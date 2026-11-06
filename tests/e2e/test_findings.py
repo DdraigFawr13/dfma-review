@@ -36,6 +36,31 @@ def test_click_highlights_face(page: Page, base_url: str):
     centre = bbox_centre(result, finding["faces"])
     assert sum((a - b) ** 2 for a, b in zip(target, centre)) ** 0.5 <= 1.0
     expect(row).to_have_attribute("aria-pressed", "true")
+    # What is drawn: the finding's faces in the accent colour, every other face faded to 0.35.
+    assert page.evaluate("window.__dfma.paintedFaces()") == sorted(finding["faces"])
+    opacity = page.evaluate("window.__dfma.opacities()")
+    assert all(opacity[str(i)] == (1 if i in finding["faces"] else 0.35) for i in range(len(result["faces"])))
+    # A flag on the view names the finding and its severity, so colour is not the only sign.
+    expect(page.locator(".viewer .flag")).to_have_text("F1medium")
+
+    # Changing the material re-analyses the same part and keeps the view and the selection,
+    # including a view the user has moved: pan first (right-drag), which moves the camera target.
+    box = page.get_by_test_id("viewer-canvas").bounding_box()
+    cx, cy = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+    page.mouse.move(cx, cy)
+    page.mouse.down(button="right")
+    page.mouse.move(cx + 80, cy + 30, steps=6)
+    page.mouse.up(button="right")
+    page.wait_for_timeout(200)
+    moved = page.evaluate("window.__dfma.cameraTarget()")
+    assert moved != target
+    target = moved
+    with page.expect_response(lambda r: r.url.endswith("/api/analyze"), timeout=30_000):
+        page.get_by_test_id("upload-material").select_option("plastic")
+    expect(page.locator("#status")).to_have_text("Showing deep_hole.step.", timeout=30_000)
+    page.wait_for_timeout(300)
+    assert page.evaluate("window.__dfma.cameraTarget()") == target
+    assert sorted(page.evaluate("window.__dfma.highlightedFaces()")) == sorted(finding["faces"])
 
     row.click()  # clicking the selected finding again clears it
     assert page.evaluate("window.__dfma.highlightedFaces()") == []

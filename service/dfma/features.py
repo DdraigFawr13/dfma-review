@@ -12,7 +12,7 @@ import math
 from dataclasses import dataclass, field
 
 from OCC.Core.BRep import BRep_Tool
-from OCC.Core.BRepAdaptor import BRepAdaptor_Surface
+from OCC.Core.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
 from OCC.Core.BRepGProp import BRepGProp_Face
 from OCC.Core.BRepTools import breptools
 from OCC.Core.GeomAbs import GeomAbs_Cone, GeomAbs_Cylinder, GeomAbs_Plane
@@ -26,7 +26,6 @@ from .frame import ANGLE_TOL, Vec, cross, dot, unit
 
 RADIUS_TOL = 0.001  # mm
 LINE_TOL = 0.01  # mm, distance between two axis lines that count as one
-SPAN_TOL = math.radians(0.5)
 DIRS = {"+X": ("x", 1), "-X": ("x", -1), "+Y": ("y", 1), "-Y": ("y", -1), "+Z": ("z", 1), "-Z": ("z", -1)}
 
 
@@ -36,8 +35,8 @@ class Cyl:
     origin: Vec
     axis: Vec
     radius: float
-    span: float  # radians covered
-    lo: float  # extent along axis (dot with axis)
+    bins: set[int]  # whole degrees around the axis the face covers, in a frame shared by coaxial faces
+    lo: float  # extent along axis (dot with axis), from points sampled on its edges
     hi: float
 
 
@@ -54,6 +53,7 @@ class Segment:
     open_ends: list[str] = field(default_factory=list)  # "lo" / "hi"
     point_mm: float | None = None
     links: set[int] = field(default_factory=set)  # indices of linked segments
+    groove: bool = False  # wider than the segments on both sides: an internal groove, not a hole (S6)
 
 
 def _sub(a: Vec, b: Vec) -> Vec:
@@ -72,6 +72,45 @@ def _vertices(shape) -> list[Vec]:
     return out
 
 
+def _points(shape, per_edge: int = 9) -> list[Vec]:
+    """Points sampled along every edge of a shape (vertices alone miss saddle-shaped edges)."""
+    out, exp = [], TopExp_Explorer(shape, TopAbs_EDGE)
+    while exp.More():
+        edge = topods.Edge(exp.Current())
+        if not BRep_Tool.Degenerated(edge):
+            curve = BRepAdaptor_Curve(edge)
+            a, b = curve.FirstParameter(), curve.LastParameter()
+            out.extend(_pt(curve.Value(a + (b - a) * i / (per_edge - 1))) for i in range(per_edge))
+        exp.Next()
+    return out or _vertices(shape)
+
+
+def _canon(axis: Vec) -> Vec:
+    """One sign for an axis line, so coaxial faces share a direction and a height scale."""
+    return axis if (round(axis[2], 9), round(axis[1], 9), round(axis[0], 9)) > (0, 0, 0) else tuple(-c for c in axis)
+
+
+def _ref_frame(axis: Vec) -> tuple[Vec, Vec]:
+    """Two unit vectors perpendicular to the axis, the same for either axis sign."""
+    a = _canon(axis)
+    seed = (1.0, 0.0, 0.0) if abs(a[0]) < 0.9 else (0.0, 1.0, 0.0)
+    x = unit(cross(a, seed))
+    return x, cross(a, x)
+
+
+def _angle_bins(face, surface, origin: Vec, axis: Vec) -> set[int]:
+    """Whole degrees around the axis covered by the face's u range (sampled every 0.5 deg)."""
+    umin, umax, vmin, vmax = breptools.UVBounds(face)
+    x, y = _ref_frame(axis)
+    steps = max(2, int(math.degrees(umax - umin) * 2) + 1)
+    angles = []
+    for i in range(steps + 1):
+        p = _pt(surface.Value(umin + (umax - umin) * i / steps, (vmin + vmax) / 2))
+        r = _sub(p, origin)
+        angles.append(math.degrees(math.atan2(dot(r, y), dot(r, x))) % 360)
+    return {int(a) % 360 for a in angles}
+
+
 def _outward_normal(face) -> tuple[Vec, Vec]:
     """A point at the middle of the face's UV box and the outward normal there."""
     umin, umax, vmin, vmax = breptools.UVBounds(face)
@@ -86,15 +125,14 @@ def _cylinder(face_id: int, face) -> Cyl | None:
         return None
     cyl = surface.Cylinder()
     ax = cyl.Axis()
-    origin, axis = _pt(ax.Location()), unit(_pt(ax.Direction()))
+    origin, axis = _pt(ax.Location()), _canon(unit(_pt(ax.Direction())))
     point, normal = _outward_normal(face)
     rel = _sub(point, origin)
     radial = _sub(rel, tuple(dot(rel, axis) * a for a in axis))
     if dot(normal, radial) >= 0:  # convex: the outward normal points away from the axis
         return None
-    umin, umax, _, _ = breptools.UVBounds(face)
-    along = [dot(_sub(v, origin), axis) for v in _vertices(face)]
-    return Cyl(face_id, origin, axis, cyl.Radius(), umax - umin, min(along), max(along))
+    along = [dot(v, axis) for v in _points(face)]  # heights on the shared scale (see _canon)
+    return Cyl(face_id, origin, axis, cyl.Radius(), _angle_bins(face, surface, origin, axis), min(along), max(along))
 
 
 def _same_line(a: Cyl | Segment, b: Cyl | Segment) -> bool:
@@ -149,54 +187,96 @@ def _segments(topo: Topology, cyls: dict[int, Cyl]) -> list[Segment]:
                     seen.add(nb)
                     todo.append(nb)
         members = [cyls[g] for g in sorted(group)]
-        # Faces of one segment can sit at different heights (a split wall); count the span once per height band.
-        if sum(m.span for m in members) < 2 * math.pi - SPAN_TOL:
+        span = _full_turn(members)
+        if span is None:
             continue
         base = members[0]
-        out.append(Segment(sorted(group), base.origin, base.axis, base.radius,
-                           min(m.lo for m in members), max(m.hi for m in members)))
+        out.append(Segment(sorted(group), base.origin, base.axis, base.radius, *span))
     return out
 
 
-def _edge_end(seg: Segment, edges) -> str:
-    along = [dot(_sub(v, seg.origin), seg.axis) for e in edges for v in _vertices(e)]
-    mid = sum(along) / len(along)
-    return "hi" if abs(mid - seg.hi) < abs(mid - seg.lo) else "lo"
+def _full_turn(members: list[Cyl]) -> tuple[float, float] | None:
+    """The height range where the group goes all the way round (360 deg within 1 deg), or None.
+
+    Faces of one hole can be split lengthwise (halves) or across (stacked bands), and a hole that
+    exits onto a sloped or curved face has halves of different lengths: the hole is the part that
+    is round all the way, and its depth is measured there. Two half-faces that never overlap in
+    height are not a hole.
+    """
+    cuts = sorted({round(v, 4) for m in members for v in (m.lo, m.hi)})
+    full = [(a, b) for a, b in zip(cuts, cuts[1:]) if b - a > 0.01 and len(set().union(
+        *(m.bins for m in members if m.lo <= a + 0.01 and m.hi >= b - 0.01))) >= 359]
+    if not full:
+        return None
+    return min(a for a, _ in full), max(b for _, b in full)
+
+
+def _edge_end(seg: Segment, edges) -> str | None:
+    """"hi" or "lo" when the shared edges lie at an end of the segment; None for an edge partway
+    along it (a cross hole breaking through the wall), which is not an end."""
+    along = [dot(v, seg.axis) for e in edges for v in _points(e)]
+    # An edge reaching an end of the round part is at that end (a sloped exit runs across it);
+    # an edge wholly partway along is a cross hole breaking through the wall.
+    if max(along) >= seg.hi - 0.01:
+        return "hi"
+    if min(along) <= seg.lo + 0.01:
+        return "lo"
+    return None
+
+
+def _is_shoulder(face, seg: Segment) -> bool:
+    """A plane perpendicular to the axis, or a cone on the same axis."""
+    surface = BRepAdaptor_Surface(face, True)
+    kind = surface.GetType()
+    if kind == GeomAbs_Plane:
+        _, n = _outward_normal(face)
+        return abs(dot(n, seg.axis)) >= math.cos(ANGLE_TOL)
+    if kind == GeomAbs_Cone:
+        ax = surface.Cone().Axis()
+        o, d = _pt(ax.Location()), unit(_pt(ax.Direction()))
+        off = cross(_sub(o, seg.origin), seg.axis)
+        return abs(dot(d, seg.axis)) >= math.cos(ANGLE_TOL) and math.sqrt(dot(off, off)) <= LINE_TOL
+    return False
 
 
 def _classify_ends(topo: Topology, segs: list[Segment]) -> None:
     owner = {f: i for i, s in enumerate(segs) for f in s.faces}
     for i, seg in enumerate(segs):
         ends: dict[str, str] = {}
-        for fid in seg.faces:
-            for nb, edges in topo.neighbours(fid).items():
-                if nb in seg.faces:
-                    continue
-                end = _edge_end(seg, edges)
-                kind = BRepAdaptor_Surface(topo.faces[nb], True).GetType()
-                nb_nbs = set(topo.neighbours(nb))
-                if kind in (GeomAbs_Plane, GeomAbs_Cone):
-                    others = {owner[n] for n in nb_nbs if n in owner and owner[n] != i}
-                    linked = [j for j in others if _same_line(segs[j], seg)]
-                    if linked:  # a shoulder joining two segments of one stepped hole
-                        seg.links.update(linked)
-                        if seg.radius > max(segs[j].radius for j in linked) and nb not in seg.shoulders:
-                            seg.shoulders.append(nb)
-                        ends.setdefault(end, "link")
-                        continue
-                    if nb_nbs <= set(seg.faces):  # a disk or a cone point closing the hole
-                        if nb not in seg.bottom:
-                            seg.bottom.append(nb)
-                        if kind == GeomAbs_Cone:
-                            seg.point_mm = _cone_length(topo.faces[nb], seg)
-                        ends.setdefault(end, "bottom")
-                        continue
-                ends[end] = "open" if ends.get(end) != "link" else "link"
+        around = {nb: edges for fid in seg.faces for nb, edges in topo.neighbours(fid).items() if nb not in seg.faces}
+        for nb, edges in around.items():
+            end = _edge_end(seg, edges)
+            if end is None:
+                continue
+            nb_nbs = set(topo.neighbours(nb))
+            others = {owner[n] for n in nb_nbs if n in owner and owner[n] != i}
+            linked = [j for j in others if _same_line(segs[j], seg)]
+            if linked and _is_shoulder(topo.faces[nb], seg):  # joins two segments of one stepped hole
+                seg.links.update(linked)
+                if seg.radius > max(segs[j].radius for j in linked) and nb not in seg.shoulders:
+                    seg.shoulders.append(nb)
+                ends.setdefault(end, "link")
+                continue
+            # A bottom closes the hole: its faces touch only this segment and each other
+            # (a flat or cone point, or a filleted, ball or split bottom).
+            if nb_nbs <= set(seg.faces) | set(around):
+                if nb not in seg.bottom:
+                    seg.bottom.append(nb)
+                if BRepAdaptor_Surface(topo.faces[nb], True).GetType() == GeomAbs_Cone:
+                    seg.point_mm = _cone_length(topo.faces[nb], seg)
+                if ends.get(end) != "link":
+                    ends[end] = "bottom"
+                continue
+            # Anything else is an open end. S3: an end on a pocket floor will take the pocket's
+            # open direction (spec Features); until then it takes the hole's own axis.
+            ends.setdefault(end, "open")
         seg.open_ends = [e for e in ("hi", "lo") if ends.get(e) == "open"]
+        seg.groove = ends.get("hi") == "link" and ends.get("lo") == "link" and all(
+            segs[j].radius < seg.radius for j in seg.links)
 
 
 def _cone_length(face, seg: Segment) -> float:
-    along = [dot(_sub(v, seg.origin), seg.axis) for v in _vertices(face)]
+    along = [dot(v, seg.axis) for v in _points(face)]
     return max(along) - min(along)
 
 
@@ -241,6 +321,8 @@ def holes(solid, faces, frame: dict[str, Vec]) -> list[dict]:
                     vectors.append(v)
         for i in chain:
             s = segs[i]
+            if s.groove:
+                continue
             dims = {"diameter": 2 * s.radius, "depth": s.hi - s.lo}
             if s.point_mm is not None:
                 dims["point_mm"] = s.point_mm

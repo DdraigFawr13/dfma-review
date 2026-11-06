@@ -30,10 +30,20 @@ let shownFile: File | null = null;
 
 declare global {
   interface Window {
-    __dfma: { highlightedFaces(): number[]; cameraTarget(): [number, number, number] };
+    __dfma: {
+      highlightedFaces(): number[];
+      cameraTarget(): [number, number, number];
+      paintedFaces(): number[];
+      opacities(): Record<number, number>;
+    };
   }
 }
-window.__dfma = { highlightedFaces: () => viewer.highlightedFaces(), cameraTarget: () => viewer.cameraTarget() };
+window.__dfma = {
+  highlightedFaces: () => viewer.highlightedFaces(),
+  cameraTarget: () => viewer.cameraTarget(),
+  paintedFaces: () => viewer.paintedFaces(), // test hook: what is actually drawn in the accent colour
+  opacities: () => viewer.opacities(),
+};
 
 function select(f: Finding): void {
   selected = selected === f.id ? null : f.id; // clicking the selected finding again clears it
@@ -77,7 +87,7 @@ async function analyse(): Promise<void> {
     shownFile = file;
     const keep = samePart ? result.findings.find((f) => f.id === selected) ?? null : null;
     selected = keep?.id ?? null;
-    if (keep) viewer.select(keep);
+    if (keep) viewer.select(keep, false); // restore the selection without moving the camera
     renderVerdict(verdict, result);
     showFindings(result, "");
     status.textContent = `Showing ${result.part.name}.`;

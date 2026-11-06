@@ -16,9 +16,10 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
         if f["kind"] != "hole":
             continue
         ratio = f["dims_mm"]["depth"] / f["dims_mm"]["diameter"]
-        if ratio > table["high"]:
+        eps = 1e-9  # "over 6.0": a ratio that is 6.0 to rounding is not over it
+        if ratio > table["high"] + eps:
             severity, limit = "high", table["high"]
-        elif ratio > table["medium"]:
+        elif ratio > table["medium"] + eps:
             severity, limit = "medium", table["medium"]
         else:
             continue

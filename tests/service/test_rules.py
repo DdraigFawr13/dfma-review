@@ -20,7 +20,10 @@ def test_deep_hole():
     assert hole["id"] == "hole-1" and hole["kind"] == "hole"
     assert hole["dims_mm"]["diameter"] == pytest.approx(6.35, abs=0.001)
     assert hole["dims_mm"]["depth"] == pytest.approx(50.8, abs=0.001)
-    assert hole["open_dirs"] == ["+Z"] or len(hole["open_dirs"]) == 1
+    # The block's largest faces are its 1 x 2.5 in sides, so frame +Z is a side normal and the
+    # hole opens towards frame +Y (spec Flow step 5).
+    assert hole["open_dirs"] == ["+Y"]
+    assert len(hole["open_vectors"]) == 1
     [f] = result["findings"]
     assert f["id"] == "F1" and f["rule"] == "hole_depth" and f["severity"] == "medium"
     assert f["title"] == "Hole depth 8.0× diameter (limit 6.0×)"
@@ -82,11 +85,29 @@ def test_stepped_hole_segments_share_open_ends():
     depths = sorted(round(h["dims_mm"]["depth"] / 25.4, 4) for h in holes)
     assert depths == [0.25, 0.75]
     assert all(len(h["open_vectors"]) == 2 for h in holes)  # the chain opens on +Z and -Z
+    big = max(holes, key=lambda h: h["dims_mm"]["diameter"])
+    small = min(holes, key=lambda h: h["dims_mm"]["diameter"])
+    assert len(big["faces"]) == 2 and len(small["faces"]) == 1  # the shoulder belongs to the larger segment
+    assert sorted(big["open_dirs"]) == sorted(small["open_dirs"]) == ["+Z", "-Z"]
 
 
 def test_through_hole_has_two_open_dirs():
     [hole] = run("odd_hole")["features"]
-    assert sorted(hole["open_dirs"]) in (["+Z", "-Z"], ["+X", "-X"], ["+Y", "-Y"])
+    assert sorted(hole["open_dirs"]) == ["+Z", "-Z"]
+
+
+def test_blind_holes_have_one_open_end():
+    for name, dirs in (("flat_bottom_hole", ["-Z"]), ("drill_point_hole", ["+Y"])):
+        [hole] = run(name)["features"]
+        assert hole["open_dirs"] == dirs, name
+    a, b = run("two_holes_web")["features"]
+    assert len(a["open_vectors"]) == len(b["open_vectors"]) == 1
+    assert sum(x * y for x, y in zip(a["open_vectors"][0], b["open_vectors"][0])) == pytest.approx(-1.0)
+
+
+def test_split_hole_is_one_through_hole():
+    [hole] = run("split_hole")["features"]
+    assert len(hole["faces"]) == 2 and sorted(hole["open_dirs"]) == ["+Z", "-Z"]
 
 
 def test_holes_above_drill_range_are_skipped(tmp_path):
@@ -108,7 +129,111 @@ def test_holes_above_drill_range_are_skipped(tmp_path):
     assert result["findings"] == []  # a 1.500 in hole is above the 1 in drill range (D-010)
 
 
-def test_limits_come_from_thresholds_toml():
+def test_limits_come_from_thresholds_toml(monkeypatch):
     from dfma import settings
     table = settings.thresholds("ss304")["hole_depth"]
     assert table == {"medium": 6.0, "high": 10.0, "source": "estimate"}
+    # analyze uses the chosen material's table: a stricter plastic limit turns deep_hole high.
+    real = settings.thresholds
+    monkeypatch.setattr(settings, "thresholds", lambda m: {"hole_depth": {"medium": 4.0, "high": 7.0, "source": "test"}}
+                        if m == "plastic" else real(m))
+    [f] = run("deep_hole", "plastic")["findings"]
+    assert f["severity"] == "high" and f["limit"] == 7.0 and f["threshold_source"] == "test"
+    [g] = run("deep_hole", "al6061")["findings"]
+    assert g["severity"] == "medium"
+
+
+def test_ratio_at_the_limit_is_not_flagged(tmp_path):
+    # 0.250 in x 1.500 in is exactly 6.0x: "over 6.0" is medium, 6.0 itself is not.
+    path = write(tmp_path, "at_limit", cut(box(1, 1, 2), blind(0.5, 0.5, 2, 0.25, 1.5)))
+    assert analyze(path, path.name)["findings"] == []
+
+
+# --- Geometry the fresh review raised (S2 review, 2026-11-06) ---------------------------------
+
+IN = 25.4
+
+
+def box(l, w, h):
+    from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeBox
+    return BRepPrimAPI_MakeBox(l * IN, w * IN, h * IN).Shape()
+
+
+def blind(x, y, top, d, depth, angle=None, rotate=0.0):
+    from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeCylinder
+    from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Dir, gp_Pnt
+    import math
+    ax = gp_Ax2(gp_Pnt(x * IN, y * IN, (top - depth) * IN), gp_Dir(0, 0, 1))
+    if rotate:
+        ax.Rotate(gp_Ax1(gp_Pnt(x * IN, y * IN, 0), gp_Dir(0, 0, 1)), rotate)
+    args = (ax, d / 2 * IN, depth * IN + 1.0) + ((angle,) if angle else ())
+    return BRepPrimAPI_MakeCylinder(*args).Shape()
+
+
+def cut(shape, *tools):
+    from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Cut
+    for t in tools:
+        shape = BRepAlgoAPI_Cut(shape, t).Shape()
+    return shape
+
+
+def write(tmp_path, name, shape):
+    from OCC.Core.Interface import Interface_Static
+    from OCC.Core.STEPControl import STEPControl_AsIs, STEPControl_Writer
+    writer = STEPControl_Writer()
+    Interface_Static.SetCVal("write.step.unit", "INCH")
+    writer.Transfer(shape, STEPControl_AsIs)
+    path = tmp_path / f"{name}.step"
+    writer.Write(str(path))
+    return path
+
+
+def test_ball_bottom_hole_is_blind(tmp_path):
+    from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Fuse
+    from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeSphere
+    from OCC.Core.gp import gp_Pnt
+    ball = BRepPrimAPI_MakeSphere(gp_Pnt(0.5 * IN, 0.5 * IN, 1.0 * IN), 0.125 * IN).Shape()
+    tool = BRepAlgoAPI_Fuse(blind(0.5, 0.5, 2, 0.25, 1.0), ball).Shape()
+    path = write(tmp_path, "ball_bottom", cut(box(1, 1, 2), tool))
+    [hole] = analyze(path, path.name)["features"]
+    assert len(hole["open_vectors"]) == 1  # a ball-end bottom closes the hole
+    assert hole["dims_mm"]["depth"] == pytest.approx(25.4, abs=0.01)
+
+
+def test_split_blind_hole_keeps_its_bottom(tmp_path):
+    import math
+    halves = (blind(0.5, 0.5, 2, 0.25, 1.0, math.pi), blind(0.5, 0.5, 2, 0.25, 1.0, math.pi, math.pi))
+    path = write(tmp_path, "split_blind", cut(box(1, 1, 2), *halves))
+    result = analyze(path, path.name)
+    [hole] = result["features"]
+    assert len(hole["open_vectors"]) == 1
+    assert {result["faces"][i]["kind"] for i in hole["faces"]} == {"cylinder", "plane"}
+
+
+def test_half_faces_at_different_heights_are_not_a_hole(tmp_path):
+    import math
+    # Two 180 deg half-cylinders of one radius and axis, at different depths: a stepped U, not a hole.
+    tools = (blind(0.5, 0.5, 2, 0.25, 0.5, math.pi), blind(0.5, 0.5, 2, 0.25, 1.0, math.pi, math.pi))
+    path = write(tmp_path, "half_steps", cut(box(1, 1, 2), *tools))
+    holes = analyze(path, path.name)["features"]
+    assert all(h["dims_mm"]["depth"] < 0.5 * IN + 0.01 for h in holes)  # never one 1.0 in deep "hole"
+
+
+def test_groove_in_bore_is_not_a_hole(tmp_path):
+    from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeCylinder
+    from OCC.Core.gp import gp_Ax2, gp_Dir, gp_Pnt
+    bore = blind(1, 1, 1, 0.5, 1.0 + 0.04)
+    groove = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(IN, IN, 0.4 * IN), gp_Dir(0, 0, 1)), 0.3 * IN, 0.2 * IN).Shape()
+    path = write(tmp_path, "groove", cut(box(2, 2, 1), bore, groove))
+    holes = analyze(path, path.name)["features"]
+    assert [round(h["dims_mm"]["diameter"] / IN, 3) for h in holes] == [0.5, 0.5]  # the bore either side, no 0.6 in groove
+
+
+def test_cross_hole_does_not_open_a_blind_hole(tmp_path):
+    from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeCylinder
+    from OCC.Core.gp import gp_Ax2, gp_Dir, gp_Pnt
+    cross = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(-1, 0.5 * IN, 1.5 * IN), gp_Dir(1, 0, 0)), 0.0625 * IN, IN + 2).Shape()
+    path = write(tmp_path, "cross", cut(box(1, 1, 2), blind(0.5, 0.5, 2, 0.25, 1.0), cross))
+    holes = analyze(path, path.name)["features"]
+    main = max(holes, key=lambda h: h["dims_mm"]["diameter"])
+    assert len(main["open_vectors"]) == 1  # the cross hole breaks through its wall, not its ends

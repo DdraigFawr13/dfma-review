@@ -20,7 +20,7 @@ export class Viewer {
   private readonly controls: OrbitControls;
   private readonly part = new THREE.Group();
   private readonly meshes = new Map<number, THREE.Mesh>();
-  private readonly flags: { el: HTMLElement; points: THREE.Vector3[] }[] = [];
+  private readonly flags: { el: HTMLElement; points: THREE.Vector3[]; finding: Finding }[] = [];
   private findings: Finding[] = [];
   private selected: Finding | null = null;
   private frame = 0;
@@ -94,18 +94,31 @@ export class Viewer {
       sev.textContent = finding.severity;
       el.append(id, sev);
       host.append(el);
-      this.flags.push({ el, points });
+      this.flags.push({ el, points, finding });
     }
     this.paint();
     this.render();
   }
 
-  /** Select a finding (or clear with null): accent on its faces, the rest faded, camera framed. */
-  select(finding: Finding | null): void {
+  /** Select a finding (or clear with null): accent on its faces, the rest faded, camera framed.
+   *  frame = false keeps the camera (restoring a selection after the material changes). */
+  select(finding: Finding | null, frame = true): void {
     this.selected = finding;
     this.paint();
-    if (finding) this.frameFaces(finding.faces);
+    if (finding && frame) this.frameFaces(finding.faces);
     else this.render();
+  }
+
+  /** The faces drawn in the accent colour, read from the materials themselves. */
+  paintedFaces(): number[] {
+    const accent = token("--accent");
+    return [...this.meshes].filter(([, m]) => (m.material as THREE.MeshStandardMaterial).color.equals(accent))
+      .map(([id]) => id).sort((a, b) => a - b);
+  }
+
+  /** Opacity of each face, for the fade check. */
+  opacities(): Record<number, number> {
+    return Object.fromEntries([...this.meshes].map(([id, m]) => [id, (m.material as THREE.Material).opacity]));
   }
 
   highlightedFaces(): number[] {
@@ -139,12 +152,11 @@ export class Viewer {
       material.depthWrite = !ghost;
       material.needsUpdate = true;
     }
-    this.flags.forEach((flag, i) => {
-      const finding = this.findings[i];
-      const on = this.selected?.id === finding?.id;
-      flag.el.style.borderColor = getComputedStyle(document.documentElement)
-        .getPropertyValue(on ? "--accent" : `--${finding?.severity ?? "line"}`).trim();
-    });
+    for (const { el, finding } of this.flags) {
+      const on = this.selected?.id === finding.id;
+      el.style.borderColor = getComputedStyle(document.documentElement)
+        .getPropertyValue(on ? "--accent" : `--${finding.severity}`).trim();
+    }
   }
 
   private boxOf(faceIds: number[]): THREE.Box3 {
