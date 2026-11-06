@@ -276,6 +276,8 @@ def test_fillet_pocket_is_one_pocket_and_four_corners():
 
 
 def test_pocket_fillets_are_analysed():
+    # A guard: pocket faces are never listed as not analysed. (S1 listed only torus and other faces,
+    # so cylinder fillets were never listed; this keeps it so once torus fillets join pockets.)
     result = run("fillet_not_hole")
     pocket_faces = set(kind(result, "pocket")[0]["faces"])
     assert not pocket_faces & set(result["part"]["not_analysed_faces"])
@@ -366,3 +368,28 @@ def test_s3_thresholds_per_material():
         t = settings.thresholds(m)
         assert t["corner_radius"] == {"min_radius_in": 0.03125, "max_depth_ratio": 4.0, "source": "estimate"}
         assert t["pocket_depth"] == {"medium": 3.0, "source": "estimate"}
+
+
+def test_pocket_rules_run_for_mill_only():
+    # Spec "Flow": corner_radius and pocket_depth run for mill only (review finding, S3).
+    result = analyze(PARTS / "pocket_sharp.step", "pocket_sharp.step", "turn", "al6061")
+    assert "corner_radius" not in result["rules_run"] and "pocket_depth" not in result["rules_run"]
+    assert not [f for f in result["findings"] if f["rule"] in ("corner_radius", "pocket_depth")]
+
+
+def test_sharp_corner_between_a_wall_and_an_arc(tmp_path):
+    # A pocket whose ends are cut by a large arc (R 1.100 in) meeting the straight walls at an angle:
+    # each junction is a sharp concave edge between a plane and a cylinder (review finding, S3).
+    from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common
+    from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeBox, BRepPrimAPI_MakeCylinder
+    from OCC.Core.gp import gp_Ax2, gp_Dir, gp_Pnt
+    tool_box = BRepPrimAPI_MakeBox(gp_Pnt(0.5 * IN, 0.5 * IN, 0.5 * IN), 2.0 * IN, 1.0 * IN, 1.0 * IN).Shape()
+    arc = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(1.5 * IN, 1.0 * IN, 0.0), gp_Dir(0, 0, 1)), 1.1 * IN, 2.0 * IN).Shape()
+    tool = BRepAlgoAPI_Common(tool_box, arc).Shape()
+    path = write(tmp_path, "arc_ends", cut(box(3, 2, 1), tool))
+    result = analyze(path, path.name)
+    sharp = [c for c in kind(result, "corner") if c["dims_mm"]["radius"] == 0]
+    assert len(sharp) == 8  # side wall to arc, and arc to end wall, at both ends
+    assert all(len(c["faces"]) == 2 and "edge_mm" in c for c in sharp)
+    [pocket] = kind(result, "pocket")
+    assert pocket["dims_mm"]["min_corner_radius"] == 0 and pocket["dims_mm"]["undersized"] == 1

@@ -5,6 +5,7 @@ from __future__ import annotations
 from ..units import MM_PER_IN, fraction
 
 ID = "pocket_depth"
+PROCESSES = ('mill',)  # spec Flow: which process runs this rule
 EPS = 1e-9
 
 

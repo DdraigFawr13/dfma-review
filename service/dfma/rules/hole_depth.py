@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 ID = "hole_depth"
+PROCESSES = ('mill', 'turn')  # spec Flow: which process runs this rule
 SUGGESTION = {
     "medium": "Needs peck drilling. Make it shallower or larger if the design allows.",
     "high": "Needs a long drill and peck drilling. Make it shallower or larger if the design allows.",

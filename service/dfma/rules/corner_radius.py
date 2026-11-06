@@ -11,6 +11,7 @@ from __future__ import annotations
 from ..units import MM_PER_IN, fmt_in
 
 ID = "corner_radius"
+PROCESSES = ('mill',)  # spec Flow: which process runs this rule
 EPS = 1e-9
 SHARP_MM = 1e-6
 SUGGEST_SHARP = "Add a corner radius of 0.031 in (1/32) or more; a larger radius lets a larger end mill cut the pocket."

@@ -432,7 +432,7 @@ path = "models/STEP/STI/daratech/daratech.stp"
 status = "ok"
 face_count = 175
 not_analysed = 2
-features = 44
+features = 46
 
 [[file]]
 path = "models/STEP/STI/gear/gear.stp"
@@ -460,7 +460,7 @@ path = "models/STEP/STI/mohne/mohne.stp"
 status = "ok"
 face_count = 205
 not_analysed = 0
-features = 60
+features = 64
 
 [[file]]
 path = "models/STEP/STI/monster4/monster4.stp"

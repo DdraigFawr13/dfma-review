@@ -484,10 +484,15 @@ def _corners(topo: Topology, walls: list[int], cyls: dict[int, Cyl]) -> list[tup
                     seen.add(nb)
                     todo.append(nb)
         out.append((sorted(group), c.radius, None))
-    planes = [w for w in sorted(walls) if w not in cyls and _plane_normal(topo.faces[w])]
-    for i, a in enumerate(planes):
-        for b in planes[i + 1:]:
-            edges = [e for e in _shared_edges(topo, a, b) if _concave(topo, a, b, e)]
+    # Sharp corners: any two walls (plane or cylinder) meeting at a concave, non-tangent edge. A fillet
+    # meets its walls tangentially, and split faces of one fillet are one group, so neither counts.
+    group_of = {f: i for i, (faces, _, _) in enumerate(out) for f in faces}
+    ordered = sorted(walls)
+    for i, a in enumerate(ordered):
+        for b in ordered[i + 1:]:
+            if a in group_of and group_of.get(b) == group_of[a]:
+                continue
+            edges = [e for e in _shared_edges(topo, a, b) if _concave(topo, a, b, e) or _concave(topo, b, a, e)]
             if edges:
                 ends = sorted(_vertices(edges[0]))
                 out.append(([a, b], 0.0, [list(ends[0]), list(ends[-1])]))
@@ -536,8 +541,9 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
         found_p.append({"kind": "pocket", "faces": pocket_faces, "axis": list(n), "open_dirs": dirs,
                         "open_vectors": [list(n)],
                         "dims_mm": {"depth": depth, "min_corner_radius": 0.0 if min_r == math.inf else min_r,
-                                    "narrowest_width": width if width != math.inf else 0.0,
                                     "end_mill_mm": tool, "undersized": int(undersized)}})
+        if width != math.inf:  # no two walls face each other: no width limit, and no key
+            found_p[-1]["dims_mm"]["narrowest_width"] = width
         for cfaces, r, edge in corners:
             ctool, _ = pick_end_mill(r, width)
             corner = {"kind": "corner", "faces": cfaces, "axis": list(n), "open_dirs": [], "open_vectors": [],

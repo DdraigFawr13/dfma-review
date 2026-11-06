@@ -6,6 +6,7 @@ from ..tools import drill_range_mm, match_tolerance_mm, nearest_drill
 from ..units import MM_PER_IN, fmt_in
 
 ID = "hole_size"
+PROCESSES = ('mill', 'turn')  # spec Flow: which process runs this rule
 
 
 def check(features: list[dict], part: dict, limits: dict) -> list[dict]:

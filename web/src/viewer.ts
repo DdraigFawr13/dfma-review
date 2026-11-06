@@ -28,6 +28,7 @@ export class Viewer {
   private readonly flags: { el: HTMLElement; points: THREE.Vector3[]; finding: Finding }[] = [];
   private findings: Finding[] = [];
   private readonly edges = new Map<string, THREE.Mesh>(); // finding id -> its sharp-corner edge, drawn as a bar
+  private readonly edgeMaterial = new THREE.LineBasicMaterial({ color: token("--ink") }); // one for every part
   private checked = new Map<number, CheckedKind>(); // faces of features checked with no finding
   private readonly showChecked: Record<CheckedKind, boolean> = { hole: false, pocket: false, corner: false };
   private selected: Finding | null = null;
@@ -61,7 +62,6 @@ export class Viewer {
       this.part.remove(mesh);
     }
     this.meshes.clear();
-    const edgeMaterial = new THREE.LineBasicMaterial({ color: token("--ink") });
     for (const face of faces) {
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute("position", new THREE.Float32BufferAttribute(face.positions, 3));
@@ -72,12 +72,14 @@ export class Viewer {
         polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.userData.faceId = face.id;
-      mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 30), edgeMaterial));
+      mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 30), this.edgeMaterial));
       this.part.add(mesh);
       this.meshes.set(face.id, mesh);
     }
     this.findings = [];
     this.clearEdges();
+    for (const f of this.flags) f.el.remove(); // a failed upload calls show([]) with no setFindings
+    this.flags.length = 0;
     this.checked = new Map();
     this.selected = null;
     this.paint();
@@ -195,8 +197,12 @@ export class Viewer {
     const kept = new Set(selectedBar ? this.selected?.faces ?? [] : []); // a sharp corner's walls stay solid
     for (const [id, bar] of this.edges) {
       const f = this.findings.find((x) => x.id === id);
-      (bar.material as THREE.MeshStandardMaterial).color.copy(
-        this.selected?.id === id ? accent : token(`--${f?.severity ?? "high"}`));
+      const material = bar.material as THREE.MeshStandardMaterial;
+      material.color.copy(this.selected?.id === id ? accent : token(`--${f?.severity ?? "high"}`));
+      const ghost = this.selected !== null && this.selected.id !== id; // fades with the rest of the part
+      material.transparent = ghost;
+      material.opacity = ghost ? GHOST_OPACITY : 1;
+      material.needsUpdate = true;
     }
     for (const [id, mesh] of this.meshes) {
       const material = mesh.material as THREE.MeshStandardMaterial;

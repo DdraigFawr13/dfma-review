@@ -34,7 +34,8 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
     pocket_faces = {i for f in pocket_list for i in f["faces"]}
     summary = {"units_in_file": part.units_in_file}
     limits = settings.thresholds(material)
-    findings = [f for rule in RULES for f in rule.check(features, summary, limits)]
+    rules = [rule for rule in RULES if process in rule.PROCESSES]
+    findings = [f for rule in rules for f in rule.check(features, summary, limits)]
     findings = [{"id": f"F{n}", **f} for n, f in enumerate(findings, 1)]
 
     return {
@@ -52,7 +53,7 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
         "faces": [{"id": f.id, "kind": f.kind, **m} for f, m in zip(infos, meshes)],
         "features": features,
         "findings": findings,
-        "rules_run": [rule.ID for rule in RULES],
+        "rules_run": [rule.ID for rule in rules],
         "machine": None,
         "turn_axis": None,
         "setups": [],
