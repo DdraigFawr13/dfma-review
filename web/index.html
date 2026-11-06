@@ -51,7 +51,12 @@
         <canvas data-testid="viewer-canvas" id="viewer"></canvas>
         <div class="viewfoot">
           <p class="hint">Drag to rotate, scroll to zoom, right-drag to pan.</p>
-          <label class="toggle"><input type="checkbox" id="show-checked" data-testid="show-checked" /> Show checked holes</label>
+          <div class="legend" role="group" aria-label="Colour legend" data-testid="legend">
+            <span class="key"><i class="sw high" aria-hidden="true"></i>High</span>
+            <span class="key"><i class="sw medium" aria-hidden="true"></i>Medium</span>
+            <span class="key"><i class="sw accent" aria-hidden="true"></i>Selected</span>
+            <label class="key toggle"><input type="checkbox" id="show-checked" data-testid="show-checked" checked /><i class="sw low" aria-hidden="true"></i>Holes checked, no finding</label>
+          </div>
         </div>
       </section>
       <section class="panel" aria-labelledby="findings-title">

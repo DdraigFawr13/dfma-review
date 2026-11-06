@@ -4,7 +4,7 @@ Updated: 2026-11-06. A fresh session must be able to continue from this file alo
 
 ## Phase
 
-Build. Brainstorm (D-001), bootstrap (D-002, #1), design (D-003 to D-006) and the first-version spec (D-007, [docs/specs/first-version.md](specs/first-version.md)) are merged in [#2](https://github.com/DdraigFawr13/dfma-review/pull/2). S1 (read and view) merged in [#3](https://github.com/DdraigFawr13/dfma-review/pull/3), approved by Morgan 2026-11-06. Next: slice S2.
+Build. Brainstorm (D-001), bootstrap (D-002, #1), design (D-003 to D-006) and the first-version spec (D-007, [docs/specs/first-version.md](specs/first-version.md)) are merged in [#2](https://github.com/DdraigFawr13/dfma-review/pull/2). S1 (read and view) merged in [#3](https://github.com/DdraigFawr13/dfma-review/pull/3), approved by Morgan 2026-11-06. S2 (holes) approved by Morgan 2026-11-06 ("otherwise I approve of this phase") and merged in [#4](https://github.com/DdraigFawr13/dfma-review/pull/4). Next: S3 (pockets).
 
 ## Plan map
 
@@ -14,12 +14,13 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ✔ Bootstrap the master harness (#1).
 - ✔ Design: `planning-interview`, 2 rounds plus approval (D-003 to D-006).
 - ✔ Spec the first usable version (D-007, 6 fresh checks, $1.49).
-- ▶ Build slice by slice: ✔ S1 read and view · ▶ S2 holes (starts with `ui-style` and the review-screen mock-up) · S3 pockets · S4 thin walls · S5 machine and setups · S6 turning · S7 report and PDF.
+- ▶ Build slice by slice: ✔ S1 read and view · ✔ S2 holes · ▶ S3 pockets · S4 thin walls · S5 machine and setups · S6 turning · S7 report and PDF.
 - ○ Assemblies and DFA · history and compare · time and $.
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
 
+- 2026-11-06 S2 approved and merged (#4). Colour legend with a checkbox per feature kind (D-014; holes on by default). NIST research: papers (R3 Appendix A lists FTC 6/8/9 features with sizes: answer key; FTC 6, 8, 9 designed in inches, so D-013 holds); fork `engineering-design-models` (16 GB, ~2,399 AP203 STEP, no PMI; best for features: UMD, STEP/STI, PTC mfgmill18; third-party rights unstated); usnistgov/SFA is the AP242 PMI reference.
 - 2026-11-06 S2 fresh spec review (97,816 tokens): 8 real gaps fixed with tests that fail on the old code, 1 stale. Manual CI [run 23](https://github.com/DdraigFawr13/dfma-review/actions/runs/42297731665) green in 1 min 32 s on b93c519. Status and demo pages updated for S2.
 - 2026-11-06 S2 built: checks written first and failed on S1 code (24 service, 2 browser); then `features.py` (holes), `tools.py` (drills), `rules/hole_depth.py`, `rules/hole_size.py`, `config/*.toml`, review screen (layout 4, IBM Plex shipped, OFL). D-013 (Morgan): mm files accept inch drills too; NIST ftc_09 hole-size findings 27 → 2. NIST: 491 holes found in 17 files.
 - 2026-11-06 Morgan approved the review-screen [mock-up](https://claude.ai/artifact/2upjSXCWKez2VVsedPVZbH) ("I approve of the design"). [Demo page](https://claude.ai/artifact/KnnLF3YAHp5ZCmNuVWyvP4) updated with 4 NIST parts on the merged S1 code (Morgan asked to see one).
@@ -37,8 +38,9 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-1. S2 (holes) on `s2-holes`, draft [#4](https://github.com/DdraigFawr13/dfma-review/pull/4): done and waiting for Morgan's "approve S2". Pages: [status](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu), [demo](https://claude.ai/artifact/KnnLF3YAHp5ZCmNuVWyvP4). On approval (GIT-08): write merged state here, mark #4 ready, turn on auto-merge once its CI starts. Then S3 (pockets) from step 8 of `write-spec`.
-2. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
+1. S3 (pockets) in this or a new session, from `main`: `write-spec` step 8 (zero-decision re-check of S3's sections against merged S2 code), no new screen so no mock-up unless the legend gains rows (it does: pockets, corners, D-014). Then checks fail first, build, show per D-009.
+2. NIST library (Morgan, 2026-11-06): on a new branch, commit `docs/nist/CATALOG.md` plus the 4 papers, 3 slide decks, FTC/CTC definition packs and HTC models; research reports are summarised in HANDOFF "Just done" 2026-11-06.
+3. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
 
 ## Open questions
 

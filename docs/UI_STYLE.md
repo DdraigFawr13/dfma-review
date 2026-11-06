@@ -60,7 +60,7 @@ Contrast (WCAG ratio, measured with a script in the S2 session): `--ink` on `--p
 - **Primary button** (Export PDF, from S7): `--accent` fill, `--accent-ink` text.
 - **Finding row:** a button the full width of the list. Severity label (text and colour), then the title, then a muted line with the feature, the value and the limit source. Clicking it selects the finding: 2px `--accent` border, its faces turn `--accent` in the 3D view and the camera frames them. Clicking the selected finding again clears the selection.
 - **Selected finding:** its faces turn `--accent`, every other face is drawn at opacity 0.35, and the camera frames the faces. Faces with a finding and nothing selected are drawn in their severity colour with an "F1 MEDIUM" label.
-- **Show checked holes:** a checkbox under the 3D view, off by default (D-014). When on, holes checked with no finding are drawn in `--low`, unlabelled; findings and the selection keep their colours.
+- **Colour legend:** under the 3D view (D-014): a 14 px swatch and its word for High, Medium and Selected, then one checkbox per feature kind for features checked with no finding (S2: "Holes checked, no finding", on by default, `--low`). Each later feature kind adds its own row and swatch.
 - **Verdict line:** severity words with counts ("HIGH 1 · MEDIUM 2"; a zero count in `--muted`), then "N holes checked · Rules run: …". A part with no findings shows "CLEAN no findings" in `--low`.
 - **Waiting:** while a file is analysed, the status line says "Analysing <name>…" and the findings list keeps its space.
 - **Refused:** errors show in the error box with the reason (J7 messages), in `--high` on `--panel` with a left stripe and the word "Error:".

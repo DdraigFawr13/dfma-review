@@ -41,7 +41,11 @@ body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
 .viewer canvas { flex: 1; width: 100%; min-height: 20rem; background: var(--view); border: 1px solid var(--line); border-radius: var(--radius); display: block; touch-action: none; }
 .hint { margin: 0; color: var(--muted); font-size: 0.875rem; }
 .viewfoot { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); align-items: center; justify-content: space-between; }
-.toggle { display: inline-flex; gap: var(--space-2); align-items: center; min-height: 32px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+.legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); align-items: center; font-size: 0.875rem; }
+.key { display: inline-flex; gap: 6px; align-items: center; min-height: 32px; }
+.sw { width: 14px; height: 14px; border-radius: var(--radius); border: 1px solid var(--ink); display: inline-block; }
+.sw.high { background: var(--high); } .sw.medium { background: var(--medium); } .sw.accent { background: var(--accent); } .sw.low { background: var(--low); }
+.toggle { font-weight: 600; cursor: pointer; }
 .toggle input { width: 18px; height: 18px; margin: 0; accent-color: var(--low); }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; min-height: 0; max-height: calc(100vh - 210px); }
 .panel h2 { margin: 0; font-size: 1.125rem; font-weight: 600; display: flex; justify-content: space-between; align-items: baseline; }

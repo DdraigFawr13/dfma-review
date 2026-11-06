@@ -72,19 +72,19 @@ def test_clean_part_shows_clean_verdict(page: Page, base_url: str):
     expect(page.get_by_test_id("verdict")).to_contain_text("2 holes checked", timeout=30_000)
     expect(page.get_by_test_id("verdict")).to_contain_text("clean", ignore_case=True)
 
-    # "Show checked holes" (off by default) tints the holes that were checked and passed.
+    # The legend's "Holes checked, no finding" box (on by default) tints the holes that passed.
     result = analyze(PARTS / "clean_holes.step", "clean_holes.step")
     hole_faces = sorted(i for h in result["features"] for i in h["faces"])
-    assert page.evaluate("window.__dfma.checkedFaces()") == []
-    page.get_by_test_id("show-checked").check()
+    expect(page.get_by_test_id("legend")).to_contain_text("High")
     assert page.evaluate("window.__dfma.checkedFaces()") == hole_faces
     page.get_by_test_id("show-checked").uncheck()
     assert page.evaluate("window.__dfma.checkedFaces()") == []
+    page.get_by_test_id("show-checked").check()
+    assert page.evaluate("window.__dfma.checkedFaces()") == hole_faces
 
 
 def test_checked_holes_exclude_holes_with_findings(page: Page, base_url: str):
     page.goto(base_url)
-    page.get_by_test_id("show-checked").check()
     page.get_by_test_id("upload-file").set_input_files(PARTS / "stepped_hole.step")
     expect(page.get_by_test_id("verdict")).to_contain_text("2 holes checked", timeout=30_000)
     result = analyze(PARTS / "stepped_hole.step", "stepped_hole.step")
