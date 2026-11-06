@@ -8,7 +8,7 @@ from . import settings
 from .frame import extents_mm, face_info, part_frame
 from .mesh import mesh_faces
 from .errors import ReadError
-from .features import holes
+from .features import holes, number, pockets
 from .rules import RULES
 from .read import read_step
 from .units import mm_to_in
@@ -27,10 +27,15 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
     meshes = mesh_faces(part.solid, part.faces)
     vertices = [tuple(m["positions"][i:i + 3]) for m in meshes for i in range(0, len(m["positions"]), 3)]
     frame = part_frame(infos, vertices)
-    features = holes(part.solid, part.faces, frame)
+    hole_list = holes(part.solid, part.faces, frame)
+    hole_faces = {i for f in hole_list for i in f["faces"]}
+    pocket_list, corner_list = pockets(part.solid, part.faces, frame, hole_faces)
+    features = hole_list + number(pocket_list, "pocket") + number(corner_list, "corner")
+    pocket_faces = {i for f in pocket_list for i in f["faces"]}
     summary = {"units_in_file": part.units_in_file}
     limits = settings.thresholds(material)
-    findings = [f for rule in RULES for f in rule.check(features, summary, limits)]
+    rules = [rule for rule in RULES if process in rule.PROCESSES]
+    findings = [f for rule in rules for f in rule.check(features, summary, limits)]
     findings = [{"id": f"F{n}", **f} for n, f in enumerate(findings, 1)]
 
     return {
@@ -41,14 +46,14 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
             "face_count": len(part.faces),
             "volume_mm3": part.volume_mm3,
             "ignored_solids": part.ignored_solids,
-            # Until S3 knows pocket fillets, every torus and every other face is listed.
-            "not_analysed_faces": [f.id for f in infos if f.kind in ("torus", "other")],
+            # Torus and other faces, except those that belong to a pocket (S3).
+            "not_analysed_faces": [f.id for f in infos if f.kind in ("torus", "other") and f.id not in pocket_faces],
             "frame": {k: list(v) for k, v in frame.items()},
         },
         "faces": [{"id": f.id, "kind": f.kind, **m} for f, m in zip(infos, meshes)],
         "features": features,
         "findings": findings,
-        "rules_run": [rule.ID for rule in RULES],
+        "rules_run": [rule.ID for rule in rules],
         "machine": None,
         "turn_axis": None,
         "setups": [],

@@ -2,7 +2,10 @@
 
 import type { Analysis, Finding, Severity } from "./api";
 
-const RULE_NAMES: Record<string, string> = { hole_depth: "hole depth", hole_size: "hole size" };
+const RULE_NAMES: Record<string, string> = {
+  hole_depth: "hole depth", hole_size: "hole size", corner_radius: "corner radius", pocket_depth: "pocket depth",
+};
+const KIND_NAMES: [string, string, string][] = [["hole", "hole", "holes"], ["pocket", "pocket", "pockets"], ["corner", "corner", "corners"]];
 const GROUPS: Severity[] = ["high", "medium"];
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: string): HTMLElementTagNameMap[K] {
@@ -16,11 +19,17 @@ function sevLabel(severity: Severity): HTMLElement {
   return el("span", `sev ${severity}`, severity);
 }
 
-/** "1 hole checked · Rules run: hole depth, hole size." */
+/** "2 holes checked · Rules run: …", or "1 pocket and 4 corners checked · …": the kinds the part
+ *  has; a part with none of them still says "0 holes checked". */
 export function checkedLine(result: Analysis): string {
-  const holes = result.features.filter((f) => f.kind === "hole").length;
+  const parts = KIND_NAMES.map(([kind, one, many]) => {
+    const n = result.features.filter((f) => f.kind === kind).length;
+    return n ? `${n} ${n === 1 ? one : many}` : "";
+  }).filter(Boolean);
+  const counted = parts.length === 0 ? "0 holes" : parts.length === 1 ? parts[0]
+    : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
   const rules = result.rules_run.map((r) => RULE_NAMES[r] ?? r.replace(/_/g, " ")).join(", ");
-  return `${holes} ${holes === 1 ? "hole" : "holes"} checked · Rules run: ${rules}.`;
+  return `${counted} checked · Rules run: ${rules}.`;
 }
 
 export function renderVerdict(host: HTMLElement, result: Analysis | null, waiting = false): void {
@@ -47,12 +56,23 @@ export function renderVerdict(host: HTMLElement, result: Analysis | null, waitin
 function meta(f: Finding, result: Analysis): string {
   const feature = result.features.find((x) => x.id === f.feature);
   const parts = [f.feature];
-  if (feature?.dims_mm.diameter !== undefined) {
+  if (feature?.kind === "pocket") {
+    parts.push(`${(feature.dims_mm.depth / 25.4).toFixed(3)} in deep, ${toolText(feature.dims_mm.end_mill_mm / 25.4)} end mill fits`);
+  } else if (feature?.kind === "corner") {
+    parts.push(`radius ${(feature.dims_mm.radius / 25.4).toFixed(3)} in, pocket ${(feature.dims_mm.depth / 25.4).toFixed(3)} in deep`);
+  } else if (feature?.dims_mm.diameter !== undefined) {
     const d = feature.dims_mm.diameter / 25.4;
     parts.push(f.rule === "hole_size" ? `${d.toFixed(3)} in diameter` : `${diameterText(d)} diameter, ${(feature.dims_mm.depth / 25.4).toFixed(3)} in deep`);
   }
   parts.push(f.rule === "hole_size" ? `limit: ${f.threshold_source}, within 0.0005 in` : `limit: ${f.threshold_source}`);
   return parts.join(" · ");
+}
+
+/** "3/32 in" for an end mill on the 1/64 in grid, else "0.300 in". */
+function toolText(inches: number): string {
+  const text = diameterText(inches);
+  const m = /\((.+)\)$/.exec(text);
+  return m ? `${m[1]} in` : text;
 }
 
 function diameterText(inches: number): string {

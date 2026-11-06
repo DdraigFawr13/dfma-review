@@ -201,14 +201,14 @@ path = "models/NIST/Manfred_Osti/spectrometer/main_block/main_block.hh.sat.stp"
 status = "ok"
 face_count = 160
 not_analysed = 18
-features = 21
+features = 27
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/main_block/main_block.prt.hh.sat.stp"
 status = "ok"
 face_count = 159
 not_analysed = 18
-features = 21
+features = 27
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/main_linkage_arm_6/main_linkage_arm_6.hh.sat.stp"
@@ -222,7 +222,7 @@ path = "models/NIST/Manfred_Osti/spectrometer/new_main/new_main.prt.hh.sat.stp"
 status = "ok"
 face_count = 159
 not_analysed = 18
-features = 21
+features = 27
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/nut_244/nut_244.hh.sat.stp"
@@ -383,21 +383,21 @@ path = "models/STEP/STI/1797609in/1797609in.stp"
 status = "ok"
 face_count = 122
 not_analysed = 0
-features = 27
+features = 32
 
 [[file]]
 path = "models/STEP/STI/2827056/2827056.stp"
 status = "ok"
 face_count = 355
 not_analysed = 0
-features = 91
+features = 94
 
 [[file]]
 path = "models/STEP/STI/boeing_part/boeing_part.stp"
 status = "ok"
 face_count = 122
 not_analysed = 0
-features = 10
+features = 34
 
 [[file]]
 path = "models/STEP/STI/bracket1-Part/bracket1-Part.stp"
@@ -432,7 +432,7 @@ path = "models/STEP/STI/daratech/daratech.stp"
 status = "ok"
 face_count = 175
 not_analysed = 2
-features = 7
+features = 46
 
 [[file]]
 path = "models/STEP/STI/gear/gear.stp"
@@ -453,28 +453,28 @@ path = "models/STEP/STI/interactingPockets/interactingPockets.stp"
 status = "ok"
 face_count = 48
 not_analysed = 0
-features = 0
+features = 22
 
 [[file]]
 path = "models/STEP/STI/mohne/mohne.stp"
 status = "ok"
 face_count = 205
 not_analysed = 0
-features = 37
+features = 64
 
 [[file]]
 path = "models/STEP/STI/monster4/monster4.stp"
 status = "ok"
 face_count = 281
 not_analysed = 0
-features = 9
+features = 15
 
 [[file]]
 path = "models/STEP/STI/mycami2/mycami2.stp"
 status = "ok"
 face_count = 49
 not_analysed = 5
-features = 1
+features = 4
 
 [[file]]
 path = "models/STEP/STI/nasty_cheese/nasty_cheese.stp"
@@ -495,7 +495,7 @@ path = "models/STEP/STI/simple_boeing_part/simple_boeing_part.stp"
 status = "ok"
 face_count = 116
 not_analysed = 0
-features = 8
+features = 28
 
 [[file]]
 path = "models/STEP/STI/socket/socket.stp"
@@ -509,7 +509,7 @@ path = "models/STEP/STI/team/team.stp"
 status = "ok"
 face_count = 88
 not_analysed = 0
-features = 21
+features = 39
 
 [[file]]
 path = "models/STEP/STI/unterlaf/unterlaf.stp"
@@ -537,14 +537,14 @@ path = "models/STEP/STI/vs_training/vs_training.stp"
 status = "ok"
 face_count = 86
 not_analysed = 0
-features = 18
+features = 32
 
 [[file]]
 path = "models/STEP/STI/weldment_asm_solid/weldment_asm_solid.stp"
 status = "ok"
 face_count = 145
 not_analysed = 12
-features = 21
+features = 27
 
 [[file]]
 path = "models/UMD/AES94/AES94.step"
@@ -593,7 +593,7 @@ path = "models/UMD/bottomed_pocket1/bottomed_pocket1.step"
 status = "ok"
 face_count = 15
 not_analysed = 0
-features = 0
+features = 5
 
 [[file]]
 path = "models/UMD/bottomless_pocket1/bottomless_pocket1.step"

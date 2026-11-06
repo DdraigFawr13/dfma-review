@@ -17,3 +17,6 @@ step_mm = 0.1
 from_mm = 13.5
 to_mm = 25.0
 step_mm = 0.5
+
+[end_mills]                   # inch end mills (spec "Tools"); every file uses them: no metric list in this version
+inch = [0.03125, 0.0625, 0.09375, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.625, 0.75, 1.0]

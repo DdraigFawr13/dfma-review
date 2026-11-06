@@ -90,3 +90,14 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-06).
 - **Decision:** Under the 3D view, a colour legend names every colour (High, Medium, Selected) and holds one checkbox per feature kind for features checked with no finding: S2 has "Holes checked, no finding", on by default, tinting those holes `--low` green with no label. Holes with a finding keep their severity colour; the selected finding stays accent. Each later slice adds its feature kind to the legend (pockets, corners, walls), each with its own swatch.
 - **Why:** Morgan saw untinted holes on NIST FTC 10 and read them as missed; 31 of its 42 found holes were clean and drawn plain. Morgan: "can we have those as a toggle then to turn certain ok features on to make sure I can like debug and check the work?" and "let's go with a for now but I do still want the highlighting to be a toggle. I will need that toggle for each feature type or like a color legend to show what is what. Whatever you recommend for that goal is fine for me" (2026-11-06).
+
+## D-015 S3: pocket and corner legend, selection and defaults
+
+- **Status:** Accepted (2026-11-06).
+- **Decision:**
+  - The colour legend gains "Pockets checked, no finding" (`--ok-pocket` #8559b8) and "Corners checked, no finding" (`--ok-corner` #1d7f86), each with its own checkbox, all three kinds on by default; it always lists all three kinds. A corner fillet is also a pocket wall and shows the corner colour.
+  - The verdict line names the kinds a part has ("1 pocket and 4 corners checked"; a holes-only part keeps "2 holes checked").
+  - A selected finding is framed at no less than 40% of the part's size. A sharp inside corner has no face of its own, so it is drawn as a bar along its edge (corner features carry `edge_mm`), in its severity colour and the accent when selected; its two walls are not painted for that finding.
+  - Finding labels never cover each other: a label that would overlap one already placed moves to the nearest free spot (Morgan: "the flags for the failing portions are covering each other").
+  - The S3 defaults in the spec's S3 "Settled at build" list stand (test parts, recognition, `pick_end_mill`, titles and suggestions). Inch end mills serve every file. Engraved text and logos (on most NIST parts) read as pockets with sharp corners and stay flagged as measured; this is listed in `assumptions`.
+- **Why:** Morgan approved the [mock-up](https://claude.ai/artifact/7pzmdnGnguo8CThdQ87gvD) v3 (real-viewer screenshots, after "the feature highlights on your model look terrible and unrealistic" on the v1 sketch and "What does it look like when selected?"): "Ok approved you can do the pr and merge go with your recommendations" (2026-11-06).

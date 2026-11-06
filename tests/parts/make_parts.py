@@ -114,6 +114,58 @@ def fillet_not_hole():
     return cut(block(3, 2, 1), fillet.Shape())
 
 
+def pocket_tool(x0, y0, l, w, z0, h, r):
+    """A box tool for a pocket (inches): its 4 vertical edges filleted with radius r (0: sharp)."""
+    tool = BRepPrimAPI_MakeBox(gp_Pnt(x0 * IN, y0 * IN, z0 * IN), l * IN, w * IN, h * IN).Shape()
+    if not r:
+        return tool
+    fillet = BRepFilletAPI_MakeFillet(tool)
+    edges = TopTools_IndexedMapOfShape()
+    topexp.MapShapes(tool, TopAbs_EDGE, edges)
+    for i in range(1, edges.Size() + 1):
+        edge = topods.Edge(edges.FindKey(i))
+        curve = BRepAdaptor_Curve(edge)
+        if curve.GetType() == GeomAbs_Line and abs(curve.Line().Direction().Z()) > 0.999:
+            fillet.Add(r * IN, edge)
+    return fillet.Shape()
+
+
+def pocket_part(depth, r, size=(3, 2, 1), pocket=(2, 1), island=None):
+    """A block with a pocket centred on +Z (inches). `island` = (side, drop): a square island
+    in the middle whose top sits `drop` below the rim."""
+    l, w, h = size
+    pl, pw = pocket
+    x0, y0 = (l - pl) / 2, (w - pw) / 2
+    tool = pocket_tool(x0, y0, pl, pw, h - depth, depth + 0.5, r)
+    if island:
+        side, drop = island
+        boss = BRepPrimAPI_MakeBox(gp_Pnt((l - side) / 2 * IN, (w - side) / 2 * IN, (h - depth - 0.1) * IN),
+                                   side * IN, side * IN, (depth + 0.1 - drop) * IN).Shape()
+        tool = cut(tool, boss)
+    return cut(block(l, w, h), tool)
+
+
+def corner_probes(depth, r, size=(3, 2, 1), pocket=(2, 1)):
+    """One probe per pocket corner (mm), at mid-depth: on the fillet at 45 deg, or on the sharp edge."""
+    l, w, h = size
+    pl, pw = pocket
+    x0, y0 = (l - pl) / 2, (w - pw) / 2
+    z = h - depth / 2
+    out = []
+    for cx, sx in ((x0, 1), (x0 + pl, -1)):
+        for cy, sy in ((y0, 1), (y0 + pw, -1)):
+            d = r - r / math.sqrt(2)  # from the corner of the box to the fillet at 45 deg, along each axis
+            out.append((round((cx + sx * d) * IN, 4), round((cy + sy * d) * IN, 4), round(z * IN, 4)))
+    return out
+
+
+def floor_probe(depth, size=(3, 2, 1), pocket=(2, 1), island=None):
+    """A probe on the pocket floor (mm), clear of any island."""
+    l, w, h = size
+    x0, y0 = (l - pocket[0]) / 2, (w - pocket[1]) / 2
+    return (round((x0 + 0.1) * IN, 4), round(w / 2 * IN, 4), round((h - depth) * IN, 4))
+
+
 def metric_block(d_mm):
     return cut(BRepPrimAPI_MakeBox(50.0, 25.0, 12.0).Shape(), through_z(25.0, 12.5, 12.0, d_mm))
 
@@ -193,10 +245,10 @@ NO_FEATURES = {"hole": 0, "pocket": 0, "corner": 0, "wall": 0}
 def main() -> int:
     parts: list[dict] = []
 
-    def add(shape, name, unit, holes, findings=(), **extra):
+    def add(shape, name, unit, holes, findings=(), pockets=0, corners=0, **extra):
         write_step(shape, name, "INCH" if unit == "inch" else "MM")
         entry = {"name": name, "units": unit, "face_count": face_count(shape),
-                 "features": {**NO_FEATURES, "hole": holes}, **extra}
+                 "features": {**NO_FEATURES, "hole": holes, "pocket": pockets, "corner": corners}, **extra}
         if findings:
             entry["finding"] = list(findings)
         parts.append(entry)
@@ -215,7 +267,7 @@ def main() -> int:
         [finding("hole_depth", "high", 11.0, (0.5 * IN + 0.125 * IN, 0.5 * IN, 2.0 * IN))])
     add(through_block(2, 1, 0.5, 0.26), "odd_hole", "inch", 1,
         [finding("hole_size", "medium", 0.26, (1.0 * IN + 0.13 * IN, 0.5 * IN, 0.25 * IN))])
-    add(fillet_not_hole(), "fillet_not_hole", "inch", 0)
+    add(fillet_not_hole(), "fillet_not_hole", "inch", 0, pockets=1, corners=4)  # 3/16 in fits: 2.67, clean
     add(metric_block(6.55), "odd_metric_hole", "mm", 1,
         [finding("hole_size", "medium", round(6.55 / IN, 4), (25.0 + 3.275, 12.5, 6.0))])
     add(metric_block(6.5), "metric_hole", "mm", 1)
@@ -226,6 +278,27 @@ def main() -> int:
     shape, point = drill_point_hole()
     add(shape, "drill_point_hole", "inch", 1, point_mm=round(point, 4))
     add(clean_holes(), "clean_holes", "inch", 2)
+
+    # S3 pockets (spec S3 "Settled at build"). Ratios: depth / the end mill pick_end_mill returns.
+    def corners(depth, r, severity, measured, **kw):
+        return [finding("corner_radius", severity, measured, p) for p in corner_probes(depth, r, **kw)]
+
+    def pocket_finding(depth, measured, **kw):
+        return finding("pocket_depth", "medium", measured, floor_probe(depth, **kw))
+
+    add(pocket_part(0.25, 0), "pocket_sharp", "inch", 0,
+        corners(0.25, 0, "high", 0.0) + [pocket_finding(0.25, 8.0)], pockets=1, corners=4)  # nothing fits: 1/32 in, undersized
+    add(pocket_part(0.0625, 0.020), "pocket_small_radius", "inch", 0,
+        corners(0.0625, 0.020, "medium", 0.02), pockets=1, corners=4)  # 1/32 in: 2.0, no depth finding
+    add(pocket_part(0.5, 0.050), "pocket_long_thin_tool", "inch", 0,
+        corners(0.5, 0.050, "medium", round(0.5 / 0.09375, 4)) + [pocket_finding(0.5, round(0.5 / 0.09375, 4))],
+        pockets=1, corners=4)  # 3/32 in: 5.33
+    add(pocket_part(0.8, 0.150), "pocket_deep", "inch", 0, [pocket_finding(0.8, 3.2)], pockets=1, corners=4)  # 1/4 in
+    add(pocket_part(0.8, 0.300, size=(3.5, 2.5, 1.25), pocket=(2.5, 1.5)), "pocket_deep_wide", "inch", 0,
+        pockets=1, corners=4)  # 1/2 in: 1.6, clean
+    add(pocket_part(0.6, 0.140, island=(0.6, 0.1)), "pocket_island", "inch", 0,
+        [pocket_finding(0.6, 3.2)], pockets=1, corners=4)  # 0.200 in gap: 3/16 in, not 1/4 in
+    add(pocket_part(0.4, 0.150), "clean_pocket", "inch", 0, pockets=1, corners=4)  # 1/4 in: 1.6
 
     write_step(single_face(), "no_solid", "MM")
     (HERE / "not_step.step").write_text("This is a text file, not a STEP file.\n", encoding="utf-8", newline="\n")

@@ -92,3 +92,58 @@ def test_checked_holes_exclude_holes_with_findings(page: Page, base_url: str):
     page.get_by_test_id("upload-file").set_input_files(PARTS / "deep_hole.step")
     expect(page.get_by_test_id("finding-F1")).to_be_visible(timeout=30_000)
     assert page.evaluate("window.__dfma.checkedFaces()") == []  # its only hole has a finding
+
+
+def test_pocket_and_corner_switches(page: Page, base_url: str):
+    # S3 (D-015): pockets and corners checked with no finding have their own colour and switch;
+    # a corner fillet is also a pocket wall and shows the corner colour.
+    page.goto(base_url)
+    page.get_by_test_id("upload-file").set_input_files(PARTS / "clean_pocket.step")
+    expect(page.get_by_test_id("verdict")).to_contain_text("1 pocket and 4 corners checked", timeout=30_000)
+    result = analyze(PARTS / "clean_pocket.step", "clean_pocket.step")
+    [pocket] = [f for f in result["features"] if f["kind"] == "pocket"]
+    corner_faces = sorted(i for f in result["features"] if f["kind"] == "corner" for i in f["faces"])
+    pocket_only = sorted(set(pocket["faces"]) - set(corner_faces))
+    assert page.evaluate("window.__dfma.checkedFaces('pocket')") == pocket_only
+    assert page.evaluate("window.__dfma.checkedFaces('corner')") == corner_faces
+    page.get_by_test_id("show-checked-corners").uncheck()
+    assert page.evaluate("window.__dfma.checkedFaces('corner')") == []
+    page.get_by_test_id("show-checked-pockets").uncheck()
+    assert page.evaluate("window.__dfma.checkedFaces('pocket')") == []
+
+
+def test_sharp_corner_is_drawn_on_its_edge(page: Page, base_url: str):
+    # A sharp corner has no face: selecting it paints no face accent, its walls stay solid (D-015).
+    page.goto(base_url)
+    page.get_by_test_id("upload-file").set_input_files(PARTS / "pocket_sharp.step")
+    page.get_by_test_id("finding-F1").click(timeout=30_000)
+    result = analyze(PARTS / "pocket_sharp.step", "pocket_sharp.step")
+    walls = result["findings"][0]["faces"]
+    assert page.evaluate("window.__dfma.paintedFaces()") == []
+    opacities = page.evaluate("window.__dfma.opacities()")
+    assert all(opacities[str(w)] == 1 for w in walls)
+    assert sorted(page.evaluate("window.__dfma.highlightedFaces()")) == sorted(walls)
+
+
+def _overlapping(boxes):
+    return [(a["id"], b["id"]) for i, a in enumerate(boxes) for b in boxes[i + 1:]
+            if a["x"] < b["x"] + b["w"] and b["x"] < a["x"] + a["w"] and a["y"] < b["y"] + b["h"] and b["y"] < a["y"] + a["h"]]
+
+
+def test_finding_labels_never_cover_each_other(page: Page, base_url: str):
+    # Morgan: "the flags for the failing portions are covering each other" (S3). Every visible
+    # label sits clear of the others, before and after a finding is selected.
+    page.goto(base_url)
+    for name in ("pocket_sharp", "pocket_long_thin_tool", "daratech"):
+        path = PARTS / f"{name}.step" if name != "daratech" else next(
+            (PARTS.parent / "edmr" / "models" / "STEP" / "STI").rglob("daratech.stp"))  # 25 findings on a real part
+        page.get_by_test_id("upload-file").set_input_files(path)
+        expect(page.get_by_test_id("finding-F5")).to_be_visible(timeout=30_000)
+        # Labels are placed on the next drawn frame; a large part takes longer to draw.
+        page.wait_for_function("window.__dfma.flagBoxes().length >= 4", timeout=30_000)
+        boxes = page.evaluate("window.__dfma.flagBoxes()")
+        assert _overlapping(boxes) == [], name
+        page.get_by_test_id("finding-F1").click()
+        page.wait_for_timeout(300)
+        assert _overlapping(page.evaluate("window.__dfma.flagBoxes()")) == [], name
+        page.get_by_test_id("finding-F1").click()

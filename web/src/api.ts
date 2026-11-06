@@ -38,6 +38,7 @@ export interface Feature {
   open_dirs: string[];
   open_vectors: number[][];
   dims_mm: Record<string, number>;
+  edge_mm?: number[][]; // a sharp corner's edge (two end points), drawn by the viewer (S3)
 }
 
 export interface Finding {

@@ -1,4 +1,4 @@
-"""Feature recognition on analytic faces (spec Design "Features"). S2: holes.
+"""Feature recognition on analytic faces (spec Design "Features"). S2: holes; S3: pockets and corners.
 
 A hole is a set of concave cylindrical faces that share edges, with the same axis (0.5 deg)
 and radius (0.001 mm), spanning the full 360 deg. Stepped segments join through a shoulder
@@ -339,3 +339,224 @@ def holes(solid, faces, frame: dict[str, Vec]) -> list[dict]:
     for n, f in enumerate(features, 1):
         f["id"] = f"hole-{n}"
     return [{"id": f["id"], **{k: v for k, v in f.items() if k != "id"}} for f in features]
+
+
+# --- S3: pockets and inside corners (spec Features "Pocket", "Inside corner"; S3 "Settled at build") ---
+
+def _normal_at(face, p: Vec) -> Vec:
+    """The outward normal of a face at the point of its surface nearest p."""
+    from OCC.Core.GeomAPI import GeomAPI_ProjectPointOnSurf
+    proj = GeomAPI_ProjectPointOnSurf(gp_Pnt(*p), BRep_Tool.Surface(face))
+    u, v = proj.LowerDistanceParameters()
+    point, vec = gp_Pnt(), gp_Vec()
+    BRepGProp_Face(face).Normal(u, v, point, vec)
+    return unit((vec.X(), vec.Y(), vec.Z()))
+
+
+def _edge_mid(edge) -> tuple[Vec, Vec]:
+    curve = BRepAdaptor_Curve(edge)
+    t = (curve.FirstParameter() + curve.LastParameter()) / 2
+    p, d = gp_Pnt(), gp_Vec()
+    curve.D1(t, p, d)
+    return _pt(p), unit((d.X(), d.Y(), d.Z()))
+
+
+def _into(face, p: Vec, n: Vec, e: Vec, step: float = 0.05) -> Vec | None:
+    """The direction from a point on a face's edge into the face (perpendicular to the edge)."""
+    from OCC.Core.BRepClass import BRepClass_FaceClassifier
+    from OCC.Core.TopAbs import TopAbs_IN
+    d = unit(cross(n, e))
+    for s in (1, -1):
+        q = tuple(p[i] + s * step * d[i] for i in range(3))
+        if BRepClass_FaceClassifier(face, gp_Pnt(*q), 1e-6).State() == TopAbs_IN:
+            return tuple(s * c for c in d)
+    return None
+
+
+def _concave(topo: Topology, a: int, b: int, edge) -> bool:
+    """The edge between faces a and b is concave: the material angle there is under 180 deg.
+
+    Moving from the edge into face a goes along face b's outward normal (into the air on b's side).
+    """
+    p, e = _edge_mid(edge)
+    fa, fb = topo.faces[a], topo.faces[b]
+    t = _into(fa, p, _normal_at(fa, p), e)
+    return t is not None and dot(_normal_at(fb, p), t) > math.sin(ANGLE_TOL)
+
+
+def _plane_normal(face) -> Vec | None:
+    if BRepAdaptor_Surface(face, True).GetType() != GeomAbs_Plane:
+        return None
+    return _outward_normal(face)[1]
+
+
+def _wall_kind(face, n: Vec) -> str | None:
+    """"plane" or "cylinder" for a face perpendicular to the floor normal n (0.5 deg), else None."""
+    surface = BRepAdaptor_Surface(face, True)
+    kind = surface.GetType()
+    if kind == GeomAbs_Plane:
+        return "plane" if abs(dot(_outward_normal(face)[1], n)) <= math.sin(ANGLE_TOL) else None
+    if kind == GeomAbs_Cylinder:
+        d = surface.Cylinder().Axis().Direction()
+        return "cylinder" if abs(dot((d.X(), d.Y(), d.Z()), n)) >= math.cos(ANGLE_TOL) else None
+    return None
+
+
+def _wire_edges(wire) -> list:
+    out, exp = [], TopExp_Explorer(wire, TopAbs_EDGE)
+    while exp.More():
+        out.append(exp.Current())
+        exp.Next()
+    return out
+
+
+def _edge_neighbour(topo: Topology, face_id: int, edge) -> int | None:
+    idx = topo.edge_faces.FindIndex(edge)
+    if not idx:
+        return None
+    for other in topo.edge_faces.FindFromIndex(idx):
+        oid = topo.fid(other)
+        if oid != face_id:
+            return oid
+    return None
+
+
+def _walls_across(topo: Topology, floor: int, n: Vec, edges) -> list[int] | None:
+    """The concave perpendicular walls across a set of floor edges; None if any edge has none."""
+    walls: list[int] = []
+    for edge in edges:
+        nb = _edge_neighbour(topo, floor, edge)
+        if nb is None or not _wall_kind(topo.faces[nb], n) or not _concave(topo, floor, nb, edge):
+            return None
+        if nb not in walls:
+            walls.append(nb)
+    return walls
+
+
+def _shared_edges(topo: Topology, a: int, b: int) -> list:
+    return topo.neighbours(a).get(b, [])
+
+
+def _distance(a, b) -> float:
+    from OCC.Core.BRepExtrema import BRepExtrema_DistShapeShape
+    dist = BRepExtrema_DistShapeShape(a, b)
+    return dist.Value() if dist.IsDone() else math.inf
+
+
+def _centre(face) -> Vec:
+    from OCC.Core.BRepGProp import brepgprop
+    from OCC.Core.GProp import GProp_GProps
+    props = GProp_GProps()
+    brepgprop.SurfaceProperties(face, props)
+    return _pt(props.CentreOfMass())
+
+
+def _narrowest(topo: Topology, walls: list[int]) -> float:
+    """Smallest distance between two planar walls that face each other (opposed normals, 0.5 deg)."""
+    planes = [(w, _outward_normal(topo.faces[w])[1], _centre(topo.faces[w])) for w in walls
+              if BRepAdaptor_Surface(topo.faces[w], True).GetType() == GeomAbs_Plane]
+    best = math.inf
+    for i, (a, na, ca) in enumerate(planes):
+        for b, nb, cb in planes[i + 1:]:
+            if dot(na, nb) > -math.cos(ANGLE_TOL) or dot(na, _sub(cb, ca)) <= 0:
+                continue
+            best = min(best, _distance(topo.faces[a], topo.faces[b]))
+    return best
+
+
+def _corners(topo: Topology, walls: list[int], cyls: dict[int, Cyl]) -> list[tuple[list[int], float, list | None]]:
+    """Inside corners between the outer walls: concave fillets (split faces merged) and sharp edges.
+    Each is (faces, radius, edge): a sharp corner's edge is its two end points (mm), for the viewer."""
+    out: list[tuple[list[int], float, list | None]] = []
+    seen: set[int] = set()
+    for w in sorted(walls):
+        c = cyls.get(w)
+        if not c or w in seen:
+            continue
+        group, todo = [], [w]
+        seen.add(w)
+        while todo:
+            cur = todo.pop()
+            group.append(cur)
+            for nb in topo.neighbours(cur):
+                o = cyls.get(nb)
+                if nb in walls and o and nb not in seen and abs(o.radius - c.radius) <= RADIUS_TOL and _same_line(o, c):
+                    seen.add(nb)
+                    todo.append(nb)
+        out.append((sorted(group), c.radius, None))
+    # Sharp corners: any two walls (plane or cylinder) meeting at a concave, non-tangent edge. A fillet
+    # meets its walls tangentially, and split faces of one fillet are one group, so neither counts.
+    group_of = {f: i for i, (faces, _, _) in enumerate(out) for f in faces}
+    ordered = sorted(walls)
+    for i, a in enumerate(ordered):
+        for b in ordered[i + 1:]:
+            if a in group_of and group_of.get(b) == group_of[a]:
+                continue
+            edges = [e for e in _shared_edges(topo, a, b) if _concave(topo, a, b, e) or _concave(topo, b, a, e)]
+            if edges:
+                ends = sorted(_vertices(edges[0]))
+                out.append(([a, b], 0.0, [list(ends[0]), list(ends[-1])]))
+    return out
+
+
+def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[list[dict], list[dict]]:
+    """Closed pockets and their inside corners. Returns (pockets, corners), unnumbered."""
+    from OCC.Core.BRepTools import breptools as bt
+    from .tools import pick_end_mill
+    topo = Topology(solid, faces)
+    cyls = {i: c for i, f in enumerate(faces) if (c := _cylinder(i, f))}
+    found_p, found_c = [], []
+    for fid, face in enumerate(faces):
+        if fid in hole_faces:
+            continue
+        n = _plane_normal(face)
+        if n is None:
+            continue
+        outer = bt.OuterWire(topods.Face(face))
+        outer_edges = _wire_edges(outer)
+        walls = _walls_across(topo, fid, n, outer_edges)
+        if not walls:
+            continue
+        if all(w in cyls for w in walls) and len({round(cyls[w].radius, 3) for w in walls}) == 1:
+            continue  # a flat-bottom hole or counterbore floor, not a pocket
+        islands: list[int] = []
+        exp = TopExp_Explorer(face, TopAbs_EDGE)
+        while exp.More():
+            edge = exp.Current()
+            exp.Next()
+            if any(edge.IsSame(o) for o in outer_edges):
+                continue
+            nb = _edge_neighbour(topo, fid, edge)
+            if nb is not None and nb not in walls and nb not in islands and _wall_kind(faces[nb], n) \
+                    and _concave(topo, fid, nb, edge):
+                islands.append(nb)
+        floor_h = dot(_outward_normal(face)[0], n)
+        depth = max(dot(p, n) for w in walls for p in _points(faces[w])) - floor_h
+        corners = _corners(topo, walls, cyls)
+        min_r = min((r for _, r, _ in corners), default=math.inf)
+        width = _narrowest(topo, walls + islands)
+        tool, undersized = pick_end_mill(min_r, width)
+        pocket_faces = sorted({fid, *walls, *islands})
+        dirs = [d] if (d := _frame_dir(n, frame)) else []
+        found_p.append({"kind": "pocket", "faces": pocket_faces, "axis": list(n), "open_dirs": dirs,
+                        "open_vectors": [list(n)],
+                        "dims_mm": {"depth": depth, "min_corner_radius": 0.0 if min_r == math.inf else min_r,
+                                    "end_mill_mm": tool, "undersized": int(undersized)}})
+        if width != math.inf:  # no two walls face each other: no width limit, and no key
+            found_p[-1]["dims_mm"]["narrowest_width"] = width
+        for cfaces, r, edge in corners:
+            ctool, _ = pick_end_mill(r, width)
+            corner = {"kind": "corner", "faces": cfaces, "axis": list(n), "open_dirs": [], "open_vectors": [],
+                      "dims_mm": {"radius": r, "depth": depth, "end_mill_mm": ctool}}
+            if edge:
+                corner["edge_mm"] = edge  # a sharp corner has no face of its own: the viewer draws this edge
+            found_c.append(corner)
+    return found_p, found_c
+
+
+def number(features: list[dict], kind: str) -> list[dict]:
+    features.sort(key=lambda f: min(f["faces"]))
+    out = []
+    for n, f in enumerate(features, 1):
+        out.append({"id": f"{kind}-{n}", **f})
+    return out

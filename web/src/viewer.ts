@@ -7,10 +7,28 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { Face, Finding } from "./api";
 
 const GHOST_OPACITY = 0.35;
+const MIN_FRAME = 0.4; // a selected finding is framed at no less than this share of the part's size (S3)
+
+/** Feature kinds the legend can tint when checked with no finding (D-014), and their tokens. */
+export type CheckedKind = "hole" | "pocket" | "corner";
+const CHECKED_TOKEN: Record<CheckedKind, string> = { hole: "--low", pocket: "--ok-pocket", corner: "--ok-corner" };
 
 function token(name: string): THREE.Color {
   const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   return new THREE.Color(value || "#888888");
+}
+
+/** Label moves in label sizes, nearest first: [sideways, up/down]. */
+const NUDGES: [number, number][] = [];
+for (let r = 0; r <= 12; r++) {
+  for (let cx = -2; cx <= 2; cx++) for (let cy = -r; cy <= r; cy++) {
+    if (Math.max(Math.abs(cx) * 2, Math.abs(cy)) === r) NUDGES.push([cx, cy]);
+  }
+}
+NUDGES.sort((a, b) => Math.hypot(a[0] * 3, a[1]) - Math.hypot(b[0] * 3, b[1]));
+
+function overlaps(a: DOMRect, b: DOMRect): boolean {
+  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
 
 export class Viewer {
@@ -22,8 +40,10 @@ export class Viewer {
   private readonly meshes = new Map<number, THREE.Mesh>();
   private readonly flags: { el: HTMLElement; points: THREE.Vector3[]; finding: Finding }[] = [];
   private findings: Finding[] = [];
-  private checked = new Set<number>(); // faces of features checked with no finding
-  private showChecked = false;
+  private readonly edges = new Map<string, THREE.Mesh>(); // finding id -> its sharp-corner edge, drawn as a bar
+  private readonly edgeMaterial = new THREE.LineBasicMaterial({ color: token("--ink") }); // one for every part
+  private checked = new Map<number, CheckedKind>(); // faces of features checked with no finding
+  private readonly showChecked: Record<CheckedKind, boolean> = { hole: false, pocket: false, corner: false };
   private selected: Finding | null = null;
   private frame = 0;
 
@@ -55,7 +75,6 @@ export class Viewer {
       this.part.remove(mesh);
     }
     this.meshes.clear();
-    const edgeMaterial = new THREE.LineBasicMaterial({ color: token("--ink") });
     for (const face of faces) {
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute("position", new THREE.Float32BufferAttribute(face.positions, 3));
@@ -66,26 +85,46 @@ export class Viewer {
         polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.userData.faceId = face.id;
-      mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 30), edgeMaterial));
+      mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 30), this.edgeMaterial));
       this.part.add(mesh);
       this.meshes.set(face.id, mesh);
     }
     this.findings = [];
-    this.checked = new Set();
+    this.clearEdges();
+    for (const f of this.flags) f.el.remove(); // a failed upload calls show([]) with no setFindings
+    this.flags.length = 0;
+    this.checked = new Map();
     this.selected = null;
     this.paint();
     if (!keepView || faces.length === 0) this.fit();
     else this.render();
   }
 
-  /** Colour faces by their findings' severity and place a flag per finding. */
-  setFindings(findings: Finding[]): void {
+  /** Colour faces by their findings' severity and place a flag per finding. A finding with an edge
+   *  (a sharp inside corner, which has no face of its own) is drawn as a bar along that edge instead
+   *  of colouring the two walls that meet there. */
+  setFindings(findings: Finding[], edges: Map<string, number[][]> = new Map()): void {
     this.findings = findings;
+    this.clearEdges();
+    const size = new THREE.Box3().setFromObject(this.part).getSize(new THREE.Vector3()).length();
+    for (const [id, [a, b]] of edges) {
+      const p = new THREE.Vector3(...a), q = new THREE.Vector3(...b);
+      const bar = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 12),
+        new THREE.MeshStandardMaterial({ metalness: 0.1, roughness: 0.6 }));
+      const r = Math.max(size * 0.004, 0.2);
+      bar.scale.set(r, p.distanceTo(q), r);
+      bar.position.copy(p).add(q).multiplyScalar(0.5);
+      bar.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), q.clone().sub(p).normalize());
+      bar.userData.points = [p, q];
+      this.scene.add(bar);
+      this.edges.set(id, bar);
+    }
     for (const f of this.flags) f.el.remove();
     this.flags.length = 0;
     const host = this.canvas.parentElement;
     for (const finding of findings) {
-      const points = this.pointsOf(finding.faces);
+      const bar = this.edges.get(finding.id);
+      const points = bar ? (bar.userData.points as THREE.Vector3[]) : this.pointsOf(finding.faces);
       if (!host || points.length === 0) continue;
       const el = document.createElement("span");
       el.className = "flag";
@@ -103,23 +142,24 @@ export class Viewer {
     this.render();
   }
 
-  /** Faces of the features that were checked and passed, for the "Show checked holes" switch. */
-  setChecked(faceIds: number[]): void {
-    this.checked = new Set(faceIds);
+  /** Faces of the features that were checked and passed, by kind, for the legend's switches.
+   *  A face in two features (a corner fillet is also a pocket wall) takes the later kind. */
+  setChecked(faces: Map<number, CheckedKind>): void {
+    this.checked = faces;
     this.paint();
     this.render();
   }
 
-  setShowChecked(on: boolean): void {
-    this.showChecked = on;
+  setShowChecked(kind: CheckedKind, on: boolean): void {
+    this.showChecked[kind] = on;
     this.paint();
     this.render();
   }
 
-  /** Faces drawn in the "checked" colour, read from the materials themselves. */
-  checkedFaces(): number[] {
-    const low = token("--low");
-    return [...this.meshes].filter(([, m]) => (m.material as THREE.MeshStandardMaterial).color.equals(low))
+  /** Faces drawn in a kind's "checked" colour, read from the materials themselves. */
+  checkedFaces(kind: CheckedKind = "hole"): number[] {
+    const colour = token(CHECKED_TOKEN[kind]);
+    return [...this.meshes].filter(([, m]) => (m.material as THREE.MeshStandardMaterial).color.equals(colour))
       .map(([id]) => id).sort((a, b) => a - b);
   }
 
@@ -128,7 +168,7 @@ export class Viewer {
   select(finding: Finding | null, frame = true): void {
     this.selected = finding;
     this.paint();
-    if (finding && frame) this.frameFaces(finding.faces);
+    if (finding && frame) this.frameFaces(finding.faces, this.edges.get(finding.id));
     else this.render();
   }
 
@@ -159,18 +199,31 @@ export class Viewer {
     const severity = new Map<number, string>();
     const rank = { high: 3, medium: 2, low: 1 } as const;
     for (const f of this.findings) {
+      if (this.edges.has(f.id)) continue; // drawn as its edge bar, not by its walls
       for (const id of f.faces) {
         const prev = severity.get(id) as keyof typeof rank | undefined;
         if (!prev || rank[f.severity] > rank[prev]) severity.set(id, f.severity);
       }
     }
-    const chosen = new Set(this.selected?.faces ?? []);
+    const selectedBar = this.selected ? this.edges.get(this.selected.id) : undefined;
+    const chosen = new Set(selectedBar ? [] : this.selected?.faces ?? []);
+    const kept = new Set(selectedBar ? this.selected?.faces ?? [] : []); // a sharp corner's walls stay solid
+    for (const [id, bar] of this.edges) {
+      const f = this.findings.find((x) => x.id === id);
+      const material = bar.material as THREE.MeshStandardMaterial;
+      material.color.copy(this.selected?.id === id ? accent : token(`--${f?.severity ?? "high"}`));
+      const ghost = this.selected !== null && this.selected.id !== id; // fades with the rest of the part
+      material.transparent = ghost;
+      material.opacity = ghost ? GHOST_OPACITY : 1;
+      material.needsUpdate = true;
+    }
     for (const [id, mesh] of this.meshes) {
       const material = mesh.material as THREE.MeshStandardMaterial;
       const sev = severity.get(id);
-      const ok = this.showChecked && this.checked.has(id);
-      material.color.copy(chosen.has(id) ? accent : sev ? token(`--${sev}`) : ok ? token("--low") : part);
-      const ghost = this.selected !== null && !chosen.has(id);
+      const kind = this.checked.get(id);
+      const ok = kind !== undefined && this.showChecked[kind];
+      material.color.copy(chosen.has(id) ? accent : sev ? token(`--${sev}`) : ok ? token(CHECKED_TOKEN[kind]) : part);
+      const ghost = this.selected !== null && !chosen.has(id) && !kept.has(id);
       material.transparent = ghost;
       material.opacity = ghost ? GHOST_OPACITY : 1;
       material.depthWrite = !ghost;
@@ -204,10 +257,23 @@ export class Viewer {
     return out.slice(0, 200);
   }
 
-  private frameFaces(faceIds: number[]): void {
-    const box = this.boxOf(faceIds);
+  private frameFaces(faceIds: number[], bar?: THREE.Mesh): void {
+    const box = bar ? new THREE.Box3().setFromObject(bar) : this.boxOf(faceIds);
     if (box.isEmpty()) return this.render();
-    this.place(box.getBoundingSphere(new THREE.Sphere()), this.viewDirection());
+    const sphere = box.getBoundingSphere(new THREE.Sphere());
+    // Keep the part around a small face in view: a corner fillet alone fills the screen otherwise.
+    const whole = new THREE.Box3().setFromObject(this.part).getBoundingSphere(new THREE.Sphere());
+    sphere.radius = Math.max(sphere.radius, whole.radius * MIN_FRAME);
+    this.place(sphere, this.viewDirection());
+  }
+
+  private clearEdges(): void {
+    for (const bar of this.edges.values()) {
+      bar.geometry.dispose();
+      (bar.material as THREE.Material).dispose();
+      this.scene.remove(bar);
+    }
+    this.edges.clear();
   }
 
   private fit(): void {
@@ -254,14 +320,38 @@ export class Viewer {
     const left = this.canvas.offsetLeft;
     const top = this.canvas.offsetTop;
     const eye = this.camera.position;
+    // Labels that would cover each other are moved up or down, one label height at a time, in
+    // finding order (F1 keeps its place first), so every finding's label stays readable (S3).
+    const placed: DOMRect[] = [];
     for (const { el, points } of this.flags) {
       const at = points.reduce((best, q) => (q.distanceToSquared(eye) < best.distanceToSquared(eye) ? q : best));
       const p = at.clone().project(this.camera);
       const visible = p.z < 1 && Math.abs(p.x) <= 1 && Math.abs(p.y) <= 1;
       el.hidden = !visible;
-      el.style.left = `${left + ((p.x + 1) / 2) * w}px`;
-      el.style.top = `${top + ((1 - p.y) / 2) * h}px`;
+      const x = left + ((p.x + 1) / 2) * w;
+      const y = top + ((1 - p.y) / 2) * h;
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      if (!visible) continue;
+      const box = el.getBoundingClientRect();
+      // The nearest free spot: one label height up or down, or one label width sideways, at a time.
+      let dx = 0, dy = 0;
+      for (const [cx, cy] of NUDGES) {
+        const moved = new DOMRect(box.x + cx * (box.width + 4), box.y + cy * (box.height + 2), box.width, box.height);
+        if (!placed.some((o) => overlaps(o, moved))) { dx = moved.x - box.x; dy = moved.y - box.y; break; }
+      }
+      el.style.left = `${x + dx}px`;
+      el.style.top = `${y + dy}px`;
+      placed.push(new DOMRect(box.x + dx, box.y + dy, box.width, box.height));
     }
+  }
+
+  /** Screen boxes of the visible flags, for the overlap test. */
+  flagBoxes(): { id: string; x: number; y: number; w: number; h: number }[] {
+    return this.flags.filter((f) => !f.el.hidden).map(({ el, finding }) => {
+      const r = el.getBoundingClientRect();
+      return { id: finding.id, x: r.x, y: r.y, w: r.width, h: r.height };
+    });
   }
 
   private render(): void {

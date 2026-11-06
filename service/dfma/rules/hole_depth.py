@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 ID = "hole_depth"
+PROCESSES = ('mill', 'turn')  # spec Flow: which process runs this rule
 SUGGESTION = {
     "medium": "Needs peck drilling. Make it shallower or larger if the design allows.",
     "high": "Needs a long drill and peck drilling. Make it shallower or larger if the design allows.",
@@ -10,7 +11,9 @@ SUGGESTION = {
 
 
 def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
-    table = limits[ID]
+    table = limits.get(ID)
+    if table is None:
+        return []
     out = []
     for f in features:
         if f["kind"] != "hole":
