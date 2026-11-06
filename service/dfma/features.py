@@ -560,3 +560,111 @@ def number(features: list[dict], kind: str) -> list[dict]:
     for n, f in enumerate(features, 1):
         out.append({"id": f"{kind}-{n}", **f})
     return out
+
+
+# --- S4: walls (spec Features "Wall"; S4 "Settled at build") ---
+
+MIN_OVERLAP_MM2 = 10.0  # assumption (spec Features "Wall")
+
+
+def _box(shape):
+    from OCC.Core.Bnd import Bnd_Box
+    from OCC.Core.BRepBndLib import brepbndlib
+    box = Bnd_Box()
+    brepbndlib.Add(shape, box)
+    box.Enlarge(0.01)
+    return box
+
+
+def _plane_info(face):
+    p, n = _outward_normal(face)
+    return p, n, _box(face)
+
+
+def _area(shape) -> float:
+    from OCC.Core.BRepGProp import brepgprop
+    from OCC.Core.GProp import GProp_GProps
+    props = GProp_GProps()
+    brepgprop.SurfaceProperties(shape, props)
+    return props.Mass()
+
+
+def _inner_points(shape) -> list[Vec]:
+    """Points well inside each face of a shape: the centroid of its largest mesh triangle,
+    largest face first (a centroid of the whole face can fall in a hole through it)."""
+    from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+    from OCC.Core.TopLoc import TopLoc_Location
+    BRepMesh_IncrementalMesh(shape, 0.5, False, 0.5, True)
+    out = []
+    exp = TopExp_Explorer(shape, TopAbs_FACE)
+    while exp.More():
+        face = topods.Face(exp.Current())
+        exp.Next()
+        tri = BRep_Tool.Triangulation(face, TopLoc_Location())
+        if tri is None:
+            continue
+        best, best_a = None, 0.0
+        for i in range(1, tri.NbTriangles() + 1):
+            a, b, c = (_pt(tri.Node(k)) for k in tri.Triangle(i).Get())
+            area = 0.5 * math.sqrt(dot(x := cross(_sub(b, a), _sub(c, a)), x))
+            if area > best_a:
+                best, best_a = tuple((a[j] + b[j] + c[j]) / 3 for j in range(3)), area
+        if best:
+            out.append((_area(face), best))
+    return [p for _, p in sorted(out, key=lambda t: -t[0])]
+
+
+def _first_hit(solid, start: Vec, direction: Vec) -> tuple[int | None, float]:
+    """The face a ray from `start` along `direction` meets first beyond 1e-4 mm, and the distance."""
+    from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
+    from OCC.Core.gp import gp_Dir, gp_Lin
+    inter = IntCurvesFace_ShapeIntersector()
+    inter.Load(solid, 1e-6)
+    inter.Perform(gp_Lin(gp_Pnt(*start), gp_Dir(*direction)), 1e-4, 1e9)
+    best, best_w = None, math.inf
+    if inter.IsDone():
+        for i in range(1, inter.NbPnt() + 1):
+            w = inter.WParameter(i)
+            if w < best_w:
+                best, best_w = inter.Face(i), w
+    return best, best_w
+
+
+def walls(solid, faces) -> list[dict]:
+    """Pairs of parallel planar faces with outward normals pointing away from each other and solid
+    material between them. Unnumbered."""
+    from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common
+    from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_Transform
+    from OCC.Core.gp import gp_Trsf
+    topo = Topology(solid, faces)
+    planes = [(i, *_plane_info(f)) for i, f in enumerate(faces)
+              if BRepAdaptor_Surface(f, True).GetType() == GeomAbs_Plane]
+    out = []
+    for k, (ia, pa, na, ba) in enumerate(planes):
+        for ib, pb, nb, bb in planes[k + 1:]:
+            if dot(na, nb) > -math.cos(ANGLE_TOL):
+                continue
+            t = -dot(_sub(pb, pa), na)  # how far b lies behind a, into a's material side
+            if t <= 1e-6:
+                continue  # facing each other (a slot's sides) or in one plane
+            move = gp_Trsf()
+            move.SetTranslation(gp_Vec(*(c * -t for c in na)))
+            a_on_b = BRepBuilderAPI_Transform(faces[ia], move, True).Shape()
+            if _box(a_on_b).IsOut(bb):  # only pairs whose boxes overlap, a moved onto b's plane
+                continue
+            common = BRepAlgoAPI_Common(a_on_b, faces[ib])
+            common.Build()
+            if not common.IsDone() or _area(common.Shape()) < MIN_OVERLAP_MM2:
+                continue
+            # Solid material between them: a ray from inside the overlap on b, along -nb (into the
+            # material), first meets face a, at distance t. Air between (a slot) or another face
+            # (a pocket in the way) fails.
+            for p in _inner_points(common.Shape())[:3]:
+                hit, w = _first_hit(solid, p, tuple(-c for c in nb))
+                if hit is not None and topo.fid(hit) == ia and abs(w - t) <= 0.01:
+                    break
+            else:
+                continue
+            out.append({"kind": "wall", "faces": [ia, ib], "axis": list(na), "open_dirs": [], "open_vectors": [],
+                        "dims_mm": {"thickness": t}})
+    return out
