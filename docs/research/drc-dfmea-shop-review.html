@@ -1,0 +1,125 @@
+<title>DRC, DFMEA and Shop Review Ideas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one reading column, ideas as rows with a phase chip; sources under each row. */
+:root{--bg:#eef2f6;--panel:#ffffff;--ink:#16263d;--muted:#55657a;--line:#c4cfdc;--accent:#1f5fa8;--good:#3f6b2a;--warn:#a35a00;--bad:#b3261e;
+--sans:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1824;--panel:#172334;--ink:#e3eaf2;--muted:#9fb0c4;--line:#2c3c52;--accent:#7fb0ea;--good:#8cc47a;--warn:#e0a050;--bad:#f08a82;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1824;--panel:#172334;--ink:#e3eaf2;--muted:#9fb0c4;--line:#2c3c52;--accent:#7fb0ea;--good:#8cc47a;--warn:#e0a050;--bad:#f08a82;color-scheme:dark}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+<style>
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--sans);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+main{max-width:44rem;margin:0 auto;display:grid;gap:20px}
+h1{font-size:1.5rem;margin:0;text-wrap:balance}h2{font-size:1.125rem;margin:0 0 8px;text-wrap:balance}
+p{margin:0}.muted{color:var(--muted);font-size:.875rem}
+.lead{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:2px;padding:14px;display:grid;gap:8px}
+.list{display:grid;gap:10px}
+.idea{background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:12px 14px;display:grid;gap:6px;min-width:0}
+.head{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.head b{font-weight:600}
+.chip{font:600 .75rem/1 var(--mono);text-transform:uppercase;letter-spacing:.06em;padding:4px 6px;border:1px solid currentColor;border-radius:2px}
+.later{color:var(--accent)}.skip{color:var(--bad)}.planned{color:var(--good)}
+.src{font-size:.875rem;color:var(--muted);overflow-wrap:anywhere}
+.src a{color:var(--accent)}
+.take{font-size:.95rem}.take strong{font-weight:600}
+ol.q{margin:0;padding-left:1.2rem;display:grid;gap:4px}
+code{font-family:var(--mono);font-size:.9em}
+</style>
+<main>
+<header style="display:grid;gap:4px">
+<h1>DRC, DFMEA and shop review: what helps DFMA Review</h1>
+<p class="muted">Research for Morgan, 2026-11-06. These are proposals, not decisions. Nothing here changes S3 to S7.</p>
+</header>
+
+<section class="lead">
+<p><strong>Answer:</strong> four ideas are worth keeping. All of them fit later phases we already plan, and none needs AI:</p>
+<ul style="margin:0;padding-left:1.2rem">
+<li>waivers on a finding</li>
+<li>shop rule profiles</li>
+<li>a change review that re-measures the part</li>
+<li>comments and sign-off per finding</li>
+</ul>
+<p>Two ideas look attractive but break our rules: scoring FMEA risk automatically, and AI DFM.</p>
+<p class="muted">My recommendation: build none of it now. Write the four into the later phases they belong to, so each phase's planning starts from them.</p>
+</section>
+
+<section>
+<h2>Keep: ideas that fit</h2>
+<div class="list">
+
+<article class="idea">
+<div class="head"><span class="chip later">History phase</span><b>Waive a finding, with who, when and why</b></div>
+<p>Altium records a waiver on a design-rule violation with its date, author and reason. Every run still finds the violation and re-applies the waiver. Waived items leave the error list but stay in a separate report section.</p>
+<p class="take"><strong>My take:</strong> this is the most useful idea for shop reviews ("we know, the fit needs it"). It needs saved history: a waiver lost on page reload is worse than none. It also needs a finding id that survives a re-run (rule plus feature position). Our ids F1, F2… renumber when the findings change.</p>
+<p class="src">Sources: <a href="https://altium.com/documentation/altium-designer/selectively-waiving-drc-violations-ad">Altium: waiving DRC violations</a> · <a href="https://www.altium.com/documentation/altium-designer/pcb/drc/interrogating-resolving-design-violations?version=1">Altium: resolving violations</a></p>
+</article>
+
+<article class="idea">
+<div class="head"><span class="chip later">Shop lists phase</span><b>Shop profiles: one settings file per shop or process</b></div>
+<p>SolidWorks DFMXpress groups its rules by process (mill/drill, turn, sheet metal, moulding). Its standard hole list has a tolerance and an "Enabled" box per size. Altium uses the most specific matching rule first and a catch-all at the bottom, and exports rule sets as files. aPriori keeps each machine's tooling and rules in an editable "digital factory".</p>
+<p class="take"><strong>My take:</strong> this is the shape of the planned "Morgan's own machine and tool lists" phase. Our <code>thresholds.toml</code> and <code>tools.toml</code> already hold limits per material, and every finding names its source. A shop profile would turn those two files into one exportable file per shop. A per-size "enabled" flag on drills answers "we don't stock that drill".</p>
+<p class="src">Sources: <a href="https://help.solidworks.com/2019/english/SolidWorks/dfmxpress/t_rules_configuring.htm">DFMXpress rules</a> · <a href="https://help.solidworks.com/2022/english/SolidWorks/dfmxpress/r_settings.htm">DFMXpress settings</a> · <a href="https://www.altium.com/documentation/knowledge-base/altium-designer/prevent-unexpected-layout-routing-or-patterning-by-configuring-design-rules-with-priority">Altium rule priority</a> · <a href="https://altium.com/documentation/knowledge-base/altium-designer/import-or-export-design-rules">Altium rule export</a> · <a href="https://www.apriori.com/digital-factories/">aPriori digital factories</a></p>
+</article>
+
+<article class="idea">
+<div class="head"><span class="chip later">Compare phase</span><b>Change review: did the fix make the part weaker?</b></div>
+<p>DRBFM (design review based on failure mode) lists what changed and the concerns each change raises, in separate designer and review-team columns. Onshape, Creo and CATIA measure wall thickness without FEA, by rays through the part or the largest ball that fits inside.</p>
+<p class="take"><strong>My take:</strong> this answers DFMEA point 2 in your screenshot, within our rules. Run every rule on rev A and rev B, then show:</p>
+<ul class="take" style="margin:0;padding-left:1.2rem">
+<li>findings added, removed and changed</li>
+<li>how the thinnest wall, the smallest corner and the volume changed</li>
+</ul>
+<p class="take">It can't say whether the part is still strong enough under load. That needs FEA or a hand calculation, and the tool must never claim it.</p>
+<p class="src">Sources: <a href="https://help.reliasoft.com/xfmea_rcm/content/drbfm_tab.htm">ReliaSoft DRBFM</a> · <a href="https://cad.onshape.com/help/Content/View/thickness_analysis.htm">Onshape thickness analysis</a> · <a href="https://support.ptc.com/help/creo/creo_plus_early_visibility/usascii/whats_new/analysis_3d_thickness.html">Creo+ 3D thickness</a></p>
+</article>
+
+<article class="idea">
+<div class="head"><span class="chip later">History phase</span><b>Comments and sign-off per finding, in the shared report</b></div>
+<p>DFMPro reports list each issue, its place on the model and reference dimensions, for design and manufacturing to share. Its templates can be changed. Paperless Parts shows estimators the features and DFM warnings on the model.</p>
+<p class="take"><strong>My take:</strong> this is the "supplier and shop floor review" in your screenshot. Each finding would get a comment, a reviewer, a date and a decision (change, waive, ask). The PDF would carry them too. It needs saved history and a way to know who is commenting, so it waits for those phases.</p>
+<p class="src">Sources: <a href="https://www.g2.com/products/hcl-software-dfmpro/reviews">DFMPro on G2</a> · <a href="https://www.digitalengineering247.com/article/geometric-releases-dfmproversion-2-3-for-pro-engineer">DFMPro report templates</a> · <a href="https://www.paperlessparts.com/demos/reviewing-models-estimators-sheet-metal/">Paperless Parts viewer</a></p>
+</article>
+
+<article class="idea">
+<div class="head"><span class="chip later">Low priority</span><b>Export findings as rows for an FMEA</b></div>
+<p>FMEA tools such as Relyence import rows from a spreadsheet. A finding can be a row with the feature, rule, measured value and limit, and the cause filled in from the rule's text.</p>
+<p class="take"><strong>My take:</strong> it's cheap once the report exists (S7), but only if your company keeps DFMEAs. Severity, occurrence and detection stay blank for the team to fill in. I found no DFM tool that does this (searched "DFM findings link DFMEA PFMEA", "import DRC results into FMEA rows").</p>
+<p class="src">Source: <a href="https://relyence.com/help/user-guide/importing-and-exporting-fmea-data.html">Relyence FMEA import</a></p>
+</article>
+
+<article class="idea">
+<div class="head"><span class="chip planned">Already there</span><b>Editable severity and limits</b></div>
+<p>aPriori groups findings as critical, major and minor, and users can change both the severity and the limit. Protolabs splits "required change" from "advisory".</p>
+<p class="take"><strong>My take:</strong> we already have this. Limits are editable per material in <code>thresholds.toml</code>, and high and medium play the parts of required and advisory. A third label would say the same thing twice. Making severity editable per rule is a small add if a shop manager asks for it.</p>
+<p class="src">Sources: <a href="https://docs.apriori.com/en/Pro/current/app/rn/26-1-x-x/26-1-0-0/enh-design-guidance.htm">aPriori design guidance</a> (from a search snippet; the page refused us) · <a href="https://www.protolabs.com/help-center/manufacturing-analysis/">Protolabs manufacturing analysis</a></p>
+</article>
+</div>
+</section>
+
+<section>
+<h2>Avoid</h2>
+<div class="list">
+<article class="idea">
+<div class="head"><span class="chip skip">Breaks D-001</span><b>Scoring FMEA risk automatically</b></div>
+<p>In the AIAG-VDA method, occurrence and detection depend on the controls in place and on field data. Those are a team's judgement, not measurements on the model. A score we invented would be a number without evidence.</p>
+<p class="src">Source: <a href="https://www.qualitydigest.com/inside/lean-article/aiagvda-s-fmea-manual-major-advance-010220.html">Quality Digest on AIAG-VDA FMEA</a></p>
+</article>
+<article class="idea">
+<div class="head"><span class="chip skip">Breaks D-001</span><b>AI DFM or AI-written FMEAs</b></div>
+<p>Protolabs ProDesk and Flux advertise these. You asked for no AI at runtime.</p>
+<p class="src">Sources: <a href="https://www.metal-am.com/protolabs-unveils-prodesk-platform-for-prototyping-and-production/">ProDesk</a> · <a href="https://docs.flux.ai/reference/fmea-report-generation">Flux FMEA</a></p>
+</article>
+<article class="idea">
+<div class="head"><span class="chip skip">Avoid</span><b>Rules written as scripts, or a check inside the CAD program</b></div>
+<p>NX and DFMPro let users write rules as code. That means running other people's code on the server, which is hard to test and a security risk (my inference). A CAD plug-in would tie us to one CAD vendor and break the portability rule. Keep rule editing to numbers in the settings files.</p>
+<p class="src">Sources: <a href="https://blogs.sw.siemens.com/designcenter/whats-new-in-nx-june-2023-validation/">NX validation</a> · <a href="https://www.digitalengineering247.com/de/geometrics-dfmpro-enables-users-to-add-dfm-rules-in-house">DFMPro in-house rules</a></p>
+</article>
+</div>
+</section>
+
+<section class="lead">
+<h2>Gaps</h2>
+<p class="muted">This session's network blocks the DFMPro site, aPriori's docs refused the request (403) and the SolidWorks help pages loaded empty. Those claims come from search snippets of the pages. I found nothing on NX severity or waivers. The research agent used 126,996 tokens.</p>
+</section>
+</main>

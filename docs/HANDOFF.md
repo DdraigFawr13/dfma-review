@@ -20,6 +20,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
+- 2026-11-06 S3 started on `s3-pockets` from 069ef55 (#5 merged). Baseline `scripts/check.py` all pass (193 service, 5 unit, 5 browser). Zero-decision re-check of S3 running. Side research for Morgan: DRC, DFMEA and shop review ideas ([page](https://claude.ai/artifact/S2TDMa3VjXmz4AD7kUt1zm), `docs/research/drc-dfmea-shop-review.html`; agent 126,996 tokens): keep waivers, shop profiles, change review, comments/sign-off for later phases; avoid auto FMEA scoring and AI. Asked Morgan whether to note them on those phases.
 - 2026-11-06 S2 approved and merged (#4). Colour legend with a checkbox per feature kind (D-014; holes on by default). NIST research: papers (R3 Appendix A lists FTC 6/8/9 features with sizes: answer key; FTC 6, 8, 9 designed in inches, so D-013 holds); fork `engineering-design-models` (16 GB, ~2,399 AP203 STEP, no PMI; best for features: UMD, STEP/STI, PTC mfgmill18; third-party rights unstated); usnistgov/SFA is the AP242 PMI reference.
 - 2026-11-06 S2 fresh spec review (97,816 tokens): 8 real gaps fixed with tests that fail on the old code, 1 stale. Manual CI [run 23](https://github.com/DdraigFawr13/dfma-review/actions/runs/42297731665) green in 1 min 32 s on b93c519. Status and demo pages updated for S2.
 - 2026-11-06 S2 built: checks written first and failed on S1 code (24 service, 2 browser); then `features.py` (holes), `tools.py` (drills), `rules/hole_depth.py`, `rules/hole_size.py`, `config/*.toml`, review screen (layout 4, IBM Plex shipped, OFL). D-013 (Morgan): mm files accept inch drills too; NIST ftc_09 hole-size findings 27 → 2. NIST: 491 holes found in 17 files.
@@ -34,12 +35,11 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - 2026-11-06 Brainstorm pages: [open questions](https://claude.ai/artifact/BAQurJCWYqGxEZJehD7uGB), [concepts](https://claude.ai/artifact/Mgi7WVFxTne89GD9ZkjzGe), [round 1](https://claude.ai/artifact/QRrJhDYjzW3NapQUBGR6rH). Brief committed as `main`'s first commit (f27c508).
 - 2026-11-06 Bootstrap #1: manifest, sync, starter docs, CI drift check. Morgan approved; `main` is the default branch.
 - 2026-11-06 Spec checks: paraphrase, critic, zero decisions, then critic, zero decisions and a narrow pass; all findings fixed. Spec [approval page](https://claude.ai/artifact/CAqfoCYn9pSSxkBHn4peGb).
-- 2026-11-06 Design pages: [round 1](https://claude.ai/artifact/4Xa6iLguwU2pnXQXCAYydk), [round 2](https://claude.ai/artifact/LEGMPWU3Avt4E9pjnSvbhG), [approval](https://claude.ai/artifact/WDr91uJChvS9RkBziPWDHo). Agent cost: stack research $0.46, review $0.15 (measured).
 
 ## Next
 
 1. S3 (pockets) in this or a new session, from `main`: `write-spec` step 8 (zero-decision re-check of S3's sections against merged S2 code), no new screen so no mock-up unless the legend gains rows (it does: pockets, corners, D-014). Then checks fail first, build, show per D-009.
-2. NIST library on `nist-library`, PR [#5](https://github.com/DdraigFawr13/dfma-review/pull/5), approved by Morgan ("incorporate those two resources ... Once all this is done we can move to the next phase"): papers and packs, EDMR subset with scorecard test, SFA fork referenced, reader fix for bare solids. Merge when green, then S3.
+2. NIST library merged in [#5](https://github.com/DdraigFawr13/dfma-review/pull/5) (069ef55).
 3. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
 
 ## Open questions
