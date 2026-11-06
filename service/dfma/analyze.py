@@ -8,6 +8,8 @@ from . import settings
 from .frame import extents_mm, face_info, part_frame
 from .mesh import mesh_faces
 from .errors import ReadError
+from .features import holes
+from .rules import RULES
 from .read import read_step
 from .units import mm_to_in
 
@@ -25,6 +27,11 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
     meshes = mesh_faces(part.solid, part.faces)
     vertices = [tuple(m["positions"][i:i + 3]) for m in meshes for i in range(0, len(m["positions"]), 3)]
     frame = part_frame(infos, vertices)
+    features = holes(part.solid, part.faces, frame)
+    summary = {"units_in_file": part.units_in_file}
+    limits = settings.thresholds(material)
+    findings = [f for rule in RULES for f in rule.check(features, summary, limits)]
+    findings = [{"id": f"F{n}", **f} for n, f in enumerate(findings, 1)]
 
     return {
         "part": {
@@ -39,8 +46,9 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
             "frame": {k: list(v) for k, v in frame.items()},
         },
         "faces": [{"id": f.id, "kind": f.kind, **m} for f, m in zip(infos, meshes)],
-        "features": [],
-        "findings": [],
+        "features": features,
+        "findings": findings,
+        "rules_run": [rule.ID for rule in RULES],
         "machine": None,
         "turn_axis": None,
         "setups": [],

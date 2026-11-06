@@ -1,0 +1,19 @@
+# Generic tools (spec "Tools"). Drill sizes are generated from these ranges, not copied from a table.
+
+[drills]
+match_tolerance_in = 0.0005   # a hole within this of a drill counts as that drill's size
+
+[[drills.inch]]               # every 1/64 in from 1/64 to 1 in (inch and other files)
+from_in = 0.015625
+to_in = 1.0
+step_in = 0.015625
+
+[[drills.mm]]                 # mm files: 1.0 to 13.0 mm in 0.1 mm steps ...
+from_mm = 1.0
+to_mm = 13.0
+step_mm = 0.1
+
+[[drills.mm]]                 # ... and 13.5 to 25.0 mm in 0.5 mm steps
+from_mm = 13.5
+to_mm = 25.0
+step_mm = 0.5
