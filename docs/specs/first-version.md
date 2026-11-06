@@ -1,7 +1,7 @@
 # First usable version: STEP part review
 
 - **Status:** Approved 2026-11-06 ([spec approval](https://claude.ai/artifact/CAqfoCYn9pSSxkBHn4peGb))
-- **Planned in:** [design round 1](https://claude.ai/artifact/4Xa6iLguwU2pnXQXCAYydk), [round 2](https://claude.ai/artifact/LEGMPWU3Avt4E9pjnSvbhG), [approval](https://claude.ai/artifact/WDr91uJChvS9RkBziPWDHo) (2026-11-06). **Decisions:** D-001, D-003, D-004, D-005, D-006, D-007.
+- **Planned in:** [design round 1](https://claude.ai/artifact/4Xa6iLguwU2pnXQXCAYydk), [round 2](https://claude.ai/artifact/LEGMPWU3Avt4E9pjnSvbhG), [approval](https://claude.ai/artifact/WDr91uJChvS9RkBziPWDHo) (2026-11-06). **Decisions:** D-001, D-003, D-004, D-005, D-006, D-007, D-008.
 
 ## Problem
 
@@ -365,6 +365,21 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
   - `AGENTS.md`: the local checks
   - `README.md`: setup and start
 - **Waits on:** none. Public STEP files join only after their licence is checked (open question 2).
+- **Settled at build (zero-decision check, 2026-11-06):**
+  - The page analyses as soon as a file is chosen, and again when process or material changes while a file is loaded. There is no submit button.
+  - `part-size` shows decimals only (J1's text); fractions are for finding values and sizes from S2.
+  - `units_in_file` comes from the length unit the STEP file declares: millimetre is `mm`, inch is `inch`, anything else is `other` (still converted to mm). S1 records the pythonocc call it uses in `read.py`.
+  - `make_parts.py` counts faces on the shape it built (`TopExp.MapShapes`); it never calls the service. S1 writes full `expected.toml` entries, including feature counts that nothing reads until S2.
+  - `box_through_hole` is written in mm: 50.8 × 25.4 × 12.7 mm with a 6.35 mm hole through the 12.7 mm side, centred. `box_inch` is the same shape written in inch units. Both tests check `units_in_file`, `bbox_in` (to 0.001 in), `face_count` and `ignored_solids == 0`. 6.35 mm is not a metric drill size, so S2 adds a `hole_size` finding to `box_through_hole`'s entry (D-007: metric drills for mm files); `box_inch` stays clean.
+  - In S1, `not_analysed_faces` lists faces of kind `torus` or `other`; S3 removes the pocket fillets from it.
+  - `test_runtime` and `test_upload_limit` live in `tests/service/test_read.py` (the 50 MB file is made in `tmp_path`, not committed); `test_bad_upload_message` lives in `tests/e2e/test_view.py`. Parametrised tests assert at least 4 parts were collected. A module fixture warms the worker for `test_time_limit`.
+  - The canvas check compares pixels before and after upload, and again after a drag, so "can be rotated" is tested.
+  - Headless Chromium launches with `--use-angle=swiftshader --enable-unsafe-swiftshader`; an optional `DFMA_CHROMIUM` variable points at a preinstalled browser.
+  - Formatting lives in `web/src/format.ts`. S1's `viewer.ts` loads the mesh and orbits; S2 adds highlight and framing. The right panel shows "No findings yet". Controls are plain and labelled (APP-02) until S2's style; `al6061` is labelled "Aluminum 6061", and processes "Milling" and "Turning".
+  - `settings.py` holds constants: the 50 MB limit (52,428,800 bytes), port 8000, mesh deflections and the repo root.
+  - Mesh arrays are flat xyz per face, with indices local to that face; normals are computed in the browser.
+  - One spawn worker serves one job at a time behind a lock. An unknown process or material gets 422 with `{"error"}`. The 413 check runs before the form is parsed.
+  - `start` finds npm with `shutil.which` (Windows `npm.cmd`) and exits with a message if the port is taken.
 
 ### S2 Holes: depth and size, with the findings list
 

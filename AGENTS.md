@@ -13,17 +13,19 @@ Shared rules come from AI-Master-Instructions and load through CLAUDE.md (`.clau
 
 ## Local checks (run before pushing)
 
-- Every push: `node .claude/master/sync.mjs --check`. The app's own check command is added once the stack is chosen in design.
+- Every push: `python scripts/check.py` inside the `dfma` environment (drift check, service tests, web check and build, browser tests).
+- Cloud sessions have no conda: install micromamba from conda-forge (D-008), build `environment.yml`, and set `DFMA_CHROMIUM` to the preinstalled Chromium (`/opt/pw-browsers/chromium-*/chrome-linux64/chrome`).
 
 ## What CI runs
 
-- **CI** (`ci.yml`): the master drift check on every PR update (non-draft) and `main` push. Markdown and `docs/**` changes skip it.
+- **CI** (`ci.yml`): one Linux job runs `scripts/check.py` on every PR update (non-draft) and `main` push, with the conda environment cached. Markdown and `docs/**` changes skip it.
 - No deploys yet.
 
 ## Project rules
 
 - Every finding and number in a report traces to a measurement on the model or a stated assumption; a finding that can't show its evidence doesn't ship (D-001).
 - No AI at runtime unless Morgan approves it (D-001; Morgan: "I don't want to integrate ai into this if it can be avoided").
+- Show each slice to Morgan as a status page plus a view-only demo page (D-009).
 - Keep the app portable: it moves later to a company host and the company GitLab, so avoid lock-in to one hosting vendor (D-001).
 
 ## Overrides
