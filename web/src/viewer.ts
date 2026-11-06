@@ -56,7 +56,10 @@ export class Viewer {
 
   private fit(): void {
     const box = new THREE.Box3().setFromObject(this.part);
-    if (box.isEmpty()) return;
+    if (box.isEmpty()) {
+      this.render(); // cleared: draw the empty scene
+      return;
+    }
     const sphere = box.getBoundingSphere(new THREE.Sphere());
     // Fit the narrower of the two view angles, so tall phone views don't clip the sides.
     const vertical = THREE.MathUtils.degToRad(this.camera.fov / 2);

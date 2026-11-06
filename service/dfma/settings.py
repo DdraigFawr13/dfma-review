@@ -25,6 +25,7 @@ MSG_NOT_STEP = "This is not a STEP file this tool can read"
 MSG_NO_SOLID = "No solid found in this file"
 MSG_TOO_LARGE = "File is larger than 50 MB"
 MSG_TOO_LONG = "This file took too long to analyse"
+MSG_FAILED = "The analysis failed on this file. Try again, or try another file."
 
 ASSUMPTIONS = [
     "Mesh deflection 0.05 mm linear, 0.5 rad angular (assumption).",

@@ -20,7 +20,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-06 S1 built on `s1-read-and-view`: service (read, frame, mesh, worker, upload limit), web viewer, 4 test parts, `scripts/check.py`, CI with micromamba. Zero-decision check: 3 high, 7 medium, 5 low; all given defaults in the spec's S1 "Settled at build" list. Checks failed first (`No module named 'dfma'`), now all 5 pass in a fresh environment (11 service, 5 unit, 2 browser tests). Playwright pinned to 1.60.0 (driver and Python client must match; 1.64.1 needs Node 24+). D-008: extra packages and micromamba, approved by Morgan.
+- 2026-11-06 S1 built on `s1-read-and-view`: service (read, frame, mesh, worker, upload limit), web viewer, 4 test parts, `scripts/check.py`, CI with micromamba. Zero-decision check: 3 high, 7 medium, 5 low; all given defaults in the spec's S1 "Settled at build" list. Checks failed first (`No module named 'dfma'`), now all 5 pass in a fresh environment (11 service, 5 unit, 2 browser tests). Playwright pinned to 1.60.0 (driver and Python client must match; 1.64.1 needs Node 24+). D-008: extra packages and micromamba, approved by Morgan. Fresh spec review: 0 high, 4 medium, 7 low; 9 fixed with tests, 2 declined (turning-axis sign rule waits for S6's shaft parts; no request cancelling for one local user).
 - 2026-11-06 Brainstorm pages: [open questions](https://claude.ai/artifact/BAQurJCWYqGxEZJehD7uGB), [concepts](https://claude.ai/artifact/Mgi7WVFxTne89GD9ZkjzGe), [round 1](https://claude.ai/artifact/QRrJhDYjzW3NapQUBGR6rH). Brief committed as `main`'s first commit (f27c508).
 - 2026-11-06 Bootstrap #1: manifest, sync, starter docs, CI drift check. Morgan approved; `main` is the default branch.
 - 2026-11-06 Spec checks: paraphrase, critic, zero decisions, then critic, zero decisions and a narrow pass; all findings fixed. Spec [approval page](https://claude.ai/artifact/CAqfoCYn9pSSxkBHn4peGb).
@@ -28,7 +28,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-1. S1: fresh reviewer against the spec, fix, mark #3 ready for CI, then Morgan's device check on their PC (J1: build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate). Approval and merge after that.
+1. S1: first CI run by manual dispatch on the branch (the PR stays draft until Morgan approves, GIT-07), then Morgan's device check on their PC (J1: build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate). Approval and merge after that.
 2. Then S2 (holes), starting with `ui-style` and the review-screen mock-up.
 3. Morgan: turn on "Allow auto-merge" in the repo settings.
 

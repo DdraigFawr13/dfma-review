@@ -21,12 +21,10 @@ def build_web() -> None:
 
 
 def port_free(port: int) -> bool:
+    """True unless something answers on the port (a bind test would fail on TIME_WAIT after a restart)."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        try:
-            s.bind((settings.HOST, port))
-        except OSError:
-            return False
-    return True
+        s.settimeout(0.5)
+        return s.connect_ex((settings.HOST, port)) != 0
 
 
 def start(no_build: bool, port: int) -> None:
@@ -41,7 +39,7 @@ def start(no_build: bool, port: int) -> None:
 
     from .app import create_app
 
-    url = f"http://localhost:{port}"
+    url = f"http://{settings.HOST}:{port}"  # not "localhost": on Windows it can resolve to ::1 first
     print(f"DFMA Review is running at {url}  (Ctrl+C to stop)", flush=True)
     uvicorn.run(create_app(), host=settings.HOST, port=port, log_level="warning")
 

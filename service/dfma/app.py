@@ -28,8 +28,11 @@ class UploadLimit:
     response (FastAPI answers 400 for a broken body) is replaced by the 413.
     """
 
+    # The body is the file plus the multipart envelope (boundaries, headers, the other fields).
+    ENVELOPE_BYTES = 64 * 1024
+
     def __init__(self, app, limit: int) -> None:
-        self.app, self.limit = app, limit
+        self.app, self.limit = app, limit + self.ENVELOPE_BYTES
 
     async def _send_413(self, send) -> None:
         body = json.dumps({"error": settings.MSG_TOO_LARGE}).encode()
@@ -95,10 +98,14 @@ def create_app(dist_dir: Path | None = settings.DIST_DIR) -> FastAPI:
         try:
             with tmp:
                 shutil.copyfileobj(file.file, tmp)
+            if os.path.getsize(tmp.name) > settings.MAX_UPLOAD_BYTES:  # exact file size, no envelope
+                return JSONResponse({"error": settings.MSG_TOO_LARGE}, status_code=413)
             name = Path(file.filename or "upload.step").name
             return run_analysis(tmp.name, name, process, material)
         except (ReadError, AnalysisTimeout) as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
+        except RuntimeError:  # the worker crashed or the analysis hit a bug; the worker restarts itself
+            return JSONResponse({"error": settings.MSG_FAILED}, status_code=500)
         finally:
             os.unlink(tmp.name)  # nothing is kept (APP-01)
 

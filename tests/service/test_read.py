@@ -48,6 +48,23 @@ def check_box(result: dict, name: str, units: str) -> None:
         assert len(face["positions"]) % 3 == 0 and face["positions"]
         assert len(face["indices"]) % 3 == 0 and face["indices"]
         assert max(face["indices"]) < len(face["positions"]) // 3
+    # Triangles face out of the material: outer faces point away from the block's centre,
+    # and the hole wall points towards the hole's axis.
+    centre = [25.4, 12.7, 6.35]
+    for face in faces:
+        n, c = face_normal_and_centroid(face)
+        if face["kind"] == "plane":
+            assert dot(n, sub(c, centre)) > 0, f"face {face['id']} faces into the material"
+            assert sorted(abs(v) for v in n)[-1] == pytest.approx(1.0, abs=1e-6)
+        else:  # the hole wall: each triangle's normal points towards the hole axis
+            for tri_n, tri_c in triangles(face):
+                radial = [tri_c[0] - 25.4, tri_c[1] - 12.7, 0.0]
+                assert dot(tri_n, radial) < 0, "the hole wall faces into the material"
+    # +Z is outward: the +Z face's centroid lies on the +Z side of the part.
+    zfaces = [f for f in faces if f["kind"] == "plane"
+              and dot(face_normal_and_centroid(f)[0], z) > 0.999]
+    assert zfaces, "no face has the frame's +Z as its outward normal"
+
     xs = [v for f in faces for v in f["positions"][0::3]]
     assert max(xs) - min(xs) == pytest.approx(50.8, abs=0.01)  # file coordinates, mm
 
@@ -57,6 +74,34 @@ def check_box(result: dict, name: str, units: str) -> None:
     assert result["turn_axis"] is None
     assert result["tool_changes"] == 0
     assert isinstance(result["assumptions"], list)
+
+
+def dot(a, b):
+    return sum(x * y for x, y in zip(a, b))
+
+
+def sub(a, b):
+    return [x - y for x, y in zip(a, b)]
+
+
+def triangles(face):
+    p, ix = face["positions"], face["indices"]
+    for t in range(0, len(ix), 3):
+        a, b, c = ([p[3 * i], p[3 * i + 1], p[3 * i + 2]] for i in ix[t:t + 3])
+        u, v = sub(b, a), sub(c, a)
+        n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]
+        yield n, [(a[k] + b[k] + c[k]) / 3 for k in range(3)]
+
+
+def face_normal_and_centroid(face):
+    total, centre, area = [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], 0.0
+    for n, c in triangles(face):
+        a = dot(n, n) ** 0.5
+        total = [t + x for t, x in zip(total, n)]
+        centre = [s + a * x for s, x in zip(centre, c)]
+        area += a
+    length = dot(total, total) ** 0.5
+    return [t / length for t in total], [s / area for s in centre]
 
 
 def test_box_through_hole():
@@ -121,6 +166,35 @@ def test_upload_limit(client, tmp_path):
     assert post(client, PARTS / "box_through_hole.step").status_code == 200
 
 
+def test_upload_at_limit_is_read(client, tmp_path):
+    """Exactly 50 MB of file is allowed: the multipart envelope doesn't count against it."""
+    edge = tmp_path / "edge.step"
+    with open(edge, "wb") as f:
+        f.truncate(50 * 1024 * 1024)
+    response = post(client, edge)
+    assert response.status_code == 422
+    assert response.json() == {"error": NOT_STEP}
+
+
+def test_worker_crash_answers_json(client, monkeypatch):
+    """A crashed analysis gives a JSON error, and a dead worker is restarted for the next upload."""
+    import dfma.app
+    from dfma.worker import default_worker
+
+    def crash(*args, **kwargs):
+        raise RuntimeError("the analysis worker stopped unexpectedly")
+
+    monkeypatch.setattr(dfma.app, "run_analysis", crash)
+    response = post(client, PARTS / "box_through_hole.step")
+    assert response.status_code == 500
+    assert response.json() == {"error": "The analysis failed on this file. Try again, or try another file."}
+    monkeypatch.undo()
+
+    default_worker()._proc.kill()
+    default_worker()._proc.join()
+    assert post(client, PARTS / "box_through_hole.step").status_code == 200
+
+
 @pytest.fixture(scope="module")
 def warm_worker():
     worker = Worker()
@@ -131,10 +205,12 @@ def warm_worker():
 
 
 def test_time_limit(warm_worker):
+    old = warm_worker._proc
     with pytest.raises(AnalysisTimeout) as err:
         warm_worker.run(PARTS / "box_through_hole.step", "box_through_hole.step", "mill", "al6061",
                         time_limit_s=0.001)
     assert str(err.value) == TOO_LONG
+    assert not old.is_alive() and warm_worker._proc.pid != old.pid, "the timed-out worker was not replaced"
     # A new worker replaces the stopped one, and it still answers.
     result = warm_worker.run(PARTS / "box_through_hole.step", "box_through_hole.step", "mill", "al6061")
     assert result["part"]["face_count"] == expected("box_through_hole")["face_count"]

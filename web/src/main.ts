@@ -41,6 +41,8 @@ async function analyse(): Promise<void> {
     if (mine !== run) return;
     error.textContent = e instanceof ApiError ? e.message : "Something went wrong showing this part.";
     error.hidden = false;
+    summary.hidden = true; // don't leave the previous part's numbers beside the error
+    viewer.show([]);
     status.textContent = "Choose another file, or try again.";
     if (!(e instanceof ApiError)) console.error(e);
   }

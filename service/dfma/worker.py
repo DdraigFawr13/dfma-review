@@ -59,8 +59,14 @@ class Worker:
         proc = self._ctx.Process(target=_serve, args=(child,), name="dfma-worker", daemon=True)
         proc.start()
         child.close()
-        kind, _ = parent.recv()
-        assert kind == "ready"
+        try:
+            kind, _ = parent.recv()
+        except EOFError:
+            proc.join(5)
+            raise RuntimeError(f"the analysis worker failed to start (exit code {proc.exitcode}); "
+                               "check that the dfma environment is active") from None
+        if kind != "ready":
+            raise RuntimeError(f"the analysis worker sent {kind!r} instead of ready")
         self._proc, self._conn = proc, parent
 
     def _kill(self) -> None:
