@@ -1,0 +1,72 @@
+{
+    "hooks": {
+        "PreToolUse": [
+            {
+                "matcher": "Bash|Edit|Write|NotebookEdit|Read|Grep|mcp__claude-code-remote__send_later|mcp__claude-code-remote__create_trigger|mcp__github__pull_request_read|mcp__github__get_check_run|mcp__github__update_pull_request",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guards/pre-tool-use.mjs\"",
+                        "timeout": 10
+                    }
+                ]
+            }
+        ],
+        "PostToolUse": [
+            {
+                "matcher": "Bash",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guards/post-tool-use.mjs\"",
+                        "timeout": 10
+                    }
+                ]
+            }
+        ],
+        "Stop": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guards/stop.mjs\"",
+                        "timeout": 10
+                    }
+                ]
+            }
+        ],
+        "SessionStart": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-start.sh"
+                    }
+                ]
+            }
+        ]
+    },
+    "permissions": {
+        "allow": [
+            "Bash(git status:*)",
+            "Bash(git diff:*)",
+            "Bash(git log:*)",
+            "Bash(git show:*)",
+            "Bash(git branch:*)",
+            "Bash(git ls-remote:*)",
+            "Bash(ls:*)",
+            "Bash(cat:*)",
+            "Bash(head:*)",
+            "Bash(tail:*)",
+            "Bash(wc:*)",
+            "Bash(grep:*)",
+            "Bash(rg:*)",
+            "Bash(find:*)",
+            "Bash(node .claude/master/sync.mjs --check)",
+            "Bash(npm run check)",
+            "Bash(npm test:*)",
+            "Bash(npm run typecheck)",
+            "Bash(npm run lint)"
+        ]
+    }
+}

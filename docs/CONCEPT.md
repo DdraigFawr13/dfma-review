@@ -47,8 +47,7 @@ One tool, built in Morgan's priority order:
 - Test parts: Morgan said "find parts online or we can make them later." Candidate public set: the NIST MBE PMI test models (STEP AP242 with PMI). Not checked yet for licence or fit.
 - Drawing check input: stage 3 reads DXF. Whether Morgan's STEP exports carry GD&T (AP242 PMI) is not checked.
 - Project kind: Tool (lens row "Tool").
-- Brainstorm trial:
-  - 2026-11-06: 4 concepts; dropped with reasons: yes; kill criteria: yes; rounds: 1; measured agent cost $0.74; measures 2 and 3: pending design.
+- Brainstorm trial: the entry moved to [HANDOFF](HANDOFF.md) at bootstrap.
 
 ## Design brief
 

@@ -1,0 +1,6 @@
+{
+  "version": "v4.11.0",
+  "layers": ["core", "project-types/web-app"],
+  "exclude": [],
+  "overrides": []
+}
