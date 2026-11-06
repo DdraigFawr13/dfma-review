@@ -22,6 +22,8 @@ export class Viewer {
   private readonly meshes = new Map<number, THREE.Mesh>();
   private readonly flags: { el: HTMLElement; points: THREE.Vector3[]; finding: Finding }[] = [];
   private findings: Finding[] = [];
+  private checked = new Set<number>(); // faces of features checked with no finding
+  private showChecked = false;
   private selected: Finding | null = null;
   private frame = 0;
 
@@ -69,6 +71,7 @@ export class Viewer {
       this.meshes.set(face.id, mesh);
     }
     this.findings = [];
+    this.checked = new Set();
     this.selected = null;
     this.paint();
     if (!keepView || faces.length === 0) this.fit();
@@ -98,6 +101,26 @@ export class Viewer {
     }
     this.paint();
     this.render();
+  }
+
+  /** Faces of the features that were checked and passed, for the "Show checked holes" switch. */
+  setChecked(faceIds: number[]): void {
+    this.checked = new Set(faceIds);
+    this.paint();
+    this.render();
+  }
+
+  setShowChecked(on: boolean): void {
+    this.showChecked = on;
+    this.paint();
+    this.render();
+  }
+
+  /** Faces drawn in the "checked" colour, read from the materials themselves. */
+  checkedFaces(): number[] {
+    const low = token("--low");
+    return [...this.meshes].filter(([, m]) => (m.material as THREE.MeshStandardMaterial).color.equals(low))
+      .map(([id]) => id).sort((a, b) => a - b);
   }
 
   /** Select a finding (or clear with null): accent on its faces, the rest faded, camera framed.
@@ -145,7 +168,8 @@ export class Viewer {
     for (const [id, mesh] of this.meshes) {
       const material = mesh.material as THREE.MeshStandardMaterial;
       const sev = severity.get(id);
-      material.color.copy(chosen.has(id) ? accent : sev ? token(`--${sev}`) : part);
+      const ok = this.showChecked && this.checked.has(id);
+      material.color.copy(chosen.has(id) ? accent : sev ? token(`--${sev}`) : ok ? token("--low") : part);
       const ghost = this.selected !== null && !chosen.has(id);
       material.transparent = ghost;
       material.opacity = ghost ? GHOST_OPACITY : 1;

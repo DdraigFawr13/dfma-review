@@ -23,6 +23,8 @@ const list = byId<HTMLElement>("findings");
 const count = byId<HTMLElement>("findings-count");
 const assumptions = byId<HTMLDetailsElement>("assumptions");
 const viewer = new Viewer(byId<HTMLCanvasElement>("viewer"));
+const showChecked = byId<HTMLInputElement>("show-checked");
+showChecked.addEventListener("change", () => viewer.setShowChecked(showChecked.checked));
 
 let run = 0;
 let selected: string | null = null;
@@ -35,6 +37,7 @@ declare global {
       cameraTarget(): [number, number, number];
       paintedFaces(): number[];
       opacities(): Record<number, number>;
+      checkedFaces(): number[];
     };
   }
 }
@@ -43,7 +46,14 @@ window.__dfma = {
   cameraTarget: () => viewer.cameraTarget(),
   paintedFaces: () => viewer.paintedFaces(), // test hook: what is actually drawn in the accent colour
   opacities: () => viewer.opacities(),
+  checkedFaces: () => viewer.checkedFaces(), // test hook: what is drawn in the "checked" colour
 };
+
+/** Faces of the holes that were checked and have no finding. */
+function checkedFaces(result: Analysis): number[] {
+  const flagged = new Set(result.findings.map((f) => f.feature));
+  return result.features.filter((f) => f.kind === "hole" && !flagged.has(f.id)).flatMap((f) => f.faces);
+}
 
 function select(f: Finding): void {
   selected = selected === f.id ? null : f.id; // clicking the selected finding again clears it
@@ -84,6 +94,8 @@ async function analyse(): Promise<void> {
     summary.hidden = false;
     viewer.show(result.faces, samePart); // the same file re-analysed keeps the camera
     viewer.setFindings(result.findings);
+    viewer.setChecked(checkedFaces(result));
+    viewer.setShowChecked(showChecked.checked);
     shownFile = file;
     const keep = samePart ? result.findings.find((f) => f.id === selected) ?? null : null;
     selected = keep?.id ?? null;

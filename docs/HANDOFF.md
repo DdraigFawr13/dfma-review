@@ -42,6 +42,8 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Open questions
 
+- Backlog (Morgan, 2026-11-06): name each hole's type (through, blind, counterbore, countersink, drill point, threaded); recognise threads modelled as ring faces (NIST FTC 10's threaded hole is missed); catalogue NIST resources and commit the papers (research agents running).
+
 - GitLab at work: are there CI runners, and can they download packages? Ask IT before the move (D-006).
 - Which CAD exports the test STEP files (Inventor version): unknown; public models first.
 

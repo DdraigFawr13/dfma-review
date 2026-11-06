@@ -49,7 +49,10 @@
     <main class="cols">
       <section class="viewer" aria-label="3D view of the part">
         <canvas data-testid="viewer-canvas" id="viewer"></canvas>
-        <p class="hint">Drag to rotate, scroll to zoom, right-drag to pan.</p>
+        <div class="viewfoot">
+          <p class="hint">Drag to rotate, scroll to zoom, right-drag to pan.</p>
+          <label class="toggle"><input type="checkbox" id="show-checked" data-testid="show-checked" /> Show checked holes</label>
+        </div>
       </section>
       <section class="panel" aria-labelledby="findings-title">
         <h2 id="findings-title">Findings <span class="count" id="findings-count"></span></h2>

@@ -84,3 +84,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-06). Changes D-007's "metric drills for mm files".
 - **Decision:** `hole_size` checks mm files against the metric drills and the 1/64 in drills. Inch and other files keep the 1/64 in drills only, so the 0.1 mm grid still can't hide an odd inch size there. With both lists, the top of the drill range for mm files is 1 in (25.4 mm), not 25.0 mm (D-010's skip rule uses this top).
 - **Why:** new evidence from the NIST gold standard (D-011): several NIST parts are designed in inches but written in mm, and metric-only checking flagged every standard inch hole (ftc_09: 27 hole-size findings from its mm file against 4 from its inch twin stc_09). Morgan: "For hole size your recommendation is approved" (2026-11-06).
+
+## D-014 "Show checked holes" switch
+
+- **Status:** Accepted (2026-11-06).
+- **Decision:** Under the 3D view, a "Show checked holes" switch (off by default) tints every hole that was checked and has no finding in `--low` green, with no label, so Morgan can see what the tool found and spot what it missed. Holes with a finding keep their severity colour; the selected finding stays accent. Later slices add their own feature kinds to it.
+- **Why:** Morgan saw untinted holes on NIST FTC 10 and read them as missed; 31 of its 42 found holes were clean and drawn plain. Morgan: "can we have those as a toggle then to turn certain ok features on to make sure I can like debug and check the work?" (2026-11-06).
