@@ -24,6 +24,9 @@ from .units import unit_name
 message.DefaultMessenger().Printers().First().SetTraceLevel(Message_Gravity.Message_Fail)
 
 
+SOLID_ENTITIES = ("StepShape_ManifoldSolidBrep", "StepShape_BrepWithVoids", "StepShape_FacetedBrep")
+
+
 @dataclass
 class ReadResult:
     solid: TopoDS_Shape
@@ -59,10 +62,18 @@ def read_step(path: str | Path) -> ReadResult:
         raise ReadError(settings.MSG_NOT_STEP)
     units = file_length_unit(reader)
     reader.TransferRoots()
-    shape = reader.OneShape()
+    if reader.NbShapes() == 0:
+        # Some files (1990s AP203 exports) hold solids with no product structure, so nothing
+        # is a transfer root: transfer their solid B-reps directly.
+        model = reader.StepModel()
+        for i in range(1, model.NbEntities() + 1):
+            entity = model.Value(i)
+            if entity.DynamicType().Name() in SOLID_ENTITIES:
+                reader.TransferEntity(entity)
+    shape = reader.OneShape() if reader.NbShapes() else None
 
     solids = []
-    if not shape.IsNull():
+    if shape is not None and not shape.IsNull():
         explorer = TopExp_Explorer(shape, TopAbs_SOLID)
         while explorer.More():
             solids.append(topods.Solid(explorer.Current()))

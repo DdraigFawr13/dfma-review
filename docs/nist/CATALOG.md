@@ -35,10 +35,15 @@ Index page: https://www.nist.gov/ctl/smart-connected-systems-division/smart-conn
 - **Threads in STEP:** the modelled diameter of a threaded hole differs between CAD systems (R1 p28), so read thread size from PMI, not from the geometry.
 - **AP242 reality:** in 2015, CTC 5 translated with 76% of annotations as semantic PMI (R2 p25): expect partial PMI and keep a fallback.
 
+## Incorporated (2026-11-06)
+
+- **EDMR subset in `tests/edmr/`**: 113 STEP files (UMD benchmark, NIST spectrometer, STEP/STI NIST DPPA files) plus 139 UMD `.fts` feature lists, copied from Morgan's fork; provenance and licence in `tests/edmr/SOURCE.md`. `tests/service/test_edmr.py` scores every file through the analysis worker. Baseline with the S2 code: 105 read, 2 read errors (`weldment.stp` is truncated; UMD `ex2.step` has no solid), 6 crash OpenCascade inside the reader (UMD bracket1-4-Part, castle, ex1); the worker restarts and the app shows "The analysis failed on this file". 880 holes found, longest file 2.2 s.
+- **Reading fix found by it:** the 1995 UMD files hold solids with no product structure, so nothing was a transfer root and every one failed; `read.py` now transfers their solid B-reps directly.
+- **SFA: Morgan's fork `DdraigFawr13/SFA`** (of `usnistgov/SFA`, version 5.54): referenced, not copied (1.9 GB). Its `Release/` folder holds `SFA-5.54.zip` (the Windows app), `SFA-User-Guide-v7.pdf`, `SFA-README-FIRST.pdf`, release notes and a newer `NIST-PMI-STEP-Files.zip` (12,889,852 bytes, SHA-256 `1fb91bb8ff0fe02032b948fda0775bc74591cd0bebc0988347d32574e5884f90`: CTC 04 as AP242 e2, FTC 08 tessellated as e4, a different FTC 11). Our gold standard stays the file from the NIST page (`tests/nist/`). Use SFA to check how a file's semantic PMI and hole features read before the drawing stages (3 and 4).
+
 ## Elsewhere, not copied (yet)
 
 - **Morgan's fork `DdraigFawr13/engineering-design-models`** (NIST Engineering Design Model Repository, 16 GB, about 2,399 AP203 STEP files, no PMI in any of them). Most useful for feature recognition: `models/UMD` (benchmark parts with `.fts` feature lists, e.g. `UMD/through_pocket1/through_pocket1.step`), `models/STEP/STI` (e.g. `monster4.stp`, `valve.stp`), `models/PTC/V18/mfgmill18` (milling tutorial parts), `models/NIST/Manfred_Osti/spectrometer` (turned parts). Licence: NIST's notice covers works of NIST employees; it says nothing about models contributed by companies and universities (PTC, SDRC, Sandia, UMD and others), and `models/Sandia` carries a patent caution. Copy a file here only when a slice uses it, with its path and source recorded.
-- **`usnistgov/SFA`** (STEP File Analyzer and Viewer): the reference for how semantic PMI, GD&T and hole features are written in AP242; its releases include sample STEP files. Use it to check our reading of PMI in the drawing stages.
 - **`usnistgov/CAD-PMI-Testing`**, **`usnistgov/STP2X3D`** (STEP to X3D on OpenCascade), **`usnistgov/AR-PMI`** (points to the NIST Box Assembly test data), **`usnistgov/QIF`** (inspection data): secondary references.
 
 ## Checksums (SHA-256)
