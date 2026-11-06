@@ -1,4 +1,4 @@
-"""S2 rules on single parts: hole_depth (J2) and hole_size, with their evidence and settings."""
+"""Rules on single parts: hole_depth (J2), hole_size (S2), corner_radius and pocket_depth (S3)."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ def run(name: str, material: str = "al6061") -> dict:
 
 def test_deep_hole():
     result = run("deep_hole")
-    assert result["rules_run"] == ["hole_depth", "hole_size"]
+    assert result["rules_run"] == ["hole_depth", "hole_size", "corner_radius", "pocket_depth"]
     [hole] = result["features"]
     assert hole["id"] == "hole-1" and hole["kind"] == "hole"
     assert hole["dims_mm"]["diameter"] == pytest.approx(6.35, abs=0.001)
@@ -237,3 +237,128 @@ def test_cross_hole_does_not_open_a_blind_hole(tmp_path):
     holes = analyze(path, path.name)["features"]
     main = max(holes, key=lambda h: h["dims_mm"]["diameter"])
     assert len(main["open_vectors"]) == 1  # the cross hole breaks through its wall, not its ends
+
+
+# --- S3: pockets and inside corners (spec S3 "Settled at build") ------------------------------
+
+def kind(result, k):
+    return [f for f in result["features"] if f["kind"] == k]
+
+
+def test_pick_end_mill():
+    from dfma.tools import pick_end_mill
+    assert pick_end_mill(0.150 * IN, 1.0 * IN) == (pytest.approx(0.25 * IN), False)
+    assert pick_end_mill(0.125 * IN, 1.0 * IN)[0] == pytest.approx(0.25 * IN)  # radius equal to the tool's fits
+    assert pick_end_mill(0.150 * IN, 0.2 * IN)[0] == pytest.approx(0.1875 * IN)  # the gap limits it
+    assert pick_end_mill(0.0, 1.0 * IN) == (pytest.approx(0.03125 * IN), True)  # nothing fits a sharp corner
+
+
+def test_fillet_pocket_is_one_pocket_and_four_corners():
+    result = run("fillet_not_hole")
+    [pocket] = kind(result, "pocket")
+    corners = kind(result, "corner")
+    assert [c["id"] for c in corners] == ["corner-1", "corner-2", "corner-3", "corner-4"]
+    # The frame takes +Z from the part's faces (spec Flow step 5): here file -Z, as for flat_bottom_hole.
+    assert pocket["id"] == "pocket-1" and pocket["open_dirs"] == ["-Z"]
+    dims = pocket["dims_mm"]
+    assert dims["depth"] == pytest.approx(0.5 * IN, abs=0.001)
+    assert dims["min_corner_radius"] == pytest.approx(0.1 * IN, abs=0.001)
+    assert dims["narrowest_width"] == pytest.approx(1.0 * IN, abs=0.001)  # not the 0.141 in across a fillet
+    assert dims["end_mill_mm"] == pytest.approx(0.1875 * IN) and dims["undersized"] == 0
+    kinds = {result["faces"][i]["kind"] for i in pocket["faces"]}
+    assert kinds == {"plane", "cylinder"} and len(pocket["faces"]) == 9  # floor, 4 walls, 4 fillets
+    for c in corners:
+        assert c["dims_mm"]["radius"] == pytest.approx(0.1 * IN, abs=0.001)
+        assert c["open_dirs"] == [] and c["open_vectors"] == []
+        assert len(c["faces"]) == 1 and set(c["faces"]) <= set(pocket["faces"])
+    assert result["findings"] == []
+
+
+def test_pocket_fillets_are_analysed():
+    result = run("fillet_not_hole")
+    pocket_faces = set(kind(result, "pocket")[0]["faces"])
+    assert not pocket_faces & set(result["part"]["not_analysed_faces"])
+
+
+def test_sharp_corner_and_undersized_tool():
+    result = run("pocket_sharp")
+    findings = result["findings"]
+    assert [f["rule"] for f in findings] == ["corner_radius"] * 4 + ["pocket_depth"]
+    c = findings[0]
+    assert c["id"] == "F1" and c["severity"] == "high" and c["feature"] == "corner-1"
+    assert c["title"] == "Sharp inside corner: needs EDM or a corner radius"
+    assert c["measured"] == 0 and c["limit"] == 0.03125 and c["unit"] == "in"
+    assert c["suggestion"] == ("Add a corner radius of 0.031 in (1/32) or more; "
+                               "a larger radius lets a larger end mill cut the pocket.")
+    assert len(c["faces"]) == 2  # the two walls that meet at the sharp edge
+    p = findings[4]
+    assert p["title"] == "Pocket depth 8.0× the end mill that fits (limit 3.0×)"
+    assert p["measured"] == pytest.approx(8.0, abs=0.01) and p["limit"] == 3.0 and p["unit"] == "ratio"
+    assert p["suggestion"].endswith("Smallest tool used: no end mill in the list fits the corners.")
+    assert kind(result, "pocket")[0]["dims_mm"]["undersized"] == 1
+
+
+def test_small_radius_title():
+    f = run("pocket_small_radius")["findings"][0]
+    assert f["title"] == "Corner radius 0.020 in under 0.031 in (1/32)"
+    assert f["measured"] == pytest.approx(0.02, abs=0.0005) and f["limit"] == 0.03125
+    assert f["suggestion"] == "Make the corner radius 0.031 in (1/32) or more if the design allows."
+
+
+def test_long_thin_tool_corner_and_depth():
+    findings = run("pocket_long_thin_tool")["findings"]
+    c, p = findings[0], findings[4]
+    assert c["severity"] == "medium" and c["unit"] == "ratio" and c["limit"] == 4.0
+    assert c["title"] == "Corner radius 0.050 in: the end mill that fits cuts 5.3× its diameter deep (limit 4.0×)"
+    assert c["suggestion"] == "Make the corner radius or the gap larger, or the pocket shallower, if the design allows."
+    assert p["title"] == "Pocket depth 5.3× the end mill that fits (limit 3.0×)"
+    assert p["suggestion"] == ("Needs a long 3/32 in end mill. Make the pocket shallower, or its corners and gaps "
+                               "larger, if the design allows.")
+
+
+def test_both_medium_corner_reasons_join(tmp_path):
+    # 0.020 in corners 0.400 in deep: under 1/32 in, and the 1/32 in end mill cuts 12.8x deep.
+    import sys
+    sys.path.insert(0, str(PARTS))
+    from make_parts import pocket_part
+    path = write(tmp_path, "both", pocket_part(0.4, 0.020))
+    f = analyze(path, path.name)["findings"][0]
+    assert f["title"] == ("Corner radius 0.020 in under 0.031 in (1/32); "
+                          "the end mill that fits cuts 12.8× its diameter deep (limit 4.0×)")
+    assert f["unit"] == "in" and f["measured"] == pytest.approx(0.02, abs=0.0005)  # the radius reason leads
+    assert f["suggestion"] == ("Make the corner radius 0.031 in (1/32) or more if the design allows. "
+                               "Make the corner radius or the gap larger, or the pocket shallower, if the design allows.")
+
+
+def test_island_narrows_the_tool():
+    result = run("pocket_island")
+    [pocket] = kind(result, "pocket")
+    assert pocket["dims_mm"]["narrowest_width"] == pytest.approx(0.2 * IN, abs=0.001)
+    assert pocket["dims_mm"]["end_mill_mm"] == pytest.approx(0.1875 * IN)
+    assert pocket["dims_mm"]["depth"] == pytest.approx(0.6 * IN, abs=0.001)  # floor to the rim, not the island top
+    assert len(kind(result, "corner")) == 4  # the island's convex edges are not corners
+    assert len(pocket["faces"]) == 13  # floor, 4 walls, 4 fillets and the 4 island walls (not the island top)
+
+
+def test_holes_are_not_pockets():
+    for name in ("flat_bottom_hole", "stepped_hole", "deep_hole", "box_through_hole"):
+        assert kind(run(name), "pocket") == [], name
+
+
+def test_clean_pockets():
+    for name in ("pocket_deep_wide", "clean_pocket"):
+        assert run(name)["findings"] == [], name
+
+
+def test_missing_rule_table_skips_the_rule(monkeypatch):
+    from dfma import settings
+    monkeypatch.setattr(settings, "thresholds", lambda m: {"hole_depth": {"medium": 6.0, "high": 10.0, "source": "t"}})
+    assert run("pocket_sharp")["findings"] == []
+
+
+def test_s3_thresholds_per_material():
+    from dfma import settings
+    for m in ("al6061", "steel1018", "ss304", "plastic"):
+        t = settings.thresholds(m)
+        assert t["corner_radius"] == {"min_radius_in": 0.03125, "max_depth_ratio": 4.0, "source": "estimate"}
+        assert t["pocket_depth"] == {"medium": 3.0, "source": "estimate"}

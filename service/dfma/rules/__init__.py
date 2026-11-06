@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from . import hole_depth, hole_size
+from . import corner_radius, hole_depth, hole_size, pocket_depth
 
-RULES = [hole_depth, hole_size]  # S3 adds corner_radius and pocket_depth; S4 thin_wall; ...
+RULES = [hole_depth, hole_size, corner_radius, pocket_depth]  # S4 adds thin_wall; ...

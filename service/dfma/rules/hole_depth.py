@@ -10,7 +10,9 @@ SUGGESTION = {
 
 
 def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
-    table = limits[ID]
+    table = limits.get(ID)
+    if table is None:
+        return []
     out = []
     for f in features:
         if f["kind"] != "hole":

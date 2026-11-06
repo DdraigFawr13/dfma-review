@@ -15,7 +15,7 @@ KINDS = ("hole", "pocket", "corner", "wall")
 
 
 def test_enough_parts():
-    assert len(ENTRIES) >= 14
+    assert len(ENTRIES) >= 21
 
 
 @pytest.mark.parametrize("entry", ENTRIES, ids=lambda e: f'{e["name"]}-{e.get("material", "al6061")}')
@@ -33,8 +33,12 @@ def test_part(entry):
     for w in want:
         probe_faces = faces_near(path, w["probe_mm"])
         assert probe_faces, f'probe {w["probe_mm"]} is on no face of {path.name}'
-        tol = 0.01 if w["rule"] in ("hole_depth",) else 0.001
-        match = next((f for f in unmatched if f["rule"] == w["rule"] and f["severity"] == w["severity"]
-                      and abs(f["measured"] - w["measured"]) <= tol and probe_faces & set(f["faces"])), None)
+        # Ratios match to 0.01, inches to 0.001 (J3). Among findings that fit, the one sharing the most
+        # faces with the probe wins: a probe on a sharp corner's edge touches both of its walls, and
+        # each wall also belongs to the next corner along it.
+        fits = [f for f in unmatched if f["rule"] == w["rule"] and f["severity"] == w["severity"]
+                and abs(f["measured"] - w["measured"]) <= (0.01 if f["unit"] == "ratio" else 0.001)
+                and probe_faces & set(f["faces"])]
+        match = max(fits, key=lambda f: len(probe_faces & set(f["faces"])), default=None)
         assert match, f"no finding matches {w}; got {got}"
         unmatched.remove(match)
