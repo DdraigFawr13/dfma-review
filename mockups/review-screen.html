@@ -1,0 +1,240 @@
+<title>DFMA Review Screen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<style>
+/* Mock-up of the S2 review screen. Tokens copied from docs/UI_STYLE.md "Tokens"; frames are 1280 px and 900 px wide. */
+:root {
+  --bg: #eef2f6; --panel: #ffffff; --ink: #16263d; --muted: #55657a; --line: #c4cfdc;
+  --accent: #1f5fa8; --accent-ink: #ffffff; --view: #e3eaf2; --grid: #cfd9e5; --part: #a9b6c6;
+  --high: #b3261e; --medium: #a35a00; --low: #3f6b2a; --radius: 2px;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --sans: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.45; margin: 0; }
+.doc { max-width: 1340px; margin: 0 auto; padding-block: 24px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 20px; }
+.doc > h1 { margin: 0; font-size: 1.5rem; text-wrap: balance; }
+.doc > h2 { margin: 16px 0 0; font-size: 1.25rem; text-wrap: balance; }
+.doc p, .doc li { max-width: 70ch; }
+.lede { color: var(--muted); margin: 0; }
+.choice { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent); padding: var(--space-3) var(--space-4); display: grid; gap: var(--space-2); max-width: 80ch; }
+.choice p { margin: 0; }
+.tagrec { font: 700 0.875rem var(--mono); color: var(--accent); letter-spacing: .06em; text-transform: uppercase; }
+.shots { display: grid; gap: 12px; }
+.shots img { border: 1px solid var(--line); width: 100%; }
+.scroll { overflow-x: auto; border: 1px solid var(--line); background: var(--bg); }
+.caption { margin: 0; color: var(--muted); font-size: 0.875rem; }
+
+/* ===== The app screen ===== */
+.app { font-family: var(--sans); color: var(--ink); background: var(--bg); font-size: 16px; }
+.w1280 { width: 1280px; } .w900 { width: 900px; }
+.top { display: flex; align-items: baseline; gap: var(--space-4); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--line); background: var(--panel); }
+.top h1 { margin: 0; font-size: 1.25rem; font-weight: 700; }
+.privacy { margin: 0; color: var(--muted); font-size: 0.875rem; }
+.cols-a { display: grid; grid-template-columns: 288px 1fr 336px; gap: var(--space-4); padding: var(--space-4); height: 720px; }
+.cols-b { display: grid; grid-template-columns: 1fr 360px; gap: var(--space-4); padding: 0 var(--space-4) var(--space-4); height: 652px; }
+.stack { display: grid; gap: var(--space-4); padding: var(--space-4); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; min-height: 0; }
+.panel h2 { margin: 0; font-size: 1.125rem; font-weight: 600; display: flex; justify-content: space-between; align-items: baseline; }
+.count { font: 600 0.875rem var(--mono); color: var(--muted); }
+label { font-weight: 600; font-size: 0.875rem; }
+.field { display: grid; gap: var(--space-1); }
+.ctl { min-height: 36px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); padding: 6px 10px; font: 400 0.9375rem var(--sans); display: flex; align-items: center; justify-content: space-between; color: var(--ink); }
+.ctl .chev { color: var(--muted); }
+.ctl.file b { font: 600 0.875rem var(--mono); }
+.filebtn { border: 1px solid var(--ink); border-radius: var(--radius); padding: 2px 8px; font-size: 0.875rem; }
+.status { margin: 0; color: var(--muted); font-size: 0.875rem; }
+.error { margin: 0; background: var(--panel); color: var(--high); border-left: 4px solid var(--high); padding: var(--space-2) var(--space-3); font-size: 0.9375rem; outline: 1px solid var(--line); }
+.error b { margin-right: 4px; }
+dl.summary { display: grid; grid-template-columns: auto 1fr; gap: var(--space-1) var(--space-3); margin: var(--space-2) 0 0; font-size: 0.9375rem; }
+dl.summary dt { font-weight: 600; } dl.summary dd { margin: 0; font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 0.875rem; overflow-wrap: anywhere; }
+.viewer { position: relative; display: flex; flex-direction: column; gap: var(--space-1); min-height: 0; }
+.viewer canvas { flex: 1; width: 100%; min-height: 0; background: var(--view); border: 1px solid var(--line); border-radius: var(--radius); display: block; }
+.hint { margin: 0; color: var(--muted); font-size: 0.875rem; }
+.flag { position: absolute; font: 700 0.875rem var(--mono); background: var(--panel); border: 1.5px solid var(--accent); border-radius: var(--radius); padding: 2px 6px; display: flex; gap: 6px; align-items: center; }
+.flag .sev { letter-spacing: .06em; text-transform: uppercase; }
+.list { display: grid; gap: var(--space-2); align-content: start; overflow: auto; }
+.finding { text-align: left; width: 100%; background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--medium); border-radius: var(--radius); padding: var(--space-2) var(--space-3); display: grid; gap: var(--space-1); font: inherit; color: inherit; min-height: 32px; }
+.finding.high { border-left-color: var(--high); }
+.finding.sel { outline: 2px solid var(--accent); outline-offset: -1px; }
+.finding .row1 { display: flex; gap: var(--space-2); align-items: baseline; }
+.sevlabel { font: 700 0.875rem var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.sevlabel.medium { color: var(--medium); } .sevlabel.high { color: var(--high); }
+.ftitle { font-weight: 600; font-size: 0.9375rem; }
+.fmeta { color: var(--muted); font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.fsug { font-size: 0.875rem; }
+.fid { font: 600 0.875rem var(--mono); color: var(--muted); }
+.empty { color: var(--muted); font-size: 0.9375rem; margin: 0; }
+.clean { margin: 0; font-size: 0.9375rem; border-left: 4px solid var(--low); padding: var(--space-2) var(--space-3); background: var(--bg); }
+.clean b { color: var(--low); font-family: var(--mono); letter-spacing: .06em; text-transform: uppercase; font-size: 0.875rem; margin-right: 6px; }
+details.assume { margin-top: auto; border-top: 1px solid var(--line); padding-top: var(--space-2); font-size: 0.875rem; color: var(--muted); }
+details.assume summary { cursor: pointer; font-weight: 600; color: var(--ink); min-height: 32px; display: flex; align-items: center; }
+details.assume ul { margin: var(--space-1) 0 0; padding-left: 18px; display: grid; gap: var(--space-1); }
+.bar { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-4); align-items: end; padding: var(--space-3) var(--space-4); }
+.bar .field { min-width: 0; }
+.bar .ctl { min-width: 180px; }
+.bar .ctl.file { min-width: 300px; }
+.bar .meta { display: flex; gap: var(--space-4); align-items: center; font-size: 0.875rem; margin-left: auto; padding-bottom: 6px; }
+.bar .meta span b { font-weight: 600; margin-right: 4px; font-family: var(--sans); }
+.bar .meta span { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.bar .status { flex-basis: 100%; }
+.w900 .viewer canvas { height: 440px; flex: none; }
+.w900 .list { overflow: visible; }
+#check-record { background: var(--panel); border: 1px solid var(--line); padding: var(--space-3) var(--space-4); }
+#check-record h2 { margin-top: 0; }
+#check-record li { font-size: 0.9375rem; }
+code { font-family: var(--mono); font-size: 0.875rem; }
+</style>
+
+<div class="doc">
+  <h1>Review screen mock-up (slice S2)</h1>
+  <p class="lede">The screen Morgan will use to upload a part and read its hole findings, in the Drawing office look from <code>docs/UI_STYLE.md</code>. Drawn at 1280 px, the first target width; scroll sideways inside each frame on a phone. The 3D view is a drawing here, not the real render.</p>
+
+  <div class="choice">
+    <span class="tagrec">Layout question</span>
+    <p><b>A. Three columns</b> is what the spec says today: upload panel left, 3D view middle, findings right.</p>
+    <p><b>B. Controls on top</b> puts the file, process, material and part size in one bar above, so the 3D view gets about 880 px of the 1280 instead of about 600.</p>
+    <p><b>My recommendation: B.</b> The upload controls are used once per part, while the view and the findings are used the whole time. Later slices add a plan panel (S5) and cost drivers (S7) under the findings, so the right column needs its full height. B would change one line of the spec's "Web page" section.</p>
+  </div>
+
+  <div class="shots" id="shots"></div>
+
+  <h2>A. Three columns, a finding selected (1280 px)</h2>
+  <div class="scroll"><div class="app w1280" id="a-normal"></div></div>
+  <p class="caption">deep_hole.step in Aluminum 6061. F1 is selected: its faces turn the accent blue and the camera frames them. The flag on the view repeats the severity word, so colour is never the only sign.</p>
+
+  <h2>B. Controls on top, a finding selected (1280 px)</h2>
+  <div class="scroll"><div class="app w1280" id="b-normal"></div></div>
+  <p class="caption">The same part and selection. The part size, faces and units sit in the bar beside the controls.</p>
+
+  <h2>B. Other states (1280 px)</h2>
+  <div class="scroll"><div class="app w1280" id="b-empty"></div></div>
+  <p class="caption">Empty: no file chosen yet.</p>
+  <div class="scroll"><div class="app w1280" id="b-loading"></div></div>
+  <p class="caption">Loading: the previous part stays greyed until the new one arrives; the findings list keeps its space.</p>
+  <div class="scroll"><div class="app w1280" id="b-error"></div></div>
+  <p class="caption">Error (J7): the message says what is wrong, the view and summary clear, and another file can be chosen at once.</p>
+  <div class="scroll"><div class="app w1280" id="b-clean"></div></div>
+  <p class="caption">Clean part: no findings, and the list says which rules ran, so "nothing found" is evidence rather than silence.</p>
+  <div class="scroll"><div class="app w1280" id="b-odd"></div></div>
+  <p class="caption">odd_hole.step: a hole-size finding with its nearest drill. Nothing selected yet.</p>
+
+  <h2>B. Stacked (900 px)</h2>
+  <div class="scroll"><div class="app w900" id="b-900"></div></div>
+  <p class="caption">At 900 px the findings move under the view. Below 900 px the controls bar wraps too.</p>
+
+  <section id="check-record"><h2>Check record</h2><div id="record">Filled after the checks.</div></section>
+</div>
+
+<script>
+// Facts used on this page, each from a fact source (see the check record).
+const PRIVACY = "Your file is analysed on this computer and deleted straight after. Nothing is kept."; // web/index.html:13
+const HINT = "Drag to rotate, scroll to zoom, right-drag to pan."; // web/index.html:43
+const ASSUMPTIONS = [ // service/dfma/settings.py:30-34
+  "Mesh deflection 0.05 mm linear, 0.5 rad angular (assumption).",
+  "Exterior profiles, steps, open-sided pockets, threads, floor fillets and thin cylindrical shells are not planned or ruled on in this version.",
+];
+const PARTS = {
+  deep: { file: "deep_hole.step", size: "2.500 × 1.000 × 1.000 in", faces: "8 faces", units: "inch",
+    findings: [{ id: "F1", sev: "medium", title: "Hole depth 8.0× diameter (limit 6.0×)",
+      meta: "hole-1 · 0.250 in (1/4) diameter, 2.000 in deep · limit: estimate",
+      sug: "Deep holes need peck drilling or a long drill. Make it shallower or larger if the design allows." }] },
+  odd: { file: "odd_hole.step", size: "2.000 × 1.000 × 0.500 in", faces: "7 faces", units: "inch",
+    findings: [{ id: "F1", sev: "medium", title: "Hole 0.260 in not a standard drill size",
+      meta: "hole-1 · 0.260 in diameter · drill list: inch, every 1/64 in",
+      sug: "Nearest drill 0.2656 in (17/64). Use it if the fit allows." }] },
+  clean: { file: "clean_holes.step", size: "3.000 × 2.000 × 0.750 in", faces: "8 faces", units: "inch", findings: [] },
+};
+
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const ctl = (label, value, extra = "") => `<div class="field"><label>${label}</label><div class="ctl ${extra}">${value}<span class="chev">▾</span></div></div>`;
+const fileCtl = name => `<div class="field"><label>STEP file</label><div class="ctl file"><span class="filebtn">Choose file</span><b>${name ? esc(name) : "No file chosen"}</b></div></div>`;
+function findingRow(f, sel) {
+  return `<button class="finding ${f.sev}${sel ? " sel" : ""}" type="button">
+    <span class="row1"><span class="sevlabel ${f.sev}">${f.sev}</span><span class="ftitle">${esc(f.title)}</span><span class="fid">${f.id}</span></span>
+    <span class="fmeta">${esc(f.meta)}</span><span class="fsug">${esc(f.sug)}</span></button>`;
+}
+function findingsPanel(p, state) {
+  let body;
+  if (state === "empty") body = `<p class="empty">No findings yet. Choose a STEP file to start.</p>`;
+  else if (state === "loading") body = `<p class="empty">Analysing ${esc(p.file)}…</p>`;
+  else if (state === "error") body = `<p class="empty">No findings: this file could not be read.</p>`;
+  else if (!p.findings.length) body = `<p class="clean"><b>Clean</b>No findings. Rules run: hole depth, hole size.</p>`;
+  else body = p.findings.map(f => findingRow(f, state === "selected")).join("");
+  const n = state === "selected" || state === "normal" ? p.findings.length : "";
+  const assume = state === "selected" || state === "normal"
+    ? `<details class="assume" open><summary>Assumptions (${ASSUMPTIONS.length})</summary><ul>${ASSUMPTIONS.map(a => `<li>${esc(a)}</li>`).join("")}</ul></details>` : "";
+  return `<section class="panel"><h2>Findings <span class="count">${n === "" ? "" : n}</span></h2><div class="list">${body}</div>${assume}</section>`;
+}
+function viewer(state, id) {
+  const flag = state === "selected" ? `<div class="flag" style="left:var(--fx);top:var(--fy)"><span>F1</span><span class="sev" style="color:var(--medium)">medium</span></div>` : "";
+  return `<section class="viewer"><canvas data-state="${state}" data-id="${id}" aria-label="3D view of the part (drawing)"></canvas>${flag}<p class="hint">${HINT}</p></section>`;
+}
+function statusLine(p, state) {
+  if (state === "empty") return `<p class="status">Choose a STEP file to start.</p>`;
+  if (state === "loading") return `<p class="status">Analysing ${esc(p.file)}…</p>`;
+  if (state === "error") return `<p class="error"><b>Error:</b>This is not a STEP file this tool can read</p><p class="status">Choose another file, or try again.</p>`;
+  return `<p class="status">Showing ${esc(p.file)}.</p>`;
+}
+const header = `<header class="top"><h1>DFMA Review</h1><p class="privacy">${PRIVACY}</p></header>`;
+function layoutA(p, state, id) {
+  const sum = state === "selected" || state === "normal" ? `<dl class="summary"><dt>Name</dt><dd>${esc(p.file)}</dd><dt>Size</dt><dd>${p.size}</dd><dt>Faces</dt><dd>${p.faces}</dd><dt>Units in file</dt><dd>${p.units}</dd></dl>` : "";
+  return header + `<main class="cols-a"><section class="panel"><h2>Part</h2>${fileCtl(state === "empty" ? "" : state === "error" ? "not_step.step" : p.file)}${ctl("Process", "Milling")}${ctl("Material", "Aluminum 6061")}${statusLine(p, state)}${sum}</section>${viewer(state, id)}${findingsPanel(p, state)}</main>`;
+}
+function layoutB(p, state, id, cls) {
+  const meta = state === "selected" || state === "normal" ? `<div class="meta"><span><b>Size</b>${p.size}</span><span><b>Faces</b>${p.faces}</span><span><b>Units in file</b>${p.units}</span></div>` : "";
+  const fname = state === "empty" ? "" : state === "error" ? "not_step.step" : p.file;
+  const bar = `<section class="bar">${fileCtl(fname)}${ctl("Process", "Milling")}${ctl("Material", "Aluminum 6061")}${meta}${statusLine(p, state)}</section>`;
+  return header + bar + `<main class="${cls}">${viewer(state, id)}${findingsPanel(p, state)}</main>`;
+}
+
+// The drawing: a block with a hole, on the view's faint grid. Highlight when selected.
+function draw(c) {
+  const css = getComputedStyle(document.documentElement), T = n => css.getPropertyValue(n).trim();
+  const r = c.getBoundingClientRect(), dpr = 2; c.width = r.width * dpr; c.height = r.height * dpr;
+  const g = c.getContext("2d"); g.scale(dpr, dpr); const W = r.width, H = r.height, state = c.dataset.state, id = c.dataset.id;
+  g.fillStyle = T("--view"); g.fillRect(0, 0, W, H);
+  g.strokeStyle = T("--grid"); g.lineWidth = 1;
+  for (let x = 0; x < W; x += 24) { g.beginPath(); g.moveTo(x + .5, 0); g.lineTo(x + .5, H); g.stroke(); }
+  for (let y = 0; y < H; y += 24) { g.beginPath(); g.moveTo(0, y + .5); g.lineTo(W, y + .5); g.stroke(); }
+  if (state === "empty" || state === "error") return;
+  const odd = id.includes("odd"), clean = id.includes("clean");
+  const s = Math.min(W, H) / 5.2, dims = odd ? [2, 1, .5] : clean ? [3, 2, .75] : [1, 1, 2.5];
+  const [a, b, h] = dims.map(v => v * s * (odd || clean ? 0.8 : 1));
+  const cx0 = W / 2, cy0 = H / 2 + h * 0.15;
+  const P = (x, y, z) => [cx0 + (x - y) * 0.87, cy0 + (x + y) * 0.5 - z + h / 2];
+  const shade = (hex, k) => { const n = parseInt(hex.slice(1), 16); const f = v => Math.max(0, Math.min(255, Math.round(v * k))); return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`; };
+  const part = T("--part"), ink = T("--ink");
+  g.globalAlpha = state === "loading" ? 0.35 : 1;
+  const poly = (pts, fill) => { g.beginPath(); pts.forEach((p, i) => { const q = P(...p); i ? g.lineTo(...q) : g.moveTo(...q); }); g.closePath(); g.fillStyle = fill; g.fill(); g.strokeStyle = ink; g.lineWidth = 1.3; g.stroke(); };
+  poly([[-a/2,-b/2,h],[a/2,-b/2,h],[a/2,b/2,h],[-a/2,b/2,h]], shade(part, 1.12));
+  poly([[-a/2,b/2,h],[a/2,b/2,h],[a/2,b/2,0],[-a/2,b/2,0]], shade(part, .92));
+  poly([[a/2,-b/2,h],[a/2,b/2,h],[a/2,b/2,0],[a/2,-b/2,0]], shade(part, .78));
+  const holes = clean ? [[-a/4, 0, .25], [a/4, 0, .5]] : [[0, 0, odd ? .26 : .25]];
+  holes.forEach(([hx, hy, d]) => {
+    const [x, y] = P(hx, hy, h), rx = d / 2 * s * 1.22, ry = rx * 0.58;
+    g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+    g.fillStyle = state === "selected" ? T("--accent") : shade(part, .55); g.fill(); g.strokeStyle = ink; g.stroke();
+    if (state === "selected") {
+      const depth = 2.0 * s; // hidden hole wall, dashed, 2.000 in deep
+      g.setLineDash([5, 4]); g.strokeStyle = T("--accent"); g.lineWidth = 1.6;
+      g.beginPath(); g.moveTo(x - rx, y); g.lineTo(x - rx, y + depth); g.moveTo(x + rx, y); g.lineTo(x + rx, y + depth); g.stroke();
+      g.beginPath(); g.ellipse(x, y + depth, rx, ry, 0, 0, Math.PI); g.stroke(); g.setLineDash([]);
+      const f = c.parentElement.querySelector(".flag"); if (f) { c.parentElement.style.setProperty("--fx", (x + rx + 14) + "px"); c.parentElement.style.setProperty("--fy", (y - 30) + "px"); }
+    }
+  });
+  g.globalAlpha = 1;
+}
+
+document.getElementById("a-normal").innerHTML = layoutA(PARTS.deep, "selected", "a-normal");
+document.getElementById("b-normal").innerHTML = layoutB(PARTS.deep, "selected", "b-normal", "cols-b");
+document.getElementById("b-empty").innerHTML = layoutB(PARTS.deep, "empty", "b-empty", "cols-b");
+document.getElementById("b-loading").innerHTML = layoutB(PARTS.deep, "loading", "b-loading", "cols-b");
+document.getElementById("b-error").innerHTML = layoutB(PARTS.deep, "error", "b-error", "cols-b");
+document.getElementById("b-clean").innerHTML = layoutB(PARTS.clean, "normal", "b-clean", "cols-b");
+document.getElementById("b-odd").innerHTML = layoutB(PARTS.odd, "normal", "b-odd", "cols-b");
+document.getElementById("b-900").innerHTML = layoutB(PARTS.deep, "selected", "b-900", "stack");
+const drawAll = () => document.querySelectorAll("canvas[data-state]").forEach(draw);
+(document.fonts ? document.fonts.ready : Promise.resolve()).then(drawAll);
+</script>
