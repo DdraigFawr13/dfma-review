@@ -5,11 +5,6 @@ name = "box_through_hole"
 units = "mm"
 face_count = 7
 features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
-[[part.finding]]
-rule = "hole_size"
-severity = "medium"
-measured = 0.25
-probe_mm = [28.575, 12.7, 6.35]
 
 [[part]]
 name = "box_inch"

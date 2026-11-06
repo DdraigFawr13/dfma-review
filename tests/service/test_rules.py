@@ -47,16 +47,22 @@ def test_odd_hole_names_nearest_drill():
 
 
 def test_metric_tie_goes_to_smaller_drill():
-    # 6.35 mm sits exactly between 6.3 and 6.4 mm; 6.55 mm between 6.5 and 6.6 mm.
-    [f] = run("box_through_hole")["findings"]
-    assert f["limit"] == pytest.approx(6.3 / 25.4, abs=1e-6)
-    assert f["suggestion"] == "Nearest drill 6.3 mm (0.248 in). Use it if the fit allows."
+    # 6.55 mm sits exactly between the 6.5 and 6.6 mm drills.
     [g] = run("odd_metric_hole")["findings"]
+    assert g["limit"] == pytest.approx(6.5 / 25.4, abs=1e-6)
     assert g["suggestion"] == "Nearest drill 6.5 mm (0.256 in). Use it if the fit allows."
 
 
+def test_mm_files_accept_inch_drills():
+    # 6.35 mm is 1/4 in: inch-designed parts exported in mm are not flagged (D-013).
+    assert run("box_through_hole")["findings"] == []
+    from dfma.tools import drills
+    assert any(abs(d.diameter_mm - 6.35) < 1e-6 for d in drills("mm"))
+    assert not any(abs(d.diameter_mm - 6.5) < 1e-6 for d in drills("inch"))
+
+
 def test_clean_parts():
-    for name in ("box_inch", "metric_hole", "flat_bottom_hole", "two_holes_web", "split_hole",
+    for name in ("box_through_hole", "box_inch", "metric_hole", "flat_bottom_hole", "two_holes_web", "split_hole",
                  "stepped_hole", "drill_point_hole", "clean_holes", "fillet_not_hole"):
         assert run(name)["findings"] == [], name
 

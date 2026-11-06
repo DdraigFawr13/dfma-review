@@ -70,9 +70,9 @@ def check_box(result: dict, name: str, units: str) -> None:
 
     for key in EMPTY_UNTIL_LATER:
         assert result[key] == []
-    # S2: one hole; the mm file's 6.35 mm hole is not a metric drill, the inch file's 1/4 in hole is.
+    # S2: one hole, 1/4 in (6.35 mm), a standard drill in both files (D-013).
     assert [f["kind"] for f in result["features"]] == ["hole"]
-    assert [f["rule"] for f in result["findings"]] == (["hole_size"] if units == "mm" else [])
+    assert result["findings"] == []
     assert result["machine"] is None
     assert result["turn_axis"] is None
     assert result["tool_changes"] == 0

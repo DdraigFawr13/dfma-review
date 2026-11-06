@@ -205,8 +205,8 @@ def main() -> int:
         return {"rule": rule, "severity": severity, "measured": measured, "probe_mm": [round(v, 4) for v in probe]}
 
     shape = box_through_hole()
-    # 6.35 mm is not a metric drill size (D-007: metric drills for mm files).
-    add(shape, "box_through_hole", "mm", 1, [finding("hole_size", "medium", 0.25, (1.0 * IN + 0.125 * IN, 0.5 * IN, 0.25 * IN))])
+    # 6.35 mm is 1/4 in: a standard inch drill, accepted in mm files too (D-013).
+    add(shape, "box_through_hole", "mm", 1)
     add(shape, "box_inch", "inch", 1)
 
     add(blind_block(1, 1, 2.5, 0.25, 2.0), "deep_hole", "inch", 1,
