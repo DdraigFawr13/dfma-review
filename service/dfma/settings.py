@@ -34,6 +34,8 @@ ASSUMPTIONS = [
     "Mesh deflection 0.05 mm linear, 0.5 rad angular (assumption).",
     "Exterior profiles, steps, open-sided pockets, threads, floor fillets and thin cylindrical shells "
     "are not planned or ruled on in this version.",
+    "End mills are the inch list in config/tools.toml for every file; no metric end mills in this version (assumption).",
+    "Engraved text and logos are read as pockets: their sharp corners are real geometry, but engraving tools may accept them.",
 ]
 
 

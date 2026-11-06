@@ -1,7 +1,7 @@
 # First usable version: STEP part review
 
 - **Status:** Approved 2026-11-06 ([spec approval](https://claude.ai/artifact/CAqfoCYn9pSSxkBHn4peGb))
-- **Planned in:** [design round 1](https://claude.ai/artifact/4Xa6iLguwU2pnXQXCAYydk), [round 2](https://claude.ai/artifact/LEGMPWU3Avt4E9pjnSvbhG), [approval](https://claude.ai/artifact/WDr91uJChvS9RkBziPWDHo) (2026-11-06). **Decisions:** D-001, D-003, D-004, D-005, D-006, D-007, D-008, D-010 to D-013.
+- **Planned in:** [design round 1](https://claude.ai/artifact/4Xa6iLguwU2pnXQXCAYydk), [round 2](https://claude.ai/artifact/LEGMPWU3Avt4E9pjnSvbhG), [approval](https://claude.ai/artifact/WDr91uJChvS9RkBziPWDHo) (2026-11-06). **Decisions:** D-001, D-003, D-004, D-005, D-006, D-007, D-008, D-010 to D-015.
 
 ## Problem
 
@@ -449,7 +449,7 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
   - test parts
   - `web/index.html`, `web/src/main.ts`, `web/src/findings.ts`, `web/src/viewer.ts` (legend rows, verdict line, finding meta), `docs/UI_STYLE.md` (two swatch tokens)
   - `tests/service/test_rules.py` (pocket and corner cases), `tests/e2e/test_findings.py` (legend)
-- **Waits on:** S2, and Morgan's approval of the legend mock-up (`ui-mockups`).
+- **Waits on:** S2, and Morgan's approval of the legend mock-up (`ui-mockups`). Done: [mock-up](https://claude.ai/artifact/7pzmdnGnguo8CThdQ87gvD) v3 approved by Morgan 2026-11-06 (D-015).
 - **Settled at build (zero-decision check against the merged S2 code at 069ef55, 2026-11-06; 113,268 agent tokens):**
   - Test parts (inch files, 3.000 × 2.000 × 1.000 in block with a 2.000 × 1.000 in pocket centred on +Z unless stated; corner fillets on all 4 vertical pocket edges; no radius equals an end-mill radius and no ratio sits on a limit):
     - `pocket_sharp`: sharp corners, 0.250 in deep. 4 `corner_radius` high (measured 0), 1 `pocket_depth` medium (8.0, smallest tool used).
@@ -471,7 +471,7 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
   - `pocket_depth` finding: measured = depth ÷ end-mill diameter, limit 3.0, unit `ratio`, medium. Title "Pocket depth 3.2× the end mill that fits (limit 3.0×)"; suggestion "Needs a long 1/4 in end mill. Make the pocket shallower, or its corners and gaps larger, if the design allows." Undersized adds "Smallest tool used: no end mill in the list fits the corners."
   - J3 matching: ratio findings match to 0.01 (`unit` "ratio"), inch findings to 0.001. Findings are matched one to one; among those that fit a probe, the one sharing the most faces with it wins (a probe on a sharp corner's edge touches both its walls, and each wall also belongs to the next corner). Probes: corner fillets at 45° at mid-depth, sharp corners on the edge at mid-depth, pocket findings on the floor.
   - `tests/service/test_rules.py`: `rules_run` becomes the 4 S3 rules.
-  - On screen ([mock-up](https://claude.ai/artifact/7pzmdnGnguo8CThdQ87gvD), approval pending): tokens `--ok-pocket` #8559b8 and `--ok-corner` #1d7f86; legend rows "Pockets checked, no finding" and "Corners checked, no finding", each with its own swatch token, all three kind boxes on by default; a corner fillet takes the corner colour over the pocket colour. Verdict line lists the non-zero kinds: "2 holes checked" stays as it is on a holes-only part; "1 pocket and 4 corners checked". Selected: framing never tighter than 40% of the part's bounding sphere; a sharp corner (no face of its own) is drawn as a bar along its edge, its corner feature carrying `edge_mm` (two end points), and its walls are not painted for that finding. Finding meta: pocket "pocket-1 · 0.800 in deep, 1/4 in end mill fits · limit: estimate"; corner "corner-1 · radius 0.050 in, pocket 0.500 in deep · limit: estimate".
+  - On screen ([mock-up](https://claude.ai/artifact/7pzmdnGnguo8CThdQ87gvD), approved, D-015): tokens `--ok-pocket` #8559b8 and `--ok-corner` #1d7f86; legend rows "Pockets checked, no finding" and "Corners checked, no finding", each with its own swatch token, all three kind boxes on by default; a corner fillet takes the corner colour over the pocket colour. Verdict line lists the non-zero kinds: "2 holes checked" stays as it is on a holes-only part; "1 pocket and 4 corners checked". Selected: framing never tighter than 40% of the part's bounding sphere; a sharp corner (no face of its own) is drawn as a bar along its edge, its corner feature carrying `edge_mm` (two end points), and its walls are not painted for that finding. Finding meta: pocket "pocket-1 · 0.800 in deep, 1/4 in end mill fits · limit: estimate"; corner "corner-1 · radius 0.050 in, pocket 0.500 in deep · limit: estimate".
   - Before the fresh review: run the new code on `tests/nist` and `tests/edmr` (UMD `.fts` pocket lists, NIST Report 3 Appendix A as answer key), time them against 10 s, and regenerate both scorecards (numbers may only improve).
 
 ### S4 Thin walls
