@@ -8,6 +8,10 @@ import type { Face, Finding } from "./api";
 
 const GHOST_OPACITY = 0.35;
 
+/** Feature kinds the legend can tint when checked with no finding (D-014), and their tokens. */
+export type CheckedKind = "hole" | "pocket" | "corner";
+const CHECKED_TOKEN: Record<CheckedKind, string> = { hole: "--low", pocket: "--ok-pocket", corner: "--ok-corner" };
+
 function token(name: string): THREE.Color {
   const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   return new THREE.Color(value || "#888888");
@@ -22,8 +26,8 @@ export class Viewer {
   private readonly meshes = new Map<number, THREE.Mesh>();
   private readonly flags: { el: HTMLElement; points: THREE.Vector3[]; finding: Finding }[] = [];
   private findings: Finding[] = [];
-  private checked = new Set<number>(); // faces of features checked with no finding
-  private showChecked = false;
+  private checked = new Map<number, CheckedKind>(); // faces of features checked with no finding
+  private readonly showChecked: Record<CheckedKind, boolean> = { hole: false, pocket: false, corner: false };
   private selected: Finding | null = null;
   private frame = 0;
 
@@ -71,7 +75,7 @@ export class Viewer {
       this.meshes.set(face.id, mesh);
     }
     this.findings = [];
-    this.checked = new Set();
+    this.checked = new Map();
     this.selected = null;
     this.paint();
     if (!keepView || faces.length === 0) this.fit();
@@ -103,23 +107,24 @@ export class Viewer {
     this.render();
   }
 
-  /** Faces of the features that were checked and passed, for the "Show checked holes" switch. */
-  setChecked(faceIds: number[]): void {
-    this.checked = new Set(faceIds);
+  /** Faces of the features that were checked and passed, by kind, for the legend's switches.
+   *  A face in two features (a corner fillet is also a pocket wall) takes the later kind. */
+  setChecked(faces: Map<number, CheckedKind>): void {
+    this.checked = faces;
     this.paint();
     this.render();
   }
 
-  setShowChecked(on: boolean): void {
-    this.showChecked = on;
+  setShowChecked(kind: CheckedKind, on: boolean): void {
+    this.showChecked[kind] = on;
     this.paint();
     this.render();
   }
 
-  /** Faces drawn in the "checked" colour, read from the materials themselves. */
-  checkedFaces(): number[] {
-    const low = token("--low");
-    return [...this.meshes].filter(([, m]) => (m.material as THREE.MeshStandardMaterial).color.equals(low))
+  /** Faces drawn in a kind's "checked" colour, read from the materials themselves. */
+  checkedFaces(kind: CheckedKind = "hole"): number[] {
+    const colour = token(CHECKED_TOKEN[kind]);
+    return [...this.meshes].filter(([, m]) => (m.material as THREE.MeshStandardMaterial).color.equals(colour))
       .map(([id]) => id).sort((a, b) => a - b);
   }
 
@@ -168,8 +173,9 @@ export class Viewer {
     for (const [id, mesh] of this.meshes) {
       const material = mesh.material as THREE.MeshStandardMaterial;
       const sev = severity.get(id);
-      const ok = this.showChecked && this.checked.has(id);
-      material.color.copy(chosen.has(id) ? accent : sev ? token(`--${sev}`) : ok ? token("--low") : part);
+      const kind = this.checked.get(id);
+      const ok = kind !== undefined && this.showChecked[kind];
+      material.color.copy(chosen.has(id) ? accent : sev ? token(`--${sev}`) : ok ? token(CHECKED_TOKEN[kind]) : part);
       const ghost = this.selected !== null && !chosen.has(id);
       material.transparent = ghost;
       material.opacity = ghost ? GHOST_OPACITY : 1;

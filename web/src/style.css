@@ -6,7 +6,7 @@
 :root {
   --bg: #eef2f6; --panel: #ffffff; --ink: #16263d; --muted: #55657a; --line: #c4cfdc;
   --accent: #1f5fa8; --accent-ink: #ffffff; --view: #e3eaf2; --grid: #cfd9e5; --part: #a9b6c6;
-  --high: #b3261e; --medium: #a35a00; --low: #3f6b2a; --radius: 2px;
+  --high: #b3261e; --medium: #a35a00; --low: #3f6b2a; --ok-pocket: #8559b8; --ok-corner: #1d7f86; --radius: 2px;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
   --sans: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
   font-family: var(--sans); font-size: 100%; line-height: 1.45; color: var(--ink); background: var(--bg);
@@ -44,9 +44,10 @@ body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
 .legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); align-items: center; font-size: 0.875rem; }
 .key { display: inline-flex; gap: 6px; align-items: center; min-height: 32px; }
 .sw { width: 14px; height: 14px; border-radius: var(--radius); border: 1px solid var(--ink); display: inline-block; }
-.sw.high { background: var(--high); } .sw.medium { background: var(--medium); } .sw.accent { background: var(--accent); } .sw.low { background: var(--low); }
+.sw.high { background: var(--high); } .sw.medium { background: var(--medium); } .sw.accent { background: var(--accent); } .sw.low { background: var(--low); } .sw.pocket { background: var(--ok-pocket); } .sw.corner { background: var(--ok-corner); }
 .toggle { font-weight: 600; cursor: pointer; }
 .toggle input { width: 18px; height: 18px; margin: 0; accent-color: var(--low); }
+.toggle input.pocket { accent-color: var(--ok-pocket); } .toggle input.corner { accent-color: var(--ok-corner); }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; min-height: 0; max-height: calc(100vh - 210px); }
 .panel h2 { margin: 0; font-size: 1.125rem; font-weight: 600; display: flex; justify-content: space-between; align-items: baseline; }
 .count { font: 600 0.875rem var(--mono); color: var(--muted); }

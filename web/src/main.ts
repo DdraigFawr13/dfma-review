@@ -4,7 +4,7 @@
 import { analyze, ApiError, type Analysis, type Finding, type Material, type Process } from "./api";
 import { renderFindings, renderVerdict } from "./findings";
 import { formatSize } from "./format";
-import { Viewer } from "./viewer";
+import { Viewer, type CheckedKind } from "./viewer";
 
 function byId<T extends HTMLElement>(id: string): T {
   const el = document.getElementById(id);
@@ -23,8 +23,13 @@ const list = byId<HTMLElement>("findings");
 const count = byId<HTMLElement>("findings-count");
 const assumptions = byId<HTMLDetailsElement>("assumptions");
 const viewer = new Viewer(byId<HTMLCanvasElement>("viewer"));
-const showChecked = byId<HTMLInputElement>("show-checked");
-showChecked.addEventListener("change", () => viewer.setShowChecked(showChecked.checked));
+// One switch per feature kind checked with no finding (D-014); the holes box keeps its S2 id.
+const SWITCHES: [CheckedKind, HTMLInputElement][] = [
+  ["hole", byId<HTMLInputElement>("show-checked")],
+  ["pocket", byId<HTMLInputElement>("show-checked-pockets")],
+  ["corner", byId<HTMLInputElement>("show-checked-corners")],
+];
+for (const [kind, box] of SWITCHES) box.addEventListener("change", () => viewer.setShowChecked(kind, box.checked));
 
 let run = 0;
 let selected: string | null = null;
@@ -37,7 +42,7 @@ declare global {
       cameraTarget(): [number, number, number];
       paintedFaces(): number[];
       opacities(): Record<number, number>;
-      checkedFaces(): number[];
+      checkedFaces(kind?: CheckedKind): number[];
     };
   }
 }
@@ -46,13 +51,20 @@ window.__dfma = {
   cameraTarget: () => viewer.cameraTarget(),
   paintedFaces: () => viewer.paintedFaces(), // test hook: what is actually drawn in the accent colour
   opacities: () => viewer.opacities(),
-  checkedFaces: () => viewer.checkedFaces(), // test hook: what is drawn in the "checked" colour
+  checkedFaces: (kind?: CheckedKind) => viewer.checkedFaces(kind), // test hook: drawn in a kind's "checked" colour
 };
 
-/** Faces of the holes that were checked and have no finding. */
-function checkedFaces(result: Analysis): number[] {
+/** Faces of the features checked with no finding, by kind; corners go last so a corner fillet
+ *  (also a pocket wall) shows the corner colour. */
+function checkedFaces(result: Analysis): Map<number, CheckedKind> {
   const flagged = new Set(result.findings.map((f) => f.feature));
-  return result.features.filter((f) => f.kind === "hole" && !flagged.has(f.id)).flatMap((f) => f.faces);
+  const out = new Map<number, CheckedKind>();
+  for (const kind of ["hole", "pocket", "corner"] as CheckedKind[]) {
+    for (const f of result.features) {
+      if (f.kind === kind && !flagged.has(f.id)) for (const id of f.faces) out.set(id, kind);
+    }
+  }
+  return out;
 }
 
 function select(f: Finding): void {
@@ -95,7 +107,7 @@ async function analyse(): Promise<void> {
     viewer.show(result.faces, samePart); // the same file re-analysed keeps the camera
     viewer.setFindings(result.findings);
     viewer.setChecked(checkedFaces(result));
-    viewer.setShowChecked(showChecked.checked);
+    for (const [kind, box] of SWITCHES) viewer.setShowChecked(kind, box.checked);
     shownFile = file;
     const keep = samePart ? result.findings.find((f) => f.id === selected) ?? null : null;
     selected = keep?.id ?? null;
