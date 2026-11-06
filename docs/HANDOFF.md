@@ -39,7 +39,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 ## Next
 
 1. S3 (pockets) in this or a new session, from `main`: `write-spec` step 8 (zero-decision re-check of S3's sections against merged S2 code), no new screen so no mock-up unless the legend gains rows (it does: pockets, corners, D-014). Then checks fail first, build, show per D-009.
-2. NIST library (Morgan, 2026-11-06): on a new branch, commit `docs/nist/CATALOG.md` plus the 4 papers, 3 slide decks, FTC/CTC definition packs and HTC models; research reports are summarised in HANDOFF "Just done" 2026-11-06.
+2. NIST library on `nist-library`, PR [#5](https://github.com/DdraigFawr13/dfma-review/pull/5), approved by Morgan ("incorporate those two resources ... Once all this is done we can move to the next phase"): papers and packs, EDMR subset with scorecard test, SFA fork referenced, reader fix for bare solids. Merge when green, then S3.
 3. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
 
 ## Open questions

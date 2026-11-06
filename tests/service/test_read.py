@@ -7,7 +7,7 @@ import time
 import pytest
 from fastapi.testclient import TestClient
 
-from helpers import PARTS, expected
+from helpers import PARTS, ROOT, expected
 
 from dfma.analyze import ReadError, analyze
 from dfma.app import create_app
@@ -246,3 +246,11 @@ def test_runtime(path):
         elapsed = time.perf_counter() - start
         worker.stop()
     assert elapsed < 10.0, f"{path.name} took {elapsed:.2f} s"
+
+
+def test_solid_without_product_structure():
+    """A 1995 AP203 file whose solid is not under a product (UMD benchmark, tests/edmr) still reads."""
+    path = ROOT / "tests" / "edmr" / "models" / "UMD" / "through_pocket1" / "through_pocket1.step"
+    result = analyze(path, path.name)
+    assert result["part"]["face_count"] == 14
+    assert result["part"]["ignored_solids"] == 0

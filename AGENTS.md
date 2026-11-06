@@ -10,6 +10,7 @@ Shared rules come from AI-Master-Instructions and load through CLAUDE.md (`.clau
 2. `docs/DECISIONS.md`: settled rules. Don't reopen them.
 3. `docs/LESSONS.md`: entries for the area you are about to work in.
 4. `docs/CONCEPT.md`: the chosen concept; its Design brief is where design starts.
+5. `docs/nist/CATALOG.md`: the NIST gold-standard material (D-011), what each file holds, and the answer keys in the papers. Add a NIST file there when a slice uses it.
 
 ## Local checks (run before pushing)
 
