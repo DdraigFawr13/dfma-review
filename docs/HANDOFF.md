@@ -4,7 +4,7 @@ Updated: 2026-11-06. A fresh session must be able to continue from this file alo
 
 ## Phase
 
-Build. Brainstorm (D-001), bootstrap (D-002, #1), design (D-003 to D-006) and the first-version spec (D-007, [docs/specs/first-version.md](specs/first-version.md)) are done and merged in [#2](https://github.com/DdraigFawr13/dfma-review/pull/2). Now: slice S1 on branch `s1-read-and-view`, draft [#3](https://github.com/DdraigFawr13/dfma-review/pull/3).
+Build. Brainstorm (D-001), bootstrap (D-002, #1), design (D-003 to D-006) and the first-version spec (D-007, [docs/specs/first-version.md](specs/first-version.md)) are merged in [#2](https://github.com/DdraigFawr13/dfma-review/pull/2). S1 (read and view) merged in [#3](https://github.com/DdraigFawr13/dfma-review/pull/3), approved by Morgan 2026-11-06. Next: slice S2.
 
 ## Plan map
 
@@ -14,7 +14,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ✔ Bootstrap the master harness (#1).
 - ✔ Design: `planning-interview`, 2 rounds plus approval (D-003 to D-006).
 - ✔ Spec the first usable version (D-007, 6 fresh checks, $1.49).
-- ▶ Build slice by slice: S1 read and view · S2 holes (starts with `ui-style` and the review-screen mock-up) · S3 pockets · S4 thin walls · S5 machine and setups · S6 turning · S7 report and PDF.
+- ▶ Build slice by slice: ✔ S1 read and view · ▶ S2 holes (starts with `ui-style` and the review-screen mock-up) · S3 pockets · S4 thin walls · S5 machine and setups · S6 turning · S7 report and PDF.
 - ○ Assemblies and DFA · history and compare · time and $.
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
@@ -29,8 +29,8 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-1. S1: CI green on 35dc0e8 by manual dispatch ([run 42288057058](https://github.com/DdraigFawr13/dfma-review/actions/runs/42288057058), 1 min 20 s; the PR stays draft until Morgan approves, GIT-07). Waiting on Morgan's device check on their PC (J1: build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate). Approval and merge after that.
-2. Then S2 (holes), starting with `ui-style` and the review-screen mock-up.
+1. S2 (holes) in a new session, from `main`: re-run the zero-decision check on S2's sections against merged S1 code, then `ui-style` (docs/UI_STYLE.md) and the review-screen mock-up (`ui-mockups`), both approved by Morgan before code. Show the slice per D-009 (status page + demo).
+2. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
 3. Morgan: turn on "Allow auto-merge" in the repo settings.
 
 ## Open questions
@@ -45,4 +45,5 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 ## Decisions since the last plan update
 
 - 2026-11-06 Concept chosen (D-001). Full master setup with web-app layer (D-002).
+- 2026-11-06 S1 build: extra packages and micromamba (D-008); slices shown as status page + demo (D-009); S1 merge approved.
 - 2026-11-06 First-version scope (D-003), stack (D-004), rules and units (D-005), company-move gates (D-006), spec approved (D-007).
