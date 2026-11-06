@@ -35,5 +35,5 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 ## D-006 Gates before the company move
 
 - **Status:** Accepted (2026-11-06)
-- **Decision:** Before moving to the company server: ask IT where CAD files may be stored, and whether GitLab CI runners can download packages (conda-forge, PyPI). Other engineers read reports as PDFs until then; no accounts.
+- **Decision:** Before moving to the company server: ask IT where CAD files may be stored, and whether GitLab CI runners can download packages (conda-forge, PyPI, npm). Other engineers read reports as PDFs until then; no accounts.
 - **Why:** company parts may be confidential; the setup depends on package access (round 2 finding, agreed).
