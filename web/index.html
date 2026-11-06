@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DFMA Review</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header class="top">
+      <h1>DFMA Review</h1>
+      <p class="privacy">Your file is analysed on this computer and deleted straight after. Nothing is kept.</p>
+    </header>
+    <main class="layout">
+      <section class="panel" aria-labelledby="upload-title">
+        <h2 id="upload-title">Part</h2>
+        <label for="file">STEP file</label>
+        <input id="file" data-testid="upload-file" type="file" accept=".step,.stp,.STEP,.STP" />
+        <label for="process">Process</label>
+        <select id="process" data-testid="upload-process">
+          <option value="mill">Milling</option>
+          <option value="turn">Turning</option>
+        </select>
+        <label for="material">Material</label>
+        <select id="material" data-testid="upload-material">
+          <option value="al6061">Aluminum 6061</option>
+          <option value="steel1018">Steel 1018/1045</option>
+          <option value="ss304">Stainless 304/316</option>
+          <option value="plastic">Delrin / nylon</option>
+        </select>
+        <p id="status" class="status" role="status" aria-live="polite">Choose a STEP file to start.</p>
+        <p id="error" class="error" data-testid="error-message" role="alert" hidden></p>
+        <dl id="summary" class="summary" hidden>
+          <dt>Name</dt><dd id="part-name"></dd>
+          <dt>Size</dt><dd data-testid="part-size" id="part-size"></dd>
+          <dt>Faces</dt><dd data-testid="face-count" id="face-count"></dd>
+          <dt>Units in file</dt><dd id="part-units"></dd>
+        </dl>
+      </section>
+      <section class="viewer" aria-label="3D view of the part">
+        <canvas data-testid="viewer-canvas" id="viewer"></canvas>
+        <p class="hint">Drag to rotate, scroll to zoom, right-drag to pan.</p>
+      </section>
+      <section class="panel" aria-labelledby="findings-title">
+        <h2 id="findings-title">Findings</h2>
+        <p id="findings-empty">No findings yet.</p>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

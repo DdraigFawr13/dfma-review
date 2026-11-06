@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dfma"
+version = "0.1.0"
+description = "DFMA Review: STEP part review service"
+requires-python = ">=3.12"
+# Dependencies come from environment.yml (conda-forge); pythonocc-core is not on PyPI.
+dependencies = []
+
+[tool.setuptools.packages.find]
+include = ["dfma*"]

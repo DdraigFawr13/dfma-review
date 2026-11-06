@@ -13,11 +13,12 @@ Shared rules come from AI-Master-Instructions and load through CLAUDE.md (`.clau
 
 ## Local checks (run before pushing)
 
-- Every push: `node .claude/master/sync.mjs --check`. The app's own check command is added once the stack is chosen in design.
+- Every push: `python scripts/check.py` inside the `dfma` environment (drift check, service tests, web check and build, browser tests).
+- Cloud sessions have no conda: install micromamba from conda-forge (D-008), build `environment.yml`, and set `DFMA_CHROMIUM` to the preinstalled Chromium (`/opt/pw-browsers/chromium-*/chrome-linux64/chrome`).
 
 ## What CI runs
 
-- **CI** (`ci.yml`): the master drift check on every PR update (non-draft) and `main` push. Markdown and `docs/**` changes skip it.
+- **CI** (`ci.yml`): one Linux job runs `scripts/check.py` on every PR update (non-draft) and `main` push, with the conda environment cached. Markdown and `docs/**` changes skip it.
 - No deploys yet.
 
 ## Project rules

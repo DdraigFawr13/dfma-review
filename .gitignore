@@ -10,3 +10,8 @@
 .env
 .env.*
 !.env.example
+/web/node_modules/
+/web/dist/
+__pycache__/
+*.egg-info/
+/.pytest_cache/
