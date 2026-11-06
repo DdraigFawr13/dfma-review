@@ -1,7 +1,7 @@
 # First usable version: STEP part review
 
-- **Status:** Draft
-- **Planned in:** [design round 1](https://claude.ai/artifact/4Xa6iLguwU2pnXQXCAYydk), [round 2](https://claude.ai/artifact/LEGMPWU3Avt4E9pjnSvbhG), [approval](https://claude.ai/artifact/WDr91uJChvS9RkBziPWDHo) (2026-11-06). **Decisions:** D-001, D-003, D-004, D-005, D-006.
+- **Status:** Approved 2026-11-06 ([spec approval](https://claude.ai/artifact/CAqfoCYn9pSSxkBHn4peGb))
+- **Planned in:** [design round 1](https://claude.ai/artifact/4Xa6iLguwU2pnXQXCAYydk), [round 2](https://claude.ai/artifact/LEGMPWU3Avt4E9pjnSvbhG), [approval](https://claude.ai/artifact/WDr91uJChvS9RkBziPWDHo) (2026-11-06). **Decisions:** D-001, D-003, D-004, D-005, D-006, D-007.
 
 ## Problem
 
