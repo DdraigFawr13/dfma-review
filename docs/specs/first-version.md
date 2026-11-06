@@ -64,15 +64,17 @@ name = "deep_hole"            # file tests/parts/deep_hole.step
 units = "mm" | "inch"         # units the file is written in
 process = "mill"              # default "mill"
 material = "al6061"           # default "al6061"; a part may repeat with another material
-face_count = 9
+face_count = 9                # from the analysis response
+features = { hole = 1, pocket = 0, corner = 0, wall = 0 }   # feature counts by kind; fails against the empty stub
 machine = "3-axis mill"       # optional until S5
-setups = [["+Z", ["probe:x,y,z", ...]], ...]   # optional until S5; features named by a probe point
-tool_loads = 3                # optional until S5
+setups = [{ dir = "+Z", probes = [[x, y, z], ...] }, ...]   # optional until S5; features named by probe points
+tools = ["dr-0.2500", "em-0.250"]   # optional until S5
+tool_changes = 3              # optional until S5
 [[part.finding]]              # none listed = clean part
 rule = "hole_depth"
 severity = "medium"
 measured = 8.0
-probe_mm = [10.0, 5.0, 3.0]   # a point on one of the finding's faces, matched within 0.01 mm
+probe_mm = [10.0, 5.0, 3.0]   # file coordinates, mm; matches the face within 0.01 mm of it on the exact B-rep (BRepExtrema), not the mesh
 ```
 
 ### J4 Machine, setups, tools and tool changes
@@ -104,7 +106,7 @@ probe_mm = [10.0, 5.0, 3.0]   # a point on one of the finding's faces, matched w
 - **Given** the app is running
 - **When** Morgan uploads `not_step.step` (a text file), `no_solid.step` (a single face, no solid), or a file over 50 MB
 - **Then** the app shows "This is not a STEP file this tool can read", "No solid found in this file" or "File is larger than 50 MB", and keeps working. An analysis that runs past its time limit stops with "This file took too long to analyse".
-- **Check:** `tests/service/test_read.py::test_bad_files` and `test_time_limit`. The time-limit test calls `analyze(path, time_limit_s=0.001)`.
+- **Check:** `tests/service/test_read.py::test_bad_files` and `test_time_limit`. The time-limit test calls `run_analysis(path, "box_through_hole.step", "mill", "al6061", time_limit_s=0.001)` on a warm worker.
 
 ## Decisions
 
@@ -141,30 +143,31 @@ probe_mm = [10.0, 5.0, 3.0]   # a point on one of the finding's faces, matched w
 
 - `environment.yml` (conda-forge only):
   - pins `python=3.12`, `pythonocc-core=8.0.1.2` and `nodejs=22`
-  - pins `fastapi`, `uvicorn`, `python-multipart`, `pytest`, `httpx`, `playwright` and `pypdf`
+  - pins `fastapi`, `uvicorn`, `python-multipart`, `pytest`, `httpx`, `playwright`, `pytest-playwright` and `pypdf`
   - installs the service with a pip entry, `-e ./service`
   - S1 resolves each package to an exact version and writes it in
 - `service/pyproject.toml` and the package `service/dfma/`:
   - `__main__.py`: the `start` command.
   - `app.py`: the FastAPI routes.
-  - `analyze.py`: `analyze(path, process="mill", material="al6061", time_limit_s=60)` runs everything below in the worker and returns the response dict. It raises `AnalysisTimeout` past the limit and `ReadError(message)` for J7 inputs; `app.py` maps both to 422. Until a slice adds them, `features`, `findings`, `setups`, `operations`, `tools` and `cost_drivers` are empty lists, `machine` is null and `tool_changes` is 0.
+  - `analyze.py`: `analyze(path, name, process="mill", material="al6061")` runs everything below in the current process and returns the response dict; `name` is the uploaded file name. It raises `ReadError(message)` for J7 inputs.
+  - `worker.py`: `run_analysis(path, name, process, material, time_limit_s=60)` sends the job to the warm worker, enforces the limit and raises `AnalysisTimeout`. `app.py` calls only `run_analysis` and maps both errors to 422. Until a slice adds them, `features`, `findings`, `setups`, `operations`, `tools` and `cost_drivers` are empty lists, `machine` is null and `tool_changes` is 0.
   - `read.py`, `frame.py`, `mesh.py`, `features.py`, `tools.py`, `plan.py`, `turning.py`, `drivers.py`, `settings.py`, `units.py`.
   - `rules/`: one module per rule.
 - `config/thresholds.toml`, `config/tools.toml`, `config/drivers.toml`: editable settings, described below.
 - `web/`:
   - Vite + TypeScript + three.js + jsPDF, with `package.json` and `package-lock.json` exact-pinned in S1
   - source files `src/main.ts`, `src/viewer.ts`, `src/findings.ts`, `src/report.ts` and `src/api.ts`
-  - `npm run check` runs `tsc --noEmit` and `vitest run --passWithNoTests`
-  - test hooks: `data-testid` on `upload-file`, `upload-process`, `upload-material`, `part-size`, `face-count`, `finding-<id>` and `export-pdf`; `window.__dfma` exposes `highlightedFaces()` and `cameraTarget()` for e2e checks
-- `tests/parts/make_parts.py`: builds every test part with OpenCascade and writes the STEP files and `expected.toml`. Both are committed.
-- `tests/service/` and `tests/e2e/`: pytest, with e2e tests marked `e2e` and run through Playwright for Python. A root `pytest.ini` registers the marker; an e2e fixture in `tests/e2e/conftest.py` starts the app on 127.0.0.1:8765. Browsers are installed once with `python -m playwright install chromium`, written in the README and in CI. The cloud session uses its preinstalled Chromium.
+  - `npm run check` runs `tsc --noEmit` and `vitest run`; S1 adds `web/src/format.test.ts` (inch and fraction formatting)
+  - test hooks: `data-testid` on `upload-file`, `upload-process`, `upload-material`, `viewer-canvas`, `part-size`, `face-count`, `error-message`, `finding-<id>` and `export-pdf`; `window.__dfma.highlightedFaces(): number[]` and `window.__dfma.cameraTarget(): [x, y, z]` (mm, file coordinates). "Frames the faces" means the camera target is within 1 mm of the centre of those faces' bounding box.
+- `tests/parts/make_parts.py`: builds every test part with OpenCascade and writes the STEP files and `expected.toml` (with a small string writer in the script, no TOML library; reading uses the standard `tomllib`). Both are committed.
+- `tests/service/` and `tests/e2e/`: pytest, with e2e tests marked `e2e` and run through Playwright for Python. A root `pytest.ini` registers the marker. `pytest-playwright` (pinned in `environment.yml`) gives the `page` fixture; `tests/e2e/conftest.py` starts the app with `python -m dfma start --no-build --port 8765` against a prebuilt `web/dist`. Browsers are installed once with `python -m playwright install chromium`, written in the README and in CI. The cloud session uses its preinstalled Chromium.
 - `scripts/check.py`: runs every local check in order and stops at the first failure. Cross-platform, Python only.
 
 ### Start
 
-`python -m dfma start [--no-build]` does three things:
+`python -m dfma start [--no-build] [--port 8000]` does three things:
 1. It runs `npm ci` and `npm run build` in `web/` when `web/dist` is missing, unless `--no-build` is given.
-2. It serves `web/dist` and the API with uvicorn on 127.0.0.1:8000.
+2. It serves `web/dist` and the API with uvicorn on 127.0.0.1 at the given port (default 8000).
 3. It prints the URL.
 
 ### Flow
@@ -182,12 +185,13 @@ probe_mm = [10.0, 5.0, 3.0]   # a point on one of the finding's faces, matched w
    - With several solids, it keeps the largest by volume and counts the rest in `ignored_solids`.
    - It reads the length unit, converts to mm and gives face ids from 0 in `TopExp.MapShapes(shape, TopAbs_FACE)` order. Ids hold within one analysis only.
 5. `frame.py` sets the part frame:
-   - +Z is the outward normal of the largest-area planar face (ties: lowest face id).
-   - +X is the outward normal of the largest planar face perpendicular to Z, within 0.5° (ties: lowest face id).
+   - +Z is the outward normal of the largest-area planar face (areas within 0.1% tie; ties go to the lowest face id).
+   - +X is the outward normal of the largest planar face perpendicular to Z, within 0.5° (same tie rule).
    - Y is Z × X.
-   - With no planar faces, Z is the axis carrying the most cylinder and cone area.
-   - With no planar face perpendicular to Z, +X is the file axis (X, then Y) most perpendicular to Z, projected onto the plane normal to Z.
-   - `bbox_in` is the part's three extents in this frame, shown largest first.
+   - With no planar faces, Z is the axis carrying the most cylinder and cone area, pointing towards the end with more face area at its extreme. `turn_axis` uses the same sign rule.
+   - With no planar face perpendicular to Z, +X is the file X axis projected onto the plane normal to Z, or the file Y axis if file X is within 10° of Z.
+   - `bbox_in` holds the extents along frame X, Y and Z, measured by projecting the mesh vertices; the screen shows them largest first.
+   - `faces.positions` are in file coordinates, mm.
    - All directions below (±X ±Y ±Z) are in this frame.
 6. `mesh.py` triangulates with `BRepMesh_IncrementalMesh` (linear deflection 0.05 mm, angular deflection 0.5 rad; assumption). The renderer keeps `preserveDrawingBuffer: true` from S1 onwards.
 7. The analysis then runs in order:
@@ -210,7 +214,7 @@ probe_mm = [10.0, 5.0, 3.0]   # a point on one of the finding's faces, matched w
                   "kind": str, "faces": [int], "axis": [x,y,z] | null,
                   "open_dirs": ["+Z", ...], "open_vectors": [[x,y,z], ...], "dims_mm": {name: float} } ],
   "findings": [ { "id": "F1", "rule": str, "severity": "high"|"medium"|"low",
-                  "title": str, "measured": float, "limit": float, "unit": "in"|"ratio",
+                  "title": str, "measured": float, "limit": float, "unit": "in"|"ratio"|"deg"|"%",
                   "faces": [int], "feature": str, "threshold_source": str, "suggestion": str } ],
   "machine":  "3-axis mill"|"4/5-axis mill or fixture"|"lathe"|"lathe with live tooling"|null,
   "turn_axis": [x,y,z] | null,
@@ -231,7 +235,8 @@ probe_mm = [10.0, 5.0, 3.0]   # a point on one of the finding's faces, matched w
 ### Features (analytic faces only)
 
 - **Hole:** connected concave cylindrical faces (sharing edges) with the same axis (within 0.5°) and radius (within 0.001 mm). Split half-cylinders merge into one hole; two same-size holes with material between them stay two holes. After merging, the faces must span the full 360°, so a pocket-corner fillet is never a hole.
-  - `open_vectors` lists every open end's direction; `open_dirs` lists those that match ±X ±Y ±Z of the frame within 0.5°. An end that opens onto a pocket face counts as open in that pocket's direction.
+  - An end is open when its circular edge borders a face that isn't part of the same hole chain (an outer face or a pocket face). Its direction is the axis pointing out of the material at that end; an end on a pocket face takes the pocket's open direction instead.
+  - `open_vectors` lists every open end's direction; `open_dirs` lists those that match ±X ±Y ±Z of the frame within 0.5°. The segments of a stepped hole are one chain, and every segment takes the chain's open ends.
   - Depth of a stepped segment is its own length along the axis.
   - A stepped hole is one hole feature per diameter segment.
   - A cone bottom (drill point) is part of the hole. Its depth is measured to where the cone starts, and the cone is recorded in `dims_mm.point_mm`.
@@ -252,8 +257,8 @@ probe_mm = [10.0, 5.0, 3.0]   # a point on one of the finding's faces, matched w
 - **Turned profile** (turn only):
   - The axis is the one shared by the most cylinder and cone area.
   - The diameter is the largest outer diameter; the length is the extent along the axis. A thin section behind a large head can read as stocky: this is listed in `assumptions`.
-  - If that axis's cylinder and cone area is under 40% of the part's total face area (assumption), the finding is "No turning axis found; check the process" (high). `block_as_turn` is the 2 × 1 × 0.5 in block with one 0.250 in hole, uploaded for turning.
-- **Groove** (turn only): a cylindrical floor on the axis whose radius is smaller than the cylinders on both sides, between two planar faces perpendicular to the axis (external or internal). Its width is the distance between those faces.
+  - If that axis's cylinder and cone area is under 40% of the part's total face area (assumption), rule `turn_axis` gives "No turning axis found; check the process" (high; measured the share in %, limit 40, unit `%`). Then only the shared rules run. `block_as_turn` is the 2 × 1 × 0.5 in block with one 0.250 in hole, uploaded for turning.
+- **Groove** (turn only): a cylindrical floor on the axis that is deeper than the cylinders on both sides (smaller radius outside, larger radius in a bore), between two planar faces perpendicular to the axis (external or internal). Its width is the distance between those faces.
 - **Bore** (turn only): an on-axis hole of 0.500 in diameter or more. An on-axis hole is either a bore (0.500 in and over) or a hole (under 0.500 in), never both; `hole_depth` applies to it once.
 
 ### Tools (`tools.py`, `config/tools.toml`)
@@ -264,7 +269,8 @@ probe_mm = [10.0, 5.0, 3.0]   # a point on one of the finding's faces, matched w
 - **`pick_end_mill(min_corner_radius, narrowest_width)`:** returns the largest end mill whose radius is at most the corner radius and whose diameter is at most the width.
 - **When nothing fits:** for example a sharp corner, it returns the smallest end mill with `undersized: true`.
 - **Use:** S2 adds `tools.py` with drills; S3 adds end mills and `pick_end_mill` for `pocket_depth`; S5's `plan.py` and S6's `turning.py` reuse it. `tools.toml` holds the drill ranges and steps, the end-mill list and the turning tools.
-- **Hole tools:** a hole with no matching drill gets `pick_end_mill(radius=hole radius, narrowest_width=hole diameter)`.
+- **Hole tools:** a hole with no matching drill gets `pick_end_mill(min_corner_radius=hole radius, narrowest_width=hole diameter)`.
+- **Pocket inputs:** `min_corner_radius` is the smallest corner radius in the pocket; `narrowest_width` is the smallest distance between two non-adjacent walls (`BRepExtrema_DistShapeShape`).
 
 ### Rules
 
@@ -273,13 +279,13 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
 - **`hole_depth`:** depth ÷ diameter over 6.0 is medium; over 10.0 is high.
 - **`hole_size`:** flags a diameter that matches no drill in `tools.toml` within 0.0005 in. Medium. The suggestion gives the nearest drill.
 - **`corner_radius`:**
-  - One finding per corner.
-  - A sharp corner (radius 0) is high: "needs EDM or a corner radius", and gets no other corner finding.
+  - One finding per corner, at the worst severity that applies; its title names every reason.
+  - A sharp corner (radius 0) is high: "needs EDM or a corner radius", measured 0 in, limit 0.0313 in.
   - A radius under 0.0313 in (1/32 in) is medium.
-  - If the radius is over 0 and depth ÷ (2 × radius) is over 4.0, that is also medium: the tool that fits is long and thin.
+  - If the radius is over 0 and depth ÷ the diameter of the end mill `pick_end_mill` returns is over 4.0, that is also a medium reason: the tool that fits is long and thin.
 - **`pocket_depth`:** pocket depth ÷ the diameter from `pick_end_mill` is over 3.0. Medium. An undersized pick adds "smallest tool used" to the suggestion.
 - **`thin_wall`:** thickness under 0.030 in (`al6061`), 0.020 in (`steel1018`, `ss304`) or 0.060 in (`plastic`). High.
-- **`access`:** a hole or pocket with no `open_dirs` along ±X ±Y ±Z of the part frame (within 0.5°). High: "needs a 4/5-axis mill or a fixture". It sets `machine` to "4/5-axis mill or fixture".
+- **`access`:** a hole or pocket with no `open_dirs` along ±X ±Y ±Z of the part frame (within 0.5°). Measured: the angle in degrees between its nearest open vector and the nearest frame axis; limit 0.5; unit `deg`. High: "needs a 4/5-axis mill or a fixture". It sets `machine` to "4/5-axis mill or fixture".
 - **`turn_slender`:** length ÷ diameter over 4.0 is medium; over 8.0 is high.
 - **`turn_offaxis`:** flags a hole or pocket whose axis is not coaxial with the turning axis. Coaxial means within 0.5°, with an offset of 0.001 in or less. Medium: "needs a milling operation or live tooling". It sets `machine` to "lathe with live tooling".
 
@@ -323,7 +329,8 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
   - off-axis features
   - features needing 4/5-axis
 - **Scoring:** each driver's score is its count × its weight from `drivers.toml`. The starting weights are labelled `estimate`.
-- **Display:** the report shows each driver with a count above 0, with its count, weight and score, sorted by score and then by driver name. Driver names are the bullets above, in `drivers.toml` keys `extra_setups`, `distinct_tools`, `small_tools`, `deep_holes`, `odd_holes`, `thin_walls`, `small_corners`, `off_axis`, `multi_axis`. A feature can count under more than one driver, because each driver is a separate cost.
+- **Counts:** `extra_setups` is setups − 1; `distinct_tools` is the number of tools; every other driver counts its findings (or `undersized` tools for `small_tools`). Every starting weight is 1.0 (`estimate`).
+- **Display:** the response and the report hold only drivers with a count above 0, with their label, count, weight and score, sorted by score (high first) and then by key (A to Z). Driver names are the bullets above, in `drivers.toml` keys `extra_setups`, `distinct_tools`, `small_tools`, `deep_holes`, `odd_holes`, `thin_walls`, `small_corners`, `off_axis`, `multi_axis`. A feature can count under more than one driver, because each driver is a separate cost.
 
 ### Units
 
@@ -351,7 +358,8 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
   - `service/dfma/{__main__,app,analyze,read,frame,mesh,units,settings}.py`
   - `web/`: the scaffold, with the upload panel (file, process, material) and the viewer
   - `tests/parts/make_parts.py`: `box_through_hole`, `box_inch`, `not_step`, `no_solid`
-  - `tests/service/test_read.py`, `tests/e2e/test_view.py`
+  - `tests/service/test_read.py`, `tests/e2e/test_view.py`, `tests/e2e/conftest.py`, `pytest.ini`
+  - `service/dfma/worker.py`
   - `scripts/check.py`
   - `.github/workflows/ci.yml`: a micromamba job using `mamba-org/setup-micromamba`, pinned to a full commit SHA under the `efficient-github-actions` skill, plus the Playwright browser install
   - `AGENTS.md`: the local checks
