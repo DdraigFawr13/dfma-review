@@ -18,7 +18,7 @@ NO_SOLID = "No solid found in this file"
 TOO_LARGE = "File is larger than 50 MB"
 TOO_LONG = "This file took too long to analyse"
 
-EMPTY_UNTIL_LATER = ("features", "findings", "setups", "operations", "tools", "cost_drivers")
+EMPTY_UNTIL_LATER = ("setups", "operations", "tools", "cost_drivers")  # features and findings arrive in S2
 
 
 def check_box(result: dict, name: str, units: str) -> None:
@@ -70,6 +70,9 @@ def check_box(result: dict, name: str, units: str) -> None:
 
     for key in EMPTY_UNTIL_LATER:
         assert result[key] == []
+    # S2: one hole, 1/4 in (6.35 mm), a standard drill in both files (D-013).
+    assert [f["kind"] for f in result["features"]] == ["hole"]
+    assert result["findings"] == []
     assert result["machine"] is None
     assert result["turn_axis"] is None
     assert result["tool_changes"] == 0

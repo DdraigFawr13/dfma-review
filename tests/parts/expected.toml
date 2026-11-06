@@ -11,3 +11,96 @@ name = "box_inch"
 units = "inch"
 face_count = 7
 features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+
+[[part]]
+name = "deep_hole"
+units = "inch"
+face_count = 8
+features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+[[part.finding]]
+rule = "hole_depth"
+severity = "medium"
+measured = 8.0
+probe_mm = [15.875, 12.7, 38.1]
+
+[[part]]
+name = "very_deep_hole"
+units = "inch"
+face_count = 8
+features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+[[part.finding]]
+rule = "hole_depth"
+severity = "high"
+measured = 11.0
+probe_mm = [15.875, 12.7, 50.8]
+
+[[part]]
+name = "odd_hole"
+units = "inch"
+face_count = 7
+features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+[[part.finding]]
+rule = "hole_size"
+severity = "medium"
+measured = 0.26
+probe_mm = [28.702, 12.7, 6.35]
+
+[[part]]
+name = "fillet_not_hole"
+units = "inch"
+face_count = 15
+features = { hole = 0, pocket = 0, corner = 0, wall = 0 }
+
+[[part]]
+name = "odd_metric_hole"
+units = "mm"
+face_count = 7
+features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+[[part.finding]]
+rule = "hole_size"
+severity = "medium"
+measured = 0.2579
+probe_mm = [28.275, 12.5, 6.0]
+
+[[part]]
+name = "metric_hole"
+units = "mm"
+face_count = 7
+features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+
+[[part]]
+name = "flat_bottom_hole"
+units = "inch"
+face_count = 8
+features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+
+[[part]]
+name = "two_holes_web"
+units = "inch"
+face_count = 10
+features = { hole = 2, pocket = 0, corner = 0, wall = 0 }
+
+[[part]]
+name = "split_hole"
+units = "inch"
+face_count = 8
+features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+
+[[part]]
+name = "stepped_hole"
+units = "inch"
+face_count = 9
+features = { hole = 2, pocket = 0, corner = 0, wall = 0 }
+
+[[part]]
+name = "drill_point_hole"
+units = "inch"
+face_count = 8
+features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+point_mm = 1.9077
+
+[[part]]
+name = "clean_holes"
+units = "inch"
+face_count = 8
+features = { hole = 2, pocket = 0, corner = 0, wall = 0 }

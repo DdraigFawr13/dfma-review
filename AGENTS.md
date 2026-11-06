@@ -14,7 +14,7 @@ Shared rules come from AI-Master-Instructions and load through CLAUDE.md (`.clau
 ## Local checks (run before pushing)
 
 - Every push: `python scripts/check.py` inside the `dfma` environment (drift check, service tests, web check and build, browser tests).
-- Cloud sessions have no conda: install micromamba from conda-forge (D-008), build `environment.yml`, and set `DFMA_CHROMIUM` to the preinstalled Chromium (`/opt/pw-browsers/chromium-*/chrome-linux64/chrome`).
+- Cloud sessions have no conda. The "Network" environment's setup script builds the env at `/opt/mamba/envs/dfma` on a fresh container; if it is missing, install micromamba from conda-forge (D-008) and build `environment.yml` yourself. Set `DFMA_CHROMIUM` to the preinstalled Chromium (`/opt/pw-browsers/chromium-*/chrome-linux64/chrome`).
 
 ## What CI runs
 

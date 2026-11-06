@@ -1,4 +1,4 @@
-// POST /api/analyze (spec Flow and Response schema). Only the S1 fields are typed so far.
+// POST /api/analyze (spec Flow and Response schema). Typed so far: the S1 and S2 fields.
 
 export type Process = "mill" | "turn";
 export type Material = "al6061" | "steel1018" | "ss304" | "plastic";
@@ -22,8 +22,36 @@ export interface Analysis {
     frame: { x: number[]; y: number[]; z: number[] };
   };
   faces: Face[];
-  findings: unknown[];
+  features: Feature[];
+  findings: Finding[];
+  rules_run: string[];
   assumptions: string[];
+}
+
+export type Severity = "high" | "medium" | "low";
+
+export interface Feature {
+  id: string;
+  kind: string;
+  faces: number[];
+  axis: number[] | null;
+  open_dirs: string[];
+  open_vectors: number[][];
+  dims_mm: Record<string, number>;
+}
+
+export interface Finding {
+  id: string;
+  rule: string;
+  severity: Severity;
+  title: string;
+  measured: number;
+  limit: number;
+  unit: "in" | "ratio" | "deg" | "%";
+  faces: number[];
+  feature: string;
+  threshold_source: string;
+  suggestion: string;
 }
 
 export class ApiError extends Error {}

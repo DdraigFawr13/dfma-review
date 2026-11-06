@@ -1,12 +1,15 @@
-"""Fixed settings. Editable thresholds arrive in config/*.toml from S2."""
+"""Fixed settings, plus loaders for the editable config/*.toml files (thresholds, tools)."""
 
 from __future__ import annotations
 
+import tomllib
+from functools import cache
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 WEB_DIR = REPO_ROOT / "web"
 DIST_DIR = WEB_DIR / "dist"
+CONFIG_DIR = REPO_ROOT / "config"
 
 HOST = "127.0.0.1"
 DEFAULT_PORT = 8000
@@ -32,3 +35,18 @@ ASSUMPTIONS = [
     "Exterior profiles, steps, open-sided pockets, threads, floor fillets and thin cylindrical shells "
     "are not planned or ruled on in this version.",
 ]
+
+
+@cache
+def _toml(name: str) -> dict:
+    with open(CONFIG_DIR / name, "rb") as f:
+        return tomllib.load(f)
+
+
+def thresholds(material: str) -> dict:
+    """The rule limits for one material, from config/thresholds.toml."""
+    return _toml("thresholds.toml")[material]
+
+
+def tools_config() -> dict:
+    return _toml("tools.toml")

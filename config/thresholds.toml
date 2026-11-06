@@ -1,0 +1,22 @@
+# Rule limits per material (D-005). Every starting value is an estimate; Morgan or a shop
+# manager may change them (spec open question 3). Each table names its source.
+
+[al6061.hole_depth]   # depth / diameter: over medium is medium, over high is high
+medium = 6.0
+high = 10.0
+source = "estimate"
+
+[steel1018.hole_depth]
+medium = 6.0
+high = 10.0
+source = "estimate"
+
+[ss304.hole_depth]
+medium = 6.0
+high = 10.0
+source = "estimate"
+
+[plastic.hole_depth]
+medium = 6.0
+high = 10.0
+source = "estimate"
