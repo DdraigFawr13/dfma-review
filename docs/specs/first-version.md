@@ -499,5 +499,5 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
 ## Open questions
 
 1. Which CAD exports Morgan's real STEP files, and which version? A real part can be tried from S2 onwards, and S7 needs one.
-2. Public test models (NIST MBE PMI): their licence is not checked. Check it before S1 commits any public file (SAFE-05). If it fails, S1 uses generated parts only.
+2. ~~Public test models (NIST MBE PMI): licence not checked.~~ Settled 2026-11-06 (D-011): usable without restrictions, and they are the gold standard. How they are stored is open (HANDOFF).
 3. The starting thresholds and driver weights are estimates. Morgan or a shop manager may change them after S2-S5.
