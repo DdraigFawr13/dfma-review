@@ -20,6 +20,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
+- 2026-11-06 Layout and style research (general-purpose agent): 9 tools; every DFM tool uses a large 3D view, a findings list beside it and click to highlight; almost no published user opinion on layout (G2, Capterra, Gartner returned 403). Mock-up fresh check: 4 fixes queued (see Next).
 - 2026-11-06 Morgan added a setup script to the "Network" environment: micromamba at `/opt/micromamba/bin/micromamba`, env at `/opt/mamba/envs/dfma` (fresh containers only; checked with get_environment).
 - 2026-11-06 S2 zero-decision check on S2's sections against the merged S1 code (fresh reviewer): 4 high, 5 medium, 2 low. One went to Morgan (holes above the drill range); the rest get defaults listed on the form and written into the spec's S2 "Settled at build". It also found that S2 breaks `test_read.py`'s empty `features`/`findings` asserts, which S2 must update on purpose. Baseline on `main`: `scripts/check.py` all pass (13 service, 5 unit, 2 browser).
 - 2026-11-06 S1 built on `s1-read-and-view`: service (read, frame, mesh, worker, upload limit), web viewer, 4 test parts, `scripts/check.py`, CI with micromamba. Zero-decision check: 3 high, 7 medium, 5 low; all given defaults in the spec's S1 "Settled at build" list. Checks failed first (`No module named 'dfma'`), now all 5 pass in a fresh environment (11 service, 5 unit, 2 browser tests). Playwright pinned to 1.60.0 (driver and Python client must match; 1.64.1 needs Node 24+). D-008: extra packages and micromamba, approved by Morgan. Fresh spec review: 0 high, 4 medium, 7 low; 9 fixed with tests, 2 declined (turning-axis sign rule waits for S6's shaft parts; no request cancelling for one local user).
@@ -31,7 +32,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-1. S2 (holes) on `s2-holes`: waiting for Morgan's [S2 form](https://claude.ai/artifact/7E7WfzWghKK6UF2kvhqUWZ) (collection `s2gaps`: taste board, screen minimums, holes above the drill range). Then write docs/UI_STYLE.md, the review-screen mock-up (`ui-mockups`) for approval, checks fail first, build, draft PR. Show the slice per D-009 (update the S1 status and demo pages).
+1. S2 (holes) on `s2-holes`, draft [#4](https://github.com/DdraigFawr13/dfma-review/pull/4): style picked (D-010, `docs/UI_STYLE.md`). Morgan asked for researched layout and style options: waiting for the [options board](https://claude.ai/artifact/EUxCGkamBk28VYfGe2CWD3) (collection `layout1`: 7 layouts, 5 styles, lead picks, extras). Then redo `mockups/review-screen.html` in the picks, fixing the first fresh check's findings (3-decimal drill size, severity colour on unselected faces, stack only below 900 px, missing high and J7 states), fact check, lint, fresh check, approval. Then spec S2 "Settled at build", checks fail first, build. Show the slice per D-009.
 2. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
 
 ## Open questions
