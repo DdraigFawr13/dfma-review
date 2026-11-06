@@ -20,6 +20,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
+- 2026-11-06 S2 zero-decision check on S2's sections against the merged S1 code (fresh reviewer): 4 high, 5 medium, 2 low. One went to Morgan (holes above the drill range); the rest get defaults listed on the form and written into the spec's S2 "Settled at build". It also found that S2 breaks `test_read.py`'s empty `features`/`findings` asserts, which S2 must update on purpose. Baseline on `main`: `scripts/check.py` all pass (13 service, 5 unit, 2 browser).
 - 2026-11-06 S1 built on `s1-read-and-view`: service (read, frame, mesh, worker, upload limit), web viewer, 4 test parts, `scripts/check.py`, CI with micromamba. Zero-decision check: 3 high, 7 medium, 5 low; all given defaults in the spec's S1 "Settled at build" list. Checks failed first (`No module named 'dfma'`), now all 5 pass in a fresh environment (11 service, 5 unit, 2 browser tests). Playwright pinned to 1.60.0 (driver and Python client must match; 1.64.1 needs Node 24+). D-008: extra packages and micromamba, approved by Morgan. Fresh spec review: 0 high, 4 medium, 7 low; 9 fixed with tests, 2 declined (turning-axis sign rule waits for S6's shaft parts; no request cancelling for one local user).
 - 2026-11-06 Phone pages for Morgan: [S1 status](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu), [view-only demo](https://claude.ai/artifact/KnnLF3YAHp5ZCmNuVWyvP4) (real viewer, test parts analysed in advance; refresh after each slice).
 - 2026-11-06 Brainstorm pages: [open questions](https://claude.ai/artifact/BAQurJCWYqGxEZJehD7uGB), [concepts](https://claude.ai/artifact/Mgi7WVFxTne89GD9ZkjzGe), [round 1](https://claude.ai/artifact/QRrJhDYjzW3NapQUBGR6rH). Brief committed as `main`'s first commit (f27c508).
@@ -29,9 +30,8 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-1. S2 (holes) in a new session, from `main`: re-run the zero-decision check on S2's sections against merged S1 code, then `ui-style` (docs/UI_STYLE.md) and the review-screen mock-up (`ui-mockups`), both approved by Morgan before code. Show the slice per D-009 (status page + demo).
+1. S2 (holes) on `s2-holes`: waiting for Morgan's [S2 form](https://claude.ai/artifact/7E7WfzWghKK6UF2kvhqUWZ) (collection `s2gaps`: taste board, screen minimums, holes above the drill range). Then write docs/UI_STYLE.md, the review-screen mock-up (`ui-mockups`) for approval, checks fail first, build, draft PR. Show the slice per D-009 (update the S1 status and demo pages).
 2. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
-3. Morgan: turn on "Allow auto-merge" in the repo settings.
 
 ## Open questions
 
