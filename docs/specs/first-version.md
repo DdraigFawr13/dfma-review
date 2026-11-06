@@ -340,7 +340,7 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
 
 ### Web page
 
-- **Layout:** one screen. At 1280 px width the upload panel (file, process, material) is on the left, the three.js viewer in the middle and the findings list on the right. Below 900 px they stack.
+- **Layout:** one screen ([approved mock-up](https://claude.ai/artifact/2upjSXCWKez2VVsedPVZbH), D-012). A bar on top holds the file, process and material controls and the part size, faces and units; under it a verdict line counts findings by severity and says how many features were checked and which rules ran. At 1280 px the three.js viewer is on the left and the findings on the right, grouped by severity (high, then medium). Below 900 px the findings stack under the viewer. While a finding is selected, the rest of the part is drawn faded (opacity 0.35).
 - **Faces:** faces with a finding are coloured by severity and also carry a severity label, so colour isn't the only signal (APP-02).
 - **Clicking a finding** highlights its faces in the accent colour and frames the camera on them (`viewer.ts`, in S2).
 - **Export PDF** captures the canvas once per finding, with that finding highlighted, and builds the PDF with jsPDF (`report.ts`, in S7).
@@ -405,7 +405,31 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
   - `tests/service/test_rules.py`, `tests/service/test_expected.py`, `tests/e2e/test_findings.py`
   - new test parts and their `expected.toml` entries
   - `docs/UI_STYLE.md`
-- **Waits on:** S1, and Morgan's approval of `docs/UI_STYLE.md` (`ui-style` skill) and of the review-screen mock-up (`ui-mockups` skill), both made at the start of this slice.
+- **Waits on:** S1, and Morgan's approval of `docs/UI_STYLE.md` (`ui-style` skill) and of the review-screen mock-up (`ui-mockups` skill), both made at the start of this slice. Done: style D-010; layout D-012; mock-up approved by Morgan 2026-11-06 ("I approve of the design").
+- **Settled at build (zero-decision check against the merged S1 code, 2026-11-06; Morgan's form D-010):**
+  - Test parts (inch files unless marked mm; holes centred on the +Z face unless stated; all clean unless a finding is named):
+    - `deep_hole`: 1.000 × 1.000 × 2.500 in block, a 0.250 in flat-bottom hole 2.000 in deep. `hole_depth` medium, measured 8.0.
+    - `very_deep_hole`: 1.000 × 1.000 × 3.250 in, 0.250 in flat-bottom, 2.750 in deep. `hole_depth` high, measured 11.0.
+    - `odd_hole`: 2.000 × 1.000 × 0.500 in, a 0.2600 in through hole. `hole_size` medium, measured 0.26.
+    - `box_through_hole` (S1, mm file, 6.35 mm hole): `hole_size` medium, measured 0.25; `box_inch` stays clean.
+    - `fillet_not_hole`: 3.000 × 2.000 × 1.000 in with a 2.000 × 1.000 × 0.500 in pocket open to +Z and 0.100 in corner fillets. 0 holes.
+    - `odd_metric_hole` (mm): 50 × 25 × 12 mm, a 6.55 mm through hole. `hole_size` medium, measured 0.2579 (in). `metric_hole` (mm): the same with 6.5 mm.
+    - `flat_bottom_hole`: 2.000 × 2.000 × 1.000 in, a 0.500 in flat-bottom hole 0.750 in deep.
+    - `two_holes_web`: 1.000 × 1.000 × 2.000 in, two coaxial 0.250 in holes 0.900 in deep from +Z and −Z, a 0.200 in web between. 2 holes.
+    - `split_hole`: `odd_hole`'s block with a 0.250 in through hole whose wall is split into two half-cylinder faces. 1 hole.
+    - `stepped_hole`: 2.000 × 2.000 × 1.000 in, a 0.4375 in (7/16) counterbore 0.250 in deep over a 0.250 in hole through the rest (0.750 in). 2 holes.
+    - `drill_point_hole`: 1.000 × 1.000 × 2.000 in, a 0.250 in hole 1.000 in deep to where a 118° point starts. `dims_mm.point_mm` is the point's length.
+    - `clean_holes`: 3.000 × 2.000 × 0.750 in, a 0.250 in and a 0.500 in through hole, 1.500 in apart.
+  - Feature counts: S2 entries hold only what S2 detects (pocket, corner and wall 0). S3 and S4 update an entry when their features appear (J3 matching is exact). Note for S4: a plain block's opposed faces will count as walls.
+  - Hole feature: `kind` "hole"; `faces` = its cylinder faces plus its bottom (flat plane or cone); `axis` = unit vector out of the material at its first open end (+axis direction when it has none); `dims_mm` keys `diameter`, `depth` and, with a drill point, `point_mm`. Concave means the face's outward normal points toward the axis. "Spans 360°" means the merged faces' angular spans sum to 360° within 0.5°. Stepped segments join through a planar shoulder perpendicular to the axis (or a cone) whose two circular edges each border a segment; the shoulder belongs to the larger segment.
+  - `hole_depth`: ratio = depth ÷ diameter; `limit` is the limit broken (6.0 medium, 10.0 high); unit `ratio`; title "Hole depth 8.0× diameter (limit 6.0×)".
+  - `hole_size`: drills by `units_in_file` (inch list for `inch` and `other`); holes above the drill range are skipped (D-010), holes below it are flagged; a tie for nearest goes to the smaller drill. `measured` is the diameter in inches, `limit` the nearest drill in inches, unit `in`. Title "Hole 0.260 in not a standard drill size"; suggestion "Nearest drill 0.266 in (17/64). Use it if the fit allows." (mm files: "Nearest drill 6.5 mm (0.256 in). …").
+  - Suggestions: `hole_depth` medium "Needs peck drilling. Make it shallower or larger if the design allows."; high "Needs a long drill and peck drilling. Make it shallower or larger if the design allows."
+  - Limits come from `config/thresholds.toml`, one table per material (`[al6061.hole_depth] medium = 6.0, high = 10.0, source = "estimate"`), the same values for all 4 until Morgan changes them. `config/tools.toml` holds the drill ranges and steps of the Tools section.
+  - The response gains `rules_run: [str]` (rule ids run on this part), for the verdict line.
+  - Probe matching: a probe matches a finding when it lies within 0.01 mm of any of the finding's faces on the exact B-rep; the test re-reads the STEP file (helper in `tests/helpers.py`).
+  - On screen: fractions only on diameters ("0.250 in (1/4)"); depths and part sizes in decimals. Findings are `<button data-testid="finding-F1">`. `window.__dfma.highlightedFaces()` is `[]` before any click; framing is immediate (no animation) and fits the faces' bounding sphere like the whole-part fit. Clicking the selected finding again clears it. Changing material keeps the camera.
+  - `tests/service/test_read.py` stops asserting empty `features` and `findings` for the box parts and checks their hole and `hole_size` results instead.
 
 ### S3 Pockets: inside corners and depth
 

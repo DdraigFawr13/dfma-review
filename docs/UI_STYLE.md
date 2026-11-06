@@ -37,11 +37,11 @@ Copied from the Drawing office sample on the S2 form. Light only in the first ve
 | `--part` | `#a9b6c6` | part faces with no finding |
 | `--high` | `#b3261e` | high severity (label, stripe, faces) |
 | `--medium` | `#a35a00` | medium severity |
-| `--low` | `#3f6b2a` | low severity (in the schema; no rule produces it yet) |
+| `--low` | `#3f6b2a` | low severity (in the schema; no rule produces it yet) and the "clean" verdict |
 | `--radius` | `2px` | every border radius |
 | `--space-1` … `--space-4` | `4px`, `8px`, `12px`, `16px` | gaps and padding |
 
-Contrast (WCAG ratio, measured with a script in the S2 session): `--ink` on `--panel` 15.2, `--muted` on `--panel` 5.95, `--accent` on `--panel` 6.44, `--accent-ink` on `--accent` 6.44, `--high` on `--panel` 6.54, `--medium` on `--panel` 5.22, `--medium` on `--bg` 4.64, `--medium` on `--view` 4.31. Severity text sits on `--panel` or `--bg`, never on `--view`.
+Contrast (WCAG ratio, measured with a script in the S2 session): `--ink` on `--panel` 15.2, `--muted` on `--panel` 5.95, `--accent` on `--panel` 6.44, `--accent-ink` on `--accent` 6.44, `--high` on `--panel` 6.54, `--medium` on `--panel` 5.22, `--medium` on `--bg` 4.64, `--medium` on `--view` 4.31, `--low` on `--panel` 6.27. Severity text sits on `--panel` or `--bg`, never on `--view`.
 
 ## Type
 <!-- Faces, sizes and number settings (tabular figures, units). Copy settings from the accepted specimen, not from memory (adventure-manager LESSONS:10). -->
@@ -59,6 +59,8 @@ Contrast (WCAG ratio, measured with a script in the S2 session): `--ink` on `--p
 - **Selects and file input:** `--panel` fill, 1px `--line` border, `--radius`, at least 32 px tall, label above.
 - **Primary button** (Export PDF, from S7): `--accent` fill, `--accent-ink` text.
 - **Finding row:** a button the full width of the list. Severity label (text and colour), then the title, then a muted line with the feature, the value and the limit source. Clicking it selects the finding: 2px `--accent` border, its faces turn `--accent` in the 3D view and the camera frames them. Clicking the selected finding again clears the selection.
+- **Selected finding:** its faces turn `--accent`, every other face is drawn at opacity 0.35, and the camera frames the faces. Faces with a finding and nothing selected are drawn in their severity colour with an "F1 MEDIUM" label.
+- **Verdict line:** severity words with counts ("HIGH 1 · MEDIUM 2"; a zero count in `--muted`), then "N holes checked · Rules run: …". A part with no findings shows "CLEAN no findings" in `--low`.
 - **Waiting:** while a file is analysed, the status line says "Analysing <name>…" and the findings list keeps its space.
 - **Refused:** errors show in the error box with the reason (J7 messages), in `--high` on `--panel` with a left stripe and the word "Error:".
 - **Focus:** 3px `--accent` outline, 2px offset, on every control.
@@ -66,7 +68,8 @@ Contrast (WCAG ratio, measured with a script in the S2 session): `--ink` on `--p
 ## Layout and sizes
 <!-- Columns, gutters and spacing at each target width; what moves or hides at each width. -->
 
-- Spec "Web page" sets the column order at 1280 px: upload panel left, 3D view middle, findings right. Below 900 px they stack. The review-screen mock-up (made in S2) settles widths and details.
+- Review screen: the [approved mock-up](https://claude.ai/artifact/2upjSXCWKez2VVsedPVZbH) (`mockups/review-screen.html`, D-012). Top bar: file, process, material, then part size, faces and units on the right. Verdict line under it. At 1280 px: 3D view (flexible) and findings panel (400 px). Below 900 px the findings stack under the view and the bar wraps.
+- The status row under the bar keeps a fixed 34 px height, so an error message never moves the view.
 - Page gutter `--space-4`; gaps between panels `--space-4`; inside panels `--space-3`.
 
 ## Avoid

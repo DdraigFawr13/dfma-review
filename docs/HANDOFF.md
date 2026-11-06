@@ -20,6 +20,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
+- 2026-11-06 Morgan approved the review-screen [mock-up](https://claude.ai/artifact/2upjSXCWKez2VVsedPVZbH) ("I approve of the design"). [Demo page](https://claude.ai/artifact/KnnLF3YAHp5ZCmNuVWyvP4) updated with 4 NIST parts on the merged S1 code (Morgan asked to see one).
 - 2026-11-06 NIST gold standard (D-011): Morgan chose to keep the files in GitHub untouched. `tests/nist/NIST-PMI-STEP-Files.zip` (NIST's file byte for byte, SHA-256 checked), `tests/nist/SOURCE.md`, `tests/nist_files.py` (unpacks to the git-ignored `tests/nist/.cache/`), `tests/nist/scorecard.toml` + `make_scorecard.py`, `tests/service/test_nist.py` (17 files read under 10 s, faces not analysed may only fall, features may only rise). `scripts/check.py` all pass: 32 service, 5 unit, 2 browser. Open: ctc_05 reads as units `other`.
 - 2026-11-06 Mock-up v2 in Morgan's picks; 2 fresh checks (54,022 and 51,078 tokens), all findings fixed or explained in its check record; lint 0 warnings.
 - 2026-11-06 Layout and style research (general-purpose agent): 9 tools; every DFM tool uses a large 3D view, a findings list beside it and click to highlight; almost no published user opinion on layout (G2, Capterra, Gartner returned 403). Mock-up fresh check: 4 fixes queued (see Next).
@@ -34,7 +35,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-1. S2 (holes) on `s2-holes`, draft [#4](https://github.com/DdraigFawr13/dfma-review/pull/4): waiting for Morgan's approve / change / rethink on the [review-screen mock-up](https://claude.ai/artifact/2upjSXCWKez2VVsedPVZbH) (layout 4, Drawing office, ghosting; D-012). On approval: update spec "Web page" and S2 "Settled at build" (defaults in the mock-up's check record), UI_STYLE controls, then checks fail first, build. Show the slice per D-009.
+1. S2 (holes) on `s2-holes`, draft [#4](https://github.com/DdraigFawr13/dfma-review/pull/4): mock-up approved by Morgan; spec S2 "Settled at build" and UI_STYLE updated. Now: write S2's checks (test parts, expected.toml, test_rules, test_expected, e2e test_findings), confirm they fail, then build features, tools, rules, config and the review screen. Show the slice per D-009 (update the S1 status and demo pages).
 2. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
 
 ## Open questions
