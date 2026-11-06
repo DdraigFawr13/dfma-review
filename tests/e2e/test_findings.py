@@ -123,3 +123,27 @@ def test_sharp_corner_is_drawn_on_its_edge(page: Page, base_url: str):
     opacities = page.evaluate("window.__dfma.opacities()")
     assert all(opacities[str(w)] == 1 for w in walls)
     assert sorted(page.evaluate("window.__dfma.highlightedFaces()")) == sorted(walls)
+
+
+def _overlapping(boxes):
+    return [(a["id"], b["id"]) for i, a in enumerate(boxes) for b in boxes[i + 1:]
+            if a["x"] < b["x"] + b["w"] and b["x"] < a["x"] + a["w"] and a["y"] < b["y"] + b["h"] and b["y"] < a["y"] + a["h"]]
+
+
+def test_finding_labels_never_cover_each_other(page: Page, base_url: str):
+    # Morgan: "the flags for the failing portions are covering each other" (S3). Every visible
+    # label sits clear of the others, before and after a finding is selected.
+    page.goto(base_url)
+    for name in ("pocket_sharp", "pocket_long_thin_tool", "daratech"):
+        path = PARTS / f"{name}.step" if name != "daratech" else next(
+            (PARTS.parent / "edmr" / "models" / "STEP" / "STI").rglob("daratech.stp"))  # 25 findings on a real part
+        page.get_by_test_id("upload-file").set_input_files(path)
+        expect(page.get_by_test_id("finding-F5")).to_be_visible(timeout=30_000)
+        # Labels are placed on the next drawn frame; a large part takes longer to draw.
+        page.wait_for_function("window.__dfma.flagBoxes().length >= 4", timeout=30_000)
+        boxes = page.evaluate("window.__dfma.flagBoxes()")
+        assert _overlapping(boxes) == [], name
+        page.get_by_test_id("finding-F1").click()
+        page.wait_for_timeout(300)
+        assert _overlapping(page.evaluate("window.__dfma.flagBoxes()")) == [], name
+        page.get_by_test_id("finding-F1").click()

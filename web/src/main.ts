@@ -43,6 +43,7 @@ declare global {
       paintedFaces(): number[];
       opacities(): Record<number, number>;
       checkedFaces(kind?: CheckedKind): number[];
+      flagBoxes(): { id: string; x: number; y: number; w: number; h: number }[];
     };
   }
 }
@@ -51,6 +52,7 @@ window.__dfma = {
   cameraTarget: () => viewer.cameraTarget(),
   paintedFaces: () => viewer.paintedFaces(), // test hook: what is actually drawn in the accent colour
   opacities: () => viewer.opacities(),
+  flagBoxes: () => viewer.flagBoxes(), // test hook: where each visible finding label sits
   checkedFaces: (kind?: CheckedKind) => viewer.checkedFaces(kind), // test hook: drawn in a kind's "checked" colour
 };
 

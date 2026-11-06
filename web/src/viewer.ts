@@ -18,6 +18,19 @@ function token(name: string): THREE.Color {
   return new THREE.Color(value || "#888888");
 }
 
+/** Label moves in label sizes, nearest first: [sideways, up/down]. */
+const NUDGES: [number, number][] = [];
+for (let r = 0; r <= 12; r++) {
+  for (let cx = -2; cx <= 2; cx++) for (let cy = -r; cy <= r; cy++) {
+    if (Math.max(Math.abs(cx) * 2, Math.abs(cy)) === r) NUDGES.push([cx, cy]);
+  }
+}
+NUDGES.sort((a, b) => Math.hypot(a[0] * 3, a[1]) - Math.hypot(b[0] * 3, b[1]));
+
+function overlaps(a: DOMRect, b: DOMRect): boolean {
+  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+}
+
 export class Viewer {
   private readonly renderer: THREE.WebGLRenderer;
   private readonly scene = new THREE.Scene();
@@ -307,14 +320,38 @@ export class Viewer {
     const left = this.canvas.offsetLeft;
     const top = this.canvas.offsetTop;
     const eye = this.camera.position;
+    // Labels that would cover each other are moved up or down, one label height at a time, in
+    // finding order (F1 keeps its place first), so every finding's label stays readable (S3).
+    const placed: DOMRect[] = [];
     for (const { el, points } of this.flags) {
       const at = points.reduce((best, q) => (q.distanceToSquared(eye) < best.distanceToSquared(eye) ? q : best));
       const p = at.clone().project(this.camera);
       const visible = p.z < 1 && Math.abs(p.x) <= 1 && Math.abs(p.y) <= 1;
       el.hidden = !visible;
-      el.style.left = `${left + ((p.x + 1) / 2) * w}px`;
-      el.style.top = `${top + ((1 - p.y) / 2) * h}px`;
+      const x = left + ((p.x + 1) / 2) * w;
+      const y = top + ((1 - p.y) / 2) * h;
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      if (!visible) continue;
+      const box = el.getBoundingClientRect();
+      // The nearest free spot: one label height up or down, or one label width sideways, at a time.
+      let dx = 0, dy = 0;
+      for (const [cx, cy] of NUDGES) {
+        const moved = new DOMRect(box.x + cx * (box.width + 4), box.y + cy * (box.height + 2), box.width, box.height);
+        if (!placed.some((o) => overlaps(o, moved))) { dx = moved.x - box.x; dy = moved.y - box.y; break; }
+      }
+      el.style.left = `${x + dx}px`;
+      el.style.top = `${y + dy}px`;
+      placed.push(new DOMRect(box.x + dx, box.y + dy, box.width, box.height));
     }
+  }
+
+  /** Screen boxes of the visible flags, for the overlap test. */
+  flagBoxes(): { id: string; x: number; y: number; w: number; h: number }[] {
+    return this.flags.filter((f) => !f.el.hidden).map(({ el, finding }) => {
+      const r = el.getBoundingClientRect();
+      return { id: finding.id, x: r.x, y: r.y, w: r.width, h: r.height };
+    });
   }
 
   private render(): void {
