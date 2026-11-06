@@ -464,9 +464,10 @@ def _narrowest(topo: Topology, walls: list[int]) -> float:
     return best
 
 
-def _corners(topo: Topology, walls: list[int], cyls: dict[int, Cyl]) -> list[tuple[list[int], float]]:
-    """Inside corners between the outer walls: concave fillets (split faces merged) and sharp edges."""
-    out: list[tuple[list[int], float]] = []
+def _corners(topo: Topology, walls: list[int], cyls: dict[int, Cyl]) -> list[tuple[list[int], float, list | None]]:
+    """Inside corners between the outer walls: concave fillets (split faces merged) and sharp edges.
+    Each is (faces, radius, edge): a sharp corner's edge is its two end points (mm), for the viewer."""
+    out: list[tuple[list[int], float, list | None]] = []
     seen: set[int] = set()
     for w in sorted(walls):
         c = cyls.get(w)
@@ -482,13 +483,14 @@ def _corners(topo: Topology, walls: list[int], cyls: dict[int, Cyl]) -> list[tup
                 if nb in walls and o and nb not in seen and abs(o.radius - c.radius) <= RADIUS_TOL and _same_line(o, c):
                     seen.add(nb)
                     todo.append(nb)
-        out.append((sorted(group), c.radius))
+        out.append((sorted(group), c.radius, None))
     planes = [w for w in sorted(walls) if w not in cyls and _plane_normal(topo.faces[w])]
     for i, a in enumerate(planes):
         for b in planes[i + 1:]:
-            edges = _shared_edges(topo, a, b)
-            if edges and any(_concave(topo, a, b, e) for e in edges):
-                out.append(([a, b], 0.0))
+            edges = [e for e in _shared_edges(topo, a, b) if _concave(topo, a, b, e)]
+            if edges:
+                ends = sorted(_vertices(edges[0]))
+                out.append(([a, b], 0.0, [list(ends[0]), list(ends[-1])]))
     return out
 
 
@@ -526,7 +528,7 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
         floor_h = dot(_outward_normal(face)[0], n)
         depth = max(dot(p, n) for w in walls for p in _points(faces[w])) - floor_h
         corners = _corners(topo, walls, cyls)
-        min_r = min((r for _, r in corners), default=math.inf)
+        min_r = min((r for _, r, _ in corners), default=math.inf)
         width = _narrowest(topo, walls + islands)
         tool, undersized = pick_end_mill(min_r, width)
         pocket_faces = sorted({fid, *walls, *islands})
@@ -536,10 +538,13 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
                         "dims_mm": {"depth": depth, "min_corner_radius": 0.0 if min_r == math.inf else min_r,
                                     "narrowest_width": width if width != math.inf else 0.0,
                                     "end_mill_mm": tool, "undersized": int(undersized)}})
-        for cfaces, r in corners:
+        for cfaces, r, edge in corners:
             ctool, _ = pick_end_mill(r, width)
-            found_c.append({"kind": "corner", "faces": cfaces, "axis": list(n), "open_dirs": [], "open_vectors": [],
-                            "dims_mm": {"radius": r, "depth": depth, "end_mill_mm": ctool}})
+            corner = {"kind": "corner", "faces": cfaces, "axis": list(n), "open_dirs": [], "open_vectors": [],
+                      "dims_mm": {"radius": r, "depth": depth, "end_mill_mm": ctool}}
+            if edge:
+                corner["edge_mm"] = edge  # a sharp corner has no face of its own: the viewer draws this edge
+            found_c.append(corner)
     return found_p, found_c
 
 

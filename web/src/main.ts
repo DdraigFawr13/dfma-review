@@ -67,6 +67,16 @@ function checkedFaces(result: Analysis): Map<number, CheckedKind> {
   return out;
 }
 
+/** Sharp inside corners have no face of their own: their findings are drawn along the corner edge. */
+function edgesOf(result: Analysis): Map<string, number[][]> {
+  const out = new Map<string, number[][]>();
+  for (const f of result.findings) {
+    const edge = result.features.find((x) => x.id === f.feature)?.edge_mm;
+    if (edge) out.set(f.id, edge);
+  }
+  return out;
+}
+
 function select(f: Finding): void {
   selected = selected === f.id ? null : f.id; // clicking the selected finding again clears it
   viewer.select(selected ? f : null);
@@ -105,7 +115,7 @@ async function analyse(): Promise<void> {
     byId("part-units").textContent = result.part.units_in_file;
     summary.hidden = false;
     viewer.show(result.faces, samePart); // the same file re-analysed keeps the camera
-    viewer.setFindings(result.findings);
+    viewer.setFindings(result.findings, edgesOf(result));
     viewer.setChecked(checkedFaces(result));
     for (const [kind, box] of SWITCHES) viewer.setShowChecked(kind, box.checked);
     shownFile = file;

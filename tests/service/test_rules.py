@@ -271,6 +271,7 @@ def test_fillet_pocket_is_one_pocket_and_four_corners():
         assert c["dims_mm"]["radius"] == pytest.approx(0.1 * IN, abs=0.001)
         assert c["open_dirs"] == [] and c["open_vectors"] == []
         assert len(c["faces"]) == 1 and set(c["faces"]) <= set(pocket["faces"])
+        assert "edge_mm" not in c  # a fillet is drawn as its own face
     assert result["findings"] == []
 
 
@@ -291,6 +292,9 @@ def test_sharp_corner_and_undersized_tool():
     assert c["suggestion"] == ("Add a corner radius of 0.031 in (1/32) or more; "
                                "a larger radius lets a larger end mill cut the pocket.")
     assert len(c["faces"]) == 2  # the two walls that meet at the sharp edge
+    corner = next(f for f in result["features"] if f["id"] == "corner-1")
+    (x0, y0, z0), (x1, y1, z1) = corner["edge_mm"]  # the sharp edge itself, for the viewer
+    assert abs(z1 - z0) == pytest.approx(0.25 * IN, abs=0.001) and (x0, y0) == pytest.approx((x1, y1), abs=1e-6)
     p = findings[4]
     assert p["title"] == "Pocket depth 8.0× the end mill that fits (limit 3.0×)"
     assert p["measured"] == pytest.approx(8.0, abs=0.01) and p["limit"] == 3.0 and p["unit"] == "ratio"
