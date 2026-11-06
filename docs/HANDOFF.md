@@ -26,7 +26,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-1. Write `docs/specs/first-version.md` with `write-spec` (step 3 on), run its three fresh checks, then ask Morgan to approve it.
+1. Spec drafted: [docs/specs/first-version.md](specs/first-version.md). Three fresh checks (paraphrase, critic, zero decisions) running; then sort findings and ask Morgan to approve it.
 2. Morgan: turn on "Allow auto-merge" in the repo settings.
 
 ## Open questions
