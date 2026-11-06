@@ -20,6 +20,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
+- 2026-11-06 S2 fresh spec review (97,816 tokens): 8 real gaps fixed with tests that fail on the old code, 1 stale. Manual CI [run 23](https://github.com/DdraigFawr13/dfma-review/actions/runs/42297731665) green in 1 min 32 s on b93c519. Status and demo pages updated for S2.
 - 2026-11-06 S2 built: checks written first and failed on S1 code (24 service, 2 browser); then `features.py` (holes), `tools.py` (drills), `rules/hole_depth.py`, `rules/hole_size.py`, `config/*.toml`, review screen (layout 4, IBM Plex shipped, OFL). D-013 (Morgan): mm files accept inch drills too; NIST ftc_09 hole-size findings 27 → 2. NIST: 491 holes found in 17 files.
 - 2026-11-06 Morgan approved the review-screen [mock-up](https://claude.ai/artifact/2upjSXCWKez2VVsedPVZbH) ("I approve of the design"). [Demo page](https://claude.ai/artifact/KnnLF3YAHp5ZCmNuVWyvP4) updated with 4 NIST parts on the merged S1 code (Morgan asked to see one).
 - 2026-11-06 NIST gold standard (D-011): Morgan chose to keep the files in GitHub untouched. `tests/nist/NIST-PMI-STEP-Files.zip` (NIST's file byte for byte, SHA-256 checked), `tests/nist/SOURCE.md`, `tests/nist_files.py` (unpacks to the git-ignored `tests/nist/.cache/`), `tests/nist/scorecard.toml` + `make_scorecard.py`, `tests/service/test_nist.py` (17 files read under 10 s, faces not analysed may only fall, features may only rise). `scripts/check.py` all pass: 32 service, 5 unit, 2 browser. Open: ctc_05 reads as units `other`.
@@ -36,7 +37,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-1. S2 (holes) on `s2-holes`, draft [#4](https://github.com/DdraigFawr13/dfma-review/pull/4): service and review screen built, `scripts/check.py` all pass (70 service, 5 unit, 4 browser). Now: fix the fresh spec reviewer's findings, update the S1 [status](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu) and [demo](https://claude.ai/artifact/KnnLF3YAHp5ZCmNuVWyvP4) pages for S2 (D-009), add the spec LESSONS line, then ask Morgan to approve the merge.
+1. S2 (holes) on `s2-holes`, draft [#4](https://github.com/DdraigFawr13/dfma-review/pull/4): done and waiting for Morgan's "approve S2". Pages: [status](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu), [demo](https://claude.ai/artifact/KnnLF3YAHp5ZCmNuVWyvP4). On approval (GIT-08): write merged state here, mark #4 ready, turn on auto-merge once its CI starts. Then S3 (pockets) from step 8 of `write-spec`.
 2. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
 
 ## Open questions
