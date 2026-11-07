@@ -129,3 +129,14 @@ def test_analyse_reports_a_crash(tmp_path):
     fake = tmp_path / "crash.py"
     fake.write_text("import os\nos._exit(139)\n", encoding="utf-8")
     assert grade.analyse(PARTS / "box_through_hole.step", [sys.executable, str(fake)])["status"] == "crash"
+
+
+def test_untyped_holes_count_for_recall_but_not_type_precision():
+    """Analysis Situs gives holes no through/blind type: they count as holes, not as either type."""
+    result = {"faces": _faces(["1", "12", "0"]), "features": [{"kind": "hole", "faces": [0, 1, 2], "open_ends": None}]}
+    preds = grade.predicted(result)
+    assert preds == ["hole", "hole", "hole"]
+    s = grade.scores(grade.tally([1, 12, 0], preds))
+    assert s["recall"][1]["n"] == 1 and s["recall"][12]["n"] == 1
+    assert s["precision"]["hole"] == {"n": 2, "of": 3, "pct": 66.7}
+    assert s["precision"]["through"]["of"] == 0 and s["type_recall"][1]["n"] == 0

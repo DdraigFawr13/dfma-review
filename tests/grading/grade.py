@@ -76,7 +76,8 @@ def face_labels(result: dict, in_file: list[int]) -> tuple[list[int | None], dic
 
 
 def predicted(result: dict) -> list[str | None]:
-    """Our label for each face: "through" or "blind" (a hole with 2+ or 1 open end), "pocket", or None.
+    """Our label for each face: "through" or "blind" (a hole with 2+ or 1 open end), "hole" (a hole
+    whose engine gives no type, open_ends None), "pocket", or None.
     A face in both a hole and a pocket counts as the hole's."""
     out: list[str | None] = [None] * len(result["faces"])
     for f in result["features"]:
@@ -86,7 +87,7 @@ def predicted(result: dict) -> list[str | None]:
     for f in result["features"]:
         if f["kind"] == "hole":
             for i in f["faces"]:
-                out[i] = "through" if f["open_ends"] >= 2 else "blind"
+                out[i] = "hole" if f["open_ends"] is None else "through" if f["open_ends"] >= 2 else "blind"
     return out
 
 
@@ -123,19 +124,19 @@ def scores(total: Counter) -> dict:
     out: dict = {"recall": {}, "type_recall": {}, "precision": {}}
     for cls, typ in HOLE_CLASSES.items():
         of = sum(v for (lab, _), v in total.items() if lab == cls)
-        out["recall"][cls] = _ratio(sum(v for (lab, p), v in total.items() if lab == cls and p in ("through", "blind")), of)
+        out["recall"][cls] = _ratio(sum(v for (lab, p), v in total.items() if lab == cls and p in ("through", "blind", "hole")), of)
         out["type_recall"][cls] = _ratio(total[(cls, typ)], of)
     for cls in POCKET_CLASSES:
         of = sum(v for (lab, _), v in total.items() if lab == cls)
         out["recall"][cls] = _ratio(total[(cls, "pocket")], of)
     scored = [(lab, p, v) for (lab, p), v in total.items() if isinstance(lab, int)]
     for name, cls_set, preds in (("through", {1}, {"through"}), ("blind", {12}, {"blind"}),
-                                 ("hole", set(HOLE_CLASSES), {"through", "blind"}),
+                                 ("hole", set(HOLE_CLASSES), {"through", "blind", "hole"}),
                                  ("pocket", set(POCKET_CLASSES), {"pocket"})):
         claimed = sum(v for lab, p, v in scored if p in preds)
         out["precision"][name] = _ratio(sum(v for lab, p, v in scored if p in preds and lab in cls_set), claimed)
     out["false_by_label"] = {kind: dict(Counter({lab: v for lab, p, v in scored if p in preds and lab not in cls_set}).most_common())
-                             for kind, cls_set, preds in (("hole", set(HOLE_CLASSES), {"through", "blind"}),
+                             for kind, cls_set, preds in (("hole", set(HOLE_CLASSES), {"through", "blind", "hole"}),
                                                           ("pocket", set(POCKET_CLASSES), {"pocket"}))}
     out["claimed_on_excluded"] = {p: v for (lab, p), v in total.items() if lab == "excluded"}
     return out
@@ -145,7 +146,7 @@ def misses(name: str, labels: list[int | None], preds: list[str | None]) -> list
     """One record per part and class with the faces we missed (0-based ids) and what we called them."""
     out = []
     for cls in (*HOLE_CLASSES, *POCKET_CLASSES):
-        want = {"pocket"} if cls in POCKET_CLASSES else {"through", "blind"}
+        want = {"pocket"} if cls in POCKET_CLASSES else {"through", "blind", "hole"}
         missed = [i for i, (lab, p) in enumerate(zip(labels, preds)) if lab == cls and p not in want]
         if missed:
             out.append({"part": name, "class": cls, "faces": missed, "called": [preds[i] for i in missed]})
@@ -272,7 +273,7 @@ def main() -> int:
     if a.engine == "quiddity":
         ENGINE.update(cmd=[a.python, str(HERE / "qchild.py")], faces=a.faces)
     elif a.engine == "situs":
-        ENGINE.update(cmd=[sys.executable, str(HERE / "schild.py"), a.situs_bin])
+        ENGINE.update(cmd=[sys.executable, str(HERE / "schild.py"), a.situs_bin])  # faces: holes, cavities
     out = mfcadpp(a.path, a.limit, a.jobs) if a.set == "mfcadpp" else situs(a.path, a.jobs)
     text = json.dumps(out, indent=1, default=str)
     if a.out:
