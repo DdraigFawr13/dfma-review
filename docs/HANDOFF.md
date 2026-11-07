@@ -33,7 +33,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-1. Morgan's answer on the 500-part MFCAD++ run (page question): Hugging Face access plus a token (recommended), a zip via Google Drive, or skip. The QUB download is behind a Cloudflare check; don't work around it. Then run `grade.py mfcadpp <test folder> --limit 500` and add the scores to the report.
+1. 500-part MFCAD++ run: Morgan chose Hugging Face and requested access to `AI4Manufacturing/mfcadpp` (2026-11-07; [steps page](https://claude.ai/artifact/8sW6xrarxBAkcQZkhg6P9P)); waiting on the owner's approval. When Morgan says "approved": say which environment the token lands on, then `request_credential` for `huggingface.co`. The QUB download is behind a Cloudflare check; don't work around it. Then run `grade.py mfcadpp <test folder> --limit 500` and add the scores to the report.
 2. Then S5. Ranked recognition changes (page and report): pockets with cut floors first, since S5 needs holes through pocket floors. Each change is a decision for Morgan before building (WS-02).
 3. NIST library merged in [#5](https://github.com/DdraigFawr13/dfma-review/pull/5) (069ef55).
 4. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
