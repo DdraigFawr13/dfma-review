@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 import pytest
 from playwright.sync_api import Page, expect
 
@@ -179,3 +181,52 @@ def test_finding_labels_never_cover_each_other(page: Page, base_url: str):
         page.wait_for_timeout(300)
         assert _overlapping(page.evaluate("window.__dfma.flagBoxes()")) == [], name
         page.get_by_test_id("finding-F1").click()
+
+
+def test_pins_sit_on_their_findings(page: Page, base_url: str):
+    # D-017: every finding has a pin on a visible spot of its faces, folded into the pin it would cover
+    # ("F4 +2"), or hidden while its spot is behind the part. The selected pin is solid in its severity
+    # colour, on a stem to a dot on its spot.
+    page.goto(base_url)
+    path = next((PARTS.parent / "edmr" / "models" / "STEP" / "STI").rglob("daratech.stp"))
+    page.get_by_test_id("upload-file").set_input_files(path)
+    expect(page.get_by_test_id("finding-F5")).to_be_visible(timeout=30_000)
+    page.wait_for_function("window.__dfma.flagBoxes().length >= 1", timeout=30_000)
+    state = page.evaluate("window.__dfma.flagState()")
+    shown = {s["id"] for s in state if s["shown"]}
+    count = page.locator("#findings .finding").count()
+    assert len(state) == count
+    assert all(s["shown"] or s["mergedInto"] in shown or s["mergedInto"] == "" for s in state)
+    assert len(shown) < count  # 23 findings on this part: some pins fold together
+    for s in state:  # a folded pin's "+n" counts the pins inside it
+        if s["shown"]:
+            inside = sum(1 for o in state if o["mergedInto"] == s["id"])
+            more = page.locator(f'.viewer .flag[data-id="{s["id"]}"]').get_attribute("data-more")
+            assert more == (f"+{inside}" if inside else ""), s["id"]
+
+    page.get_by_test_id("finding-F1").click()
+    pin = page.locator('.viewer .flag[data-id="F1"]')
+    expect(pin).to_have_class(re.compile(r"\bchosen\b"))
+    severity = page.get_by_test_id("finding-F1").locator(".sev").inner_text().lower()
+    colour = page.evaluate(f"getComputedStyle(document.documentElement).getPropertyValue('--{severity}').trim()")
+    assert pin.evaluate("e => getComputedStyle(e).backgroundColor") == page.evaluate(
+        f"(() => {{ const d = document.createElement('i'); d.style.color = '{colour}'; document.body.append(d);"
+        " const c = getComputedStyle(d).color; d.remove(); return c; })()")
+    assert page.locator(".viewer svg.leaders line").count() == 1 and page.locator(".viewer svg.leaders circle").count() == 1
+    assert _overlapping(page.evaluate("window.__dfma.flagBoxes()")) == []
+
+
+def test_pins_behind_the_part_are_hidden(page: Page, base_url: str):
+    # pocket_sharp's findings are all in its pocket on top: seen from underneath, no pin shows.
+    page.goto(base_url)
+    page.get_by_test_id("upload-file").set_input_files(PARTS / "pocket_sharp.step")
+    expect(page.get_by_test_id("finding-F5")).to_be_visible(timeout=30_000)
+    page.wait_for_function("window.__dfma.flagBoxes().length >= 1", timeout=30_000)
+    box = page.get_by_test_id("viewer-canvas").bounding_box()
+    cx, cy = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+    page.mouse.move(cx, cy)
+    page.mouse.down()
+    page.mouse.move(cx, cy - box["height"] * 0.9, steps=12)  # orbit to look up at the bottom face
+    page.mouse.up()
+    page.wait_for_timeout(300)
+    assert page.evaluate("window.__dfma.flagBoxes()") == []

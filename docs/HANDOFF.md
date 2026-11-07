@@ -4,7 +4,7 @@ Updated: 2026-11-07. A fresh session must be able to continue from this file alo
 
 ## Phase
 
-Build. Brainstorm (D-001), bootstrap (D-002, #1), design (D-003 to D-006) and the first-version spec (D-007, [docs/specs/first-version.md](specs/first-version.md)) are merged in [#2](https://github.com/DdraigFawr13/dfma-review/pull/2). S1 (read and view) merged in [#3](https://github.com/DdraigFawr13/dfma-review/pull/3), approved by Morgan 2026-11-06. S2 (holes) approved by Morgan 2026-11-06 ("otherwise I approve of this phase") and merged in [#4](https://github.com/DdraigFawr13/dfma-review/pull/4). S3 (pockets) approved by Morgan 2026-11-06 ("Ok approved you can do the pr and merge go with your recommendations", D-015) and merged in [#6](https://github.com/DdraigFawr13/dfma-review/pull/6). S4 (thin walls) in progress on branch `s4-thin-walls`, draft [#7](https://github.com/DdraigFawr13/dfma-review/pull/7).
+Build. Brainstorm (D-001), bootstrap (D-002, #1), design (D-003 to D-006) and the first-version spec (D-007, [docs/specs/first-version.md](specs/first-version.md)) are merged in [#2](https://github.com/DdraigFawr13/dfma-review/pull/2). S1 (read and view) merged in [#3](https://github.com/DdraigFawr13/dfma-review/pull/3), approved by Morgan 2026-11-06. S2 (holes) approved by Morgan 2026-11-06 ("otherwise I approve of this phase") and merged in [#4](https://github.com/DdraigFawr13/dfma-review/pull/4). S3 (pockets) approved by Morgan 2026-11-06 (D-015) and merged in [#6](https://github.com/DdraigFawr13/dfma-review/pull/6). S4 (thin walls, thin material at holes, finding pins) approved by Morgan 2026-11-07 ("you can push and merge s4", D-016, D-017) and merged in [#7](https://github.com/DdraigFawr13/dfma-review/pull/7). Next: a grading and testing session (score recognition against labelled parts), in a new session, before S5.
 
 ## Plan map
 
@@ -14,12 +14,13 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ✔ Bootstrap the master harness (#1).
 - ✔ Design: `planning-interview`, 2 rounds plus approval (D-003 to D-006).
 - ✔ Spec the first usable version (D-007, 6 fresh checks, $1.49).
-- ▶ Build slice by slice: ✔ S1 read and view · ✔ S2 holes · ✔ S3 pockets · ▶ S4 thin walls · S5 machine and setups · S6 turning · S7 report and PDF.
+- ▶ Build slice by slice: ✔ S1 read and view · ✔ S2 holes · ✔ S3 pockets · ✔ S4 thin walls · ▶ grading spike · S5 machine and setups · S6 turning · S7 report and PDF.
 - ○ Assemblies and DFA · history and compare · time and $.
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
 
+- 2026-11-07 S4 approved and merged (#7): walls, thin material at holes (D-016), walls box off, finding pins with the selected pin in its severity colour (D-017). Checks: 250 service, 5 unit, 11 browser.
 - 2026-11-07 S4 fresh review (96,088 tokens): 0 high, 5 medium, 4 low; fixed 4 with tests (rays start on the hole face, one wall per pair of holes, bounded points and guarded booleans, 4-place title at the limit); 3 declined with evidence (spec S4 Settled). Scorecards vs main: NIST 690 → 1,340, EDMR 1,090 → 3,110; slowest file 6.44 s.
 - 2026-11-07 S4 built on `s4-thin-walls` (#7, draft): walls (opposed planar pairs, overlap ≥10 mm², ray test for material between; the spec's midpoint test found 0 walls on a plain block, spec Features "Wall" updated), `thin_wall` rule (mill and turn), 4 test parts, wall counts on every expected entry, legend row "Walls checked, no finding" (`--ok-wall` #6b5d4f). Zero-decision check on d6502d4: builder defaults in spec S4 "Settled at build". Checks fail first: 27 of 28 J3 tests fail on main. Scorecards: NIST features 690 → 1,227, EDMR 1,090 → 2,345, none worse; max 3.94 s / 5.22 s. Mock-up [wall legend](https://claude.ai/artifact/JaEjos5QQvY7cbRVHwWpH2) (`mockups/wall-legend.html`, real screenshots; fresh check 73,109 tokens, 3 fixes) answered.
 - 2026-11-07 D-016 (Morgan: "Go with recommended"): walls box off by default; thin material at holes added to S4 (around a hole's side and under a drill point, measured up to 0.250 in): `hole_walls()`, parts `thin_drill_point`, `hole_near_edge`, `holes_close`. Scorecards vs main: NIST features 690 → 1,351, EDMR 1,090 → 3,119, none worse; slowest file 6.72 s.
@@ -31,13 +32,13 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-1. S4: waiting on Morgan's approval ([status](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu), [demo](https://claude.ai/artifact/KnnLF3YAHp5ZCmNuVWyvP4) updated 2026-11-07, 26 parts in 4 materials); then finish per GIT-08 and start S5. Carry: S5 must make a hole end on a pocket floor take the floor normal; engraved lettering on NIST parts reads as pockets (assumption in the app).
+1. New session, before S5: the grading and testing spike Morgan asked for. Score holes and pockets against Quiddity's 41-part MFCAD++ subset, then the first 500 MFCAD++ test parts (classes 1 and 12 holes, 13-16 pockets; per-class face precision and recall), and the Analysis Situs hole and cavity cases (exact face ids); compare their rules with ours. Sources and licences: [workshop page](https://claude.ai/artifact/P3kT7ftt811y7qbQWb2gNk) "Public GitHub repos". Files in a git-ignored folder; ask before committing the CC BY set. If the GitHub API refuses, use the browser (AGENTS.md). Then S5.
 2. NIST library merged in [#5](https://github.com/DdraigFawr13/dfma-review/pull/5) (069ef55).
 3. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
 
 ## Open questions
 
-- Morgan (2026-11-07), before S5: workshop the finding labels ("not clearly indicating what they are attached to … floating randomly" with many tags) and research better feature-recognition methods (equations, efficiency; possible code review). Research done (225,607 agent tokens); [workshop page](https://claude.ai/artifact/P3kT7ftt811y7qbQWb2gNk) Q1 answered (Morgan 2026-11-07: "b is good but it should be more obviously highlighted"): pins; then "just the selected one should be highlighted I liked the way they were": outlined B pins unchanged, the selected pin solid blue, larger, "F5 HIGH", on a stem to a dot (Proposed, page v4, awaiting approval). Prototype in scratch, not in the repo. GitHub survey done (158,521 tokens; CadQuery account searched: its AnalysisSitus is a 2020 BSD copy with the AAG core and 631 test files, rights unclear). Top finds: Quiddity (Apache-2.0, rule-based, scored on MFCAD++), Analysis Situs tests (face-id answer keys), MFCAD++ (CC BY, per-face labels), mfgen (MIT). Proposed next: a scoring spike before S5 (page section "How we could test"). Q2 after: a recognition code-review spike (graph/hint methods, mesh BVH rays, sphere thickness, Analysis Situs BSD as reference). S4 approval not yet given. S4 took 1 h 58 min of session time, $6.19 main session plus 314,815 agent tokens.
+- Settled 2026-11-07: labels are pins (D-017); the scoring spike runs in a new session before S5 (Morgan: "We do the grading and testing in a new session before s5"). Research totals: 384,128 agent tokens (methods, labels, GitHub). S4 took 1 h 58 min to the first approval ask, $6.19 main session.
 - Backlog (Morgan, 2026-11-06): name each hole's type (through, blind, counterbore, countersink, drill point, threaded); recognise threads modelled as ring faces (NIST FTC 10's threaded hole is missed); catalogue NIST resources and commit the papers (research agents running).
 
 - Nice to haves after the project is complete (Morgan, 2026-11-06), from the [research page](https://claude.ai/artifact/S2TDMa3VjXmz4AD7kUt1zm): waivers per finding, shop profiles, change review (rev A vs B, thinnest wall and smallest corner re-measured), comments and sign-off per finding, FMEA row export.

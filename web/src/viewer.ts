@@ -1,5 +1,5 @@
 // three.js viewer: shows the part's faces and orbits. S2: faces with a finding are drawn in their
-// severity colour with an "F1 MEDIUM" flag; selecting a finding turns its faces the accent colour,
+// severity colour with a pin ("F1"; D-017: on the feature, merged when pins overlap); selecting a finding turns its faces the accent colour,
 // fades the rest (opacity 0.35) and frames the camera on them (spec "Web page", D-012).
 
 import * as THREE from "three";
@@ -19,15 +19,6 @@ function token(name: string): THREE.Color {
   const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   return new THREE.Color(value || "#888888");
 }
-
-/** Label moves in label sizes, nearest first: [sideways, up/down]. */
-const NUDGES: [number, number][] = [];
-for (let r = 0; r <= 12; r++) {
-  for (let cx = -2; cx <= 2; cx++) for (let cy = -r; cy <= r; cy++) {
-    if (Math.max(Math.abs(cx) * 2, Math.abs(cy)) === r) NUDGES.push([cx, cy]);
-  }
-}
-NUDGES.sort((a, b) => Math.hypot(a[0] * 3, a[1]) - Math.hypot(b[0] * 3, b[1]));
 
 function overlaps(a: DOMRect, b: DOMRect): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
@@ -94,6 +85,7 @@ export class Viewer {
     this.findings = [];
     this.clearEdges();
     for (const f of this.flags) f.el.remove(); // a failed upload calls show([]) with no setFindings
+    this.leaders?.replaceChildren();
     this.flags.length = 0;
     this.checked = new Map();
     this.selected = null;
@@ -130,6 +122,8 @@ export class Viewer {
       if (!host || points.length === 0) continue;
       const el = document.createElement("span");
       el.className = "flag";
+      el.dataset.id = finding.id;
+      el.style.setProperty("--sev", `var(--${finding.severity})`);
       el.setAttribute("aria-hidden", "true"); // the findings list carries the same text
       const id = document.createElement("span");
       id.textContent = finding.id;
@@ -231,11 +225,7 @@ export class Viewer {
       material.depthWrite = !ghost;
       material.needsUpdate = true;
     }
-    for (const { el, finding } of this.flags) {
-      const on = this.selected?.id === finding.id;
-      el.style.borderColor = getComputedStyle(document.documentElement)
-        .getPropertyValue(on ? "--accent" : `--${finding.severity}`).trim();
-    }
+
   }
 
   private boxOf(faceIds: number[]): THREE.Box3 {
@@ -316,36 +306,121 @@ export class Viewer {
     this.render();
   }
 
-  private placeFlags(): void {
-    const w = this.canvas.clientWidth;
-    const h = this.canvas.clientHeight;
-    const left = this.canvas.offsetLeft;
-    const top = this.canvas.offsetTop;
+  private leaders: SVGSVGElement | null = null;
+
+  /** A finding's spot on screen: of up to 24 of its sampled points, those the camera can see
+   *  (nothing nearer on the ray to them), the one nearest the middle of them; null if none is visible. */
+  private anchorOf(points: THREE.Vector3[]): { x: number; y: number } | null {
+    const w = this.canvas.clientWidth, h = this.canvas.clientHeight;
+    const left = this.canvas.offsetLeft, top = this.canvas.offsetTop;
     const eye = this.camera.position;
-    // Labels that would cover each other are moved up or down, one label height at a time, in
-    // finding order (F1 keeps its place first), so every finding's label stays readable (S3).
-    const placed: DOMRect[] = [];
-    for (const { el, points } of this.flags) {
-      const at = points.reduce((best, q) => (q.distanceToSquared(eye) < best.distanceToSquared(eye) ? q : best));
-      const p = at.clone().project(this.camera);
-      const visible = p.z < 1 && Math.abs(p.x) <= 1 && Math.abs(p.y) <= 1;
-      el.hidden = !visible;
-      const x = left + ((p.x + 1) / 2) * w;
-      const y = top + ((1 - p.y) / 2) * h;
-      el.style.left = `${x}px`;
-      el.style.top = `${y}px`;
-      if (!visible) continue;
-      const box = el.getBoundingClientRect();
-      // The nearest free spot: one label height up or down, or one label width sideways, at a time.
-      let dx = 0, dy = 0;
-      for (const [cx, cy] of NUDGES) {
-        const moved = new DOMRect(box.x + cx * (box.width + 4), box.y + cy * (box.height + 2), box.width, box.height);
-        if (!placed.some((o) => overlaps(o, moved))) { dx = moved.x - box.x; dy = moved.y - box.y; break; }
-      }
-      el.style.left = `${x + dx}px`;
-      el.style.top = `${y + dy}px`;
-      placed.push(new DOMRect(box.x + dx, box.y + dy, box.width, box.height));
+    const ray = new THREE.Raycaster();
+    const solid = [...this.meshes.values()].filter((m) => !(m.material as THREE.MeshStandardMaterial).transparent);
+    const step = Math.max(1, Math.floor(points.length / 24));
+    const seen: { x: number; y: number }[] = [];
+    for (let i = 0; i < points.length; i += step) {
+      const q = points[i];
+      const dir = q.clone().sub(eye);
+      const dist = dir.length();
+      ray.set(eye, dir.normalize());
+      ray.far = dist + 1e-3;
+      const hit = ray.intersectObjects(solid, false)[0];
+      if (hit && hit.distance < dist - Math.max(dist * 1e-4, 0.05)) continue; // behind the part
+      const p = q.clone().project(this.camera);
+      if (p.z >= 1 || Math.abs(p.x) > 1 || Math.abs(p.y) > 1) continue;
+      seen.push({ x: left + ((p.x + 1) / 2) * w, y: top + ((1 - p.y) / 2) * h });
     }
+    if (seen.length === 0) return null;
+    const cx = seen.reduce((a, s) => a + s.x, 0) / seen.length, cy = seen.reduce((a, s) => a + s.y, 0) / seen.length;
+    return seen.reduce((best, s) => (Math.hypot(s.x - cx, s.y - cy) < Math.hypot(best.x - cx, best.y - cy) ? s : best));
+  }
+
+  /** The leader layer over the canvas, emptied. */
+  private leaderLayer(): SVGSVGElement {
+    if (!this.leaders) {
+      this.leaders = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      this.leaders.setAttribute("class", "leaders");
+      this.leaders.setAttribute("aria-hidden", "true");
+      this.canvas.parentElement?.append(this.leaders);
+    }
+    const c = this.canvas;
+    Object.assign(this.leaders.style, { left: `${c.offsetLeft}px`, top: `${c.offsetTop}px`, width: `${c.clientWidth}px`, height: `${c.clientHeight}px` });
+    this.leaders.replaceChildren();
+    return this.leaders;
+  }
+
+  /** A stem from (x1, y1) to a dot at (x2, y2), in host coordinates. */
+  private stem(svg: SVGSVGElement, x1: number, y1: number, x2: number, y2: number, colour: string): void {
+    const ns = "http://www.w3.org/2000/svg";
+    const ox = this.canvas.offsetLeft, oy = this.canvas.offsetTop;
+    const line = document.createElementNS(ns, "line");
+    const dot = document.createElementNS(ns, "circle");
+    const set = (el: Element, attrs: Record<string, string | number>) => Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, String(v)));
+    set(line, { x1: x1 - ox, y1: y1 - oy, x2: x2 - ox, y2: y2 - oy, stroke: colour, "stroke-width": 2.5 });
+    set(dot, { cx: x2 - ox, cy: y2 - oy, r: 5, fill: colour, stroke: "#ffffff", "stroke-width": 2 });
+    svg.append(line, dot);
+  }
+
+  /** Pins (D-017): each finding's pin sits on a visible spot of its faces; a pin that would cover one
+   *  already placed folds into it ("F4 +2"); a pin whose spot is behind the part is hidden. The selected
+   *  finding's pin is placed first, solid in its severity colour, larger, with its severity word, raised
+   *  on a stem to a dot on its spot. */
+  private placeFlags(): void {
+    const svg = this.leaderLayer();
+    const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    const STEM = 26;
+    const order = [...this.flags].sort((a, b) =>
+      Number(this.selected?.id === b.finding.id) - Number(this.selected?.id === a.finding.id));
+    const placed: { r: DOMRect; el: HTMLElement; more: number }[] = [];
+    const host = this.canvas.parentElement?.getBoundingClientRect();
+    for (const { el, points, finding } of order) {
+      el.dataset.more = "";
+      el.dataset.mergedInto = "";
+      const at = points.length ? this.anchorOf(points) : null;
+      const on = this.selected?.id === finding.id;
+      el.classList.toggle("chosen", on);
+      el.hidden = !at;
+      if (!at) continue;
+      el.style.left = `${at.x}px`;
+      el.style.top = `${on ? at.y - STEM : at.y}px`;
+      el.style.transform = on ? "translate(-50%, -100%)" : "translate(-50%, -50%)";
+      const r = el.getBoundingClientRect();
+      const near = placed.find((o) => overlaps(o.r, r));
+      if (near) { // fold into the pin already there
+        el.hidden = true;
+        el.dataset.mergedInto = near.el.dataset.id ?? "";
+        near.more += 1;
+        near.el.dataset.more = `+${near.more}`;
+        continue;
+      }
+      placed.push({ r, el, more: 0 });
+      if (on && host) this.stem(svg, r.left - host.left + r.width / 2, r.bottom - host.top, at.x, at.y, css(`--${finding.severity}`));
+    }
+    // A "+n" makes a pin wider after it was placed: fold any pin it now covers, until none overlap.
+    for (let changed = true, round = 0; changed && round < 20; round++) {
+      changed = false;
+      for (let i = 0; i < placed.length && !changed; i++) {
+        placed[i].r = placed[i].el.getBoundingClientRect();
+        for (let j = i + 1; j < placed.length; j++) {
+          const later = placed[j];
+          later.r = later.el.getBoundingClientRect();
+          if (!overlaps(placed[i].r, later.r) || later.el.classList.contains("chosen")) continue;
+          later.el.hidden = true;
+          later.el.dataset.mergedInto = placed[i].el.dataset.id ?? "";
+          for (const f of this.flags) if (f.el.dataset.mergedInto === later.el.dataset.id) f.el.dataset.mergedInto = placed[i].el.dataset.id ?? "";
+          placed[i].more += 1 + later.more;
+          placed[i].el.dataset.more = `+${placed[i].more}`;
+          placed.splice(j, 1);
+          changed = true;
+          break;
+        }
+      }
+    }
+  }
+
+  /** Where each finding's pin went: shown, folded into another pin, or hidden behind the part. */
+  flagState(): { id: string; shown: boolean; mergedInto: string }[] {
+    return this.flags.map(({ el, finding }) => ({ id: finding.id, shown: !el.hidden, mergedInto: el.dataset.mergedInto ?? "" }));
   }
 
   /** Screen boxes of the visible flags, for the overlap test. */
