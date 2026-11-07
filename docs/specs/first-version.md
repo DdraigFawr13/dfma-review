@@ -238,7 +238,7 @@ probe_mm = [10.0, 5.0, 3.0]   # file coordinates, mm; matches the face within 0.
   - An end is open when its circular edge borders a face that isn't part of the same hole chain (an outer face or a pocket face). Its direction is the axis pointing out of the material at that end; an end on a pocket face takes the pocket's open direction instead.
   - `open_vectors` lists every open end's direction; `open_dirs` lists those that match ±X ±Y ±Z of the frame within 0.5°. The segments of a stepped hole are one chain, and every segment takes the chain's open ends.
   - Depth of a stepped segment is its own length along the axis.
-  - A stepped hole is one hole feature per diameter segment.
+  - A stepped hole is one hole feature per diameter segment. Each segment carries `chain`, a number shared by the segments of one stepped hole (added 2026-11-07 for the hole-joins set, D-018).
   - A cone bottom (drill point) is part of the hole. Its depth is measured to where the cone starts, and the cone is recorded in `dims_mm.point_mm`.
   - `open_dirs` holds every end that opens onto an outer face, so a through hole has two.
 - **Pocket:**

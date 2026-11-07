@@ -1,4 +1,6 @@
-"""Print one line per result file: hole and pocket surfaces found, wrong calls, and the calls on
+"""Print one line per result file: hole and pocket surfaces found, wrong calls, hole surfaces given
+the right type (through or blind; an engine that gives no type has 0), whole holes on a set with
+INSTANCES.json (grade.instance_score), and the calls on
 labels the scores leave out (O-ring as hole or pocket, blind slots and steps as pocket, rounds and
 stock as either; slots shaped like a pocket beside a step on their own line, D-019), plus parts that did not score. python tests/grading/summary.py <result.json>..."""
 
@@ -55,7 +57,11 @@ def line(path: str) -> str:
     pn, po = (sum(s["recall"][k][x] for k in POCKET) for x in ("n", "of"))
     ph, pp = s["precision"]["hole"], s["precision"]["pocket"]
     ex = " ".join(f"{k} {v}" for k, v in excluded_calls(d["per_part"]).items())
-    return (f"{path.split('/')[-1]}: {d['status']} holes {hn}/{ho} (miss {ho - hn}, wrong {ph['of'] - ph['n']}) "
+    typed = sum(s["type_recall"][k]["n"] for k in HOLE)
+    hw = d.get("holes_whole")
+    whole = f" whole holes {hw['whole']}/{hw['of']} (split {hw['split']}, merged {hw['merged']})" if hw else ""
+    return (f"{path.split('/')[-1]}: {d['status']} holes {hn}/{ho} (miss {ho - hn}, wrong {ph['of'] - ph['n']}, "
+            f"through/blind right {typed}){whole} "
             f"pockets {pn}/{po} (miss {po - pn}, wrong {pp['of'] - pp['n']}) {ex}")
 
 

@@ -6,6 +6,7 @@ process on our own test parts, end to end. The outside answer keys are not neede
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from collections import Counter
@@ -210,3 +211,34 @@ def test_another_engine_without_file_positions_still_joins():
     rec, counts, _ = grade.score_part("p.step", r, [1])
     assert rec["status"] == "ok"
     assert grade.scores(counts)["recall"][1] == {"n": 1, "of": 1, "pct": 100.0}
+
+
+def test_instance_score_joins_a_stepped_holes_chain_and_finds_splits_and_merges():
+    """Hole-joins set (HANDOFF 3a): a counterbore and its bore share a chain and are one hole; two
+    holes read as one group are merged; one hole in two groups is split."""
+    ours = [{"kind": "hole", "faces": [0, 1], "chain": 1}, {"kind": "hole", "faces": [2], "chain": 1},
+            {"kind": "hole", "faces": [3], "chain": 2}, {"kind": "hole", "faces": [4], "chain": 3},
+            {"kind": "pocket", "faces": [5]}]
+    assert grade.instance_score(ours, [[0, 1, 2], [3, 4]]) == {"whole": 1, "of": 2, "split": 1, "merged": 0}
+    # Quiddity: features with no chain, each its own hole
+    quid = [{"kind": "hole", "faces": [0, 1, 2], "open_ends": 2}, {"kind": "hole", "faces": [3, 4], "open_ends": 1}]
+    assert grade.instance_score(quid, [[0, 1, 2], [3, 4]])["whole"] == 2
+    # Analysis Situs: every hole face in one feature, so two holes are merged
+    situs = [{"kind": "hole", "faces": [0, 1, 2, 3, 4], "open_ends": None}]
+    assert grade.instance_score(situs, [[0, 1, 2], [3, 4]]) == {"whole": 0, "of": 2, "split": 0, "merged": 2}
+    assert grade.instance_score([], [[0]]) == {"whole": 0, "of": 1, "split": 0, "merged": 0}
+
+
+def test_a_set_with_instances_scores_whole_holes(tmp_path, monkeypatch):
+    (tmp_path / "a.step").write_bytes(b"ADVANCED_FACE('1',x) ADVANCED_FACE('1',x)")
+    (tmp_path / "INSTANCES.json").write_text('{"a": [[0, 1]]}')
+    faces = [{"kind": "cylinder", "kind2": "cylinder", "name": "1", "file_pos": i} for i in range(2)]
+    monkeypatch.setattr(grade, "run_all", lambda paths, jobs: {p: {"status": "ok", "ignored_solids": 0, "faces": faces,
+                        "features": [{"kind": "hole", "faces": [0], "open_ends": 2, "chain": 1},
+                                     {"kind": "hole", "faces": [1], "open_ends": 2, "chain": 2}]} for p in paths})
+    out = grade.mfcadpp(tmp_path, None, 1)
+    assert out["holes_whole"] == {"whole": 0, "of": 1, "split": 1, "merged": 0}
+    sys.path.insert(0, str(Path(grade.__file__).parent))
+    import summary
+    (tmp_path / "r.json").write_text(json.dumps(out))
+    assert "whole holes 0/1 (split 1, merged 0)" in summary.line(str(tmp_path / "r.json"))
