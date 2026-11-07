@@ -421,15 +421,58 @@ def _edge_neighbour(topo: Topology, face_id: int, edge) -> int | None:
     return None
 
 
-def _walls_across(topo: Topology, floor: int, n: Vec, edges) -> list[int] | None:
-    """The concave perpendicular walls across a set of floor edges; None if any edge has none."""
+BREAK_STEP = 0.05  # mm: how far past a floor edge, and below the floor, the enclosure probe starts
+
+
+class _Enclosure:
+    """Is the gap past a floor edge inside the part? Loaded once per analysis, only when needed."""
+
+    def __init__(self, solid):
+        self.solid = solid
+        self.rays = None
+
+    def inside(self, floor, n: Vec, edge) -> bool:
+        """A floor edge with no wall (D-018 round 1): another feature (a passage, a through hole, a
+        groove, a step) cuts the pocket there. Start just past the edge and just below the floor, in
+        the air of that feature, and cast rays in the floor's plane: outward, 45 deg either side, and
+        both ways along the edge. Every one must meet the part again, so the gap is closed all round
+        (a passage, a hole). A slot or step that opens to the outside, or a through slot that runs
+        out of the part, lets a ray escape."""
+        from OCC.Core.BRepClass3d import BRepClass3d_SolidClassifier
+        from OCC.Core.TopAbs import TopAbs_OUT
+        p, e = _edge_mid(edge)
+        into = _into(floor, p, n, e)
+        if into is None:
+            return False
+        out = tuple(-c for c in into)
+        start = tuple(p[i] + BREAK_STEP * out[i] - BREAK_STEP * n[i] for i in range(3))
+        if BRepClass3d_SolidClassifier(self.solid, gp_Pnt(*start), 1e-6).State() != TopAbs_OUT:
+            return False  # material past the edge: a slope or chamfer, not a cut
+        if self.rays is None:
+            self.rays = _Rays(self.solid)
+        c, s = math.cos(math.pi / 4), math.sin(math.pi / 4)
+        dirs = [out, e, tuple(-x for x in e),
+                tuple(c * out[i] + s * e[i] for i in range(3)), tuple(c * out[i] - s * e[i] for i in range(3))]
+        return all(self.rays.first_hit(start, unit(d))[0] is not None for d in dirs)
+
+
+def _pocket_walls(topo: Topology, floor: int, n: Vec, edges, enclosure: _Enclosure) -> list[int] | None:
+    """The walls of a pocket on this floor, or None. Each outer edge of the floor meets a concave
+    wall perpendicular to it, or (D-018 round 1) is cut by another feature inside the part; a cut
+    pocket needs at least two walls left."""
     walls: list[int] = []
+    cut = False
     for edge in edges:
         nb = _edge_neighbour(topo, floor, edge)
-        if nb is None or not _wall_kind(topo.faces[nb], n) or not _concave(topo, floor, nb, edge):
+        if nb is not None and _wall_kind(topo.faces[nb], n) and _concave(topo, floor, nb, edge):
+            if nb not in walls:
+                walls.append(nb)
+        elif nb is not None and enclosure.inside(topo.faces[floor], n, edge):
+            cut = True
+        else:
             return None
-        if nb not in walls:
-            walls.append(nb)
+    if cut and len(walls) < 2:
+        return None
     return walls
 
 
@@ -506,6 +549,7 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
     topo = Topology(solid, faces)
     cyls = {i: c for i, f in enumerate(faces) if (c := _cylinder(i, f))}
     found_p, found_c = [], []
+    enclosure = _Enclosure(solid)
     for fid, face in enumerate(faces):
         if fid in hole_faces:
             continue
@@ -514,11 +558,12 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
             continue
         outer = bt.OuterWire(topods.Face(face))
         outer_edges = _wire_edges(outer)
-        walls = _walls_across(topo, fid, n, outer_edges)
+        walls = _pocket_walls(topo, fid, n, outer_edges, enclosure)
         if not walls:
             continue
-        if all(w in cyls for w in walls) and len({round(cyls[w].radius, 3) for w in walls}) == 1:
-            continue  # a flat-bottom hole or counterbore floor, not a pocket
+        if all(w in cyls for w in walls) and (len({round(cyls[w].radius, 3) for w in walls}) == 1
+                                              or all(_same_line(cyls[w], cyls[walls[0]]) for w in walls)):
+            continue  # a flat-bottom hole, counterbore floor or groove (walls on one axis), not a pocket
         islands: list[int] = []
         exp = TopExp_Explorer(face, TopAbs_EDGE)
         while exp.More():
