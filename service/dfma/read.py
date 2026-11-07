@@ -34,6 +34,7 @@ class ReadResult:
     units_in_file: str
     volume_mm3: float
     ignored_solids: int
+    free_edges: int = 0  # edges on one face only, when an open shell was read as the solid (D-018 round 4)
 
 
 def volume(shape: TopoDS_Shape) -> float:
@@ -78,6 +79,9 @@ def read_step(path: str | Path) -> ReadResult:
         while explorer.More():
             solids.append(topods.Solid(explorer.Current()))
             explorer.Next()
+    free_edges = 0
+    if not solids and shape is not None and not shape.IsNull() and _declares_solid(reader):
+        solids, free_edges = _solids_from_shells(shape)
     if not solids:
         raise ReadError(settings.MSG_NO_SOLID)
 
@@ -88,4 +92,28 @@ def read_step(path: str | Path) -> ReadResult:
     face_map = TopTools_IndexedMapOfShape()
     topexp.MapShapes(solid, TopAbs_FACE, face_map)
     faces = [topods.Face(face_map.FindKey(i)) for i in range(1, face_map.Size() + 1)]
-    return ReadResult(solid, faces, units, volumes[best], len(solids) - 1)
+    return ReadResult(solid, faces, units, volumes[best], len(solids) - 1, free_edges)
+
+
+def _declares_solid(reader: STEPControl_Reader) -> bool:
+    model = reader.StepModel()
+    return any(model.Value(i).DynamicType().Name() in SOLID_ENTITIES for i in range(1, model.NbEntities() + 1))
+
+
+def _solids_from_shells(shape: TopoDS_Shape) -> tuple[list, int]:
+    """D-018 round 4: the file declares a solid, but its shell has a gap (an edge on one face only),
+    so OpenCascade returns the shell alone. Close each shell into a solid and count the gap's edges,
+    which analyze() lists under assumptions."""
+    from OCC.Core.ShapeFix import ShapeFix_Solid
+    from OCC.Core.TopAbs import TopAbs_EDGE, TopAbs_SHELL
+    from OCC.Core.TopTools import TopTools_IndexedDataMapOfShapeListOfShape
+    solids, free = [], 0
+    explorer = TopExp_Explorer(shape, TopAbs_SHELL)
+    while explorer.More():
+        shell = topods.Shell(explorer.Current())
+        explorer.Next()
+        edges = TopTools_IndexedDataMapOfShapeListOfShape()
+        topexp.MapShapesAndAncestors(shell, TopAbs_EDGE, TopAbs_FACE, edges)
+        free += sum(1 for i in range(1, edges.Size() + 1) if edges.FindFromIndex(i).Size() == 1)
+        solids.append(topods.Solid(ShapeFix_Solid().SolidFromShell(shell)))
+    return solids, free

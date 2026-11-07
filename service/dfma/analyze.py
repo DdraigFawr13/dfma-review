@@ -62,5 +62,6 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
         "tools": [],
         "tool_changes": 0,
         "cost_drivers": [],
-        "assumptions": list(settings.ASSUMPTIONS),
+        "assumptions": list(settings.ASSUMPTIONS) + ([settings.MSG_OPEN_SHELL.format(n=part.free_edges)]
+                                                     if part.free_edges else []),
     }

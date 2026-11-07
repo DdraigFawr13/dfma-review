@@ -545,8 +545,24 @@ def _floor_chamfer_walls(topo: Topology, floor: int, nb: int, n: Vec, edge) -> l
     """The walls past a chamfer between floor and wall (D-018 round 3): `nb` is a sloped plane,
     concave to the floor, that meets walls perpendicular to the floor at concave edges. Empty when
     `nb` is not such a chamfer. A chamfer is a strip: its edge to the wall runs parallel to its edge
-    to the floor (a corner chamfer between two walls meets them across, and is no floor)."""
+    to the floor (a corner chamfer between two walls meets them across, and is no floor). At a round
+    wall the chamfer is a cone on the wall's axis (perpendicular to the floor)."""
     face = topo.faces[nb]
+    surface = BRepAdaptor_Surface(face, True)
+    if surface.GetType() == GeomAbs_Cone:
+        ax = surface.Cone().Axis()
+        o, d = _pt(ax.Location()), unit(_pt(ax.Direction()))
+        if abs(dot(d, n)) < math.cos(ANGLE_TOL) or not _concave(topo, floor, nb, edge):
+            return []
+        out = []
+        for k, edges in topo.neighbours(nb).items():
+            s = BRepAdaptor_Surface(topo.faces[k], True)
+            if k == floor or s.GetType() != GeomAbs_Cylinder or not _wall_kind(topo.faces[k], n):
+                continue
+            off = cross(_sub(_pt(s.Cylinder().Axis().Location()), o), d)
+            if math.sqrt(dot(off, off)) <= LINE_TOL and any(_concave(topo, nb, k, e) for e in edges):
+                out.append(k)
+        return out
     m = _plane_normal(face)
     if m is None or _wall_kind(face, n) or abs(dot(m, n)) >= math.cos(ANGLE_TOL) or not _concave(topo, floor, nb, edge):
         return []
