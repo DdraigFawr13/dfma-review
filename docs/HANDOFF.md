@@ -31,7 +31,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-1. S4: update the status page and demo (D-009), ask Morgan to approve, finish per GIT-08. Carry: S5 must make a hole end on a pocket floor take the floor normal; engraved lettering on NIST parts reads as pockets (assumption in the app).
+1. S4: waiting on Morgan's approval ([status](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu), [demo](https://claude.ai/artifact/KnnLF3YAHp5ZCmNuVWyvP4) updated 2026-11-07, 26 parts in 4 materials); then finish per GIT-08 and start S5. Carry: S5 must make a hole end on a pocket floor take the floor normal; engraved lettering on NIST parts reads as pockets (assumption in the app).
 2. NIST library merged in [#5](https://github.com/DdraigFawr13/dfma-review/pull/5) (069ef55).
 3. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
 
