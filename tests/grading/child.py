@@ -88,6 +88,9 @@ def _step_names(path: str, n_faces: int) -> tuple[list, object, list, list]:
     while exp.More():
         solids.append(topods.Solid(exp.Current()))
         exp.Next()
+    if not solids:  # a declared solid with a gap: read_step closes its shell (D-018 round 4)
+        from dfma.read import _solids_from_shells
+        solids = _solids_from_shells(shape)[0]
     if not solids:
         return [(None, None)] * n_faces, shape, [], []
     vols = [volume(s) for s in solids]
@@ -145,7 +148,29 @@ def run(path: str) -> dict:
                       "name": name, "file_pos": pos, "shape_id": sid or None})
     feats = [{"kind": f["kind"], "faces": f["faces"], "open_ends": len(f.get("open_vectors", []))}
              for f in r["features"] if f["kind"] in ("hole", "pocket")]
+    topo = None
+    for out, f in zip(feats, [f for f in r["features"] if f["kind"] in ("hole", "pocket")]):
+        if f["kind"] == "pocket":
+            if topo is None:
+                from dfma.features import Topology
+                topo = Topology(part.solid, part.faces)
+            out["short_walls"] = short_walls(topo, f)
     return {"faces": faces, "features": feats, "ignored_solids": r["part"]["ignored_solids"], "error": None}
+
+
+def short_walls(topo, pocket: dict) -> list[list]:
+    """[wall, [faces past its top]] for each pocket wall whose top stops more than 0.01 mm below the
+    pocket's depth, for the scorer's D-019 line (a slot closed by a short wall over a blind step)."""
+    from dfma.features import _plane_normal, _points, dot
+    n, faces = tuple(pocket["axis"]), set(pocket["faces"])
+    hs = {i: [dot(p, n) for p in _points(topo.faces[i])] for i in faces}
+    floors = [i for i in faces if (m := _plane_normal(topo.faces[i])) is not None and dot(m, n) > 0.999]
+    if not floors:
+        return []
+    floor = min(floors, key=lambda i: min(hs[i]))
+    base, depth = min(hs[floor]), pocket["dims_mm"]["depth"]
+    return [[w, sorted(k for k in topo.neighbours(w) if k not in faces)]
+            for w in sorted(faces) if w != floor and max(hs[w]) - base < depth - 0.01]
 
 
 def main() -> int:
