@@ -12,63 +12,63 @@ path = "models/NIST/Manfred_Osti/spectrometer/ballnut/ballnut.hh.sat.stp"
 status = "ok"
 face_count = 9
 not_analysed = 0
-features = 1
+features = 2
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/ballnut/ballnut.prt.hh.sat.stp"
 status = "ok"
 face_count = 9
 not_analysed = 0
-features = 1
+features = 3
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/bearing_208/bearing_208.hh.sat.stp"
 status = "ok"
 face_count = 9
 not_analysed = 0
-features = 1
+features = 2
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/bearing_208/bearing_208.prt.hh.sat.stp"
 status = "ok"
 face_count = 9
 not_analysed = 0
-features = 1
+features = 4
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/bearing_209/bearing_209.hh.sat.stp"
 status = "ok"
 face_count = 9
 not_analysed = 0
-features = 1
+features = 2
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/bearing_209/bearing_209.prt.hh.sat.stp"
 status = "ok"
 face_count = 9
 not_analysed = 0
-features = 1
+features = 4
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/bearing_nut_support_plate_31/bearing_nut_support_plate_31.hh.sat.stp"
 status = "ok"
 face_count = 26
 not_analysed = 0
-features = 6
+features = 12
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/bearing_post1_56/bearing_post1_56.hh.sat.stp"
 status = "ok"
 face_count = 37
 not_analysed = 0
-features = 4
+features = 8
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/bearing_post_56/bearing_post_56.hh.sat.stp"
 status = "ok"
 face_count = 37
 not_analysed = 0
-features = 4
+features = 8
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/bearing_shaft1_57/bearing_shaft1_57.hh.sat.stp"
@@ -96,35 +96,35 @@ path = "models/NIST/Manfred_Osti/spectrometer/bellow/bellow.hh.sat.stp"
 status = "ok"
 face_count = 68
 not_analysed = 0
-features = 1
+features = 2
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/bellow/bellow.prt.hh.sat.stp"
 status = "ok"
 face_count = 68
 not_analysed = 0
-features = 1
+features = 2
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/bellows_attach_ring_21/bellows_attach_ring_21.hh.sat.stp"
 status = "ok"
 face_count = 18
 not_analysed = 4
-features = 1
+features = 2
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/bellows_attach_ring_26/bellows_attach_ring_26.hh.sat.stp"
 status = "ok"
 face_count = 18
 not_analysed = 4
-features = 1
+features = 2
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/bellows_long/bellows_long.hh.sat.stp"
 status = "ok"
 face_count = 68
 not_analysed = 0
-features = 1
+features = 2
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/bellows_long/bellows_long.prt.hh.sat.stp"
@@ -138,119 +138,119 @@ path = "models/NIST/Manfred_Osti/spectrometer/flange_pt201_11/flange_pt201_11.hh
 status = "ok"
 face_count = 67
 not_analysed = 0
-features = 20
+features = 40
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/flange_pt202_16/flange_pt202_16.hh.sat.stp"
 status = "ok"
 face_count = 84
 not_analysed = 0
-features = 25
+features = 45
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/linkage_arm1_42/linkage_arm1_42.hh.sat.stp"
 status = "ok"
 face_count = 36
 not_analysed = 0
-features = 10
+features = 19
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/linkage_arm1_43/linkage_arm1_43.hh.sat.stp"
 status = "ok"
 face_count = 43
 not_analysed = 0
-features = 14
+features = 28
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/linkage_arm_42/linkage_arm_42.hh.sat.stp"
 status = "ok"
 face_count = 36
 not_analysed = 0
-features = 10
+features = 19
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/linkage_arm_42/linkage_arm_42.prt.hh.sat.stp"
 status = "ok"
 face_count = 36
 not_analysed = 0
-features = 10
+features = 22
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/linkage_arm_43/linkage_arm_43.hh.sat.stp"
 status = "ok"
 face_count = 43
 not_analysed = 0
-features = 14
+features = 28
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/linkage_arm_43/linkage_arm_43.prt.hh.sat.stp"
 status = "ok"
 face_count = 43
 not_analysed = 0
-features = 14
+features = 30
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/linkage_arm_short_46/linkage_arm_short_46.hh.sat.stp"
 status = "ok"
 face_count = 12
 not_analysed = 0
-features = 2
+features = 4
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/main_block/main_block.hh.sat.stp"
 status = "ok"
 face_count = 160
 not_analysed = 18
-features = 27
+features = 50
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/main_block/main_block.prt.hh.sat.stp"
 status = "ok"
 face_count = 159
 not_analysed = 18
-features = 27
+features = 54
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/main_linkage_arm_6/main_linkage_arm_6.hh.sat.stp"
 status = "ok"
 face_count = 103
 not_analysed = 0
-features = 23
+features = 46
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/new_main/new_main.prt.hh.sat.stp"
 status = "ok"
 face_count = 159
 not_analysed = 18
-features = 27
+features = 54
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/nut_244/nut_244.hh.sat.stp"
 status = "ok"
 face_count = 10
 not_analysed = 0
-features = 1
+features = 2
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/nut_244/nut_244.prt.hh.sat.stp"
 status = "ok"
 face_count = 10
 not_analysed = 0
-features = 1
+features = 3
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/rear_plate_36/rear_plate_36.hh.sat.stp"
 status = "ok"
 face_count = 80
 not_analysed = 0
-features = 20
+features = 40
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/rear_plate_36/rear_plate_36.prt.hh.sat.stp"
 status = "ok"
 face_count = 80
 not_analysed = 0
-features = 20
+features = 61
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/screw_81/screw_81.hh.sat.stp"
@@ -264,7 +264,7 @@ path = "models/NIST/Manfred_Osti/spectrometer/screw_81/screw_81.prt.hh.sat.stp"
 status = "ok"
 face_count = 26
 not_analysed = 0
-features = 0
+features = 3
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/shaft_62/shaft_62.hh.sat.stp"
@@ -278,329 +278,329 @@ path = "models/NIST/Manfred_Osti/spectrometer/shaft_62/shaft_62.prt.hh.sat.stp"
 status = "ok"
 face_count = 15
 not_analysed = 0
-features = 0
+features = 2
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/spacer1_66/spacer1_66.hh.sat.stp"
 status = "ok"
 face_count = 35
 not_analysed = 0
-features = 10
+features = 18
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/spacer1_66/spacer1_66.prt.hh.sat.stp"
 status = "ok"
 face_count = 35
 not_analysed = 0
-features = 10
+features = 27
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/spacer1_67/spacer1_67.hh.sat.stp"
 status = "ok"
 face_count = 35
 not_analysed = 0
-features = 10
+features = 18
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/spacer1_67/spacer1_67.prt.hh.sat.stp"
 status = "ok"
 face_count = 35
 not_analysed = 0
-features = 10
+features = 27
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/spacer_220/spacer_220.hh.sat.stp"
 status = "ok"
 face_count = 6
 not_analysed = 0
-features = 1
+features = 2
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/spacer_220/spacer_220.prt.hh.sat.stp"
 status = "ok"
 face_count = 6
 not_analysed = 0
-features = 1
+features = 3
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/spacer_223/spacer_223.hh.sat.stp"
 status = "ok"
 face_count = 6
 not_analysed = 0
-features = 1
+features = 2
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/spacer_223/spacer_223.prt.hh.sat.stp"
 status = "ok"
 face_count = 6
 not_analysed = 0
-features = 1
+features = 3
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/spacer_66/spacer_66.hh.sat.stp"
 status = "ok"
 face_count = 35
 not_analysed = 0
-features = 10
+features = 18
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/spacer_66/spacer_66.prt.hh.sat.stp"
 status = "ok"
 face_count = 35
 not_analysed = 0
-features = 10
+features = 27
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/spacer_67/spacer_67.hh.sat.stp"
 status = "ok"
 face_count = 35
 not_analysed = 0
-features = 10
+features = 18
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/spacer_67/spacer_67.prt.hh.sat.stp"
 status = "ok"
 face_count = 35
 not_analysed = 0
-features = 10
+features = 27
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/spacer_87/spacer_87.hh.sat.stp"
 status = "ok"
 face_count = 9
 not_analysed = 0
-features = 1
+features = 2
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/spacer_87/spacer_87.prt.hh.sat.stp"
 status = "ok"
 face_count = 9
 not_analysed = 0
-features = 1
+features = 4
 
 [[file]]
 path = "models/STEP/STI/1797609in/1797609in.stp"
 status = "ok"
 face_count = 122
 not_analysed = 0
-features = 32
+features = 59
 
 [[file]]
 path = "models/STEP/STI/2827056/2827056.stp"
 status = "ok"
 face_count = 355
 not_analysed = 0
-features = 94
+features = 219
 
 [[file]]
 path = "models/STEP/STI/boeing_part/boeing_part.stp"
 status = "ok"
 face_count = 122
 not_analysed = 0
-features = 34
+features = 56
 
 [[file]]
 path = "models/STEP/STI/bracket1-Part/bracket1-Part.stp"
 status = "ok"
 face_count = 45
 not_analysed = 0
-features = 3
+features = 36
 
 [[file]]
 path = "models/STEP/STI/clevis21/clevis21.stp"
 status = "ok"
 face_count = 48
 not_analysed = 0
-features = 12
+features = 43
 
 [[file]]
 path = "models/STEP/STI/clevis22/clevis22.stp"
 status = "ok"
 face_count = 64
 not_analysed = 0
-features = 15
+features = 55
 
 [[file]]
 path = "models/STEP/STI/clevis23/clevis23.stp"
 status = "ok"
 face_count = 47
 not_analysed = 0
-features = 15
+features = 44
 
 [[file]]
 path = "models/STEP/STI/daratech/daratech.stp"
 status = "ok"
 face_count = 175
 not_analysed = 2
-features = 46
+features = 94
 
 [[file]]
 path = "models/STEP/STI/gear/gear.stp"
 status = "ok"
 face_count = 86
 not_analysed = 0
-features = 0
+features = 4
 
 [[file]]
 path = "models/STEP/STI/gehaeuse/gehaeuse.stp"
 status = "ok"
 face_count = 89
 not_analysed = 9
-features = 1
+features = 18
 
 [[file]]
 path = "models/STEP/STI/interactingPockets/interactingPockets.stp"
 status = "ok"
 face_count = 48
 not_analysed = 0
-features = 22
+features = 44
 
 [[file]]
 path = "models/STEP/STI/mohne/mohne.stp"
 status = "ok"
 face_count = 205
 not_analysed = 0
-features = 64
+features = 184
 
 [[file]]
 path = "models/STEP/STI/monster4/monster4.stp"
 status = "ok"
 face_count = 281
 not_analysed = 0
-features = 15
+features = 285
 
 [[file]]
 path = "models/STEP/STI/mycami2/mycami2.stp"
 status = "ok"
 face_count = 49
 not_analysed = 5
-features = 4
+features = 23
 
 [[file]]
 path = "models/STEP/STI/nasty_cheese/nasty_cheese.stp"
 status = "ok"
 face_count = 331
 not_analysed = 1
-features = 165
+features = 365
 
 [[file]]
 path = "models/STEP/STI/piston/piston.stp"
 status = "ok"
 face_count = 46
 not_analysed = 12
-features = 1
+features = 10
 
 [[file]]
 path = "models/STEP/STI/simple_boeing_part/simple_boeing_part.stp"
 status = "ok"
 face_count = 116
 not_analysed = 0
-features = 28
+features = 57
 
 [[file]]
 path = "models/STEP/STI/socket/socket.stp"
 status = "ok"
 face_count = 37
 not_analysed = 0
-features = 7
+features = 31
 
 [[file]]
 path = "models/STEP/STI/team/team.stp"
 status = "ok"
 face_count = 88
 not_analysed = 0
-features = 39
+features = 80
 
 [[file]]
 path = "models/STEP/STI/unterlaf/unterlaf.stp"
 status = "ok"
 face_count = 392
 not_analysed = 0
-features = 15
+features = 157
 
 [[file]]
 path = "models/STEP/STI/vaccase_asm_solid/vaccase_asm_solid.stp"
 status = "ok"
 face_count = 16
 not_analysed = 0
-features = 0
+features = 5
 
 [[file]]
 path = "models/STEP/STI/valve/valve.stp"
 status = "ok"
 face_count = 44
 not_analysed = 0
-features = 9
+features = 23
 
 [[file]]
 path = "models/STEP/STI/vs_training/vs_training.stp"
 status = "ok"
 face_count = 86
 not_analysed = 0
-features = 32
+features = 94
 
 [[file]]
 path = "models/STEP/STI/weldment_asm_solid/weldment_asm_solid.stp"
 status = "ok"
 face_count = 145
 not_analysed = 12
-features = 27
+features = 54
 
 [[file]]
 path = "models/UMD/AES94/AES94.step"
 status = "ok"
 face_count = 32
 not_analysed = 0
-features = 2
+features = 24
 
 [[file]]
 path = "models/UMD/AES94_stock/AES94_stock.step"
 status = "ok"
 face_count = 6
 not_analysed = 0
-features = 0
+features = 3
 
 [[file]]
 path = "models/UMD/base1-Part/base1-Part.step"
 status = "ok"
 face_count = 44
 not_analysed = 0
-features = 4
+features = 28
 
 [[file]]
 path = "models/UMD/base1-Stock/base1-Stock.step"
 status = "ok"
 face_count = 6
 not_analysed = 0
-features = 0
+features = 3
 
 [[file]]
 path = "models/UMD/base2-Part/base2-Part.step"
 status = "ok"
 face_count = 52
 not_analysed = 0
-features = 4
+features = 37
 
 [[file]]
 path = "models/UMD/base2-Stock/base2-Stock.step"
 status = "ok"
 face_count = 6
 not_analysed = 0
-features = 0
+features = 3
 
 [[file]]
 path = "models/UMD/bottomed_pocket1/bottomed_pocket1.step"
 status = "ok"
 face_count = 15
 not_analysed = 0
-features = 5
+features = 13
 
 [[file]]
 path = "models/UMD/bottomless_pocket1/bottomless_pocket1.step"
 status = "ok"
 face_count = 20
 not_analysed = 0
-features = 0
+features = 10
 
 [[file]]
 path = "models/UMD/bracket1-Part/bracket1-Part.step"
@@ -614,7 +614,7 @@ path = "models/UMD/bracket1-Stock/bracket1-Stock.step"
 status = "ok"
 face_count = 6
 not_analysed = 0
-features = 0
+features = 3
 
 [[file]]
 path = "models/UMD/bracket2-Part/bracket2-Part.step"
@@ -628,7 +628,7 @@ path = "models/UMD/bracket2-Stock/bracket2-Stock.step"
 status = "ok"
 face_count = 6
 not_analysed = 0
-features = 0
+features = 3
 
 [[file]]
 path = "models/UMD/bracket3-Part/bracket3-Part.step"
@@ -642,7 +642,7 @@ path = "models/UMD/bracket3-Stock/bracket3-Stock.step"
 status = "ok"
 face_count = 6
 not_analysed = 0
-features = 0
+features = 3
 
 [[file]]
 path = "models/UMD/bracket4-Part/bracket4-Part.step"
@@ -656,7 +656,7 @@ path = "models/UMD/bracket4-Stock/bracket4-Stock.step"
 status = "ok"
 face_count = 6
 not_analysed = 0
-features = 0
+features = 3
 
 [[file]]
 path = "models/UMD/castle/castle.step"
@@ -677,7 +677,7 @@ path = "models/UMD/ex1_stock/ex1_stock.step"
 status = "ok"
 face_count = 6
 not_analysed = 0
-features = 0
+features = 3
 
 [[file]]
 path = "models/UMD/ex2/ex2.step"
@@ -691,102 +691,102 @@ path = "models/UMD/ex2_stock/ex2_stock.step"
 status = "ok"
 face_count = 6
 not_analysed = 0
-features = 0
+features = 3
 
 [[file]]
 path = "models/UMD/pathological/pathological.step"
 status = "ok"
 face_count = 10
 not_analysed = 0
-features = 0
+features = 3
 
 [[file]]
 path = "models/UMD/polyh_castle/polyh_castle.step"
 status = "ok"
 face_count = 21
 not_analysed = 0
-features = 0
+features = 18
 
 [[file]]
 path = "models/UMD/regli_pathological1/regli_pathological1.step"
 status = "ok"
 face_count = 19
 not_analysed = 2
-features = 0
+features = 8
 
 [[file]]
 path = "models/UMD/socket1-Part/socket1-Part.step"
 status = "ok"
 face_count = 37
 not_analysed = 0
-features = 7
+features = 29
 
 [[file]]
 path = "models/UMD/socket1-Stock/socket1-Stock.step"
 status = "ok"
 face_count = 3
 not_analysed = 0
-features = 0
+features = 1
 
 [[file]]
 path = "models/UMD/socket2-Part/socket2-Part.step"
 status = "ok"
 face_count = 37
 not_analysed = 0
-features = 7
+features = 31
 
 [[file]]
 path = "models/UMD/socket2-Stock/socket2-Stock.step"
 status = "ok"
 face_count = 3
 not_analysed = 0
-features = 0
+features = 1
 
 [[file]]
 path = "models/UMD/swivel1-Part/swivel1-Part.step"
 status = "ok"
 face_count = 14
 not_analysed = 0
-features = 2
+features = 5
 
 [[file]]
 path = "models/UMD/swivel1-Stock/swivel1-Stock.step"
 status = "ok"
 face_count = 3
 not_analysed = 0
-features = 0
+features = 1
 
 [[file]]
 path = "models/UMD/swivel2-Part/swivel2-Part.step"
 status = "ok"
 face_count = 14
 not_analysed = 0
-features = 2
+features = 6
 
 [[file]]
 path = "models/UMD/swivel2-Stock/swivel2-Stock.step"
 status = "ok"
 face_count = 3
 not_analysed = 0
-features = 0
+features = 1
 
 [[file]]
 path = "models/UMD/through_pocket1/through_pocket1.step"
 status = "ok"
 face_count = 14
 not_analysed = 0
-features = 0
+features = 7
 
 [[file]]
 path = "models/UMD/vand1/vand1.step"
 status = "ok"
 face_count = 30
 not_analysed = 0
-features = 0
+features = 15
 
 [[file]]
 path = "models/UMD/vand1_stock/vand1_stock.step"
 status = "ok"
 face_count = 6
 not_analysed = 0
-features = 0
+features = 3

@@ -4,8 +4,9 @@ import type { Analysis, Finding, Severity } from "./api";
 
 const RULE_NAMES: Record<string, string> = {
   hole_depth: "hole depth", hole_size: "hole size", corner_radius: "corner radius", pocket_depth: "pocket depth",
+  thin_wall: "thin wall",
 };
-const KIND_NAMES: [string, string, string][] = [["hole", "hole", "holes"], ["pocket", "pocket", "pockets"], ["corner", "corner", "corners"]];
+const KIND_NAMES: [string, string, string][] = [["hole", "hole", "holes"], ["pocket", "pocket", "pockets"], ["corner", "corner", "corners"], ["wall", "wall", "walls"]];
 const GROUPS: Severity[] = ["high", "medium"];
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: string): HTMLElementTagNameMap[K] {
@@ -60,6 +61,8 @@ function meta(f: Finding, result: Analysis): string {
     parts.push(`${(feature.dims_mm.depth / 25.4).toFixed(3)} in deep, ${toolText(feature.dims_mm.end_mill_mm / 25.4)} end mill fits`);
   } else if (feature?.kind === "corner") {
     parts.push(`radius ${(feature.dims_mm.radius / 25.4).toFixed(3)} in, pocket ${(feature.dims_mm.depth / 25.4).toFixed(3)} in deep`);
+  } else if (feature?.kind === "wall") {
+    parts.push(`${(feature.dims_mm.thickness / 25.4).toFixed(3)} in thick`);
   } else if (feature?.dims_mm.diameter !== undefined) {
     const d = feature.dims_mm.diameter / 25.4;
     parts.push(f.rule === "hole_size" ? `${d.toFixed(3)} in diameter` : `${diameterText(d)} diameter, ${(feature.dims_mm.depth / 25.4).toFixed(3)} in deep`);

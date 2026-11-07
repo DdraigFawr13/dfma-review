@@ -1,4 +1,4 @@
-"""Feature recognition on analytic faces (spec Design "Features"). S2: holes; S3: pockets and corners.
+"""Feature recognition on analytic faces (spec Design "Features"). S2: holes; S3: pockets and corners; S4: walls.
 
 A hole is a set of concave cylindrical faces that share edges, with the same axis (0.5 deg)
 and radius (0.001 mm), spanning the full 360 deg. Stepped segments join through a shoulder
@@ -555,8 +555,271 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
 
 
 def number(features: list[dict], kind: str) -> list[dict]:
-    features.sort(key=lambda f: min(f["faces"]))
+    features.sort(key=lambda f: (min(f["faces"]), sorted(f["faces"])))  # walls often share their lowest face
     out = []
     for n, f in enumerate(features, 1):
         out.append({"id": f"{kind}-{n}", **f})
     return out
+
+
+# --- S4: walls (spec Features "Wall"; S4 "Settled at build") ---
+
+MIN_OVERLAP_MM2 = 10.0  # assumption (spec Features "Wall")
+
+
+def _box(shape):
+    from OCC.Core.Bnd import Bnd_Box
+    from OCC.Core.BRepBndLib import brepbndlib
+    box = Bnd_Box()
+    brepbndlib.Add(shape, box)
+    box.Enlarge(0.01)
+    return box
+
+
+def _plane_info(face):
+    p, n = _outward_normal(face)
+    return p, n, _box(face)
+
+
+def _area(shape) -> float:
+    from OCC.Core.BRepGProp import brepgprop
+    from OCC.Core.GProp import GProp_GProps
+    props = GProp_GProps()
+    brepgprop.SurfaceProperties(shape, props)
+    return props.Mass()
+
+
+def _inner_points(shape, grid: int = 9) -> list[Vec]:
+    """Points inside a shape's faces: the centroids of their mesh triangles (largest first), then a
+    grid x grid sample of each face's UV box kept where it lies inside the face. The centroid of a
+    whole face can fall in a hole through it, and a ray from one point can be blocked where the
+    material between two faces is only partial (a pocket in the middle of a block)."""
+    from OCC.Core.BRepClass import BRepClass_FaceClassifier
+    from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+    from OCC.Core.gp import gp_Pnt2d
+    from OCC.Core.TopAbs import TopAbs_IN
+    from OCC.Core.TopLoc import TopLoc_Location
+    BRepMesh_IncrementalMesh(shape, 0.5, False, 0.5, True)
+    centroids, samples = [], []
+    exp = TopExp_Explorer(shape, TopAbs_FACE)
+    while exp.More():
+        face = topods.Face(exp.Current())
+        exp.Next()
+        tri = BRep_Tool.Triangulation(face, TopLoc_Location())
+        if tri is not None:
+            for i in range(1, tri.NbTriangles() + 1):
+                a, b, c = (_pt(tri.Node(k)) for k in tri.Triangle(i).Get())
+                area = 0.5 * math.sqrt(dot(x := cross(_sub(b, a), _sub(c, a)), x))
+                centroids.append((-round(area, 6), tuple((a[j] + b[j] + c[j]) / 3 for j in range(3))))
+        umin, umax, vmin, vmax = breptools.UVBounds(face)
+        surface = BRepAdaptor_Surface(face, True)
+        for i in range(grid):
+            for j in range(grid):
+                u = umin + (umax - umin) * (i + 0.5) / grid
+                v = vmin + (vmax - vmin) * (j + 0.5) / grid
+                if BRepClass_FaceClassifier(face, gp_Pnt2d(u, v), 1e-6).State() == TopAbs_IN:
+                    samples.append(_pt(surface.Value(u, v)))
+    return [p for _, p in sorted(centroids)[:24]] + samples  # at most 24 centroids, then the grid
+
+
+class _Rays:
+    """Rays cast through one solid; the intersector is loaded once per analysis."""
+
+    def __init__(self, solid):
+        from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
+        self.inter = IntCurvesFace_ShapeIntersector()
+        self.inter.Load(solid, 1e-6)
+
+    def first_hit(self, start: Vec, direction: Vec):
+        """The face a ray from `start` along `direction` meets first beyond 1e-4 mm, and the distance."""
+        from OCC.Core.gp import gp_Dir, gp_Lin
+        self.inter.Perform(gp_Lin(gp_Pnt(*start), gp_Dir(*direction)), 1e-4, 1e9)
+        best, best_w = None, math.inf
+        if self.inter.IsDone():
+            for i in range(1, self.inter.NbPnt() + 1):
+                w = self.inter.WParameter(i)
+                if w < best_w:
+                    best, best_w = self.inter.Face(i), w
+        return best, best_w
+
+
+def walls(solid, faces) -> list[dict]:
+    """Pairs of parallel planar faces with outward normals pointing away from each other and solid
+    material between them. Unnumbered."""
+    from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common
+    from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_Transform
+    from OCC.Core.gp import gp_Trsf
+    topo = Topology(solid, faces)
+    rays = _Rays(solid)
+    planes = [(i, *_plane_info(f)) for i, f in enumerate(faces)
+              if BRepAdaptor_Surface(f, True).GetType() == GeomAbs_Plane]
+    out = []
+    for k, (ia, pa, na, ba) in enumerate(planes):
+        for ib, pb, nb, bb in planes[k + 1:]:
+            if dot(na, nb) > -math.cos(ANGLE_TOL):
+                continue
+            t = -dot(_sub(pb, pa), na)  # how far b lies behind a, into a's material side
+            if t <= 1e-6:
+                continue  # facing each other (a slot's sides) or in one plane
+            move = gp_Trsf()
+            move.SetTranslation(gp_Vec(*(c * -t for c in na)))
+            a_on_b = BRepBuilderAPI_Transform(faces[ia], move, True).Shape()
+            if _box(a_on_b).IsOut(bb):  # only pairs whose boxes overlap, a moved onto b's plane
+                continue
+            try:  # a failed boolean skips this pair, not the whole analysis
+                common = BRepAlgoAPI_Common(a_on_b, faces[ib])
+                common.Build()
+                overlap = _area(common.Shape()) if common.IsDone() else 0.0
+            except RuntimeError:
+                continue
+            if overlap < MIN_OVERLAP_MM2:
+                continue
+            # Solid material between them: a ray from a point inside the overlap on b, along -nb (into
+            # the material), first meets face a, at distance t. Air between (two bosses) or another
+            # face in the way (a slot or pocket) fails; one clear ray of the sampled points is enough.
+            for p in _inner_points(common.Shape()):
+                hit, w = rays.first_hit(p, tuple(-c for c in nb))
+                if hit is not None and topo.fid(hit) == ia and abs(w - t) <= 0.01:
+                    break
+            else:
+                continue
+            out.append({"kind": "wall", "faces": [ia, ib], "axis": [-c for c in na], "open_dirs": [],
+                        "open_vectors": [], "dims_mm": {"thickness": t, "overlap_mm2": overlap}})
+    return out
+
+
+# --- S4 (D-016): thin material at holes ---
+
+SIDE_STEP_DEG = 15  # rays around a hole's side every 15 deg, then every 1 deg within 15 deg of the nearest
+SIDE_HEIGHTS = 3  # at 3 heights along its round part
+TIP_TILTS = (0, 10, 20, 30)  # deg off the axis, for rays from a drill point's tip (its surface is 31 deg off it)
+TIP_TURNS = 12  # around the axis at each tilt
+HOLE_WALL_MAX_MM = 0.25 * 25.4  # material at a hole is measured up to 0.250 in (assumption): over every limit
+
+
+def _on_face(face, p: Vec) -> bool:
+    """The point lies on the face itself or its boundary (a seam between split faces), not where a cross
+    hole or an exit has cut the face away."""
+    from OCC.Core.BRepClass import BRepClass_FaceClassifier
+    from OCC.Core.TopAbs import TopAbs_OUT
+    return BRepClass_FaceClassifier(topods.Face(face), gp_Pnt(*p), 1e-4).State() != TopAbs_OUT
+
+
+class _NearRays:
+    """First hits of rays from one hole, up to HOLE_WALL_MAX_MM, testing only the faces whose boxes lie
+    within that distance of the hole's box: a face outside it is farther than any hit that counts."""
+
+    def __init__(self, faces, boxes, topo: Topology, own: set[int]):
+        from OCC.Core.Bnd import Bnd_Box
+        self.faces, self.boxes, self.topo, self.own = faces, boxes, topo, own
+        self.hole_box = Bnd_Box()
+        for f in own:
+            self.hole_box.Add(boxes[f])
+
+    def nearest(self, starts: list[tuple[Vec, Vec]], keep=None) -> tuple[int, float, int] | None:
+        """(face id, distance, index of the ray) of the nearest first hit, or None. `keep(n)` can turn
+        down a ray by its index; it is asked only for the nearest hits, nearest first."""
+        from OCC.Core.BRep import BRep_Builder
+        from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
+        from OCC.Core.TopoDS import TopoDS_Compound
+        from OCC.Core.gp import gp_Dir, gp_Lin
+        radius = HOLE_WALL_MAX_MM
+        if not hasattr(self, "inter"):  # one intersector per hole, over the faces near it
+            near = [i for i, box in enumerate(self.boxes)
+                    if i not in self.own and box.Distance(self.hole_box) <= radius]
+            self.inter = None
+            if near:
+                comp, builder = TopoDS_Compound(), BRep_Builder()
+                builder.MakeCompound(comp)
+                for i in near:
+                    builder.Add(comp, self.faces[i])
+                self.inter = IntCurvesFace_ShapeIntersector()
+                self.inter.Load(comp, 1e-6)
+        inter = self.inter
+        if inter is None:
+            return None
+        hits: list[tuple[float, int, int]] = []  # (distance, face id, ray) of each ray's first hit
+        for n, (p, d) in enumerate(starts):
+            inter.Perform(gp_Lin(gp_Pnt(*p), gp_Dir(*d)), 1e-3, radius)
+            if not inter.IsDone() or inter.NbPnt() == 0:
+                continue
+            first = min((inter.WParameter(k), self.topo.fid(inter.Face(k))) for k in range(1, inter.NbPnt() + 1))
+            hits.append((round(first[0], 9), first[1], n))
+        for w, fid, n in sorted(hits):  # nearest first; ties go to the lower face id
+            if keep is None or keep(n):
+                return fid, w, n
+        return None
+
+
+def hole_walls(solid, faces, hole_list: list[dict]) -> list[dict]:
+    """Walls at holes (D-016), unnumbered: per hole, the thinnest material around its side (rays square
+    to the axis from its round part) and, for a drill point, under its tip (rays from the tip, up to
+    30 deg off the axis, deeper into the part), when it is at most 0.250 in. The first face a ray from the hole meets bounds solid
+    material, so a ray measures material only. Two holes that find each other give one wall."""
+    from OCC.Core.GeomAbs import GeomAbs_Cone as Cone
+    topo = Topology(solid, faces)
+    boxes = [_box(f) for f in faces]
+    out: dict[tuple, dict] = {}
+    hole_of = {f: h["id"] for h in hole_list for f in h["faces"]}
+
+    def add(own: int, found: tuple[int, float], hole_id: str, where: str) -> None:
+        # Between two holes the key is the pair of holes, so split hole faces still give one wall.
+        other = hole_of.get(found[0])
+        key = ("holes", *sorted((hole_id, other))) if other else tuple(sorted((own, found[0])))
+        if key not in out or found[1] < out[key]["dims_mm"]["thickness"]:
+            out[key] = {"kind": "wall", "faces": sorted((own, found[0])), "axis": None, "open_dirs": [], "open_vectors": [],
+                        "dims_mm": {"thickness": found[1]}, "hole": hole_id, "at": where}
+
+    for h in hole_list:
+        own = set(h["faces"])
+        rays = _NearRays(faces, boxes, topo, own)
+        cyls = [c for f in h["faces"] if (c := _cylinder(f, faces[f]))]
+        if cyls:
+            x, y = _ref_frame(cyls[0].axis)
+            lo, hi = min(c.lo for c in cyls), max(c.hi for c in cyls)
+            def ray(c: Cyl, centre: Vec, deg: int) -> tuple[Vec, Vec, int, Vec, int]:
+                ang = math.radians(deg)
+                d = tuple(math.cos(ang) * x[i] + math.sin(ang) * y[i] for i in range(3))
+                return tuple(centre[i] + c.radius * d[i] for i in range(3)), d, c.id, centre, deg
+
+            starts = []
+            for c in cyls:
+                for k in range(SIDE_HEIGHTS):
+                    t = lo + (hi - lo) * (k + 1) / (SIDE_HEIGHTS + 1)
+                    if not c.lo - 1e-6 <= t <= c.hi + 1e-6:
+                        continue
+                    centre = tuple(c.origin[i] + (t - dot(c.origin, c.axis)) * c.axis[i] for i in range(3))
+                    # a face covers only its own angles (split faces); bins are whole degrees
+                    starts += [ray(c, centre, deg) for deg in range(0, 360, SIDE_STEP_DEG) if deg in c.bins]
+            def on(rs):  # a ray counts only if it starts on its hole face, not in a gap cut through it
+                return lambda n: _on_face(faces[rs[n][2]], rs[n][0])
+            found = rays.nearest([(p, d) for p, d, *_ in starts], on(starts))
+            if found:
+                _, _, cid, centre, deg = starts[found[2]]
+                c = next(c for c in cyls if c.id == cid)
+                fine = [ray(c, centre, (deg + k) % 360) for k in range(-SIDE_STEP_DEG, SIDE_STEP_DEG + 1)
+                        if (deg + k) % 360 in c.bins]
+                close = rays.nearest([(p, d) for p, d, *_ in fine], on(fine))
+                if close and close[1] < found[1]:
+                    found, starts = close, fine
+                add(starts[found[2]][2], found, h["id"], "side")  # the hole face the nearest ray left from
+        tip = None
+        for f in h["faces"]:
+            surface = BRepAdaptor_Surface(faces[f], True)
+            if surface.GetType() != Cone or "point_mm" not in h["dims_mm"]:
+                continue
+            apex = _pt(surface.Cone().Apex())
+            deeper = tuple(-a for a in h["axis"])  # a hole's axis points out of the material at its open end
+            x, y = _ref_frame(deeper)
+            starts = []
+            for tilt in TIP_TILTS:
+                for k in range(TIP_TURNS if tilt else 1):
+                    a, b = math.radians(tilt), 2 * math.pi * k / TIP_TURNS
+                    starts.append((apex, tuple(math.cos(a) * deeper[i] + math.sin(a) * (
+                        math.cos(b) * x[i] + math.sin(b) * y[i]) for i in range(3))))
+            found = rays.nearest(starts)  # a point split into several faces is one tip: keep the nearest
+            if found and (tip is None or found[1] < tip[1][1] - 1e-9):
+                tip = (f, found)
+        if tip:
+            add(tip[0], tip[1], h["id"], "tip")
+    return list(out.values())

@@ -4,43 +4,43 @@
 name = "nist_ctc_01_asme1_ap242-e1.stp"
 face_count = 117
 not_analysed = 0
-features = 10
+features = 43
 
 [[file]]
 name = "nist_ctc_02_asme1_ap242-e2.stp"
 face_count = 635
 not_analysed = 58
-features = 101
+features = 129
 
 [[file]]
 name = "nist_ctc_03_asme1_ap242-e2.stp"
 face_count = 120
 not_analysed = 0
-features = 15
+features = 35
 
 [[file]]
 name = "nist_ctc_04_asme1_ap242-e1.stp"
 face_count = 483
 not_analysed = 51
-features = 60
+features = 107
 
 [[file]]
 name = "nist_ctc_05_asme1_ap242-e1.stp"
 face_count = 156
 not_analysed = 14
-features = 52
+features = 85
 
 [[file]]
 name = "nist_ftc_06_asme1_ap242-e2.stp"
 face_count = 187
 not_analysed = 20
-features = 43
+features = 95
 
 [[file]]
 name = "nist_ftc_07_asme1_ap242-e2.stp"
 face_count = 304
 not_analysed = 62
-features = 27
+features = 67
 
 [[file]]
 name = "nist_ftc_08_asme1_ap242-e1-tg.stp"
@@ -52,52 +52,52 @@ features = 0
 name = "nist_ftc_08_asme1_ap242-e2.stp"
 face_count = 247
 not_analysed = 32
-features = 42
+features = 87
 
 [[file]]
 name = "nist_ftc_09_asme1_ap242-e1.stp"
 face_count = 158
 not_analysed = 0
-features = 50
+features = 78
 
 [[file]]
 name = "nist_ftc_10_asme1_ap242-e2.stp"
 face_count = 264
 not_analysed = 50
-features = 42
+features = 116
 
 [[file]]
 name = "nist_ftc_11_asme1_ap242-e2.stp"
 face_count = 42
 not_analysed = 4
-features = 23
+features = 25
 
 [[file]]
 name = "nist_stc_06_asme1_ap242-e3.stp"
 face_count = 144
 not_analysed = 11
-features = 43
+features = 95
 
 [[file]]
 name = "nist_stc_07_asme1_ap242-e3.stp"
 face_count = 304
 not_analysed = 62
-features = 27
+features = 67
 
 [[file]]
 name = "nist_stc_08_asme1_ap242-e3.stp"
 face_count = 270
 not_analysed = 32
-features = 41
+features = 86
 
 [[file]]
 name = "nist_stc_09_asme1_ap242-e3.stp"
 face_count = 125
 not_analysed = 0
-features = 50
+features = 79
 
 [[file]]
 name = "nist_stc_10_asme1_ap242-e2.stp"
 face_count = 256
 not_analysed = 54
-features = 64
+features = 146

@@ -28,6 +28,7 @@ const SWITCHES: [CheckedKind, HTMLInputElement][] = [
   ["hole", byId<HTMLInputElement>("show-checked")],
   ["pocket", byId<HTMLInputElement>("show-checked-pockets")],
   ["corner", byId<HTMLInputElement>("show-checked-corners")],
+  ["wall", byId<HTMLInputElement>("show-checked-walls")],
 ];
 for (const [kind, box] of SWITCHES) box.addEventListener("change", () => viewer.setShowChecked(kind, box.checked));
 
@@ -44,6 +45,7 @@ declare global {
       opacities(): Record<number, number>;
       checkedFaces(kind?: CheckedKind): number[];
       flagBoxes(): { id: string; x: number; y: number; w: number; h: number }[];
+      flagState(): { id: string; shown: boolean; mergedInto: string }[];
     };
   }
 }
@@ -53,15 +55,17 @@ window.__dfma = {
   paintedFaces: () => viewer.paintedFaces(), // test hook: what is actually drawn in the accent colour
   opacities: () => viewer.opacities(),
   flagBoxes: () => viewer.flagBoxes(), // test hook: where each visible finding label sits
+  flagState: () => viewer.flagState(), // test hook: each pin shown, folded into another, or hidden
   checkedFaces: (kind?: CheckedKind) => viewer.checkedFaces(kind), // test hook: drawn in a kind's "checked" colour
 };
 
-/** Faces of the features checked with no finding, by kind; corners go last so a corner fillet
- *  (also a pocket wall) shows the corner colour. */
+/** Faces of the features checked with no finding, by kind. Walls go first, so a face that is also
+ *  in a hole or pocket shows that kind's colour; corners go last, so a corner fillet (also a pocket
+ *  wall) shows the corner colour. */
 function checkedFaces(result: Analysis): Map<number, CheckedKind> {
   const flagged = new Set(result.findings.map((f) => f.feature));
   const out = new Map<number, CheckedKind>();
-  for (const kind of ["hole", "pocket", "corner"] as CheckedKind[]) {
+  for (const kind of ["wall", "hole", "pocket", "corner"] as CheckedKind[]) {
     for (const f of result.features) {
       if (f.kind === kind && !flagged.has(f.id)) for (const id of f.faces) out.set(id, kind);
     }
