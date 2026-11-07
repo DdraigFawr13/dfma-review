@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from . import settings
-from .units import MM_PER_IN
+from .units import METRIC, MM_PER_IN
 
 
 @dataclass(frozen=True)
@@ -21,12 +21,13 @@ def _steps(start: float, stop: float, step: float) -> list[float]:
 
 
 def drills(units_in_file: str) -> list[Drill]:
-    """The drill set for a part: 1/64 in drills for inch and other files; for mm files, metric
-    drills plus the 1/64 in drills, because inch-designed parts are often exported in mm (D-013)."""
+    """The drill set for a part: 1/64 in drills for inch, other and no-unit files; for metric files
+    (mm, cm, m: D-020), metric drills plus the 1/64 in drills, because inch-designed parts are often
+    exported in mm (D-013)."""
     cfg = settings.tools_config()["drills"]
     inch = [Drill(d * MM_PER_IN, f"{d:.4f} in", False)
             for r in cfg["inch"] for d in _steps(r["from_in"], r["to_in"], r["step_in"])]
-    if units_in_file != "mm":
+    if units_in_file not in METRIC:
         return inch
     metric = [Drill(d, f"{d:g} mm", True) for r in cfg["mm"] for d in _steps(r["from_mm"], r["to_mm"], r["step_mm"])]
     return metric + inch

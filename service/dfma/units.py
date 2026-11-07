@@ -9,11 +9,21 @@ def mm_to_in(mm: float) -> float:
     return mm / MM_PER_IN
 
 
+METRIC = ("mm", "cm", "m")  # D-020: centimetre and metre files are metric too
+
+
 def unit_name(file_length_unit: str) -> str:
-    """Map the length unit a STEP file declares to "mm", "inch" or "other"."""
+    """Map the length unit a STEP file declares to "mm", "cm", "m", "inch", "none" (it declares none,
+    D-020) or "other"."""
     name = file_length_unit.strip().lower()
     if name in ("mm", "millimetre", "millimeter"):
         return "mm"
+    if name in ("cm", "centimetre", "centimeter"):
+        return "cm"
+    if name in ("m", "metre", "meter"):
+        return "m"
+    if not name:
+        return "none"
     if name in ("in", "inch", "inches"):
         return "inch"
     return "other"

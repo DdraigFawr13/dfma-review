@@ -137,3 +137,12 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-07). Amends D-018's "0 wrong calls on slots".
 - **Decision:** A surface MFCAD++ labels as a blind slot (classes 17-19) counts as a right pocket call when the slot's end is closed by one wall shorter than the others, past which lies the floor of a blind step (classes 20-22). That shape is the same as a real pocket cut beside a step, so no shape rule can call it a slot. The scoreboard shows these surfaces on their own line ("labelled slot, same shape as a pocket"), outside the wrong-call count. Other slot surfaces called pockets still count as wrong.
 - **Why:** the adversarial review (2026-11-07, [page](https://claude.ai/artifact/4oufpheC26VYYwT2zBiiHs)) found 20 of the 40 slot surfaces on the first 500 parts have this shape (10526, 10649, 11652, 12317), and the rule that removed them also removed 5 real pockets on EDMR daratech and 1797609in (LESSONS "recognition"). Morgan, 2026-11-07, choosing "Pockets (Recommended)": call them pockets and show them on the scoreboard as "labelled slot, same shape as a pocket", outside the 0-wrong target.
+
+## D-020 Units without mm, and walls with draft
+
+- **Status:** Accepted (2026-11-07). Changes D-013 for cm and m files, and the spec's wall definition (exactly parallel faces).
+- **Decision:**
+  - Files in centimetres or metres are metric: `units_in_file` is `cm` or `m`, and `hole_size` checks them against the metric and the 1/64 in drills, as mm files (D-013).
+  - A file that declares no length unit is read as millimetres; `units_in_file` is `none`, the report's assumptions say so (`MSG_NO_UNIT`), and it gets the inch drills, as `other` files.
+  - A wall's two faces may be up to 15 deg from parallel (draft); its thickness is taken at the thinnest place. 15 deg is the same limit as pocket draft and tapered holes (D-018).
+- **Why:** the stress test ([page](https://claude.ai/artifact/4oufpheC26VYYwT2zBiiHs)): a 6.6 mm hole in a cm or m file was "not a standard drill"; a no-unit file drawn in inches would read 25.4 times too small with no note; a 0.4 mm wall with 0.01 deg of draft gave no finding. Morgan, 2026-11-07, choosing the recommended option on each: "Up to 15°", "Treat as metric", "Read as mm, say so".

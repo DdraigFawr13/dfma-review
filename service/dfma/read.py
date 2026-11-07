@@ -48,6 +48,8 @@ def file_length_unit(reader: STEPControl_Reader) -> str:
     lengths, angles, solid_angles = (TColStd_SequenceOfAsciiString() for _ in range(3))
     reader.FileUnits(lengths, angles, solid_angles)
     names = {lengths.Value(i).ToCString() for i in range(1, lengths.Length() + 1)}
+    if not names:
+        return "none"
     if len(names) != 1:
         return "other"
     return unit_name(names.pop())

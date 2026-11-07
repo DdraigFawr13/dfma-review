@@ -28,6 +28,8 @@ MSG_NOT_STEP = "This is not a STEP file this tool can read"
 MSG_NO_SOLID = "No solid found in this file"
 MSG_OPEN_SHELL = ("The solid in this file has a gap: {n} of its edges belong to one face only. It was closed and "
                   "analysed as a solid, so results near the gap may be wrong.")
+MSG_NO_UNIT = ("This file declares no length unit. It was read as millimetres; if it was drawn in inches, every "
+               "size here is 25.4 times too small (D-020).")
 MSG_TOO_LARGE = "File is larger than 50 MB"
 MSG_TOO_LONG = "This file took too long to analyse"
 MSG_FAILED = "The analysis failed on this file. Try again, or try another file."

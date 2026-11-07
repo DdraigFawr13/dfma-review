@@ -205,7 +205,7 @@ probe_mm = [10.0, 5.0, 3.0]   # file coordinates, mm; matches the face within 0.
 
 ```
 {
-  "part":     { "name": str, "units_in_file": "mm"|"inch"|"other", "bbox_in": [x,y,z],
+  "part":     { "name": str, "units_in_file": "mm"|"cm"|"m"|"inch"|"none"|"other", "bbox_in": [x,y,z],
                 "face_count": int, "volume_mm3": float, "ignored_solids": int,
                 "not_analysed_faces": [int], "frame": {"x":[3], "y":[3], "z":[3]} },
   "faces":    [ { "id": int, "kind": "plane"|"cylinder"|"cone"|"torus"|"other",
@@ -369,7 +369,7 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
 - **Settled at build (zero-decision check, 2026-11-06):**
   - The page analyses as soon as a file is chosen, and again when process or material changes while a file is loaded. There is no submit button.
   - `part-size` shows decimals only (J1's text); fractions are for finding values and sizes from S2.
-  - `units_in_file` comes from the length unit the STEP file declares: millimetre is `mm`, inch is `inch`, anything else is `other` (still converted to mm). S1 records the pythonocc call it uses in `read.py`.
+  - `units_in_file` comes from the length unit the STEP file declares: millimetre is `mm`, inch is `inch`, anything else is `other` (still converted to mm). Added by D-020: centimetre `cm` and metre `m` (metric, like `mm`), and `none` when the file declares no length unit (read as mm, with an assumption line in the report). S1 records the pythonocc call it uses in `read.py`.
   - `make_parts.py` counts faces on the shape it built (`TopExp.MapShapes`); it never calls the service. S1 writes full `expected.toml` entries, including feature counts that nothing reads until S2.
   - `box_through_hole` is written in mm: 50.8 × 25.4 × 12.7 mm with a 6.35 mm hole through the 12.7 mm side, centred. `box_inch` is the same shape written in inch units. Both tests check `units_in_file`, `bbox_in` (to 0.001 in), `face_count` and `ignored_solids == 0`. ~~6.35 mm is not a metric drill size, so S2 adds a `hole_size` finding~~ Changed in S2 (D-013): mm files also accept inch drills, so 6.35 mm (1/4 in) is standard and both box parts stay clean.
   - In S1, `not_analysed_faces` lists faces of kind `torus` or `other`; S3 removes the pocket fillets from it.
@@ -424,7 +424,7 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
   - Feature counts: S2 entries hold only what S2 detects (pocket, corner and wall 0). S3 and S4 update an entry when their features appear (J3 matching is exact). Note for S4: a plain block's opposed faces will count as walls.
   - Hole feature: `kind` "hole"; `faces` = its cylinder faces plus its bottom (flat plane or cone); `axis` = unit vector out of the material at its first open end (+axis direction when it has none); `dims_mm` keys `diameter`, `depth` and, with a drill point, `point_mm`. Concave means the face's outward normal points toward the axis. "Spans 360°" means the merged faces' angular spans sum to 360° within 0.5°. Stepped segments join through a planar shoulder perpendicular to the axis (or a cone) whose two circular edges each border a segment; the shoulder belongs to the larger segment.
   - `hole_depth`: ratio = depth ÷ diameter; `limit` is the limit broken (6.0 medium, 10.0 high); unit `ratio`; title "Hole depth 8.0× diameter (limit 6.0×)".
-  - `hole_size`: drills by `units_in_file`: the inch list for `inch` and `other`, the metric list plus the inch list for `mm` (D-013); holes above the drill range are skipped (D-010), holes below it are flagged; a tie for nearest goes to the smaller drill. `measured` is the diameter in inches, `limit` the nearest drill in inches, unit `in`. Title "Hole 0.260 in not a standard drill size"; suggestion "Nearest drill 0.266 in (17/64). Use it if the fit allows." (mm files: "Nearest drill 6.5 mm (0.256 in). …").
+  - `hole_size`: drills by `units_in_file`: the inch list for `inch`, `none` and `other`, the metric list plus the inch list for `mm`, `cm` and `m` (D-013, D-020); holes above the drill range are skipped (D-010), holes below it are flagged; a tie for nearest goes to the smaller drill. `measured` is the diameter in inches, `limit` the nearest drill in inches, unit `in`. Title "Hole 0.260 in not a standard drill size"; suggestion "Nearest drill 0.266 in (17/64). Use it if the fit allows." (mm files: "Nearest drill 6.5 mm (0.256 in). …").
   - Suggestions: `hole_depth` medium "Needs peck drilling. Make it shallower or larger if the design allows."; high "Needs a long drill and peck drilling. Make it shallower or larger if the design allows."
   - Limits come from `config/thresholds.toml`, one table per material (`[al6061.hole_depth] medium = 6.0, high = 10.0, source = "estimate"`), the same values for all 4 until Morgan changes them. `config/tools.toml` holds the drill ranges and steps of the Tools section.
   - The response gains `rules_run: [str]` (rule ids run on this part), for the verdict line.
