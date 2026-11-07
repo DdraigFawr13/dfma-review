@@ -502,7 +502,7 @@ path = "models/STEP/STI/socket/socket.stp"
 status = "ok"
 face_count = 37
 not_analysed = 0
-features = 31
+features = 30
 
 [[file]]
 path = "models/STEP/STI/team/team.stp"
@@ -719,7 +719,7 @@ path = "models/UMD/socket1-Part/socket1-Part.step"
 status = "ok"
 face_count = 37
 not_analysed = 0
-features = 29
+features = 28
 
 [[file]]
 path = "models/UMD/socket1-Stock/socket1-Stock.step"
@@ -733,7 +733,7 @@ path = "models/UMD/socket2-Part/socket2-Part.step"
 status = "ok"
 face_count = 37
 not_analysed = 0
-features = 31
+features = 30
 
 [[file]]
 path = "models/UMD/socket2-Stock/socket2-Stock.step"

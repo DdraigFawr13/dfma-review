@@ -1196,11 +1196,15 @@ def _on_face(face, p: Vec) -> bool:
 
 class _NearRays:
     """First hits of rays from one hole, up to HOLE_WALL_MAX_MM, testing only the faces whose boxes lie
-    within that distance of the hole's box: a face outside it is farther than any hit that counts."""
+    within that distance of the hole's box: a face outside it is farther than any hit that counts.
+    Faces that share an edge with the hole are not tested: the hole opens onto them, so the material
+    between them thins to nothing at that edge by its shape (a hole entering a sloped face), not a wall
+    (stress test, HANDOFF 3a: d6 into a 70 deg slope gave a 0.075 mm wall)."""
 
     def __init__(self, faces, boxes, topo: Topology, own: set[int]):
         from OCC.Core.Bnd import Bnd_Box
-        self.faces, self.boxes, self.topo, self.own = faces, boxes, topo, own
+        self.faces, self.boxes, self.topo = faces, boxes, topo
+        self.own = own | {n for f in own for n in topo.neighbours(f)}  # the hole and what it opens onto
         self.hole_box = Bnd_Box()
         for f in own:
             self.hole_box.Add(boxes[f])
