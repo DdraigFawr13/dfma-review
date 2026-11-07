@@ -38,6 +38,10 @@ class Cyl:
     bins: set[int]  # whole degrees around the axis the face covers, in a frame shared by coaxial faces
     lo: float  # extent along axis (dot with axis), from points sampled on its edges
     hi: float
+    slope: float = 0.0  # a tapered hole's cone: radius change per mm along the axis; radius is then at height 0
+
+    def radius_at(self, t: float) -> float:
+        return self.radius + self.slope * t
 
 
 @dataclass
@@ -55,6 +59,8 @@ class Segment:
     links: set[int] = field(default_factory=set)  # indices of linked segments
     groove: bool = False  # wider than the segments on both sides: an internal groove, not a hole (S6)
     ring: bool = False  # ends on a flat ring round a raised core on its axis: an O-ring groove (D-018 round 2)
+    taper_deg: float = 0.0  # a tapered hole: the cone's half-angle (D-018 tapered-holes round)
+    small_radius: float | None = None  # a tapered hole: the radius at its narrow end
 
 
 def _sub(a: Vec, b: Vec) -> Vec:
@@ -120,12 +126,22 @@ def _outward_normal(face) -> tuple[Vec, Vec]:
     return _pt(point), unit((vec.X(), vec.Y(), vec.Z()))
 
 
-def _cylinder(face_id: int, face) -> Cyl | None:
+TAPER_MAX_DEG = 15.0  # a cone this steep or less is a tapered hole's wall (taper pins 0.6, pipe threads 1.8,
+# drafts a few deg); countersinks (41-60), entry chamfers (45) and drill points (59) are steeper
+
+
+def _cylinder(face_id: int, face, tapers: bool = False) -> Cyl | None:
+    """A concave cylinder face as a hole piece; with `tapers`, a concave cone of half-angle up to
+    TAPER_MAX_DEG too (a tapered hole), its radius given at height 0 on the shared axis scale."""
     surface = BRepAdaptor_Surface(face, True)
-    if surface.GetType() != GeomAbs_Cylinder:
+    kind = surface.GetType()
+    if kind == GeomAbs_Cylinder:
+        geo = surface.Cylinder()
+    elif kind == GeomAbs_Cone and tapers and abs(math.degrees(surface.Cone().SemiAngle())) <= TAPER_MAX_DEG:
+        geo = surface.Cone()
+    else:
         return None
-    cyl = surface.Cylinder()
-    ax = cyl.Axis()
+    ax = geo.Axis()
     origin, axis = _pt(ax.Location()), _canon(unit(_pt(ax.Direction())))
     point, normal = _outward_normal(face)
     rel = _sub(point, origin)
@@ -133,7 +149,13 @@ def _cylinder(face_id: int, face) -> Cyl | None:
     if dot(normal, radial) >= 0:  # convex: the outward normal points away from the axis
         return None
     along = [dot(v, axis) for v in _points(face)]  # heights on the shared scale (see _canon)
-    return Cyl(face_id, origin, axis, cyl.Radius(), _angle_bins(face, surface, origin, axis), min(along), max(along))
+    bins = _angle_bins(face, surface, origin, axis)
+    if kind == GeomAbs_Cylinder:
+        return Cyl(face_id, origin, axis, geo.Radius(), bins, min(along), max(along))
+    # gp_Cone: radius RefRadius at Location, growing by tan(SemiAngle) along its own direction
+    d = unit(_pt(ax.Direction()))
+    slope = math.tan(geo.SemiAngle()) * (1 if dot(d, axis) > 0 else -1)
+    return Cyl(face_id, origin, axis, geo.RefRadius() - slope * dot(origin, axis), bins, min(along), max(along), slope)
 
 
 def _same_line(a: Cyl | Segment, b: Cyl | Segment) -> bool:
@@ -190,7 +212,8 @@ def _segments(topo: Topology, cyls: dict[int, Cyl]) -> list[Segment]:
             group.append(cur)
             for nb in topo.neighbours(cur):
                 c = cyls.get(nb)
-                if c and nb not in seen and abs(c.radius - cyls[fid].radius) <= RADIUS_TOL and _same_line(c, cyls[fid]):
+                if c and nb not in seen and abs(c.radius - cyls[fid].radius) <= RADIUS_TOL and _same_line(c, cyls[fid]) \
+                        and abs(c.slope - cyls[fid].slope) <= 1e-6:
                     seen.add(nb)
                     todo.append(nb)
         groups.append(sorted(group))
@@ -200,7 +223,8 @@ def _segments(topo: Topology, cyls: dict[int, Cyl]) -> list[Segment]:
         for other in merged:
             a, b = cyls[other[0]], cyls[group[0]]
             olo, ohi = min(cyls[g].lo for g in other), max(cyls[g].hi for g in other)
-            if abs(a.radius - b.radius) <= RADIUS_TOL and _same_line(a, b) and min(hi, ohi) - max(lo, olo) > 0.01:
+            if abs(a.radius - b.radius) <= RADIUS_TOL and _same_line(a, b) and abs(a.slope - b.slope) <= 1e-6 \
+                    and min(hi, ohi) - max(lo, olo) > 0.01:
                 other.extend(group)
                 other.sort()
                 break
@@ -213,7 +237,12 @@ def _segments(topo: Topology, cyls: dict[int, Cyl]) -> list[Segment]:
         if span is None:
             continue
         base = members[0]
-        out.append(Segment(group, base.origin, base.axis, base.radius, *span))
+        if base.slope:  # a tapered hole: its size is the wide end, and it keeps the narrow end
+            ends = sorted((base.radius_at(span[0]), base.radius_at(span[1])))
+            out.append(Segment(group, base.origin, base.axis, ends[1], *span,
+                               taper_deg=math.degrees(math.atan(abs(base.slope))), small_radius=ends[0]))
+        else:
+            out.append(Segment(group, base.origin, base.axis, base.radius, *span))
     return out
 
 
@@ -402,7 +431,7 @@ def _frame_dir(v: Vec, frame: dict[str, Vec]) -> str | None:
 
 def holes(solid, faces, frame: dict[str, Vec]) -> list[dict]:
     topo = Topology(solid, faces)
-    cyls = {i: c for i, f in enumerate(faces) if (c := _cylinder(i, f))}
+    cyls = {i: c for i, f in enumerate(faces) if (c := _cylinder(i, f, tapers=True))}
     segs = _segments(topo, cyls)
     _classify_ends(topo, segs)
     features = []
@@ -421,6 +450,9 @@ def holes(solid, faces, frame: dict[str, Vec]) -> list[dict]:
             dims = {"diameter": 2 * s.radius, "depth": s.hi - s.lo}
             if s.point_mm is not None:
                 dims["point_mm"] = s.point_mm
+            if s.taper_deg:
+                dims["taper_deg"] = s.taper_deg
+                dims["small_diameter"] = 2 * s.small_radius
             dirs = [d for v in vectors if (d := _frame_dir(v, frame))]
             features.append({
                 "kind": "hole",
@@ -1104,14 +1136,15 @@ def hole_walls(solid, faces, hole_list: list[dict]) -> list[dict]:
     for h in hole_list:
         own = set(h["faces"])
         rays = _NearRays(faces, boxes, topo, own)
-        cyls = [c for f in h["faces"] if (c := _cylinder(f, faces[f]))]
+        cyls = [c for f in h["faces"] if (c := _cylinder(f, faces[f], tapers=True))]
         if cyls:
             x, y = _ref_frame(cyls[0].axis)
             lo, hi = min(c.lo for c in cyls), max(c.hi for c in cyls)
             def ray(c: Cyl, centre: Vec, deg: int) -> tuple[Vec, Vec, int, Vec, int]:
                 ang = math.radians(deg)
                 d = tuple(math.cos(ang) * x[i] + math.sin(ang) * y[i] for i in range(3))
-                return tuple(centre[i] + c.radius * d[i] for i in range(3)), d, c.id, centre, deg
+                r = c.radius_at(dot(centre, c.axis))  # a tapered hole's radius changes along it
+                return tuple(centre[i] + r * d[i] for i in range(3)), d, c.id, centre, deg
 
             starts = []
             for c in cyls:
