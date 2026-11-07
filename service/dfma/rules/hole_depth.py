@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from ..units import past_limit
+
 ID = "hole_depth"
 PROCESSES = ('mill', 'turn')  # spec Flow: which process runs this rule
 SUGGESTION = {
@@ -27,7 +29,7 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
         else:
             continue
         out.append({"rule": ID, "severity": severity,
-                    "title": f"Hole depth {ratio:.1f}× diameter (limit {limit:.1f}×)",
+                    "title": f"Hole depth {past_limit(ratio, limit, 1)}× diameter (limit {limit:.1f}×)",
                     "measured": round(ratio, 4), "limit": limit, "unit": "ratio",
                     "faces": f["faces"], "feature": f["id"], "threshold_source": table["source"],
                     "suggestion": SUGGESTION[severity]})

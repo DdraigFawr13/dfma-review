@@ -81,15 +81,21 @@ def read_step(path: str | Path) -> ReadResult:
         while explorer.More():
             solids.append(topods.Solid(explorer.Current()))
             explorer.Next()
-    free_edges = 0
-    if not solids and shape is not None and not shape.IsNull() and _declares_solid(reader):
-        solids, free_edges = _solids_from_shells(shape)
+    # Shells outside any solid, in a file that declares solids: a solid whose shell has a gap. Close
+    # each and let it compete with the closed solids, so a gapped main part saved next to a small
+    # closed body is not dropped for it (stress test, HANDOFF 3a).
+    gaps: list[int] = [0] * len(solids)
+    if shape is not None and not shape.IsNull() and _declares_solid(reader):
+        closed, free = _solids_from_shells(shape, beside_solids=bool(solids))
+        solids += closed
+        gaps += free
     if not solids:
         raise ReadError(settings.MSG_NO_SOLID)
 
     volumes = [volume(s) for s in solids]
     best = max(range(len(solids)), key=lambda i: volumes[i])  # first largest on a tie
     solid = solids[best]
+    free_edges = gaps[best]
 
     face_map = TopTools_IndexedMapOfShape()
     topexp.MapShapes(solid, TopAbs_FACE, face_map)
@@ -102,20 +108,28 @@ def _declares_solid(reader: STEPControl_Reader) -> bool:
     return any(model.Value(i).DynamicType().Name() in SOLID_ENTITIES for i in range(1, model.NbEntities() + 1))
 
 
-def _solids_from_shells(shape: TopoDS_Shape) -> tuple[list, int]:
+GAP_MAX_SHARE = 0.1  # assumption: beside closed solids, a shell with more than 10% of its edges on one face is
+# an open surface (a construction sheet), not a gapped solid
+
+
+def _solids_from_shells(shape: TopoDS_Shape, beside_solids: bool = False) -> tuple[list, list[int]]:
     """D-018 round 4: the file declares a solid, but its shell has a gap (an edge on one face only),
-    so OpenCascade returns the shell alone. Close each shell into a solid and count the gap's edges,
-    which analyze() lists under assumptions."""
+    so OpenCascade returns the shell alone. Close each shell that lies in no solid and count its gap's
+    edges, which analyze() lists under assumptions (one count per closed shell). `beside_solids`: the file
+    also holds closed solids, so only shells with a small gap (GAP_MAX_SHARE) compete with them."""
     from OCC.Core.ShapeFix import ShapeFix_Solid
     from OCC.Core.TopAbs import TopAbs_EDGE, TopAbs_SHELL
     from OCC.Core.TopTools import TopTools_IndexedDataMapOfShapeListOfShape
-    solids, free = [], 0
-    explorer = TopExp_Explorer(shape, TopAbs_SHELL)
+    solids, free = [], []
+    explorer = TopExp_Explorer(shape, TopAbs_SHELL, TopAbs_SOLID)  # shells in no solid
     while explorer.More():
         shell = topods.Shell(explorer.Current())
         explorer.Next()
         edges = TopTools_IndexedDataMapOfShapeListOfShape()
         topexp.MapShapesAndAncestors(shell, TopAbs_EDGE, TopAbs_FACE, edges)
-        free += sum(1 for i in range(1, edges.Size() + 1) if edges.FindFromIndex(i).Size() == 1)
+        n_free = sum(1 for i in range(1, edges.Size() + 1) if edges.FindFromIndex(i).Size() == 1)
+        if beside_solids and n_free > GAP_MAX_SHARE * edges.Size():  # an open surface, not a gapped solid
+            continue
+        free.append(n_free)
         solids.append(topods.Solid(ShapeFix_Solid().SolidFromShell(shell)))
     return solids, free

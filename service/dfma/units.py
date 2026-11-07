@@ -29,6 +29,13 @@ def unit_name(file_length_unit: str) -> str:
     return "other"
 
 
+def past_limit(value: float, limit: float, places: int) -> str:
+    """value to `places` decimals, or one more where that would read the same as the limit, so a value
+    just past a limit never shows as the limit ("6.03x (limit 6.0x)", not "6.0x"; stress test)."""
+    text = f"{value:.{places}f}"
+    return f"{value:.{places + 1}f}" if text == f"{limit:.{places}f}" else text
+
+
 def fraction(inches: float) -> str | None:
     """"1/4", "1 1/2"; None unless within 0.0005 in of a 1/64 in multiple (spec Units; web/src/format.ts)."""
     sixty_fourths = round(inches * 64)

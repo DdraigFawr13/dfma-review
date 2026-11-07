@@ -89,9 +89,9 @@ def _step_names(path: str, n_faces: int) -> tuple[list, object, list, list]:
     while exp.More():
         solids.append(topods.Solid(exp.Current()))
         exp.Next()
-    if not solids:  # a declared solid with a gap: read_step closes its shell (D-018 round 4)
-        from dfma.read import _solids_from_shells
-        solids = _solids_from_shells(shape)[0]
+    from dfma.read import _declares_solid, _solids_from_shells
+    if _declares_solid(reader):  # a declared solid with a gap: read_step closes its shell (D-018 round 4)
+        solids += _solids_from_shells(shape, beside_solids=bool(solids))[0]
     if not solids:
         return [(None, None)] * n_faces, shape, [], []
     vols = [volume(s) for s in solids]

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ..units import MM_PER_IN, fraction
+from ..units import MM_PER_IN, fraction, past_limit
 
 ID = "pocket_depth"
 PROCESSES = ('mill',)  # spec Flow: which process runs this rule
@@ -28,7 +28,7 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
         if dims["undersized"]:
             suggestion += " Smallest tool used: no end mill in the list fits the corners."
         out.append({"rule": ID, "severity": "medium",
-                    "title": f"Pocket depth {ratio:.1f}× the end mill that fits (limit {table['medium']:.1f}×)",
+                    "title": f"Pocket depth {past_limit(ratio, table['medium'], 1)}× the end mill that fits (limit {table['medium']:.1f}×)",
                     "measured": round(ratio, 4), "limit": table["medium"], "unit": "ratio",
                     "faces": f["faces"], "feature": f["id"], "threshold_source": table["source"],
                     "suggestion": suggestion})

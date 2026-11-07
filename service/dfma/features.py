@@ -794,17 +794,18 @@ def _pocket_walls(topo: Topology, floor: int, n: Vec, edges, enclosure: _Enclosu
     blends = set() if blends is None else blends
     walls: list[int] = []
     cut = False
-    for edge in edges:
-        nb = _edge_neighbour(topo, floor, edge)
-        if nb is not None and _wall_kind(topo.faces[nb], n) and _concave(topo, floor, nb, edge):
+    for item in edges:  # an edge of the floor, or (floor piece, edge) for a floor in several pieces
+        piece, edge = item if isinstance(item, tuple) else (floor, item)
+        nb = _edge_neighbour(topo, piece, edge)
+        if nb is not None and _wall_kind(topo.faces[nb], n) and _concave(topo, piece, nb, edge):
             if nb not in walls:
                 walls.append(nb)
-        elif nb is not None and (beyond := _floor_chamfer_walls(topo, floor, nb, n, edge)):
+        elif nb is not None and (beyond := _floor_chamfer_walls(topo, piece, nb, n, edge)):
             walls.extend(w for w in beyond if w not in walls)
-        elif nb is not None and (fill := _blend_walls(topo, floor, nb, n, edge)):
+        elif nb is not None and (fill := _blend_walls(topo, piece, nb, n, edge)):
             blends.update(fill[0])
             walls.extend(w for w in fill[1] if w not in walls)
-        elif nb is not None and enclosure.inside(topo.faces[floor], n, edge):
+        elif nb is not None and enclosure.inside(topo.faces[piece], n, edge):
             cut = True
         else:
             return None
@@ -908,8 +909,54 @@ def _centre(face) -> Vec:
     return _pt(props.CentreOfMass())
 
 
-def _narrowest(topo: Topology, walls: list[int]) -> float:
-    """Smallest distance between two planar walls that face each other (opposed normals, 0.5 deg)."""
+def _floor_pieces(topo: Topology, fid: int, n: Vec, skip: set[int]) -> list[int] | None:
+    """The flat faces joined to this one, edge to edge, in its plane (the same outward normal and
+    height), itself included, or None when it stands alone."""
+    h = dot(_outward_normal(topo.faces[fid])[0], n)
+    group, todo = {fid}, [fid]
+    while todo:
+        cur = todo.pop()
+        for k in topo.neighbours(cur):
+            if k in group or k in skip:
+                continue
+            m = _plane_normal(topo.faces[k])
+            if m is not None and dot(m, n) >= math.cos(ANGLE_TOL) and abs(dot(_outward_normal(topo.faces[k])[0], n) - h) <= 1e-4:
+                group.add(k)
+                todo.append(k)
+    return sorted(group) if len(group) > 1 else None
+
+
+RIM_BREAK_MAX_SHARE = 0.5  # an edge break on a pocket's rim is at most half the pocket's depth tall
+
+
+def _rim_top(topo: Topology, walls: list[int], own: set[int], n: Vec, top: float, depth: float) -> float:
+    """The height the pocket opens at: its walls' top, or above it the top of a chamfer or round on
+    its rim (an edge break: a plane tilted 10 to 80 deg from the axis, or a cone, cylinder or torus,
+    lying wholly above the walls' top and under half the depth tall; stress test, HANDOFF 3a: a 1 mm
+    top chamfer made a 12 mm pocket read 11)."""
+    from OCC.Core.GeomAbs import GeomAbs_Torus as Torus
+    best = top
+    for w in walls:
+        for k in topo.neighbours(w):
+            if k in own:
+                continue
+            face = topo.faces[k]
+            kind = BRepAdaptor_Surface(face, True).GetType()
+            if kind == GeomAbs_Plane:
+                if not 0.17 < abs(dot(_outward_normal(face)[1], n)) < 0.98:  # 10 to 80 deg
+                    continue
+            elif kind not in (GeomAbs_Cone, GeomAbs_Cylinder, Torus):
+                continue
+            h = [dot(p, n) for p in _points(face)]
+            if min(h) >= top - 0.01 and max(h) - min(h) <= RIM_BREAK_MAX_SHARE * depth:
+                best = max(best, max(h))
+    return best
+
+
+def _narrowest(topo: Topology, walls: list[int], islands: list[int] = ()) -> float:
+    """Smallest distance between two planar walls that face each other (opposed normals, 0.5 deg),
+    and between a round island face (a boss) and any wall or island face it does not touch (stress
+    test, HANDOFF 3a: a d8 boss 1.27 mm from a wall left the gap at the pocket's 30 mm width)."""
     planes = [(w, _outward_normal(topo.faces[w])[1], _centre(topo.faces[w])) for w in walls
               if BRepAdaptor_Surface(topo.faces[w], True).GetType() == GeomAbs_Plane]
     best = math.inf
@@ -918,6 +965,16 @@ def _narrowest(topo: Topology, walls: list[int]) -> float:
             if dot(na, nb) > -math.cos(ANGLE_TOL) or dot(na, _sub(cb, ca)) <= 0:
                 continue
             best = min(best, _distance(topo.faces[a], topo.faces[b]))
+    rounds = [w for w in islands if BRepAdaptor_Surface(topo.faces[w], True).GetType() != GeomAbs_Plane]
+    boxes = {w: _box(topo.faces[w]) for w in (set(walls) | set(rounds))} if rounds else {}
+    for a in rounds:
+        near = set(topo.neighbours(a))
+        # nearest boxes first, and a pair whose boxes are already farther apart than the best gap is skipped
+        for gap, b in sorted((boxes[a].Distance(boxes[b]), b) for b in walls if b != a and b not in near):
+            if gap >= best:
+                break
+            if (d := _distance(topo.faces[a], topo.faces[b])) > 1e-6:
+                best = min(best, d)
     return best
 
 
@@ -994,7 +1051,15 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
         outer = bt.OuterWire(topods.Face(face))
         outer_edges = _wire_edges(outer)
         blends: set[int] = set()
+        pieces = [fid]
         walls = _pocket_walls(topo, fid, n, outer_edges, enclosure, blends)
+        if not walls and (group := _floor_pieces(topo, fid, n, hole_faces)) and min(group) == fid:
+            # A floor in several flat pieces (a pocket tool fused from a box and round ends): its
+            # outline is the pieces' edges that no other piece shares (stress test, HANDOFF 3a).
+            pieces = group
+            outer_edges = [(k, e) for k in group for e in _wire_edges(bt.OuterWire(topods.Face(faces[k])))
+                           if _edge_neighbour(topo, k, e) not in group]
+            walls = _pocket_walls(topo, fid, n, outer_edges, enclosure, blends)
         if not walls:
             continue
         if all(w in cyls for w in walls) and len({round(cyls[w].radius, 3) for w in walls}) == 1:
@@ -1006,26 +1071,30 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
         if not walls:
             continue
         islands: list[int] = []
-        exp = TopExp_Explorer(face, TopAbs_EDGE)
-        while exp.More():
-            edge = exp.Current()
-            exp.Next()
-            if any(edge.IsSame(o) for o in outer_edges):
-                continue
-            nb = _edge_neighbour(topo, fid, edge)
-            if nb is not None and nb not in walls and nb not in islands and _wall_kind(faces[nb], n) \
-                    and _concave(topo, fid, nb, edge):
-                islands.append(nb)
-            elif nb is not None and nb not in blends and (fill := _blend_walls(topo, fid, nb, n, edge)):
-                blends.update(fill[0])  # an island rounded into the floor
-                islands.extend(w for w in fill[1] if w not in walls and w not in islands)
+        rim = [e[1] if isinstance(e, tuple) else e for e in outer_edges]
+        for piece in pieces:
+            exp = TopExp_Explorer(faces[piece], TopAbs_EDGE)
+            while exp.More():
+                edge = exp.Current()
+                exp.Next()
+                if any(edge.IsSame(o) for o in rim):
+                    continue
+                nb = _edge_neighbour(topo, piece, edge)
+                if nb is None or nb in pieces:
+                    continue
+                if nb not in walls and nb not in islands and _wall_kind(faces[nb], n) and _concave(topo, piece, nb, edge):
+                    islands.append(nb)
+                elif nb not in blends and (fill := _blend_walls(topo, piece, nb, n, edge)):
+                    blends.update(fill[0])  # an island rounded into the floor
+                    islands.extend(w for w in fill[1] if w not in walls and w not in islands)
         floor_h = dot(_outward_normal(face)[0], n)
-        depth = max(dot(p, n) for w in walls for p in _points(faces[w])) - floor_h
+        top = max(dot(p, n) for w in walls for p in _points(faces[w]))
+        depth = _rim_top(topo, walls, {*pieces, *walls, *islands, *blends}, n, top, top - floor_h) - floor_h
         corners = _corners(topo, walls, cyls)
         min_r = min((r for _, r, _ in corners), default=math.inf)
-        width = _narrowest(topo, walls + islands)
+        width = _narrowest(topo, walls + islands, islands)
         tool, undersized = pick_end_mill(min_r, width)
-        pocket_faces = sorted({fid, *walls, *islands, *blends})
+        pocket_faces = sorted({*pieces, *walls, *islands, *blends})
         dirs = [d] if (d := _frame_dir(n, frame)) else []
         found_p.append({"kind": "pocket", "faces": pocket_faces, "axis": list(n), "open_dirs": dirs,
                         "open_vectors": [list(n)],
