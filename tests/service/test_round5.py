@@ -75,3 +75,16 @@ def test_chamfer_longer_than_a_neighbour_wall_is_still_a_chamfer(tmp_path):
     found = pockets_of(cut(box(*BLOCK), prism(pts, 0.5, 1)), tmp_path)
     assert len(found) == 1
     assert len(found[0]["faces"]) == 1 + 4
+
+
+def test_slot_worn_to_a_knife_edge_is_not_a_pocket(tmp_path):
+    """D-018 round 6: a round step cut beside a blind slot leaves its end wall 0 thick at the top
+    (MFCAD++ 1149, 12029), so the slot is open there. The same slot with real material is a pocket."""
+    from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeCylinder
+    from OCC.Core.gp import gp_Ax2, gp_Dir
+    slot = box(1.0, 0.8, 0.5, 1.0, 0.4, 1)  # x 1..2, 0.5 in deep from the top (z = 1)
+    r = 0.4  # round step along Y, tangent to the slot's end wall x = 1 at the top
+    step = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt((1.0 - r) * IN, -0.5 * IN, 1.0 * IN), gp_Dir(0, 1, 0)), r * IN, 3 * IN).Shape()
+    assert pockets_of(cut(box(*BLOCK), slot, step), tmp_path) == []
+    away = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt((0.9 - r) * IN, -0.5 * IN, 1.0 * IN), gp_Dir(0, 1, 0)), r * IN, 3 * IN).Shape()
+    assert len(pockets_of(cut(box(*BLOCK), slot, away), tmp_path)) == 1

@@ -538,7 +538,28 @@ def _pocket_walls(topo: Topology, floor: int, n: Vec, edges, enclosure: _Enclosu
             return None
     if cut and len(walls) < 2:
         return None
+    if any(_knife_edge(topo, floor, w, walls) for w in walls):
+        return None
     return walls
+
+
+KNIFE_DEG = 1.0  # deg: material angle under this at a wall's edge is no material (D-018 round 6)
+
+
+def _knife_edge(topo: Topology, floor: int, w: int, walls: list[int]) -> bool:
+    """The wall's material runs out to nothing: at a convex edge to a face outside the pocket the two
+    outward normals are opposite (within KNIFE_DEG), so the material between them is 0 thick there.
+    A slot whose open end another cut has worn down to such an edge is open, not walled (MFCAD++
+    1149, 12029); no part can be made with a 0-thick edge."""
+    for k, edges in topo.neighbours(w).items():
+        if k == floor or k in walls:
+            continue
+        for e in edges:
+            p, _ = _edge_mid(e)
+            if dot(_normal_at(topo.faces[w], p), _normal_at(topo.faces[k], p)) < -math.cos(math.radians(KNIFE_DEG)) \
+                    and not _concave(topo, w, k, e):
+                return True
+    return False
 
 
 def _floor_chamfer_walls(topo: Topology, floor: int, nb: int, n: Vec, edge) -> list[int]:
