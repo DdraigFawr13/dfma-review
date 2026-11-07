@@ -7,6 +7,7 @@ process on our own test parts, end to end. The outside answer keys are not neede
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 from collections import Counter
 
 from helpers import PARTS, ROOT
@@ -147,3 +148,43 @@ def test_select_takes_ids_in_lexical_order_with_skip_and_limit():
     paths = [Path(f"{n}.step") for n in ("2", "10", "1000", "100", "3")]
     assert [p.stem for p in grade.select(paths)] == ["10", "100", "1000", "2", "3"]
     assert [p.stem for p in grade.select(paths, skip=2, limit=2)] == ["1000", "2"]
+
+
+def test_a_part_that_fails_still_counts_its_labelled_faces_as_misses():
+    """Adversarial review 2026-11-07: a timed-out or unreadable part left the denominators, so a tool
+    that failed on hard parts scored higher. Its labelled faces now count as misses."""
+    in_file = [1, 1, 14, 11, 0]
+    for status in ("timeout", "read_error", "crash"):
+        rec, counts, missed = grade.score_part("p.step", {"status": status}, in_file)
+        assert rec["status"] == status
+        s = grade.scores(counts)
+        assert s["recall"][1] == {"n": 0, "of": 2, "pct": 0.0}
+        assert s["recall"][14] == {"n": 0, "of": 1, "pct": 0.0}
+        assert [m["class"] for m in missed] == [1, 14]
+
+
+def test_a_failed_join_counts_as_misses_too():
+    r = {"status": "ok", "ignored_solids": 0, "features": [{"kind": "hole", "faces": [0], "open_ends": 2}],
+         "faces": [{"kind": "plane", "kind2": "cylinder", "name": "1", "file_pos": 0}]}
+    rec, counts, _ = grade.score_part("p.step", r, [1])
+    assert rec["status"] == "join_failed"
+    assert grade.scores(counts)["recall"][1] == {"n": 0, "of": 1, "pct": 0.0}
+
+
+def test_a_part_whose_face_names_cannot_be_read_is_a_failed_join():
+    """Adversarial review 2026-11-07: with no names every label was None and the part scored 0/0."""
+    r = {"status": "ok", "ignored_solids": 0, "features": [],
+         "faces": [{"kind": "cylinder", "kind2": None, "name": None, "file_pos": None}]}
+    rec, counts, _ = grade.score_part("p.step", r, [1])
+    assert rec["status"] == "join_failed"
+    assert grade.scores(counts)["recall"][1] == {"n": 0, "of": 1, "pct": 0.0}
+
+
+def test_summary_counts_o_ring_faces_called_pockets():
+    """Parent session 2026-11-07: O-ring faces called pockets were in no number."""
+    sys.path.insert(0, str(Path(grade.__file__).parent))
+    import summary
+    part = {"labels": [11, 11, 18, 24, 14], "features": [
+        {"kind": "pocket", "faces": [0, 2, 3, 4]}, {"kind": "hole", "faces": [1]}]}
+    assert summary.excluded_calls([part]) == {"o-ring-as-hole": 1, "o-ring-as-pocket": 1,
+                                              "slot-step-as-pocket": 1, "other-excluded": 1}

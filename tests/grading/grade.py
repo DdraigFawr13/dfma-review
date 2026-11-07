@@ -213,24 +213,33 @@ def select(paths: list[Path], skip: int = 0, limit: int | None = None) -> list[P
     return paths[:limit] if limit else paths
 
 
+def score_part(name: str, r: dict, in_file: list[int]) -> tuple[dict, Counter, list]:
+    """One part's record, counts and misses. A part that failed to read, crashed, timed out or
+    could not be joined to its labels still counts: every labelled face in the file is a miss, so a
+    tool that fails on hard parts cannot score higher than one that tries them."""
+    rec = {"part": name, "status": r["status"]}
+    if r["status"] == "ok":
+        labels, checks = face_labels(r, in_file)
+        preds = predicted(r)
+        rec.update(checks=checks, faces=len(labels), ignored_solids=r["ignored_solids"])
+        if checks["kinds_agree"] and checks["names_agree"]:  # a file whose names can't be read is no join
+            rec["features"] = r["features"]
+            rec["labels"] = labels
+            return rec, tally(labels, preds), misses(name, labels, preds)
+        rec["status"] = "join_failed"
+    none = [None] * len(in_file)
+    return rec, tally(in_file, none), misses(name, in_file, none)
+
+
 def mfcadpp(folder: Path, limit: int | None, jobs: int, skip: int = 0) -> dict:
     paths = select(list(folder.glob("*.step")), skip, limit)
     results = run_all(paths, jobs)
     total: Counter = Counter()
     parts, all_misses = [], []
     for path, r in results.items():
-        rec = {"part": path.name, "status": r["status"]}
-        if r["status"] == "ok":
-            labels, checks = face_labels(r, file_labels(path.read_bytes()))
-            preds = predicted(r)
-            rec.update(checks=checks, faces=len(labels), ignored_solids=r["ignored_solids"])
-            if checks["kinds_agree"]:
-                total += tally(labels, preds)
-                all_misses += misses(path.name, labels, preds)
-                rec["features"] = r["features"]
-                rec["labels"] = labels
-            else:
-                rec["status"] = "join_failed"
+        rec, counts, part_misses = score_part(path.name, r, file_labels(path.read_bytes()))
+        total += counts
+        all_misses += part_misses
         parts.append(rec)
     status = Counter(p["status"] for p in parts)
     checks = {k: sum(1 for p in parts if p.get("checks", {}).get(k)) for k in ("same_count", "file_order", "names_agree", "kinds_agree")}

@@ -574,18 +574,27 @@ def _floor_chamfer_walls(topo: Topology, floor: int, nb: int, n: Vec, edge) -> l
 CHAMFER_MAX_TURN_DEG = 60 - math.degrees(ANGLE_TOL)  # a regular hexagon pocket turns 60 deg at each wall
 
 
-def _corner_chamfers(topo: Topology, walls: list[int]) -> set[int]:
+def _span(face, n: Vec) -> float:
+    """How long a wall runs across the floor: the widest spread of its points square to n."""
+    pts = [tuple(p[i] - dot(p, n) * n[i] for i in range(3)) for p in _points(face)]
+    return max((math.dist(a, b) for i, a in enumerate(pts) for b in pts[i + 1:]), default=0.0)
+
+
+def _corner_chamfers(topo: Topology, walls: list[int], n: Vec) -> set[int]:
     """Planar walls that cut a corner between two planar walls (D-018 round 3): the wall turns by the
     same angle (0.05 deg) to each of its two planar neighbour walls, under CHAMFER_MAX_TURN_DEG. A side
-    of a regular hexagon turns 60 deg each way and stays a wall."""
+    of a regular hexagon turns 60 deg each way and stays a wall. Round 5: when a neighbour passes the
+    same test (an octagon, or the side between two chamfered corners), only the shorter of the two
+    is a chamfer, and equal sides are walls."""
     normals = {w: m for w in walls if (m := _plane_normal(topo.faces[w])) is not None}
-    out = set()
+    like = {}
     for w, m in normals.items():
-        turns = [math.degrees(math.acos(max(-1.0, min(1.0, dot(m, normals[k]))))) for k in topo.neighbours(w)
-                 if k in normals and k != w]
+        nbs = [k for k in topo.neighbours(w) if k in normals and k != w]
+        turns = [math.degrees(math.acos(max(-1.0, min(1.0, dot(m, normals[k]))))) for k in nbs]
         if len(turns) == 2 and abs(turns[0] - turns[1]) <= 0.05 and turns[0] < CHAMFER_MAX_TURN_DEG:
-            out.add(w)
-    return out
+            like[w] = nbs
+    span = {w: _span(topo.faces[w], n) for w in like}
+    return {w for w, nbs in like.items() if all(span[w] < span[k] - LINE_TOL for k in nbs if k in like)}
 
 
 def _shared_edges(topo: Topology, a: int, b: int) -> list:
@@ -654,6 +663,24 @@ def _corners(topo: Topology, walls: list[int], cyls: dict[int, Cyl]) -> list[tup
     return out
 
 
+def _one_axis(faces, walls: list[int]) -> bool:
+    """Every wall is a cylinder, concave or convex, on one axis line: a groove round a core or a
+    stepped bore, not a pocket (D-018 round 5: an O-ring's core is convex, so `Cyl` misses it)."""
+    lines = []
+    for w in walls:
+        surface = BRepAdaptor_Surface(faces[w], True)
+        if surface.GetType() != GeomAbs_Cylinder:
+            return False
+        ax = surface.Cylinder().Axis()
+        lines.append((_pt(ax.Location()), unit(_pt(ax.Direction()))))
+    o0, d0 = lines[0]
+    for o, d in lines[1:]:
+        off = cross(_sub(o, o0), d0)
+        if abs(dot(d, d0)) < math.cos(ANGLE_TOL) or math.sqrt(dot(off, off)) > LINE_TOL:
+            return False
+    return True
+
+
 def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[list[dict], list[dict]]:
     """Closed pockets and their inside corners. Returns (pockets, corners), unnumbered."""
     from OCC.Core.BRepTools import breptools as bt
@@ -673,11 +700,14 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
         walls = _pocket_walls(topo, fid, n, outer_edges, enclosure)
         if not walls:
             continue
-        if all(w in cyls for w in walls) and (len({round(cyls[w].radius, 3) for w in walls}) == 1
-                                              or all(_same_line(cyls[w], cyls[walls[0]]) for w in walls)):
-            continue  # a flat-bottom hole, counterbore floor or groove (walls on one axis), not a pocket
-        chamfers = _corner_chamfers(topo, walls)
+        if all(w in cyls for w in walls) and len({round(cyls[w].radius, 3) for w in walls}) == 1:
+            continue  # a flat-bottom hole or counterbore floor, not a pocket
+        if _one_axis(faces, walls):
+            continue  # a ring groove: walls on one axis, the core's convex (round 5), not a pocket
+        chamfers = _corner_chamfers(topo, walls, n)
         walls = [w for w in walls if w not in chamfers]
+        if not walls:
+            continue
         islands: list[int] = []
         exp = TopExp_Explorer(face, TopAbs_EDGE)
         while exp.More():
