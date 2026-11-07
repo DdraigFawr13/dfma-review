@@ -207,9 +207,14 @@ def run_all(paths: list[Path], jobs: int) -> dict[Path, dict]:
         return dict(zip(paths, pool.map(analyse, paths)))
 
 
-def mfcadpp(folder: Path, limit: int | None, jobs: int) -> dict:
-    paths = sorted(folder.glob("*.step"), key=lambda p: p.stem)  # lexical order of ids, as Quiddity
-    paths = paths[:limit] if limit else paths
+def select(paths: list[Path], skip: int = 0, limit: int | None = None) -> list[Path]:
+    """Files in lexical order of their ids (as Quiddity), from `skip`, at most `limit` of them."""
+    paths = sorted(paths, key=lambda p: p.stem)[skip:]
+    return paths[:limit] if limit else paths
+
+
+def mfcadpp(folder: Path, limit: int | None, jobs: int, skip: int = 0) -> dict:
+    paths = select(list(folder.glob("*.step")), skip, limit)
     results = run_all(paths, jobs)
     total: Counter = Counter()
     parts, all_misses = [], []
@@ -262,6 +267,7 @@ def main() -> int:
     ap.add_argument("set", choices=("mfcadpp", "situs"))
     ap.add_argument("path", type=Path)
     ap.add_argument("--limit", type=int)
+    ap.add_argument("--skip", type=int, default=0, help="mfcadpp: skip this many files first (501-1,000 = --skip 500 --limit 500)")
     ap.add_argument("--jobs", type=int, default=4)
     ap.add_argument("--out", type=Path)
     ap.add_argument("--engine", choices=("ours", "quiddity", "situs"), default="ours",
@@ -274,7 +280,7 @@ def main() -> int:
         ENGINE.update(cmd=[a.python, str(HERE / "qchild.py")], faces=a.faces)
     elif a.engine == "situs":
         ENGINE.update(cmd=[sys.executable, str(HERE / "schild.py"), a.situs_bin])  # faces: holes, cavities
-    out = mfcadpp(a.path, a.limit, a.jobs) if a.set == "mfcadpp" else situs(a.path, a.jobs)
+    out = mfcadpp(a.path, a.limit, a.jobs, a.skip) if a.set == "mfcadpp" else situs(a.path, a.jobs)
     text = json.dumps(out, indent=1, default=str)
     if a.out:
         a.out.write_text(text, encoding="utf-8")

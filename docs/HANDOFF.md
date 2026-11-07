@@ -28,14 +28,13 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - 2026-11-06 S3 approved (D-015), merged in #6. Mock-up v3 used real-viewer screenshots (v1 sketch: "terrible and unrealistic"); selection got a 40% minimum frame and sharp corners as an edge bar (`edge_mm`). Fresh review (93,501 tokens): 2 medium fixed test-first (pocket rules ran for turning; plane-to-arc sharp corners missed), 3 low fixed, 3 declined, 1 deferred to S5. Checks: 221 service, 5 unit, 7 browser; NIST max 3.98 s. [Status](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu), [demo](https://claude.ai/artifact/KnnLF3YAHp5ZCmNuVWyvP4) updated.
 - 2026-11-06 S2 approved and merged (#4). Colour legend with a checkbox per feature kind (D-014; holes on by default). NIST research: papers (R3 Appendix A lists FTC 6/8/9 features with sizes: answer key; FTC 6, 8, 9 designed in inches, so D-013 holds); fork `engineering-design-models` (16 GB, ~2,399 AP203 STEP, no PMI; best for features: UMD, STEP/STI, PTC mfgmill18; third-party rights unstated); usnistgov/SFA is the AP242 PMI reference.
 - 2026-11-06 NIST gold standard (D-011): Morgan chose to keep the files in GitHub untouched. `tests/nist/NIST-PMI-STEP-Files.zip` (NIST's file byte for byte, SHA-256 checked), `tests/nist/SOURCE.md`, `tests/nist_files.py` (unpacks to the git-ignored `tests/nist/.cache/`), `tests/nist/scorecard.toml` + `make_scorecard.py`, `tests/service/test_nist.py` (17 files read under 10 s, faces not analysed may only fall, features may only rise). `scripts/check.py` all pass: 32 service, 5 unit, 2 browser. Open: ctc_05 reads as units `other`.
-- 2026-11-06 Morgan added a setup script to the "Network" environment: micromamba at `/opt/micromamba/bin/micromamba`, env at `/opt/mamba/envs/dfma` (fresh containers only; checked with get_environment).
 - 2026-11-06 Phone pages for Morgan: [S1 status](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu), [view-only demo](https://claude.ai/artifact/KnnLF3YAHp5ZCmNuVWyvP4) (real viewer, test parts analysed in advance; refresh after each slice).
 
 ## Next
 
 1. Done 2026-11-07: 500-part MFCAD++ run from Morgan's Drive copy (QUB zip, 1,615,810,586 bytes; test split unpacked to `tests/grading/.cache/mfcadpp/`). Face recall holes 536/602 (89.0%), pockets 3,205/3,745 (85.6%), precision 99.8% / 99.7%; 545 of 606 misses are features cut by another feature. Morgan can turn off the Drive link sharing. The Hugging Face access request is still open; not needed now.
 2. Done 2026-11-07 (Morgan asked for all three tools on all parts): [head-to-head page](https://claude.ai/artifact/YAAEriC8gktJkGi5VtNvhq) v2, all through `grade.py --engine`. On 500 parts holes found 536 / 586 / 530 of 602 (ours / Quiddity / Analysis Situs), pockets 3,205 / 3,352 / 3,641 of 3,745; we make the fewest wrong calls. v1 of the page compared unlike numbers (LESSONS "reports" x2, now an AGENTS.md rule). Envs in git-ignored `tests/grading/.cache/`: `qenv` (Quiddity), `as-env77` + `as-build/build/as_recognize` (OCCT 7.7.2; 7.8+ fails on the old hasher API).
-3. Then S5. Ranked recognition changes (page and report): pockets with cut floors first, since S5 needs holes through pocket floors. Each change is a decision for Morgan before building (WS-02).
+3. Next (D-018, Morgan 2026-11-07): recognition rounds toward the gold-standard target (holes miss <=14 of 602, pockets <=93 of 3,745, 0 wrong surfaces), each round rerunning our engine and republishing the head-to-head page; also scored on check parts 501-1,000 (baseline running). Then S5. Ranked recognition changes (page and report): pockets with cut floors first, since S5 needs holes through pocket floors. Each change is a decision for Morgan before building (WS-02).
 4. NIST library merged in [#5](https://github.com/DdraigFawr13/dfma-review/pull/5) (069ef55).
 5. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
 
@@ -55,6 +54,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-07 D-018: grading sets are the recognition gold standard; target 10% fewer misses than the best other tool, 0 wrong calls.
 - 2026-11-06 Concept chosen (D-001). Full master setup with web-app layer (D-002).
 - 2026-11-06 S1 build: extra packages and micromamba (D-008); slices shown as status page + demo (D-009); S1 merge approved.
 - 2026-11-06 First-version scope (D-003), stack (D-004), rules and units (D-005), company-move gates (D-006), spec approved (D-007).

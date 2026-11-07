@@ -140,3 +140,10 @@ def test_untyped_holes_count_for_recall_but_not_type_precision():
     assert s["recall"][1]["n"] == 1 and s["recall"][12]["n"] == 1
     assert s["precision"]["hole"] == {"n": 2, "of": 3, "pct": 66.7}
     assert s["precision"]["through"]["of"] == 0 and s["type_recall"][1]["n"] == 0
+
+
+def test_select_takes_ids_in_lexical_order_with_skip_and_limit():
+    from pathlib import Path
+    paths = [Path(f"{n}.step") for n in ("2", "10", "1000", "100", "3")]
+    assert [p.stem for p in grade.select(paths)] == ["10", "100", "1000", "2", "3"]
+    assert [p.stem for p in grade.select(paths, skip=2, limit=2)] == ["1000", "2"]
