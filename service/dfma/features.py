@@ -419,15 +419,19 @@ def _edge_mid(edge) -> tuple[Vec, Vec]:
     return _pt(p), unit((d.X(), d.Y(), d.Z()))
 
 
-def _into(face, p: Vec, n: Vec, e: Vec, step: float = 0.05) -> Vec | None:
+INTO_STEPS = (0.05, 0.01, 0.002)  # mm; D-018 round 3: a sliver of floor left between two cuts is under 0.05 wide
+
+
+def _into(face, p: Vec, n: Vec, e: Vec) -> Vec | None:
     """The direction from a point on a face's edge into the face (perpendicular to the edge)."""
     from OCC.Core.BRepClass import BRepClass_FaceClassifier
     from OCC.Core.TopAbs import TopAbs_IN
     d = unit(cross(n, e))
-    for s in (1, -1):
-        q = tuple(p[i] + s * step * d[i] for i in range(3))
-        if BRepClass_FaceClassifier(face, gp_Pnt(*q), 1e-6).State() == TopAbs_IN:
-            return tuple(s * c for c in d)
+    for step in INTO_STEPS:
+        for s in (1, -1):
+            q = tuple(p[i] + s * step * d[i] for i in range(3))
+            if BRepClass_FaceClassifier(face, gp_Pnt(*q), 1e-6).State() == TopAbs_IN:
+                return tuple(s * c for c in d)
     return None
 
 
@@ -479,7 +483,7 @@ def _edge_neighbour(topo: Topology, face_id: int, edge) -> int | None:
     return None
 
 
-BREAK_STEP = 0.05  # mm: how far past a floor edge, and below the floor, the enclosure probe starts
+BREAK_STEP = 0.01  # mm: how far past a floor edge, and below the floor, the enclosure probe starts
 
 
 class _Enclosure:
@@ -517,7 +521,8 @@ class _Enclosure:
 def _pocket_walls(topo: Topology, floor: int, n: Vec, edges, enclosure: _Enclosure) -> list[int] | None:
     """The walls of a pocket on this floor, or None. Each outer edge of the floor meets a concave
     wall perpendicular to it, or (D-018 round 1) is cut by another feature inside the part; a cut
-    pocket needs at least two walls left."""
+    pocket needs at least two walls left. A chamfer between floor and wall (D-018 round 3) leads to
+    its wall and is not one."""
     walls: list[int] = []
     cut = False
     for edge in edges:
@@ -525,6 +530,8 @@ def _pocket_walls(topo: Topology, floor: int, n: Vec, edges, enclosure: _Enclosu
         if nb is not None and _wall_kind(topo.faces[nb], n) and _concave(topo, floor, nb, edge):
             if nb not in walls:
                 walls.append(nb)
+        elif nb is not None and (beyond := _floor_chamfer_walls(topo, floor, nb, n, edge)):
+            walls.extend(w for w in beyond if w not in walls)
         elif nb is not None and enclosure.inside(topo.faces[floor], n, edge):
             cut = True
         else:
@@ -532,6 +539,37 @@ def _pocket_walls(topo: Topology, floor: int, n: Vec, edges, enclosure: _Enclosu
     if cut and len(walls) < 2:
         return None
     return walls
+
+
+def _floor_chamfer_walls(topo: Topology, floor: int, nb: int, n: Vec, edge) -> list[int]:
+    """The walls past a chamfer between floor and wall (D-018 round 3): `nb` is a sloped plane,
+    concave to the floor, that meets walls perpendicular to the floor at concave edges. Empty when
+    `nb` is not such a chamfer. A chamfer is a strip: its edge to the wall runs parallel to its edge
+    to the floor (a corner chamfer between two walls meets them across, and is no floor)."""
+    face = topo.faces[nb]
+    m = _plane_normal(face)
+    if m is None or _wall_kind(face, n) or abs(dot(m, n)) >= math.cos(ANGLE_TOL) or not _concave(topo, floor, nb, edge):
+        return []
+    along = _edge_mid(edge)[1]
+    return [k for k, edges in topo.neighbours(nb).items() if k != floor and _wall_kind(topo.faces[k], n)
+            and any(_concave(topo, nb, k, e) and abs(dot(_edge_mid(e)[1], along)) >= math.cos(ANGLE_TOL) for e in edges)]
+
+
+CHAMFER_MAX_TURN_DEG = 60 - math.degrees(ANGLE_TOL)  # a regular hexagon pocket turns 60 deg at each wall
+
+
+def _corner_chamfers(topo: Topology, walls: list[int]) -> set[int]:
+    """Planar walls that cut a corner between two planar walls (D-018 round 3): the wall turns by the
+    same angle (0.05 deg) to each of its two planar neighbour walls, under CHAMFER_MAX_TURN_DEG. A side
+    of a regular hexagon turns 60 deg each way and stays a wall."""
+    normals = {w: m for w in walls if (m := _plane_normal(topo.faces[w])) is not None}
+    out = set()
+    for w, m in normals.items():
+        turns = [math.degrees(math.acos(max(-1.0, min(1.0, dot(m, normals[k]))))) for k in topo.neighbours(w)
+                 if k in normals and k != w]
+        if len(turns) == 2 and abs(turns[0] - turns[1]) <= 0.05 and turns[0] < CHAMFER_MAX_TURN_DEG:
+            out.add(w)
+    return out
 
 
 def _shared_edges(topo: Topology, a: int, b: int) -> list:
@@ -622,6 +660,8 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
         if all(w in cyls for w in walls) and (len({round(cyls[w].radius, 3) for w in walls}) == 1
                                               or all(_same_line(cyls[w], cyls[walls[0]]) for w in walls)):
             continue  # a flat-bottom hole, counterbore floor or groove (walls on one axis), not a pocket
+        chamfers = _corner_chamfers(topo, walls)
+        walls = [w for w in walls if w not in chamfers]
         islands: list[int] = []
         exp = TopExp_Explorer(face, TopAbs_EDGE)
         while exp.More():
