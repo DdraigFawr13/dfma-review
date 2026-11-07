@@ -13,7 +13,7 @@ export interface Face {
 export interface Analysis {
   part: {
     name: string;
-    units_in_file: "mm" | "inch" | "other";
+    units_in_file: "mm" | "cm" | "m" | "inch" | "none" | "other";
     bbox_in: [number, number, number];
     face_count: number;
     volume_mm3: number;

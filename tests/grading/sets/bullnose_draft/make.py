@@ -174,22 +174,24 @@ def _inner_point(face):
     return best[1]
 
 
-def label_faces(faces, tools):
-    """The class of each face: the first tool (shape, class) whose boundary it lies on, else stock."""
+def tool_index(faces, tools):
+    """For each face, the index of the first tool (shape, class) whose boundary it lies on, else None.
+    A tool's shape may instead be a test `pick(face, point)` (a fillet made on the part, not by a tool)."""
     out = []
     for face in faces:
         p = _inner_point(face)
-        lab = 24
-        for shape, cls in tools:
-            if BRepClass3d_SolidClassifier(shape, p, 1e-5).State() == TopAbs_ON:
-                lab = cls
+        hit = None
+        for k, (shape, _) in enumerate(tools):
+            if (shape(face, p) if callable(shape) else BRepClass3d_SolidClassifier(shape, p, 1e-5).State() == TopAbs_ON):
+                hit = k
                 break
-        out.append(lab)
+        out.append(hit)
     return out
 
 
-def write(path: Path, part, tools):
-    """Write the part, then name each ADVANCED_FACE with its class, in file order."""
+def write(path: Path, part, tools, tool_by_pos: list | None = None):
+    """Write the part, then name each ADVANCED_FACE with its class, in file order. With `tool_by_pos`,
+    also fill it with each face's tool index (or None) in file order (for a set's hole instances)."""
     w = STEPControl_Writer()
     w.Transfer(part, STEPControl_AsIs)
     assert w.Write(str(path)) == IFSelect_RetDone
@@ -200,16 +202,20 @@ def write(path: Path, part, tools):
     m = TopTools_IndexedMapOfShape()
     topexp.MapShapes(shape, TopAbs_FACE, m)
     faces = [topods.Face(m.FindKey(i)) for i in range(1, m.Size() + 1)]
-    labels = label_faces(faces, tools)
+    hits = tool_index(faces, tools)
+    labels = [24 if k is None else tools[k][1] for k in hits]
     model, tr = r.StepModel(), r.WS().TransferReader()
     order = {}
     for i in range(1, model.NbEntities() + 1):
         if model.Value(i).DynamicType().Name() == "StepShape_AdvancedFace":
             order[i] = len(order)
-    by_pos = [None] * len(order)
-    for face, lab in zip(faces, labels):
+    by_pos, tool_pos = [None] * len(order), [None] * len(order)
+    for face, lab, k in zip(faces, labels, hits):
         ent = tr.EntityFromShapeResult(face, 1)
         by_pos[order[model.Number(ent)]] = lab
+        tool_pos[order[model.Number(ent)]] = k
+    if tool_by_pos is not None:
+        tool_by_pos[:] = tool_pos
     assert None not in by_pos, "a face with no STEP entity"
     text = path.read_text()
     it = iter(by_pos)

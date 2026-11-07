@@ -28,6 +28,8 @@ MSG_NOT_STEP = "This is not a STEP file this tool can read"
 MSG_NO_SOLID = "No solid found in this file"
 MSG_OPEN_SHELL = ("The solid in this file has a gap: {n} of its edges belong to one face only. It was closed and "
                   "analysed as a solid, so results near the gap may be wrong.")
+MSG_NO_UNIT = ("This file declares no length unit. It was read as millimetres; if it was drawn in inches, every "
+               "size here is 25.4 times too small (D-020).")
 MSG_TOO_LARGE = "File is larger than 50 MB"
 MSG_TOO_LONG = "This file took too long to analyse"
 MSG_FAILED = "The analysis failed on this file. Try again, or try another file."
@@ -37,8 +39,8 @@ ASSUMPTIONS = [
     "Exterior profiles, steps, open-sided pockets, threads and floor fillets "
     "are not planned or ruled on in this version.",
     "End mills are the inch list in config/tools.toml for every file; no metric end mills in this version (assumption).",
-    "Walls are pairs of parallel planar faces with at least 10 mm2 of overlap and material between them "
-    "(assumption), plus the material around a hole's side and under a drill point, measured up to 0.250 in "
+    "Walls are pairs of planar faces, parallel or up to 15 deg from it (draft, measured at the thinnest place), "
+    "with at least 10 mm2 of overlap and material between them (assumption), plus the material around a hole's side and under a drill point, measured up to 0.250 in "
     "(assumption); other curved walls, such as thin cylindrical shells, are not measured.",
     "Engraved text and logos are read as pockets: their sharp corners are real geometry, but engraving tools may accept them.",
 ]
