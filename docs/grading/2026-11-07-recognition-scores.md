@@ -6,7 +6,7 @@ Measured on `main` c0adf63 with `tests/grading/grade.py` (tests: `tests/service/
 
 - **Quiddity's MFCAD++ subset** (github.com/pzfreo/quiddity-python, Apache-2.0, `tests/corpus/mfcadpp`): **40 parts**, not 41 (the 41st file is `MANIFEST.json`). MFCAD++ is CC BY, DOI 10.17034/d1fec5a0-8c10-4630-b02e-b92dc81df823. The subset was chosen for chamfers, triangular pockets, triangular blind steps, 6-sided passages and 2-sided through steps (MANIFEST `rule.targets`), so it holds few holes.
 - **First 500 MFCAD++ test parts** (lexical order, `1000.step` to `12832.step`), the sample Quiddity used. The QUB download answers scripts with a Cloudflare check, so Morgan downloaded `MFCAD_dataset.zip` in a browser and shared it from Google Drive (1,615,810,586 bytes; 8,949 test STEP files, as its readme says). Our class totals equal Quiddity's (239 through-hole, 363 blind-hole, 907 rectangular-pocket faces), so the sample is the same.
-- **Analysis Situs** (gitlab.com/ssv/AnalysisSitus, BSD-3, `tests/feature-recognition`): 19 hole cases, 36 cavity cases, 53 data files.
+- **Analysis Situs** (gitlab.com/ssv/AnalysisSitus, BSD-3, `tests/feature-recognition`): 19 hole cases, 36 cavity cases, 53 data files. Each case's `refFids` are the face ids Analysis Situs itself returns (its test runner fails on any difference, `tests/feature-recognition/recognize-holes/begin`), so Analysis Situs scores 100% on them by design: they measure how close we are to its rules, not who is more accurate.
 
 ## Join checks
 
