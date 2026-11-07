@@ -204,6 +204,40 @@ def clean_holes():
     return cut(block(3, 2, 0.75), through_z(0.75 * IN, 1.0 * IN, h, 0.25 * IN), through_z(2.25 * IN, 1.0 * IN, h, 0.5 * IN))
 
 
+def fuse(shape, *tools):
+    from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Fuse
+    for tool in tools:
+        op = BRepAlgoAPI_Fuse(shape, tool)
+        op.SimplifyResult()
+        op.Build()
+        if not op.IsDone():
+            raise RuntimeError("fuse failed")
+        shape = op.Shape()
+    return shape
+
+
+def box_at(x, y, z, l, w, h):
+    """A box from (x, y, z), inches, modelled in mm."""
+    return BRepPrimAPI_MakeBox(gp_Pnt(x * IN, y * IN, z * IN), l * IN, w * IN, h * IN).Shape()
+
+
+def thin_rib():
+    """2.000 x 1.000 x 0.500 in base with a rib 1.500 long (X), 0.040 thick (Y) and 1.000 tall on top, centred."""
+    return fuse(block(2, 1, 0.5), box_at(0.25, 0.48, 0.5, 1.5, 0.04, 1.0))
+
+
+def slot_not_wall():
+    """2.000 x 1.000 x 0.500 in block with a 0.040 in slot 0.250 in deep across it (along Y), centred."""
+    return cut(block(2, 1, 0.5), box_at(0.98, -0.1, 0.25, 0.04, 1.2, 0.5))
+
+
+def clean_walls():
+    """3.000 x 2.000 x 0.250 in base, two 0.500 in square bosses 0.750 in tall with 1.000 in of air
+    between them, and a 0.250 in hole through the base between them."""
+    base = cut(block(3, 2, 0.25), through_z(1.5 * IN, 1.0 * IN, 0.25 * IN, 0.25 * IN))
+    return fuse(base, box_at(0.5, 0.75, 0.25, 0.5, 0.5, 0.75), box_at(2.0, 0.75, 0.25, 0.5, 0.5, 0.75))
+
+
 def single_face():
     return BRepBuilderAPI_MakeFace(gp_Pln(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)), 0, 20, 0, 10).Face()
 
@@ -245,10 +279,14 @@ NO_FEATURES = {"hole": 0, "pocket": 0, "corner": 0, "wall": 0}
 def main() -> int:
     parts: list[dict] = []
 
-    def add(shape, name, unit, holes, findings=(), pockets=0, corners=0, **extra):
+    # Wall counts are counted by hand from the spec's rule (S4 "Settled at build"), never from the
+    # service: every pair of opposed planar faces with material between them and 10 mm2 of overlap.
+    # A plain block has 3 (its X, Y and Z pairs).
+    def add(shape, name, unit, holes, findings=(), pockets=0, corners=0, walls=3, **extra):
         write_step(shape, name, "INCH" if unit == "inch" else "MM")
         entry = {"name": name, "units": unit, "face_count": face_count(shape),
-                 "features": {**NO_FEATURES, "hole": holes, "pocket": pockets, "corner": corners}, **extra}
+                 "features": {**NO_FEATURES, "hole": holes, "pocket": pockets, "corner": corners, "wall": walls},
+                 **extra}
         if findings:
             entry["finding"] = list(findings)
         parts.append(entry)
@@ -261,20 +299,20 @@ def main() -> int:
     add(shape, "box_through_hole", "mm", 1)
     add(shape, "box_inch", "inch", 1)
 
-    add(blind_block(1, 1, 2.5, 0.25, 2.0), "deep_hole", "inch", 1,
-        [finding("hole_depth", "medium", 8.0, (0.5 * IN + 0.125 * IN, 0.5 * IN, 1.5 * IN))])
-    add(blind_block(1, 1, 3.25, 0.25, 2.75), "very_deep_hole", "inch", 1,
-        [finding("hole_depth", "high", 11.0, (0.5 * IN + 0.125 * IN, 0.5 * IN, 2.0 * IN))])
+    add(blind_block(1, 1, 2.5, 0.25, 2.0), "deep_hole", "inch", 1, walls=4,  # + hole bottom to the far face
+        findings=[finding("hole_depth", "medium", 8.0, (0.5 * IN + 0.125 * IN, 0.5 * IN, 1.5 * IN))])
+    add(blind_block(1, 1, 3.25, 0.25, 2.75), "very_deep_hole", "inch", 1, walls=4,
+        findings=[finding("hole_depth", "high", 11.0, (0.5 * IN + 0.125 * IN, 0.5 * IN, 2.0 * IN))])
     add(through_block(2, 1, 0.5, 0.26), "odd_hole", "inch", 1,
         [finding("hole_size", "medium", 0.26, (1.0 * IN + 0.13 * IN, 0.5 * IN, 0.25 * IN))])
-    add(fillet_not_hole(), "fillet_not_hole", "inch", 0, pockets=1, corners=4)  # 3/16 in fits: 2.67, clean
+    add(fillet_not_hole(), "fillet_not_hole", "inch", 0, pockets=1, corners=4, walls=8)  # 3/16 in fits: 2.67, clean
     add(metric_block(6.55), "odd_metric_hole", "mm", 1,
         [finding("hole_size", "medium", round(6.55 / IN, 4), (25.0 + 3.275, 12.5, 6.0))])
     add(metric_block(6.5), "metric_hole", "mm", 1)
-    add(blind_block(2, 2, 1, 0.5, 0.75), "flat_bottom_hole", "inch", 1)
-    add(two_holes_web(), "two_holes_web", "inch", 2)
+    add(blind_block(2, 2, 1, 0.5, 0.75), "flat_bottom_hole", "inch", 1, walls=4)
+    add(two_holes_web(), "two_holes_web", "inch", 2, walls=4)  # + the 0.200 in web; each bottom to the far face crosses the other hole
     add(split_hole(), "split_hole", "inch", 1)
-    add(stepped_hole(), "stepped_hole", "inch", 2)
+    add(stepped_hole(), "stepped_hole", "inch", 2, walls=4)  # + the shoulder to the bottom
     shape, point = drill_point_hole()
     add(shape, "drill_point_hole", "inch", 1, point_mm=round(point, 4))
     add(clean_holes(), "clean_holes", "inch", 2)
@@ -287,18 +325,35 @@ def main() -> int:
         return finding("pocket_depth", "medium", measured, floor_probe(depth, **kw))
 
     add(pocket_part(0.25, 0), "pocket_sharp", "inch", 0,
-        corners(0.25, 0, "high", 0.0) + [pocket_finding(0.25, 8.0)], pockets=1, corners=4)  # nothing fits: 1/32 in, undersized
+        corners(0.25, 0, "high", 0.0) + [pocket_finding(0.25, 8.0)], pockets=1, corners=4, walls=8)  # nothing fits: 1/32 in, undersized
     add(pocket_part(0.0625, 0.020), "pocket_small_radius", "inch", 0,
-        corners(0.0625, 0.020, "medium", 0.02), pockets=1, corners=4)  # 1/32 in: 2.0, no depth finding
+        corners(0.0625, 0.020, "medium", 0.02), pockets=1, corners=4, walls=8)  # 1/32 in: 2.0, no depth finding
     add(pocket_part(0.5, 0.050), "pocket_long_thin_tool", "inch", 0,
         corners(0.5, 0.050, "medium", round(0.5 / 0.09375, 4)) + [pocket_finding(0.5, round(0.5 / 0.09375, 4))],
-        pockets=1, corners=4)  # 3/32 in: 5.33
-    add(pocket_part(0.8, 0.150), "pocket_deep", "inch", 0, [pocket_finding(0.8, 3.2)], pockets=1, corners=4)  # 1/4 in
+        pockets=1, corners=4, walls=8)  # 3/32 in: 5.33
+    add(pocket_part(0.8, 0.150), "pocket_deep", "inch", 0, [pocket_finding(0.8, 3.2)], pockets=1, corners=4, walls=8)  # 1/4 in
     add(pocket_part(0.8, 0.300, size=(3.5, 2.5, 1.25), pocket=(2.5, 1.5)), "pocket_deep_wide", "inch", 0,
-        pockets=1, corners=4)  # 1/2 in: 1.6, clean
+        pockets=1, corners=4, walls=8)  # 1/2 in: 1.6, clean
     add(pocket_part(0.6, 0.140, island=(0.6, 0.1)), "pocket_island", "inch", 0,
-        [pocket_finding(0.6, 3.2)], pockets=1, corners=4)  # 0.200 in gap: 3/16 in, not 1/4 in
-    add(pocket_part(0.4, 0.150), "clean_pocket", "inch", 0, pockets=1, corners=4)  # 1/4 in: 1.6
+        [pocket_finding(0.6, 3.2)], pockets=1, corners=4, walls=11)  # + island top to bottom, island X and Y pairs; 0.200 in gap: 3/16 in, not 1/4 in
+    add(pocket_part(0.4, 0.150), "clean_pocket", "inch", 0, pockets=1, corners=4, walls=8)  # 1/4 in: 1.6
+
+    # S4 walls (spec S4 "Settled at build"). Limits: 0.030 in al6061, 0.020 in steels, 0.060 in plastic.
+    rib_probe = (1.0 * IN, 0.48 * IN, 1.0 * IN)  # middle of the rib's -Y side
+    # base X, Y and Z pairs, rib top to base bottom, rib X pair, rib Y pair (0.040 in)
+    add(thin_rib(), "thin_rib", "inch", 0, walls=6)  # 0.040 in is over 0.030 in: clean in 6061
+    add(thin_rib(), "thin_rib", "inch", 0, walls=6, material="plastic",
+        findings=[finding("thin_wall", "high", 0.04, rib_probe)])  # under 0.060 in
+    # block 3, 4 pocket walls to outer faces, floor to bottom: a 0.015 in floor, under every limit
+    add(pocket_part(0.485, 0.150, size=(3, 2, 0.5)), "thin_floor", "inch", 0, pockets=1, corners=4, walls=8,
+        findings=[finding("thin_wall", "high", 0.015, (1.5 * IN, 1.0 * IN, 0.015 * IN))])  # 1/4 in: 1.94
+    # X pair (below the slot), Y pair, each top half to the bottom, slot floor to the bottom, each slot
+    # side to its outer end face; the slot's sides face each other across air, so they are no wall.
+    add(slot_not_wall(), "slot_not_wall", "inch", 0, walls=7)
+    add(slot_not_wall(), "slot_not_wall", "inch", 0, walls=7, material="plastic")  # 0.040 in would be flagged here
+    # base X, Y and Z pairs, each boss top to the base bottom, each boss's X and Y pairs; the outer
+    # sides of the two bosses face away from each other with air between: no wall.
+    add(clean_walls(), "clean_walls", "inch", 1, walls=9)
 
     write_step(single_face(), "no_solid", "MM")
     (HERE / "not_step.step").write_text("This is a text file, not a STEP file.\n", encoding="utf-8", newline="\n")

@@ -4,19 +4,19 @@
 name = "box_through_hole"
 units = "mm"
 face_count = 7
-features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+features = { hole = 1, pocket = 0, corner = 0, wall = 3 }
 
 [[part]]
 name = "box_inch"
 units = "inch"
 face_count = 7
-features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+features = { hole = 1, pocket = 0, corner = 0, wall = 3 }
 
 [[part]]
 name = "deep_hole"
 units = "inch"
 face_count = 8
-features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+features = { hole = 1, pocket = 0, corner = 0, wall = 4 }
 [[part.finding]]
 rule = "hole_depth"
 severity = "medium"
@@ -27,7 +27,7 @@ probe_mm = [15.875, 12.7, 38.1]
 name = "very_deep_hole"
 units = "inch"
 face_count = 8
-features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+features = { hole = 1, pocket = 0, corner = 0, wall = 4 }
 [[part.finding]]
 rule = "hole_depth"
 severity = "high"
@@ -38,7 +38,7 @@ probe_mm = [15.875, 12.7, 50.8]
 name = "odd_hole"
 units = "inch"
 face_count = 7
-features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+features = { hole = 1, pocket = 0, corner = 0, wall = 3 }
 [[part.finding]]
 rule = "hole_size"
 severity = "medium"
@@ -49,13 +49,13 @@ probe_mm = [28.702, 12.7, 6.35]
 name = "fillet_not_hole"
 units = "inch"
 face_count = 15
-features = { hole = 0, pocket = 1, corner = 4, wall = 0 }
+features = { hole = 0, pocket = 1, corner = 4, wall = 8 }
 
 [[part]]
 name = "odd_metric_hole"
 units = "mm"
 face_count = 7
-features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+features = { hole = 1, pocket = 0, corner = 0, wall = 3 }
 [[part.finding]]
 rule = "hole_size"
 severity = "medium"
@@ -66,50 +66,50 @@ probe_mm = [28.275, 12.5, 6.0]
 name = "metric_hole"
 units = "mm"
 face_count = 7
-features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+features = { hole = 1, pocket = 0, corner = 0, wall = 3 }
 
 [[part]]
 name = "flat_bottom_hole"
 units = "inch"
 face_count = 8
-features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+features = { hole = 1, pocket = 0, corner = 0, wall = 4 }
 
 [[part]]
 name = "two_holes_web"
 units = "inch"
 face_count = 10
-features = { hole = 2, pocket = 0, corner = 0, wall = 0 }
+features = { hole = 2, pocket = 0, corner = 0, wall = 4 }
 
 [[part]]
 name = "split_hole"
 units = "inch"
 face_count = 8
-features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+features = { hole = 1, pocket = 0, corner = 0, wall = 3 }
 
 [[part]]
 name = "stepped_hole"
 units = "inch"
 face_count = 9
-features = { hole = 2, pocket = 0, corner = 0, wall = 0 }
+features = { hole = 2, pocket = 0, corner = 0, wall = 4 }
 
 [[part]]
 name = "drill_point_hole"
 units = "inch"
 face_count = 8
-features = { hole = 1, pocket = 0, corner = 0, wall = 0 }
+features = { hole = 1, pocket = 0, corner = 0, wall = 3 }
 point_mm = 1.9077
 
 [[part]]
 name = "clean_holes"
 units = "inch"
 face_count = 8
-features = { hole = 2, pocket = 0, corner = 0, wall = 0 }
+features = { hole = 2, pocket = 0, corner = 0, wall = 3 }
 
 [[part]]
 name = "pocket_sharp"
 units = "inch"
 face_count = 11
-features = { hole = 0, pocket = 1, corner = 4, wall = 0 }
+features = { hole = 0, pocket = 1, corner = 4, wall = 8 }
 [[part.finding]]
 rule = "corner_radius"
 severity = "high"
@@ -140,7 +140,7 @@ probe_mm = [15.24, 25.4, 19.05]
 name = "pocket_small_radius"
 units = "inch"
 face_count = 15
-features = { hole = 0, pocket = 1, corner = 4, wall = 0 }
+features = { hole = 0, pocket = 1, corner = 4, wall = 8 }
 [[part.finding]]
 rule = "corner_radius"
 severity = "medium"
@@ -166,7 +166,7 @@ probe_mm = [63.3512, 37.9512, 24.6062]
 name = "pocket_long_thin_tool"
 units = "inch"
 face_count = 15
-features = { hole = 0, pocket = 1, corner = 4, wall = 0 }
+features = { hole = 0, pocket = 1, corner = 4, wall = 8 }
 [[part.finding]]
 rule = "corner_radius"
 severity = "medium"
@@ -197,7 +197,7 @@ probe_mm = [15.24, 25.4, 12.7]
 name = "pocket_deep"
 units = "inch"
 face_count = 15
-features = { hole = 0, pocket = 1, corner = 4, wall = 0 }
+features = { hole = 0, pocket = 1, corner = 4, wall = 8 }
 [[part.finding]]
 rule = "pocket_depth"
 severity = "medium"
@@ -208,13 +208,13 @@ probe_mm = [15.24, 25.4, 5.08]
 name = "pocket_deep_wide"
 units = "inch"
 face_count = 15
-features = { hole = 0, pocket = 1, corner = 4, wall = 0 }
+features = { hole = 0, pocket = 1, corner = 4, wall = 8 }
 
 [[part]]
 name = "pocket_island"
 units = "inch"
 face_count = 20
-features = { hole = 0, pocket = 1, corner = 4, wall = 0 }
+features = { hole = 0, pocket = 1, corner = 4, wall = 11 }
 [[part.finding]]
 rule = "pocket_depth"
 severity = "medium"
@@ -225,4 +225,52 @@ probe_mm = [15.24, 25.4, 10.16]
 name = "clean_pocket"
 units = "inch"
 face_count = 15
-features = { hole = 0, pocket = 1, corner = 4, wall = 0 }
+features = { hole = 0, pocket = 1, corner = 4, wall = 8 }
+
+[[part]]
+name = "thin_rib"
+units = "inch"
+face_count = 11
+features = { hole = 0, pocket = 0, corner = 0, wall = 6 }
+
+[[part]]
+name = "thin_rib"
+units = "inch"
+face_count = 11
+features = { hole = 0, pocket = 0, corner = 0, wall = 6 }
+material = "plastic"
+[[part.finding]]
+rule = "thin_wall"
+severity = "high"
+measured = 0.04
+probe_mm = [25.4, 12.192, 25.4]
+
+[[part]]
+name = "thin_floor"
+units = "inch"
+face_count = 15
+features = { hole = 0, pocket = 1, corner = 4, wall = 8 }
+[[part.finding]]
+rule = "thin_wall"
+severity = "high"
+measured = 0.015
+probe_mm = [38.1, 25.4, 0.381]
+
+[[part]]
+name = "slot_not_wall"
+units = "inch"
+face_count = 10
+features = { hole = 0, pocket = 0, corner = 0, wall = 7 }
+
+[[part]]
+name = "slot_not_wall"
+units = "inch"
+face_count = 10
+features = { hole = 0, pocket = 0, corner = 0, wall = 7 }
+material = "plastic"
+
+[[part]]
+name = "clean_walls"
+units = "inch"
+face_count = 17
+features = { hole = 1, pocket = 0, corner = 0, wall = 9 }

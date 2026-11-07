@@ -1,4 +1,4 @@
-"""Feature recognition on analytic faces (spec Design "Features"). S2: holes; S3: pockets and corners.
+"""Feature recognition on analytic faces (spec Design "Features"). S2: holes; S3: pockets and corners; S4: walls.
 
 A hole is a set of concave cylindrical faces that share edges, with the same axis (0.5 deg)
 and radius (0.001 mm), spanning the full 360 deg. Stepped segments join through a shoulder
@@ -555,7 +555,7 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
 
 
 def number(features: list[dict], kind: str) -> list[dict]:
-    features.sort(key=lambda f: min(f["faces"]))
+    features.sort(key=lambda f: (min(f["faces"]), sorted(f["faces"])))  # walls often share their lowest face
     out = []
     for n, f in enumerate(features, 1):
         out.append({"id": f"{kind}-{n}", **f})
@@ -589,45 +589,58 @@ def _area(shape) -> float:
     return props.Mass()
 
 
-def _inner_points(shape) -> list[Vec]:
-    """Points well inside each face of a shape: the centroid of its largest mesh triangle,
-    largest face first (a centroid of the whole face can fall in a hole through it)."""
+def _inner_points(shape, grid: int = 9) -> list[Vec]:
+    """Points inside a shape's faces: the centroids of their mesh triangles (largest first), then a
+    grid x grid sample of each face's UV box kept where it lies inside the face. The centroid of a
+    whole face can fall in a hole through it, and a ray from one point can be blocked where the
+    material between two faces is only partial (a pocket in the middle of a block)."""
+    from OCC.Core.BRepClass import BRepClass_FaceClassifier
     from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+    from OCC.Core.gp import gp_Pnt2d
+    from OCC.Core.TopAbs import TopAbs_IN
     from OCC.Core.TopLoc import TopLoc_Location
     BRepMesh_IncrementalMesh(shape, 0.5, False, 0.5, True)
-    out = []
+    centroids, samples = [], []
     exp = TopExp_Explorer(shape, TopAbs_FACE)
     while exp.More():
         face = topods.Face(exp.Current())
         exp.Next()
         tri = BRep_Tool.Triangulation(face, TopLoc_Location())
-        if tri is None:
-            continue
-        best, best_a = None, 0.0
-        for i in range(1, tri.NbTriangles() + 1):
-            a, b, c = (_pt(tri.Node(k)) for k in tri.Triangle(i).Get())
-            area = 0.5 * math.sqrt(dot(x := cross(_sub(b, a), _sub(c, a)), x))
-            if area > best_a:
-                best, best_a = tuple((a[j] + b[j] + c[j]) / 3 for j in range(3)), area
-        if best:
-            out.append((_area(face), best))
-    return [p for _, p in sorted(out, key=lambda t: -t[0])]
+        if tri is not None:
+            for i in range(1, tri.NbTriangles() + 1):
+                a, b, c = (_pt(tri.Node(k)) for k in tri.Triangle(i).Get())
+                area = 0.5 * math.sqrt(dot(x := cross(_sub(b, a), _sub(c, a)), x))
+                centroids.append((-round(area, 6), tuple((a[j] + b[j] + c[j]) / 3 for j in range(3))))
+        umin, umax, vmin, vmax = breptools.UVBounds(face)
+        surface = BRepAdaptor_Surface(face, True)
+        for i in range(grid):
+            for j in range(grid):
+                u = umin + (umax - umin) * (i + 0.5) / grid
+                v = vmin + (vmax - vmin) * (j + 0.5) / grid
+                if BRepClass_FaceClassifier(face, gp_Pnt2d(u, v), 1e-6).State() == TopAbs_IN:
+                    samples.append(_pt(surface.Value(u, v)))
+    return [p for _, p in sorted(centroids)] + samples
 
 
-def _first_hit(solid, start: Vec, direction: Vec) -> tuple[int | None, float]:
-    """The face a ray from `start` along `direction` meets first beyond 1e-4 mm, and the distance."""
-    from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
-    from OCC.Core.gp import gp_Dir, gp_Lin
-    inter = IntCurvesFace_ShapeIntersector()
-    inter.Load(solid, 1e-6)
-    inter.Perform(gp_Lin(gp_Pnt(*start), gp_Dir(*direction)), 1e-4, 1e9)
-    best, best_w = None, math.inf
-    if inter.IsDone():
-        for i in range(1, inter.NbPnt() + 1):
-            w = inter.WParameter(i)
-            if w < best_w:
-                best, best_w = inter.Face(i), w
-    return best, best_w
+class _Rays:
+    """Rays cast through one solid; the intersector is loaded once per analysis."""
+
+    def __init__(self, solid):
+        from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
+        self.inter = IntCurvesFace_ShapeIntersector()
+        self.inter.Load(solid, 1e-6)
+
+    def first_hit(self, start: Vec, direction: Vec):
+        """The face a ray from `start` along `direction` meets first beyond 1e-4 mm, and the distance."""
+        from OCC.Core.gp import gp_Dir, gp_Lin
+        self.inter.Perform(gp_Lin(gp_Pnt(*start), gp_Dir(*direction)), 1e-4, 1e9)
+        best, best_w = None, math.inf
+        if self.inter.IsDone():
+            for i in range(1, self.inter.NbPnt() + 1):
+                w = self.inter.WParameter(i)
+                if w < best_w:
+                    best, best_w = self.inter.Face(i), w
+        return best, best_w
 
 
 def walls(solid, faces) -> list[dict]:
@@ -637,6 +650,7 @@ def walls(solid, faces) -> list[dict]:
     from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_Transform
     from OCC.Core.gp import gp_Trsf
     topo = Topology(solid, faces)
+    rays = _Rays(solid)
     planes = [(i, *_plane_info(f)) for i, f in enumerate(faces)
               if BRepAdaptor_Surface(f, True).GetType() == GeomAbs_Plane]
     out = []
@@ -654,17 +668,18 @@ def walls(solid, faces) -> list[dict]:
                 continue
             common = BRepAlgoAPI_Common(a_on_b, faces[ib])
             common.Build()
-            if not common.IsDone() or _area(common.Shape()) < MIN_OVERLAP_MM2:
+            overlap = _area(common.Shape()) if common.IsDone() else 0.0
+            if overlap < MIN_OVERLAP_MM2:
                 continue
-            # Solid material between them: a ray from inside the overlap on b, along -nb (into the
-            # material), first meets face a, at distance t. Air between (a slot) or another face
-            # (a pocket in the way) fails.
-            for p in _inner_points(common.Shape())[:3]:
-                hit, w = _first_hit(solid, p, tuple(-c for c in nb))
+            # Solid material between them: a ray from a point inside the overlap on b, along -nb (into
+            # the material), first meets face a, at distance t. Air between (two bosses) or another
+            # face in the way (a slot or pocket) fails; one clear ray of the sampled points is enough.
+            for p in _inner_points(common.Shape()):
+                hit, w = rays.first_hit(p, tuple(-c for c in nb))
                 if hit is not None and topo.fid(hit) == ia and abs(w - t) <= 0.01:
                     break
             else:
                 continue
-            out.append({"kind": "wall", "faces": [ia, ib], "axis": list(na), "open_dirs": [], "open_vectors": [],
-                        "dims_mm": {"thickness": t}})
+            out.append({"kind": "wall", "faces": [ia, ib], "axis": [-c for c in na], "open_dirs": [],
+                        "open_vectors": [], "dims_mm": {"thickness": t, "overlap_mm2": overlap}})
     return out

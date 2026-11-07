@@ -40,10 +40,11 @@ Copied from the Drawing office sample on the S2 form. Light only in the first ve
 | `--low` | `#3f6b2a` | low severity (in the schema; no rule produces it yet), the "clean" verdict and holes checked with no finding |
 | `--ok-pocket` | `#8559b8` | pockets checked with no finding (D-015) |
 | `--ok-corner` | `#1d7f86` | corners checked with no finding (D-015) |
+| `--ok-wall` | `#6b5d4f` | walls checked with no finding (S4, proposed; mock-up `mockups/wall-legend.html`) |
 | `--radius` | `2px` | every border radius |
 | `--space-1` … `--space-4` | `4px`, `8px`, `12px`, `16px` | gaps and padding |
 
-Contrast (WCAG ratio, measured with a script in the S2 session; S3 swatches: `--ok-pocket` 5.10 on `--panel`, 4.20 on `--view`; `--ok-corner` 4.74 and 3.91): `--ink` on `--panel` 15.2, `--muted` on `--panel` 5.95, `--accent` on `--panel` 6.44, `--accent-ink` on `--accent` 6.44, `--high` on `--panel` 6.54, `--medium` on `--panel` 5.22, `--medium` on `--bg` 4.64, `--medium` on `--view` 4.31, `--low` on `--panel` 6.27. Severity text sits on `--panel` or `--bg`, never on `--view`.
+Contrast (WCAG ratio, measured with a script in the S2 session; S3 swatches: `--ok-pocket` 5.10 on `--panel`, 4.20 on `--view`; `--ok-corner` 4.74 and 3.91; S4: `--ok-wall` 6.36 and 5.24): `--ink` on `--panel` 15.2, `--muted` on `--panel` 5.95, `--accent` on `--panel` 6.44, `--accent-ink` on `--accent` 6.44, `--high` on `--panel` 6.54, `--medium` on `--panel` 5.22, `--medium` on `--bg` 4.64, `--medium` on `--view` 4.31, `--low` on `--panel` 6.27. Severity text sits on `--panel` or `--bg`, never on `--view`.
 
 ## Type
 <!-- Faces, sizes and number settings (tabular figures, units). Copy settings from the accepted specimen, not from memory (adventure-manager LESSONS:10). -->
@@ -62,7 +63,7 @@ Contrast (WCAG ratio, measured with a script in the S2 session; S3 swatches: `--
 - **Primary button** (Export PDF, from S7): `--accent` fill, `--accent-ink` text.
 - **Finding row:** a button the full width of the list. Severity label (text and colour), then the title, then a muted line with the feature, the value and the limit source. Clicking it selects the finding: 2px `--accent` border, its faces turn `--accent` in the 3D view and the camera frames them. Clicking the selected finding again clears the selection.
 - **Selected finding:** its faces turn `--accent`, every other face is drawn at opacity 0.35, and the camera frames the faces, never tighter than 40% of the part's size. A sharp inside corner is a bar along its edge, accent when selected, with its walls kept solid (D-015). Faces with a finding and nothing selected are drawn in their severity colour with an "F1 MEDIUM" label.
-- **Colour legend:** under the 3D view (D-014): a 14 px swatch and its word for High, Medium and Selected, then one checkbox per feature kind for features checked with no finding (S2: "Holes checked, no finding", `--low`; S3: "Pockets checked, no finding", `--ok-pocket`, and "Corners checked, no finding", `--ok-corner`; all on by default, D-015). Each later feature kind adds its own row and swatch.
+- **Colour legend:** under the 3D view (D-014): a 14 px swatch and its word for High, Medium and Selected, then one checkbox per feature kind for features checked with no finding (S2: "Holes checked, no finding", `--low`; S3: "Pockets checked, no finding", `--ok-pocket`, and "Corners checked, no finding", `--ok-corner`; all on by default, D-015; S4: "Walls checked, no finding", `--ok-wall`, painted first so other kinds win). Each later feature kind adds its own row and swatch.
 - **Verdict line:** severity words with counts ("HIGH 1 · MEDIUM 2"; a zero count in `--muted`), then "N holes checked · Rules run: …". A part with no findings shows "CLEAN no findings" in `--low`.
 - **Waiting:** while a file is analysed, the status line says "Analysing <name>…" and the findings list keeps its space.
 - **Refused:** errors show in the error box with the reason (J7 messages), in `--high` on `--panel` with a left stripe and the word "Error:".

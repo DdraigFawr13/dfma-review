@@ -56,3 +56,19 @@ source = "estimate"
 [plastic.pocket_depth]    # pocket depth / the end mill that fits: over medium is medium
 medium = 3.0
 source = "estimate"
+
+[al6061.thin_wall]   # wall thickness under min_in is high
+min_in = 0.030
+source = "estimate"
+
+[steel1018.thin_wall]   # wall thickness under min_in is high
+min_in = 0.020
+source = "estimate"
+
+[ss304.thin_wall]   # wall thickness under min_in is high
+min_in = 0.020
+source = "estimate"
+
+[plastic.thin_wall]   # wall thickness under min_in is high
+min_in = 0.060
+source = "estimate"

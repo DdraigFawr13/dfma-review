@@ -1,4 +1,4 @@
-"""Rules on single parts: hole_depth (J2), hole_size (S2), corner_radius and pocket_depth (S3)."""
+"""Rules on single parts: hole_depth (J2), hole_size (S2), corner_radius and pocket_depth (S3), thin_wall (S4)."""
 
 from __future__ import annotations
 
@@ -9,14 +9,19 @@ from helpers import PARTS, expected
 from dfma.analyze import analyze
 
 
-def run(name: str, material: str = "al6061") -> dict:
-    return analyze(PARTS / f"{name}.step", f"{name}.step", "mill", material)
+def run(name: str, material: str = "al6061", process: str = "mill") -> dict:
+    return analyze(PARTS / f"{name}.step", f"{name}.step", process, material)
+
+
+def only_holes(result: dict) -> list[dict]:
+    """The hole features (S4 adds walls to every block, so hole tests pick their kind)."""
+    return [f for f in result["features"] if f["kind"] == "hole"]
 
 
 def test_deep_hole():
     result = run("deep_hole")
-    assert result["rules_run"] == ["hole_depth", "hole_size", "corner_radius", "pocket_depth"]
-    [hole] = result["features"]
+    assert result["rules_run"] == ["hole_depth", "hole_size", "corner_radius", "pocket_depth", "thin_wall"]
+    [hole] = only_holes(result)
     assert hole["id"] == "hole-1" and hole["kind"] == "hole"
     assert hole["dims_mm"]["diameter"] == pytest.approx(6.35, abs=0.001)
     assert hole["dims_mm"]["depth"] == pytest.approx(50.8, abs=0.001)
@@ -72,7 +77,7 @@ def test_clean_parts():
 
 def test_drill_point_is_part_of_the_hole():
     result = run("drill_point_hole")
-    [hole] = result["features"]
+    [hole] = only_holes(result)
     assert hole["dims_mm"]["depth"] == pytest.approx(25.4, abs=0.001)  # to where the cone starts
     assert hole["dims_mm"]["point_mm"] == pytest.approx(expected("drill_point_hole")["point_mm"], abs=0.001)
     kinds = {result["faces"][i]["kind"] for i in hole["faces"]}
@@ -80,7 +85,7 @@ def test_drill_point_is_part_of_the_hole():
 
 
 def test_stepped_hole_segments_share_open_ends():
-    holes = run("stepped_hole")["features"]
+    holes = only_holes(run("stepped_hole"))
     assert sorted(round(h["dims_mm"]["diameter"] / 25.4, 4) for h in holes) == [0.25, 0.4375]
     depths = sorted(round(h["dims_mm"]["depth"] / 25.4, 4) for h in holes)
     assert depths == [0.25, 0.75]
@@ -92,21 +97,21 @@ def test_stepped_hole_segments_share_open_ends():
 
 
 def test_through_hole_has_two_open_dirs():
-    [hole] = run("odd_hole")["features"]
+    [hole] = only_holes(run("odd_hole"))
     assert sorted(hole["open_dirs"]) == ["+Z", "-Z"]
 
 
 def test_blind_holes_have_one_open_end():
     for name, dirs in (("flat_bottom_hole", ["-Z"]), ("drill_point_hole", ["+Y"])):
-        [hole] = run(name)["features"]
+        [hole] = only_holes(run(name))
         assert hole["open_dirs"] == dirs, name
-    a, b = run("two_holes_web")["features"]
+    a, b = only_holes(run("two_holes_web"))
     assert len(a["open_vectors"]) == len(b["open_vectors"]) == 1
     assert sum(x * y for x, y in zip(a["open_vectors"][0], b["open_vectors"][0])) == pytest.approx(-1.0)
 
 
 def test_split_hole_is_one_through_hole():
-    [hole] = run("split_hole")["features"]
+    [hole] = only_holes(run("split_hole"))
     assert len(hole["faces"]) == 2 and sorted(hole["open_dirs"]) == ["+Z", "-Z"]
 
 
@@ -125,7 +130,7 @@ def test_holes_above_drill_range_are_skipped(tmp_path):
     path = tmp_path / "bore_1500.step"
     writer.Write(str(path))
     result = analyze(path, path.name)
-    assert len(result["features"]) == 1
+    assert len(only_holes(result)) == 1
     assert result["findings"] == []  # a 1.500 in hole is above the 1 in drill range (D-010)
 
 
@@ -195,7 +200,7 @@ def test_ball_bottom_hole_is_blind(tmp_path):
     ball = BRepPrimAPI_MakeSphere(gp_Pnt(0.5 * IN, 0.5 * IN, 1.0 * IN), 0.125 * IN).Shape()
     tool = BRepAlgoAPI_Fuse(blind(0.5, 0.5, 2, 0.25, 1.0), ball).Shape()
     path = write(tmp_path, "ball_bottom", cut(box(1, 1, 2), tool))
-    [hole] = analyze(path, path.name)["features"]
+    [hole] = only_holes(analyze(path, path.name))
     assert len(hole["open_vectors"]) == 1  # a ball-end bottom closes the hole
     assert hole["dims_mm"]["depth"] == pytest.approx(25.4, abs=0.01)
 
@@ -205,7 +210,7 @@ def test_split_blind_hole_keeps_its_bottom(tmp_path):
     halves = (blind(0.5, 0.5, 2, 0.25, 1.0, math.pi), blind(0.5, 0.5, 2, 0.25, 1.0, math.pi, math.pi))
     path = write(tmp_path, "split_blind", cut(box(1, 1, 2), *halves))
     result = analyze(path, path.name)
-    [hole] = result["features"]
+    [hole] = only_holes(result)
     assert len(hole["open_vectors"]) == 1
     assert {result["faces"][i]["kind"] for i in hole["faces"]} == {"cylinder", "plane"}
 
@@ -215,7 +220,7 @@ def test_half_faces_at_different_heights_are_not_a_hole(tmp_path):
     # Two 180 deg half-cylinders of one radius and axis, at different depths: a stepped U, not a hole.
     tools = (blind(0.5, 0.5, 2, 0.25, 0.5, math.pi), blind(0.5, 0.5, 2, 0.25, 1.0, math.pi, math.pi))
     path = write(tmp_path, "half_steps", cut(box(1, 1, 2), *tools))
-    holes = analyze(path, path.name)["features"]
+    holes = only_holes(analyze(path, path.name))
     assert all(h["dims_mm"]["depth"] < 0.5 * IN + 0.01 for h in holes)  # never one 1.0 in deep "hole"
 
 
@@ -225,7 +230,7 @@ def test_groove_in_bore_is_not_a_hole(tmp_path):
     bore = blind(1, 1, 1, 0.5, 1.0 + 0.04)
     groove = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(IN, IN, 0.4 * IN), gp_Dir(0, 0, 1)), 0.3 * IN, 0.2 * IN).Shape()
     path = write(tmp_path, "groove", cut(box(2, 2, 1), bore, groove))
-    holes = analyze(path, path.name)["features"]
+    holes = only_holes(analyze(path, path.name))
     assert [round(h["dims_mm"]["diameter"] / IN, 3) for h in holes] == [0.5, 0.5]  # the bore either side, no 0.6 in groove
 
 
@@ -234,7 +239,7 @@ def test_cross_hole_does_not_open_a_blind_hole(tmp_path):
     from OCC.Core.gp import gp_Ax2, gp_Dir, gp_Pnt
     cross = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(-1, 0.5 * IN, 1.5 * IN), gp_Dir(1, 0, 0)), 0.0625 * IN, IN + 2).Shape()
     path = write(tmp_path, "cross", cut(box(1, 1, 2), blind(0.5, 0.5, 2, 0.25, 1.0), cross))
-    holes = analyze(path, path.name)["features"]
+    holes = only_holes(analyze(path, path.name))
     main = max(holes, key=lambda h: h["dims_mm"]["diameter"])
     assert len(main["open_vectors"]) == 1  # the cross hole breaks through its wall, not its ends
 
@@ -393,3 +398,84 @@ def test_sharp_corner_between_a_wall_and_an_arc(tmp_path):
     assert all(len(c["faces"]) == 2 and "edge_mm" in c for c in sharp)
     [pocket] = kind(result, "pocket")
     assert pocket["dims_mm"]["min_corner_radius"] == 0 and pocket["dims_mm"]["undersized"] == 1
+
+
+# --- S4: walls and thin_wall ---
+
+def walls_of(result: dict) -> list[dict]:
+    return [f for f in result["features"] if f["kind"] == "wall"]
+
+
+def test_material_changes_limit():
+    """thin_rib's 0.040 in rib is flagged only in Delrin / nylon (limit 0.060 in; spec S4)."""
+    limits = {"al6061": 0.030, "steel1018": 0.020, "ss304": 0.020, "plastic": 0.060}
+    for material, limit in limits.items():
+        result = run("thin_rib", material)
+        thin = [f for f in result["findings"] if f["rule"] == "thin_wall"]
+        if material != "plastic":
+            assert thin == [], material
+            continue
+        [f] = thin
+        assert f["severity"] == "high" and f["unit"] == "in" and f["limit"] == limit
+        assert f["measured"] == pytest.approx(0.040, abs=0.001)
+        assert f["threshold_source"] == "estimate"
+        assert f["title"] == "Wall 0.040 in thick (limit 0.060 in)"
+        assert f["suggestion"] == "Make the wall 0.060 in or thicker if the design allows."
+        wall = next(w for w in walls_of(result) if w["id"] == f["feature"])
+        assert f["faces"] == wall["faces"] and len(wall["faces"]) == 2
+
+
+def test_s4_thresholds_per_material():
+    from dfma import settings
+    want = {"al6061": 0.030, "steel1018": 0.020, "ss304": 0.020, "plastic": 0.060}
+    for material, limit in want.items():
+        table = settings.thresholds(material)["thin_wall"]
+        assert table == {"min_in": limit, "source": "estimate"}
+
+
+def test_wall_feature_schema():
+    result = run("thin_floor")
+    floor = min(walls_of(result), key=lambda w: w["dims_mm"]["thickness"])
+    assert floor["dims_mm"]["thickness"] == pytest.approx(0.015 * IN, abs=0.001)
+    assert floor["dims_mm"]["overlap_mm2"] >= 10.0
+    assert floor["open_dirs"] == [] and floor["open_vectors"] == []
+    assert floor["faces"] == sorted(floor["faces"])
+    assert [w["id"] for w in walls_of(result)] == [f"wall-{n}" for n in range(1, 9)]
+    # features: holes, pockets, corners, then walls (spec Response schema; S4 settled)
+    kinds = [f["kind"] for f in result["features"]]
+    assert kinds == sorted(kinds, key=["hole", "pocket", "corner", "wall"].index)
+
+
+def test_wall_at_the_limit_is_not_flagged(tmp_path):
+    """A wall exactly 0.030 in thick in 6061 is not "under 0.030 in"."""
+    from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeBox
+    from OCC.Core.STEPControl import STEPControl_AsIs, STEPControl_Writer
+    path = tmp_path / "plate_030.step"
+    writer = STEPControl_Writer()
+    writer.Transfer(BRepPrimAPI_MakeBox(2.0 * IN, 1.0 * IN, 0.030 * IN).Shape(), STEPControl_AsIs)
+    writer.Write(str(path))
+    result = analyze(path, path.name)
+    assert min(w["dims_mm"]["thickness"] for w in walls_of(result)) == pytest.approx(0.030 * IN, abs=1e-6)
+    assert [f for f in result["findings"] if f["rule"] == "thin_wall"] == []
+    result = analyze(path, path.name, "mill", "plastic")
+    assert [f["rule"] for f in result["findings"]] == ["thin_wall"]
+
+
+def test_slot_sides_are_not_a_wall():
+    """The 0.040 in slot's two sides face each other across air: no wall, so no finding in plastic."""
+    result = run("slot_not_wall", "plastic")
+    assert result["findings"] == []
+    assert min(w["dims_mm"]["thickness"] for w in walls_of(result)) > 0.2 * IN
+
+
+def test_bosses_with_air_between_are_not_a_wall():
+    """clean_walls: the bosses face each other across 1.000 in of air, and their outer sides (2.000 in apart) have air between: neither is a wall."""
+    thick = sorted(round(w["dims_mm"]["thickness"] / IN, 3) for w in walls_of(run("clean_walls")))
+    assert thick == [0.25, 0.5, 0.5, 0.5, 0.5, 1.0, 1.0, 2.0, 3.0]
+
+
+def test_thin_wall_runs_for_turn():
+    """thin_wall is shared by mill and turn (spec Flow); the pocket rules are not."""
+    result = run("thin_floor", process="turn")
+    assert result["rules_run"] == ["hole_depth", "hole_size", "thin_wall"]
+    assert [f["rule"] for f in result["findings"]] == ["thin_wall"]

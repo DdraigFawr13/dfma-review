@@ -1,10 +1,10 @@
 # Handoff
 
-Updated: 2026-11-06. A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
+Updated: 2026-11-07. A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
 
 ## Phase
 
-Build. Brainstorm (D-001), bootstrap (D-002, #1), design (D-003 to D-006) and the first-version spec (D-007, [docs/specs/first-version.md](specs/first-version.md)) are merged in [#2](https://github.com/DdraigFawr13/dfma-review/pull/2). S1 (read and view) merged in [#3](https://github.com/DdraigFawr13/dfma-review/pull/3), approved by Morgan 2026-11-06. S2 (holes) approved by Morgan 2026-11-06 ("otherwise I approve of this phase") and merged in [#4](https://github.com/DdraigFawr13/dfma-review/pull/4). S3 (pockets) approved by Morgan 2026-11-06 ("Ok approved you can do the pr and merge go with your recommendations", D-015) and merged in [#6](https://github.com/DdraigFawr13/dfma-review/pull/6). Next: S4 (thin walls), in a new session.
+Build. Brainstorm (D-001), bootstrap (D-002, #1), design (D-003 to D-006) and the first-version spec (D-007, [docs/specs/first-version.md](specs/first-version.md)) are merged in [#2](https://github.com/DdraigFawr13/dfma-review/pull/2). S1 (read and view) merged in [#3](https://github.com/DdraigFawr13/dfma-review/pull/3), approved by Morgan 2026-11-06. S2 (holes) approved by Morgan 2026-11-06 ("otherwise I approve of this phase") and merged in [#4](https://github.com/DdraigFawr13/dfma-review/pull/4). S3 (pockets) approved by Morgan 2026-11-06 ("Ok approved you can do the pr and merge go with your recommendations", D-015) and merged in [#6](https://github.com/DdraigFawr13/dfma-review/pull/6). S4 (thin walls) in progress on branch `s4-thin-walls`, draft [#7](https://github.com/DdraigFawr13/dfma-review/pull/7).
 
 ## Plan map
 
@@ -20,6 +20,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
+- 2026-11-07 S4 built on `s4-thin-walls` (#7, draft): walls (opposed planar pairs, overlap ≥10 mm², ray test for material between; the spec's midpoint test found 0 walls on a plain block, spec Features "Wall" updated), `thin_wall` rule (mill and turn), 4 test parts, wall counts on every expected entry, legend row "Walls checked, no finding" (`--ok-wall` #6b5d4f). Zero-decision check on d6502d4: builder defaults in spec S4 "Settled at build". Checks fail first: 27 of 28 J3 tests fail on main. Scorecards: NIST features 690 → 1,227, EDMR 1,090 → 2,345, none worse; max 3.94 s / 5.22 s. Mock-up [wall legend](https://claude.ai/artifact/JaEjos5QQvY7cbRVHwWpH2) (`mockups/wall-legend.html`, real screenshots; fresh check 73,109 tokens, 3 fixes) awaiting Morgan: walls box ticked or unticked by default.
 - 2026-11-06 S3 approved (D-015), merged in #6. Mock-up v3 used real-viewer screenshots (v1 sketch: "terrible and unrealistic"); selection got a 40% minimum frame and sharp corners as an edge bar (`edge_mm`). Fresh review (93,501 tokens): 2 medium fixed test-first (pocket rules ran for turning; plane-to-arc sharp corners missed), 3 low fixed, 3 declined, 1 deferred to S5. Checks: 221 service, 5 unit, 7 browser; NIST max 3.98 s. [Status](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu), [demo](https://claude.ai/artifact/KnnLF3YAHp5ZCmNuVWyvP4) updated.
 - 2026-11-06 S2 approved and merged (#4). Colour legend with a checkbox per feature kind (D-014; holes on by default). NIST research: papers (R3 Appendix A lists FTC 6/8/9 features with sizes: answer key; FTC 6, 8, 9 designed in inches, so D-013 holds); fork `engineering-design-models` (16 GB, ~2,399 AP203 STEP, no PMI; best for features: UMD, STEP/STI, PTC mfgmill18; third-party rights unstated); usnistgov/SFA is the AP242 PMI reference.
 - 2026-11-06 NIST gold standard (D-011): Morgan chose to keep the files in GitHub untouched. `tests/nist/NIST-PMI-STEP-Files.zip` (NIST's file byte for byte, SHA-256 checked), `tests/nist/SOURCE.md`, `tests/nist_files.py` (unpacks to the git-ignored `tests/nist/.cache/`), `tests/nist/scorecard.toml` + `make_scorecard.py`, `tests/service/test_nist.py` (17 files read under 10 s, faces not analysed may only fall, features may only rise). `scripts/check.py` all pass: 32 service, 5 unit, 2 browser. Open: ctc_05 reads as units `other`.
@@ -28,7 +29,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-1. S4 (thin walls) in a new session, from `main`: `write-spec` step 8 (zero-decision re-check of S4's sections against the merged S3 code, including spec Flow's per-process rule list), checks fail first, build, show per D-009. S4 adds a "Walls checked" legend row (D-014): mock-up with real-viewer screenshots, not a sketch (LESSONS). Carry: S5 must make a hole end on a pocket floor take the floor normal; engraved lettering on NIST parts reads as pockets (assumption in the app).
+1. S4: Morgan answers the wall-legend mock-up (default ticked or not); set the default, then fresh `reviewer` of the diff against the spec, update status page and demo (D-009), ask Morgan to approve, finish per GIT-08. Carry: S5 must make a hole end on a pocket floor take the floor normal; engraved lettering on NIST parts reads as pockets (assumption in the app).
 2. NIST library merged in [#5](https://github.com/DdraigFawr13/dfma-review/pull/5) (069ef55).
 3. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
 

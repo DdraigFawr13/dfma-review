@@ -28,6 +28,7 @@ const SWITCHES: [CheckedKind, HTMLInputElement][] = [
   ["hole", byId<HTMLInputElement>("show-checked")],
   ["pocket", byId<HTMLInputElement>("show-checked-pockets")],
   ["corner", byId<HTMLInputElement>("show-checked-corners")],
+  ["wall", byId<HTMLInputElement>("show-checked-walls")],
 ];
 for (const [kind, box] of SWITCHES) box.addEventListener("change", () => viewer.setShowChecked(kind, box.checked));
 
@@ -56,12 +57,13 @@ window.__dfma = {
   checkedFaces: (kind?: CheckedKind) => viewer.checkedFaces(kind), // test hook: drawn in a kind's "checked" colour
 };
 
-/** Faces of the features checked with no finding, by kind; corners go last so a corner fillet
- *  (also a pocket wall) shows the corner colour. */
+/** Faces of the features checked with no finding, by kind. Walls go first, so a face that is also
+ *  in a hole or pocket shows that kind's colour; corners go last, so a corner fillet (also a pocket
+ *  wall) shows the corner colour. */
 function checkedFaces(result: Analysis): Map<number, CheckedKind> {
   const flagged = new Set(result.findings.map((f) => f.feature));
   const out = new Map<number, CheckedKind>();
-  for (const kind of ["hole", "pocket", "corner"] as CheckedKind[]) {
+  for (const kind of ["wall", "hole", "pocket", "corner"] as CheckedKind[]) {
     for (const f of result.features) {
       if (f.kind === kind && !flagged.has(f.id)) for (const id of f.faces) out.set(id, kind);
     }

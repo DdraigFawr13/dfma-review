@@ -27,7 +27,7 @@ def test_click_highlights_face(page: Page, base_url: str):
     row = page.get_by_test_id("finding-F1")
     expect(row).to_contain_text("Hole depth 8.0× diameter (limit 6.0×)", timeout=30_000)
     expect(row).to_contain_text("medium")
-    expect(page.get_by_test_id("verdict")).to_contain_text("1 hole checked")
+    expect(page.get_by_test_id("verdict")).to_contain_text("1 hole and 4 walls checked")
     assert page.evaluate("window.__dfma.highlightedFaces()") == []
 
     row.click()
@@ -69,12 +69,12 @@ def test_click_highlights_face(page: Page, base_url: str):
 def test_clean_part_shows_clean_verdict(page: Page, base_url: str):
     page.goto(base_url)
     page.get_by_test_id("upload-file").set_input_files(PARTS / "clean_holes.step")
-    expect(page.get_by_test_id("verdict")).to_contain_text("2 holes checked", timeout=30_000)
+    expect(page.get_by_test_id("verdict")).to_contain_text("2 holes and 3 walls checked", timeout=30_000)
     expect(page.get_by_test_id("verdict")).to_contain_text("clean", ignore_case=True)
 
     # The legend's "Holes checked, no finding" box (on by default) tints the holes that passed.
     result = analyze(PARTS / "clean_holes.step", "clean_holes.step")
-    hole_faces = sorted(i for h in result["features"] for i in h["faces"])
+    hole_faces = sorted(i for h in result["features"] if h["kind"] == "hole" for i in h["faces"])
     expect(page.get_by_test_id("legend")).to_contain_text("High")
     assert page.evaluate("window.__dfma.checkedFaces()") == hole_faces
     page.get_by_test_id("show-checked").uncheck()
@@ -86,9 +86,9 @@ def test_clean_part_shows_clean_verdict(page: Page, base_url: str):
 def test_checked_holes_exclude_holes_with_findings(page: Page, base_url: str):
     page.goto(base_url)
     page.get_by_test_id("upload-file").set_input_files(PARTS / "stepped_hole.step")
-    expect(page.get_by_test_id("verdict")).to_contain_text("2 holes checked", timeout=30_000)
+    expect(page.get_by_test_id("verdict")).to_contain_text("2 holes and 4 walls checked", timeout=30_000)
     result = analyze(PARTS / "stepped_hole.step", "stepped_hole.step")
-    assert page.evaluate("window.__dfma.checkedFaces()") == sorted(i for h in result["features"] for i in h["faces"])
+    assert page.evaluate("window.__dfma.checkedFaces()") == sorted(i for h in result["features"] if h["kind"] == "hole" for i in h["faces"])
     page.get_by_test_id("upload-file").set_input_files(PARTS / "deep_hole.step")
     expect(page.get_by_test_id("finding-F1")).to_be_visible(timeout=30_000)
     assert page.evaluate("window.__dfma.checkedFaces()") == []  # its only hole has a finding
@@ -99,7 +99,7 @@ def test_pocket_and_corner_switches(page: Page, base_url: str):
     # a corner fillet is also a pocket wall and shows the corner colour.
     page.goto(base_url)
     page.get_by_test_id("upload-file").set_input_files(PARTS / "clean_pocket.step")
-    expect(page.get_by_test_id("verdict")).to_contain_text("1 pocket and 4 corners checked", timeout=30_000)
+    expect(page.get_by_test_id("verdict")).to_contain_text("1 pocket, 4 corners and 8 walls checked", timeout=30_000)
     result = analyze(PARTS / "clean_pocket.step", "clean_pocket.step")
     [pocket] = [f for f in result["features"] if f["kind"] == "pocket"]
     corner_faces = sorted(i for f in result["features"] if f["kind"] == "corner" for i in f["faces"])
@@ -110,6 +110,36 @@ def test_pocket_and_corner_switches(page: Page, base_url: str):
     assert page.evaluate("window.__dfma.checkedFaces('corner')") == []
     page.get_by_test_id("show-checked-pockets").uncheck()
     assert page.evaluate("window.__dfma.checkedFaces('pocket')") == []
+
+
+def test_wall_switch(page: Page, base_url: str):
+    # S4 (D-014): walls checked with no finding have their own colour and switch, on by default.
+    # Walls are painted first, so a face that is also in a hole or pocket keeps that kind's colour,
+    # and a wall with a finding is not "checked".
+    page.goto(base_url)
+    page.get_by_test_id("upload-material").select_option("plastic")
+    page.get_by_test_id("upload-file").set_input_files(PARTS / "thin_rib.step")
+    expect(page.get_by_test_id("verdict")).to_contain_text("6 walls checked", timeout=30_000)
+    expect(page.get_by_test_id("finding-F1")).to_contain_text("Wall 0.040 in thick (limit 0.060 in)")
+    expect(page.get_by_test_id("finding-F1")).to_contain_text("0.040 in thick · limit: estimate")
+    result = analyze(PARTS / "thin_rib.step", "thin_rib.step", "mill", "plastic")
+    flagged = {f["feature"] for f in result["findings"]}
+    walls = [f for f in result["features"] if f["kind"] == "wall"]
+    passed = sorted({i for w in walls if w["id"] not in flagged for i in w["faces"]}
+                    - {i for f in result["findings"] for i in f["faces"]})
+    assert page.get_by_test_id("show-checked-walls").is_checked()
+    assert page.evaluate("window.__dfma.checkedFaces('wall')") == passed
+    page.get_by_test_id("show-checked-walls").uncheck()
+    assert page.evaluate("window.__dfma.checkedFaces('wall')") == []
+
+    page.get_by_test_id("upload-file").set_input_files(PARTS / "clean_holes.step")
+    expect(page.get_by_test_id("verdict")).to_contain_text("2 holes and 3 walls checked", timeout=30_000)
+    page.get_by_test_id("show-checked-walls").check()
+    result = analyze(PARTS / "clean_holes.step", "clean_holes.step")
+    hole_faces = {i for f in result["features"] if f["kind"] == "hole" for i in f["faces"]}
+    wall_faces = {i for f in result["features"] if f["kind"] == "wall" for i in f["faces"]}
+    assert page.evaluate("window.__dfma.checkedFaces('wall')") == sorted(wall_faces - hole_faces)
+    assert page.evaluate("window.__dfma.checkedFaces('hole')") == sorted(hole_faces)
 
 
 def test_sharp_corner_is_drawn_on_its_edge(page: Page, base_url: str):

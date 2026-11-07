@@ -10,8 +10,10 @@ const GHOST_OPACITY = 0.35;
 const MIN_FRAME = 0.4; // a selected finding is framed at no less than this share of the part's size (S3)
 
 /** Feature kinds the legend can tint when checked with no finding (D-014), and their tokens. */
-export type CheckedKind = "hole" | "pocket" | "corner";
-const CHECKED_TOKEN: Record<CheckedKind, string> = { hole: "--low", pocket: "--ok-pocket", corner: "--ok-corner" };
+export type CheckedKind = "hole" | "pocket" | "corner" | "wall";
+const CHECKED_TOKEN: Record<CheckedKind, string> = {
+  hole: "--low", pocket: "--ok-pocket", corner: "--ok-corner", wall: "--ok-wall",
+};
 
 function token(name: string): THREE.Color {
   const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -43,7 +45,7 @@ export class Viewer {
   private readonly edges = new Map<string, THREE.Mesh>(); // finding id -> its sharp-corner edge, drawn as a bar
   private readonly edgeMaterial = new THREE.LineBasicMaterial({ color: token("--ink") }); // one for every part
   private checked = new Map<number, CheckedKind>(); // faces of features checked with no finding
-  private readonly showChecked: Record<CheckedKind, boolean> = { hole: false, pocket: false, corner: false };
+  private readonly showChecked: Record<CheckedKind, boolean> = { hole: false, pocket: false, corner: false, wall: false };
   private selected: Finding | null = null;
   private frame = 0;
 

@@ -70,8 +70,11 @@ def check_box(result: dict, name: str, units: str) -> None:
 
     for key in EMPTY_UNTIL_LATER:
         assert result[key] == []
-    # S2: one hole, 1/4 in (6.35 mm), a standard drill in both files (D-013).
-    assert [f["kind"] for f in result["features"]] == ["hole"]
+    # S2: one hole, 1/4 in (6.35 mm), a standard drill in both files (D-013). S4: the block's
+    # X, Y and Z pairs of faces are 3 walls, 2.000, 1.000 and 0.500 in thick, none thin.
+    assert [f["kind"] for f in result["features"]] == ["hole", "wall", "wall", "wall"]
+    walls = sorted(round(f["dims_mm"]["thickness"] / 25.4, 4) for f in result["features"] if f["kind"] == "wall")
+    assert walls == [0.5, 1.0, 2.0]
     assert result["findings"] == []
     assert result["machine"] is None
     assert result["turn_axis"] is None

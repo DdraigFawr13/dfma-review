@@ -249,11 +249,11 @@ probe_mm = [10.0, 5.0, 3.0]   # file coordinates, mm; matches the face within 0.
   - `open_dirs` is the floor normal.
   - Open-sided pockets are out of scope (see Non-goals).
 - **Inside corner:** the concave edge, or the cylinder or torus fillet, between two adjacent pocket walls. Its radius is the fillet radius, or 0 for a sharp edge.
-- **Wall:** two parallel planar faces whose outward normals point away from each other, with solid material between them. Two tests apply:
-  - The midpoint of the shortest segment between the two faces (from `BRepExtrema_DistShapeShape`) is classified IN by `BRepClass3d_SolidClassifier`.
-  - Only pairs with opposed normals and overlapping bounding boxes are measured, to keep the search short.
-  - Their overlap, projected onto either face, is at least 10 mm² (assumption).
-  The thickness is their distance (`BRepExtrema_DistShapeShape`). A slot's two sides fail the classifier test, because there is air between them.
+- **Wall:** two parallel planar faces whose outward normals point away from each other, with solid material between them. ~~The midpoint of the shortest segment between the two faces is classified IN by `BRepClass3d_SolidClassifier`.~~ Changed in S4: for parallel faces that segment ends on an edge, so its midpoint is ON, not IN, and a plain block had no walls. Instead:
+  - Only pairs with opposed normals (within 0.5°) whose bounding boxes overlap once one face is moved onto the other's plane are measured, to keep the search short.
+  - Their overlap (`BRepAlgoAPI_Common` of the moved face and the other face) is at least 10 mm² (assumption).
+  - Material between: a ray from a point inside the overlap, into the material, meets the other face first. The points tried are the centroids of the overlap's mesh triangles, then a 9 × 9 grid on it; one clear ray is enough.
+  The thickness is the distance between their planes. A slot's two sides face each other, so they are never a pair; two bosses facing away with air between fail the ray test.
 - **Turned profile** (turn only):
   - The axis is the one shared by the most cylinder and cone area.
   - The diameter is the largest outer diameter; the length is the extent along the axis. A thin section behind a large head can read as stocky: this is listed in `assumptions`.
@@ -489,7 +489,20 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
   - `features.py` (walls)
   - `rules/thin_wall.py`
   - test parts
-- **Waits on:** S3.
+- **Waits on:** S3, and Morgan's approval of the wall legend mock-up (`ui-mockups`, D-014).
+- **Settled at build (zero-decision check against the merged S3 code at d6502d4, 2026-11-07; 145,618 agent tokens):**
+  - Test parts (inch files; wall counts counted by hand in `make_parts.py`, never from the service):
+    - `thin_rib`: 2.000 × 1.000 × 0.500 in base with a rib 1.500 long, 0.040 thick and 1.000 tall on top. 6 walls. Clean in `al6061`; in `plastic`, 1 `thin_wall` high, measured 0.040.
+    - `thin_floor`: 3.000 × 2.000 × 0.500 in block, 2.000 × 1.000 in pocket 0.485 in deep with 0.150 in corners: a 0.015 in floor. 8 walls, 1 `thin_wall` high, measured 0.015 (under every limit).
+    - `slot_not_wall`: 2.000 × 1.000 × 0.500 in block, a 0.040 in slot 0.250 in deep across it. 7 walls, clean in `al6061` and in `plastic` (where a slot read as a wall would be flagged).
+    - `clean_walls`: 3.000 × 2.000 × 0.250 in base, two 0.500 in square bosses 0.750 in tall with 1.000 in of air between, a 0.250 in hole through the base. 9 walls, clean: the bosses' outer sides are no wall.
+    - Earlier parts: a plain block has 3 walls (its X, Y and Z pairs); a blind or flat-bottom hole adds its bottom to the far face (4); `stepped_hole` adds the shoulder (4); `two_holes_web` adds the 0.200 in web (4); a pocket block has 8 (3, 4 pocket walls to the outer faces, the floor to the bottom); `pocket_island` 11. No existing finding changes.
+  - Wall feature: `kind` "wall"; `faces` = the two face ids, ascending; `axis` = the unit vector from the first face into the material; `open_dirs` and `open_vectors` empty (S5's `access` and `plan.py` ignore walls, as corners); `dims_mm` keys `thickness` and `overlap_mm2`. Faces may belong to a hole or pocket too. Planar faces only (no cylindrical shells; in `assumptions`). Feature order: holes, pockets, corners, walls; `number()` breaks ties on the sorted face list.
+  - `config/thresholds.toml`: per material `[<m>.thin_wall] min_in` (0.030, 0.020, 0.020, 0.060) and `source = "estimate"`. Under `min_in` (to 1e-9) is high; exactly at it is not.
+  - `thin_wall` finding: measured = thickness in inches, limit `min_in`, unit `in`, faces = both, feature = the wall. Title "Wall 0.040 in thick (limit 0.060 in)"; suggestion "Make the wall 0.060 in or thicker if the design allows." Rule order: after `pocket_depth`; `PROCESSES = ("mill", "turn")`, so `rules_run` for turn is `hole_depth`, `hole_size`, `thin_wall`.
+  - `test_material_changes_limit` lives in `tests/service/test_rules.py` (thin_rib in all 4 materials), beside `test_s4_thresholds_per_material`, an at-the-limit test, the slot and boss tests and `test_thin_wall_runs_for_turn`. Hole tests pick features by kind.
+  - On screen: legend row "Walls checked, no finding", token `--ok-wall` #6b5d4f, walls painted first so hole, pocket and corner colours win; verdict "1 pocket, 4 corners and 8 walls checked"; finding meta "wall-6 · 0.040 in thick · limit: estimate". Default of the walls box: Morgan's call on the mock-up.
+  - Run on NIST and EDMR before the review: scorecards regenerated (features 690 → 1,227 and 1,090 → 2,345, nothing worse); slowest NIST file 3.94 s, slowest EDMR file 5.22 s.
 
 ### S5 Machine, setups, tools and tool changes
 
