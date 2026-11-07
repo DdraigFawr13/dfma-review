@@ -1,0 +1,108 @@
+"""The grading scorer (tests/grading/grade.py): label join, counts and Analysis Situs parsing.
+
+The pure functions are checked on hand-made inputs with known answers; one test runs the child
+process on our own test parts, end to end. The outside answer keys are not needed here.
+"""
+
+from __future__ import annotations
+
+import sys
+from collections import Counter
+
+from helpers import PARTS, ROOT
+
+sys.path.insert(0, str(ROOT / "tests" / "grading"))
+import grade  # noqa: E402
+
+
+def _faces(names, kinds=None):
+    kinds = kinds or ["plane"] * len(names)
+    return [{"kind": k, "kind2": k, "name": n, "file_pos": i, "shape_id": i + 1} for i, (n, k) in enumerate(zip(names, kinds))]
+
+
+def test_file_labels_read_the_face_names_in_order():
+    step = b"#1=ADVANCED_FACE('24',(#2),#3,.T.);\n#4 = ADVANCED_FACE ( '1' ,(#5),#6,.F.);\n#7=FACE_BOUND('',#8,.T.);"
+    assert grade.file_labels(step) == [24, 1]
+
+
+def test_face_labels_join_through_the_entity_and_check_order():
+    labels, checks = grade.face_labels({"faces": _faces(["24", "1", "12"])}, [24, 1, 12])
+    assert labels == [24, 1, 12]
+    assert checks == {"same_count": True, "file_order": True, "names_agree": True, "kinds_agree": True}
+
+
+def test_face_labels_flag_a_reordered_join():
+    faces = _faces(["1", "24"])
+    faces[0]["file_pos"], faces[1]["file_pos"] = 1, 0  # our face 0 is the file's face 1
+    faces[1]["kind2"] = "cylinder"
+    labels, checks = grade.face_labels({"faces": faces}, [24, 1])
+    assert labels == [1, 24]
+    assert checks["file_order"] is False and checks["names_agree"] is True and checks["kinds_agree"] is False
+
+
+def test_predicted_splits_through_and_blind_and_holes_win_over_pockets():
+    result = {"faces": _faces(["0"] * 6), "features": [
+        {"kind": "pocket", "faces": [3, 4, 5], "open_ends": 1},
+        {"kind": "hole", "faces": [0, 1], "open_ends": 2},
+        {"kind": "hole", "faces": [2, 3], "open_ends": 1},
+    ]}
+    assert grade.predicted(result) == ["through", "through", "blind", "blind", "pocket", "pocket"]
+
+
+def test_scores_count_recall_precision_and_drop_excluded_labels():
+    labels = [1, 1, 12, 12, 14, 14, 3, 24, 11, None]
+    preds = ["through", None, "through", "blind", "pocket", None, "pocket", None, "through", "pocket"]
+    total = grade.tally(labels, preds)
+    s = grade.scores(total)
+    assert s["recall"][1] == {"n": 1, "of": 2, "pct": 50.0}
+    assert s["recall"][12] == {"n": 2, "of": 2, "pct": 100.0}  # found as a hole, either type
+    assert s["type_recall"][12] == {"n": 1, "of": 2, "pct": 50.0}
+    assert s["recall"][14] == {"n": 1, "of": 2, "pct": 50.0}
+    assert s["recall"][13] == {"n": 0, "of": 0, "pct": None}
+    assert s["precision"]["through"] == {"n": 1, "of": 2, "pct": 50.0}  # face 2 is blind; face 8 (O-ring) dropped
+    assert s["precision"]["hole"] == {"n": 3, "of": 3, "pct": 100.0}
+    assert s["precision"]["pocket"] == {"n": 1, "of": 2, "pct": 50.0}  # face 6 is a passage (class 3)
+    assert s["false_by_label"]["pocket"] == {3: 1}
+    assert s["claimed_on_excluded"] == {"through": 1}
+    assert total[("unlabelled", "pocket")] == 1
+
+
+def test_misses_list_the_faces_per_class():
+    out = grade.misses("p.step", [1, 1, 14, 0], ["through", None, "blind", None])
+    assert out == [{"part": "p.step", "class": 1, "faces": [1], "called": [None]},
+                   {"part": "p.step", "class": 14, "faces": [2], "called": ["blind"]}]
+
+
+def test_parse_situs_case():
+    text = ("# Set working variables.\nset datafile public/cad/holes/obstructed-hole.step\n"
+            "set radius 1e10\nset refFids { 5 7 }\n\n__recognize-holes\n")
+    assert grade.parse_situs_case(text) == {"datafile": "public/cad/holes/obstructed-hole.step",
+                                            "refFids": [5, 7], "radius": 1e10}
+    assert grade.parse_situs_case("set datafile  a.brep\nset maxSize   0\nset refFids { }\n")["refFids"] == []
+
+
+def test_situs_ids_are_one_based_and_compare_is_exact():
+    result = {"faces": _faces(["", "", ""], ["plane", "cylinder", "plane"]),
+              "features": [{"kind": "hole", "faces": [1, 2], "open_ends": 1}]}
+    assert grade.situs_predicted(result, {"hole"}) == [2, 3]
+    assert grade.situs_predicted(result, {"hole"}, {"cylinder"}) == [2]
+    c = grade.compare([2, 3], [2, 4])
+    assert c["exact"] is False and c["tp"] == 1 and c["fp"] == [3] and c["fn"] == [4]
+    assert grade.compare([], [])["exact"] is True
+
+
+def test_child_runs_our_part_end_to_end():
+    """One process per file, as for outside files; a box with one through hole (expected.toml)."""
+    r = grade.analyse(PARTS / "box_through_hole.step")
+    assert r["status"] == "ok", r
+    assert len(r["faces"]) == 7
+    assert [f["shape_id"] for f in r["faces"]] == list(range(1, 8))
+    assert [f["file_pos"] for f in r["faces"]] == list(range(7))
+    assert all(f["kind"] == f["kind2"] for f in r["faces"])
+    assert Counter(f["kind"] for f in r["features"]) == {"hole": 1}
+    assert r["features"][0]["open_ends"] == 2
+    assert grade.predicted(r).count("through") == 1
+
+
+def test_child_reports_a_read_error_as_a_result():
+    assert grade.analyse(PARTS / "not_step.step")["status"] == "read_error"
