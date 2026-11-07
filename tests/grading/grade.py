@@ -222,7 +222,9 @@ def score_part(name: str, r: dict, in_file: list[int]) -> tuple[dict, Counter, l
         labels, checks = face_labels(r, in_file)
         preds = predicted(r)
         rec.update(checks=checks, faces=len(labels), ignored_solids=r["ignored_solids"])
-        if checks["kinds_agree"] and checks["names_agree"]:  # a file whose names can't be read is no join
+        # A file whose face names can't all be read is no join. (Not names_agree: the other engines'
+        # children give no file positions, so it is False for them by construction.)
+        if checks["kinds_agree"] and None not in labels:
             rec["features"] = r["features"]
             rec["labels"] = labels
             return rec, tally(labels, preds), misses(name, labels, preds)

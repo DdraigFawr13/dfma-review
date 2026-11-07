@@ -292,9 +292,11 @@ def _classify_ends(topo: Topology, segs: list[Segment]) -> None:
             # (a flat or cone point, or a filleted, ball or split bottom), and lie within its radius.
             # A flat bottom that another feature cuts into still closes the hole.
             flat = BRepAdaptor_Surface(topo.faces[nb], True).GetType() == GeomAbs_Plane and _is_shoulder(topo.faces[nb], seg)
-            if (nb_nbs <= set(seg.faces) | set(around) or flat) and _within(topo.faces[nb], seg):
-                if nb not in seg.bottom:
-                    seg.bottom.append(nb)
+            closed = _closed_bottom(topo, seg, nb, end) if not (nb_nbs <= set(seg.faces) | set(around) or flat) else [nb]
+            if closed and _within(topo.faces[nb], seg):
+                for k in closed:
+                    if k not in seg.bottom:
+                        seg.bottom.append(k)
                 if BRepAdaptor_Surface(topo.faces[nb], True).GetType() == GeomAbs_Cone:
                     seg.point_mm = _cone_length(topo.faces[nb], seg)
                 if ends.get(end) != "link":
@@ -306,6 +308,41 @@ def _classify_ends(topo: Topology, segs: list[Segment]) -> None:
         seg.open_ends = [e for e in ("hi", "lo") if ends.get(e) == "open"]
         seg.groove = ends.get("hi") == "link" and ends.get("lo") == "link" and all(
             segs[j].radius < seg.radius for j in seg.links)
+
+
+BOTTOM_MAX_FACES = 12  # a filleted, ball or split bottom has a few faces; more is another feature
+
+
+def _closed_bottom(topo: Topology, seg: Segment, nb: int, end: str) -> list[int] | None:
+    """The faces that close the hole past `nb`, or None: every face joined to `nb` away from the
+    bore lies within the bore's radius, so they shut the end together (a flat floor rounded into
+    the bore by a fillet: a bull-nose or ball end mill's round recess, or a filleted blind hole;
+    D-018 bull-nose round). A face reaching further out (a pocket floor the hole opens into) or a
+    face of another hole means the end is open. Every face lies past the bore's end: a face that
+    comes back up inside the bore (the core of a ring groove) means it is no bottom, and so does a
+    face no tool tip leaves (only planes, cones, tori and spheres count; MFCAD++ 13975 has a B-spline
+    there that it labels a chamfer)."""
+    from OCC.Core.GeomAbs import GeomAbs_Sphere, GeomAbs_Torus
+    tip = (GeomAbs_Plane, GeomAbs_Cone, GeomAbs_Torus, GeomAbs_Sphere)  # what a drill or end-mill tip leaves
+
+    def past_end(face) -> bool:
+        if BRepAdaptor_Surface(face, True).GetType() not in tip:
+            return False
+        along = [dot(v, seg.axis) for v in _points(face)]
+        return max(along) <= seg.lo + 0.01 if end == "lo" else min(along) >= seg.hi - 0.01
+    if not past_end(topo.faces[nb]):
+        return None
+    group, todo = {nb}, [nb]
+    while todo:
+        cur = todo.pop()
+        for k in topo.neighbours(cur):
+            if k in seg.faces or k in group:
+                continue
+            if len(group) >= BOTTOM_MAX_FACES or not _within(topo.faces[k], seg) or not past_end(topo.faces[k]):
+                return None
+            group.add(k)
+            todo.append(k)
+    return sorted(group)
 
 
 def _within(face, seg: Segment) -> bool:
@@ -452,15 +489,28 @@ def _plane_normal(face) -> Vec | None:
     return _outward_normal(face)[1]
 
 
+DRAFT_MAX_DEG = 15.0  # D-018 bull-nose/draft round: a pocket wall may lean outward (open upward) this far
+
+
 def _wall_kind(face, n: Vec) -> str | None:
-    """"plane" or "cylinder" for a face perpendicular to the floor normal n (0.5 deg), else None."""
+    """"plane", "cylinder" or "cone" for a pocket wall round the floor normal n: a cylinder on an
+    axis along n (0.5 deg), or a plane or a cone on such an axis whose face leans outward by up to
+    DRAFT_MAX_DEG (a drafted wall; a cone is a drafted round corner or round wall). A face leaning
+    the other way (an undercut) or further is not a wall."""
     surface = BRepAdaptor_Surface(face, True)
     kind = surface.GetType()
-    if kind == GeomAbs_Plane:
-        return "plane" if abs(dot(_outward_normal(face)[1], n)) <= math.sin(ANGLE_TOL) else None
     if kind == GeomAbs_Cylinder:
         d = surface.Cylinder().Axis().Direction()
         return "cylinder" if abs(dot((d.X(), d.Y(), d.Z()), n)) >= math.cos(ANGLE_TOL) else None
+    if kind == GeomAbs_Cone:
+        d = surface.Cone().Axis().Direction()
+        if abs(dot((d.X(), d.Y(), d.Z()), n)) < math.cos(ANGLE_TOL):
+            return None
+    elif kind != GeomAbs_Plane:
+        return None
+    lean = dot(_outward_normal(face)[1], n)
+    if -math.sin(ANGLE_TOL) <= lean <= math.sin(math.radians(DRAFT_MAX_DEG)):
+        return "plane" if kind == GeomAbs_Plane else "cone"
     return None
 
 
@@ -522,11 +572,68 @@ class _Enclosure:
         return all(self.rays.first_hit(start, unit(d))[0] is not None for d in dirs)
 
 
-def _pocket_walls(topo: Topology, floor: int, n: Vec, edges, enclosure: _Enclosure) -> list[int] | None:
+def _smooth(topo: Topology, a: int, b: int, edge) -> bool:
+    """Faces a and b meet tangentially at the middle of the edge (normals within 0.5 deg)."""
+    p, _ = _edge_mid(edge)
+    return dot(_normal_at(topo.faces[a], p), _normal_at(topo.faces[b], p)) >= math.cos(ANGLE_TOL)
+
+
+def _is_blend(face, n: Vec) -> bool:
+    """A face that can round a floor into its walls: a cylinder lying along the floor (axis square to
+    n), a torus or surface of revolution on an axis along n (round a corner), or a sphere (a ball
+    end's corner)."""
+    from OCC.Core.GeomAbs import GeomAbs_Sphere, GeomAbs_SurfaceOfRevolution, GeomAbs_Torus
+    s = BRepAdaptor_Surface(face, True)
+    kind = s.GetType()
+    if kind == GeomAbs_Cylinder:
+        d = s.Cylinder().Axis().Direction()
+        return abs(dot((d.X(), d.Y(), d.Z()), n)) <= math.sin(ANGLE_TOL)
+    if kind in (GeomAbs_Torus, GeomAbs_SurfaceOfRevolution):  # CAD writes a near-ball corner as the latter
+        d = (s.Torus().Axis() if kind == GeomAbs_Torus else s.AxeOfRevolution()).Direction()
+        return abs(dot((d.X(), d.Y(), d.Z()), n)) >= math.cos(ANGLE_TOL)
+    return kind == GeomAbs_Sphere
+
+
+def _blend_walls(topo: Topology, floor: int, nb: int, n: Vec, edge) -> tuple[set[int], list[int]] | None:
+    """The fillet faces between a floor and its walls (a bull-nose or ball end mill, or a fillet added
+    in CAD; D-018 bull-nose round), and the walls past them. `nb` meets the floor tangentially along
+    `edge`; the blend is every blend face joined to it by smooth edges, and its walls are the wall
+    faces it meets. None when `nb` is no such fillet or leads to no wall. A blend face whose concave
+    side faces away from the floor (a rounded top edge) is not one: its edge to the floor is convex."""
+    if not _is_blend(topo.faces[nb], n) or not _smooth(topo, floor, nb, edge):
+        return None
+    blend, todo, walls, tangent = {nb}, [nb], [], False
+    while todo:
+        cur = todo.pop()
+        for k, edges in topo.neighbours(cur).items():
+            if k == floor or k in blend:
+                continue
+            smooth = any(_smooth(topo, cur, k, e) for e in edges)
+            if _wall_kind(topo.faces[k], n):
+                if k not in walls:
+                    walls.append(k)
+                tangent = tangent or smooth
+            elif _is_blend(topo.faces[k], n):  # tangent, or two floor fillets meeting in a sharp corner
+                blend.add(k)
+                todo.append(k)
+            else:
+                return None  # past the fillet lies no wall: the round bottom of a U-slot seen from its side, not a floor fillet
+    p, _ = _edge_mid(edge)
+    # The fillet must curve up from the floor (a point on it, off the edge, lies above the floor)
+    # and run into a wall tangentially, as a cutter's corner leaves it.
+    if not tangent or max(dot(q, n) for q in _points(topo.faces[nb])) <= dot(p, n) + 1e-6:
+        return None
+    return blend, walls
+
+
+def _pocket_walls(topo: Topology, floor: int, n: Vec, edges, enclosure: _Enclosure,
+                  blends: set[int] | None = None) -> list[int] | None:
     """The walls of a pocket on this floor, or None. Each outer edge of the floor meets a concave
     wall perpendicular to it, or (D-018 round 1) is cut by another feature inside the part; a cut
     pocket needs at least two walls left. A chamfer between floor and wall (D-018 round 3) leads to
-    its wall and is not one."""
+    its wall and is not one. A fillet between floor and wall leads to its wall too; its faces are
+    added to `blends` (D-018 bull-nose round)."""
+    blends = set() if blends is None else blends
     walls: list[int] = []
     cut = False
     for edge in edges:
@@ -536,6 +643,9 @@ def _pocket_walls(topo: Topology, floor: int, n: Vec, edges, enclosure: _Enclosu
                 walls.append(nb)
         elif nb is not None and (beyond := _floor_chamfer_walls(topo, floor, nb, n, edge)):
             walls.extend(w for w in beyond if w not in walls)
+        elif nb is not None and (fill := _blend_walls(topo, floor, nb, n, edge)):
+            blends.update(fill[0])
+            walls.extend(w for w in fill[1] if w not in walls)
         elif nb is not None and enclosure.inside(topo.faces[floor], n, edge):
             cut = True
         else:
@@ -689,14 +799,17 @@ def _corners(topo: Topology, walls: list[int], cyls: dict[int, Cyl]) -> list[tup
 
 
 def _one_axis(faces, walls: list[int]) -> bool:
-    """Every wall is a cylinder, concave or convex, on one axis line: a groove round a core or a
+    """Every wall is a cylinder or cone, concave or convex, on one axis line: a groove round a core or a
     stepped bore, not a pocket (D-018 round 5: an O-ring's core is convex, so `Cyl` misses it)."""
     lines = []
     for w in walls:
         surface = BRepAdaptor_Surface(faces[w], True)
-        if surface.GetType() != GeomAbs_Cylinder:
+        if surface.GetType() == GeomAbs_Cylinder:
+            ax = surface.Cylinder().Axis()
+        elif surface.GetType() == GeomAbs_Cone:  # a tapered round recess: a hole, not a pocket
+            ax = surface.Cone().Axis()
+        else:
             return False
-        ax = surface.Cylinder().Axis()
         lines.append((_pt(ax.Location()), unit(_pt(ax.Direction()))))
     o0, d0 = lines[0]
     for o, d in lines[1:]:
@@ -722,7 +835,8 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
             continue
         outer = bt.OuterWire(topods.Face(face))
         outer_edges = _wire_edges(outer)
-        walls = _pocket_walls(topo, fid, n, outer_edges, enclosure)
+        blends: set[int] = set()
+        walls = _pocket_walls(topo, fid, n, outer_edges, enclosure, blends)
         if not walls:
             continue
         if all(w in cyls for w in walls) and len({round(cyls[w].radius, 3) for w in walls}) == 1:
@@ -744,13 +858,16 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
             if nb is not None and nb not in walls and nb not in islands and _wall_kind(faces[nb], n) \
                     and _concave(topo, fid, nb, edge):
                 islands.append(nb)
+            elif nb is not None and nb not in blends and (fill := _blend_walls(topo, fid, nb, n, edge)):
+                blends.update(fill[0])  # an island rounded into the floor
+                islands.extend(w for w in fill[1] if w not in walls and w not in islands)
         floor_h = dot(_outward_normal(face)[0], n)
         depth = max(dot(p, n) for w in walls for p in _points(faces[w])) - floor_h
         corners = _corners(topo, walls, cyls)
         min_r = min((r for _, r, _ in corners), default=math.inf)
         width = _narrowest(topo, walls + islands)
         tool, undersized = pick_end_mill(min_r, width)
-        pocket_faces = sorted({fid, *walls, *islands})
+        pocket_faces = sorted({fid, *walls, *islands, *blends})
         dirs = [d] if (d := _frame_dir(n, frame)) else []
         found_p.append({"kind": "pocket", "faces": pocket_faces, "axis": list(n), "open_dirs": dirs,
                         "open_vectors": [list(n)],

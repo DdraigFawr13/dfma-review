@@ -200,3 +200,13 @@ def test_summary_puts_a_slot_shaped_like_a_pocket_beside_a_step_on_its_own_line(
     two_short = {"kind": "pocket", "faces": [5, 6, 7], "short_walls": [[6, [4]], [7, [4]]]}
     got = summary.excluded_calls([{"labels": labels, "features": [shaped, two_short]}])
     assert got["slot-shaped-as-pocket"] == 4 and got["slot-step-as-pocket"] == 3
+
+
+def test_another_engine_without_file_positions_still_joins():
+    """qchild.py and schild.py give names but no file positions; a first version of the join gate
+    (names_agree) failed every part of theirs."""
+    r = {"status": "ok", "ignored_solids": 0, "features": [{"kind": "hole", "faces": [0], "open_ends": None}],
+         "faces": [{"kind": "cylinder", "kind2": "cylinder", "name": "1", "file_pos": None}]}
+    rec, counts, _ = grade.score_part("p.step", r, [1])
+    assert rec["status"] == "ok"
+    assert grade.scores(counts)["recall"][1] == {"n": 1, "of": 1, "pct": 100.0}
