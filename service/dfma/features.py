@@ -683,3 +683,125 @@ def walls(solid, faces) -> list[dict]:
             out.append({"kind": "wall", "faces": [ia, ib], "axis": [-c for c in na], "open_dirs": [],
                         "open_vectors": [], "dims_mm": {"thickness": t, "overlap_mm2": overlap}})
     return out
+
+
+# --- S4 (D-016): thin material at holes ---
+
+SIDE_STEP_DEG = 15  # rays around a hole's side every 15 deg, then every 1 deg within 15 deg of the nearest
+SIDE_HEIGHTS = 3  # at 3 heights along its round part
+TIP_TILTS = (0, 10, 20, 30)  # deg off the axis, for rays from a drill point's tip (its surface is 31 deg off it)
+TIP_TURNS = 12  # around the axis at each tilt
+HOLE_WALL_MAX_MM = 0.25 * 25.4  # material at a hole is measured up to 0.250 in (assumption): over every limit
+
+
+class _NearRays:
+    """First hits of rays from one hole, up to HOLE_WALL_MAX_MM, testing only the faces whose boxes lie
+    within that distance of the hole's box: a face outside it is farther than any hit that counts."""
+
+    def __init__(self, faces, boxes, topo: Topology, own: set[int]):
+        from OCC.Core.Bnd import Bnd_Box
+        self.faces, self.boxes, self.topo, self.own = faces, boxes, topo, own
+        self.hole_box = Bnd_Box()
+        for f in own:
+            self.hole_box.Add(boxes[f])
+
+    def nearest(self, starts: list[tuple[Vec, Vec]]) -> tuple[int, float, int] | None:
+        """(face id, distance, index of the ray) of the nearest first hit, or None."""
+        from OCC.Core.BRep import BRep_Builder
+        from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
+        from OCC.Core.TopoDS import TopoDS_Compound
+        from OCC.Core.gp import gp_Dir, gp_Lin
+        radius = HOLE_WALL_MAX_MM
+        if not hasattr(self, "inter"):  # one intersector per hole, over the faces near it
+            near = [i for i, box in enumerate(self.boxes)
+                    if i not in self.own and box.Distance(self.hole_box) <= radius]
+            self.inter = None
+            if near:
+                comp, builder = TopoDS_Compound(), BRep_Builder()
+                builder.MakeCompound(comp)
+                for i in near:
+                    builder.Add(comp, self.faces[i])
+                self.inter = IntCurvesFace_ShapeIntersector()
+                self.inter.Load(comp, 1e-6)
+        inter = self.inter
+        if inter is None:
+            return None
+        best: tuple[int, float, int] | None = None
+        for n, (p, d) in enumerate(starts):
+            inter.Perform(gp_Lin(gp_Pnt(*p), gp_Dir(*d)), 1e-3, radius)
+            if not inter.IsDone():
+                continue
+            for k in range(1, inter.NbPnt() + 1):
+                w, fid = inter.WParameter(k), self.topo.fid(inter.Face(k))
+                if best is None or w < best[1] - 1e-9 or (abs(w - best[1]) <= 1e-9 and fid < best[0]):
+                    best = (fid, w, n)
+        return best
+
+
+def hole_walls(solid, faces, hole_list: list[dict]) -> list[dict]:
+    """Walls at holes (D-016), unnumbered: per hole, the thinnest material around its side (rays square
+    to the axis from its round part) and, for a drill point, under its tip (rays from the tip, up to
+    30 deg off the axis, deeper into the part), when it is at most 0.250 in. The first face a ray from the hole meets bounds solid
+    material, so a ray measures material only. Two holes that find each other give one wall."""
+    from OCC.Core.GeomAbs import GeomAbs_Cone as Cone
+    topo = Topology(solid, faces)
+    boxes = [_box(f) for f in faces]
+    out: dict[tuple[int, int], dict] = {}
+
+    def add(own: int, found: tuple[int, float], hole_id: str, where: str) -> None:
+        key = tuple(sorted((own, found[0])))
+        if key not in out or found[1] < out[key]["dims_mm"]["thickness"]:
+            out[key] = {"kind": "wall", "faces": list(key), "axis": None, "open_dirs": [], "open_vectors": [],
+                        "dims_mm": {"thickness": found[1]}, "hole": hole_id, "at": where}
+
+    for h in hole_list:
+        own = set(h["faces"])
+        rays = _NearRays(faces, boxes, topo, own)
+        cyls = [c for f in h["faces"] if (c := _cylinder(f, faces[f]))]
+        if cyls:
+            x, y = _ref_frame(cyls[0].axis)
+            lo, hi = min(c.lo for c in cyls), max(c.hi for c in cyls)
+            def ray(c: Cyl, centre: Vec, deg: int) -> tuple[Vec, Vec, int, Vec, int]:
+                ang = math.radians(deg)
+                d = tuple(math.cos(ang) * x[i] + math.sin(ang) * y[i] for i in range(3))
+                return tuple(centre[i] + c.radius * d[i] for i in range(3)), d, c.id, centre, deg
+
+            starts = []
+            for c in cyls:
+                for k in range(SIDE_HEIGHTS):
+                    t = lo + (hi - lo) * (k + 1) / (SIDE_HEIGHTS + 1)
+                    if not c.lo - 1e-6 <= t <= c.hi + 1e-6:
+                        continue
+                    centre = tuple(c.origin[i] + (t - dot(c.origin, c.axis)) * c.axis[i] for i in range(3))
+                    # a face covers only its own angles (split faces); bins are whole degrees
+                    starts += [ray(c, centre, deg) for deg in range(0, 360, SIDE_STEP_DEG) if deg in c.bins]
+            found = rays.nearest([(p, d) for p, d, *_ in starts])
+            if found:
+                _, _, cid, centre, deg = starts[found[2]]
+                c = next(c for c in cyls if c.id == cid)
+                fine = [ray(c, centre, (deg + k) % 360) for k in range(-SIDE_STEP_DEG, SIDE_STEP_DEG + 1)
+                        if (deg + k) % 360 in c.bins]
+                close = rays.nearest([(p, d) for p, d, *_ in fine])
+                if close and close[1] < found[1]:
+                    found, starts = close, fine
+                add(starts[found[2]][2], found, h["id"], "side")  # the hole face the nearest ray left from
+        tip = None
+        for f in h["faces"]:
+            surface = BRepAdaptor_Surface(faces[f], True)
+            if surface.GetType() != Cone or "point_mm" not in h["dims_mm"]:
+                continue
+            apex = _pt(surface.Cone().Apex())
+            deeper = tuple(-a for a in h["axis"])  # a hole's axis points out of the material at its open end
+            x, y = _ref_frame(deeper)
+            starts = []
+            for tilt in TIP_TILTS:
+                for k in range(TIP_TURNS if tilt else 1):
+                    a, b = math.radians(tilt), 2 * math.pi * k / TIP_TURNS
+                    starts.append((apex, tuple(math.cos(a) * deeper[i] + math.sin(a) * (
+                        math.cos(b) * x[i] + math.sin(b) * y[i]) for i in range(3))))
+            found = rays.nearest(starts)  # a point split into several faces is one tip: keep the nearest
+            if found and (tip is None or found[1] < tip[1][1] - 1e-9):
+                tip = (f, found)
+        if tip:
+            add(tip[0], tip[1], h["id"], "tip")
+    return list(out.values())

@@ -113,7 +113,7 @@ def test_pocket_and_corner_switches(page: Page, base_url: str):
 
 
 def test_wall_switch(page: Page, base_url: str):
-    # S4 (D-014): walls checked with no finding have their own colour and switch, on by default.
+    # S4 (D-014, D-016): walls checked with no finding have their own colour and switch, off by default.
     # Walls are painted first, so a face that is also in a hole or pocket keeps that kind's colour,
     # and a wall with a finding is not "checked".
     page.goto(base_url)
@@ -127,7 +127,9 @@ def test_wall_switch(page: Page, base_url: str):
     walls = [f for f in result["features"] if f["kind"] == "wall"]
     passed = sorted({i for w in walls if w["id"] not in flagged for i in w["faces"]}
                     - {i for f in result["findings"] for i in f["faces"]})
-    assert page.get_by_test_id("show-checked-walls").is_checked()
+    assert not page.get_by_test_id("show-checked-walls").is_checked()
+    assert page.evaluate("window.__dfma.checkedFaces('wall')") == []
+    page.get_by_test_id("show-checked-walls").check()
     assert page.evaluate("window.__dfma.checkedFaces('wall')") == passed
     page.get_by_test_id("show-checked-walls").uncheck()
     assert page.evaluate("window.__dfma.checkedFaces('wall')") == []

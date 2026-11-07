@@ -32,11 +32,12 @@ MSG_FAILED = "The analysis failed on this file. Try again, or try another file."
 
 ASSUMPTIONS = [
     "Mesh deflection 0.05 mm linear, 0.5 rad angular (assumption).",
-    "Exterior profiles, steps, open-sided pockets, threads, floor fillets and thin cylindrical shells "
+    "Exterior profiles, steps, open-sided pockets, threads and floor fillets "
     "are not planned or ruled on in this version.",
     "End mills are the inch list in config/tools.toml for every file; no metric end mills in this version (assumption).",
     "Walls are pairs of parallel planar faces with at least 10 mm2 of overlap and material between them "
-    "(assumption); curved walls and thin cylindrical shells are not measured.",
+    "(assumption), plus the material around a hole's side and under a drill point, measured up to 0.250 in "
+    "(assumption); other curved walls, such as thin cylindrical shells, are not measured.",
     "Engraved text and logos are read as pockets: their sharp corners are real geometry, but engraving tools may accept them.",
 ]
 

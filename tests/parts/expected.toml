@@ -274,3 +274,36 @@ name = "clean_walls"
 units = "inch"
 face_count = 17
 features = { hole = 1, pocket = 0, corner = 0, wall = 9 }
+
+[[part]]
+name = "thin_drill_point"
+units = "inch"
+face_count = 8
+features = { hole = 1, pocket = 0, corner = 0, wall = 4 }
+[[part.finding]]
+rule = "thin_wall"
+severity = "high"
+measured = 0.015
+probe_mm = [12.7, 12.7, 0.381]
+
+[[part]]
+name = "hole_near_edge"
+units = "inch"
+face_count = 7
+features = { hole = 1, pocket = 0, corner = 0, wall = 4 }
+[[part.finding]]
+rule = "thin_wall"
+severity = "high"
+measured = 0.02
+probe_mm = [25.4, 0.508, 6.35]
+
+[[part]]
+name = "holes_close"
+units = "inch"
+face_count = 8
+features = { hole = 2, pocket = 0, corner = 0, wall = 4 }
+[[part.finding]]
+rule = "thin_wall"
+severity = "high"
+measured = 0.025
+probe_mm = [25.0825, 12.7, 6.35]

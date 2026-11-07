@@ -101,3 +101,11 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - Finding labels never cover each other: a label that would overlap one already placed moves to the nearest free spot (Morgan: "the flags for the failing portions are covering each other").
   - The S3 defaults in the spec's S3 "Settled at build" list stand (test parts, recognition, `pick_end_mill`, titles and suggestions). Inch end mills serve every file. Engraved text and logos (on most NIST parts) read as pockets with sharp corners and stay flagged as measured; this is listed in `assumptions`.
 - **Why:** Morgan approved the [mock-up](https://claude.ai/artifact/7pzmdnGnguo8CThdQ87gvD) v3 (real-viewer screenshots, after "the feature highlights on your model look terrible and unrealistic" on the v1 sketch and "What does it look like when selected?"): "Ok approved you can do the pr and merge go with your recommendations" (2026-11-06).
+
+## D-016 S4: thin material at holes, walls box off by default
+
+- **Status:** Accepted (2026-11-07).
+- **Decision:**
+  - S4 also measures thin material at holes, not only between two flat faces: the material under a drill point (from the tip to the nearest face across material) and around a hole's side (to the nearest face or other hole across material, measured square to the hole axis). Each is a `wall` feature and `thin_wall` rules on it with the same limits. Material at a hole is measured up to 0.250 in, four times the largest limit (assumption): thicker material there is no wall feature, which keeps the search under the 10 s file limit (the slowest NIST file took 8.15 s for this step without the cap).
+  - The legend row "Walls checked, no finding" (`--ok-wall` #6b5d4f) starts unticked, the only kind box that does: with it ticked almost the whole part is tinted, because nearly every flat face belongs to a wall. The verdict line still counts walls.
+- **Why:** Morgan asked whether blind holes, drill points and opposed holes are checked; measured on test blocks, flat-bottom holes were and drill points and holes near a face were not. Morgan: "Go with recommended" (2026-11-07) to the options "add both to S4 now" and, on the [wall legend mock-up](https://claude.ai/artifact/JaEjos5QQvY7cbRVHwWpH2), "unticked when the page opens".

@@ -238,6 +238,26 @@ def clean_walls():
     return fuse(base, box_at(0.5, 0.75, 0.25, 0.5, 0.5, 0.75), box_at(2.0, 0.75, 0.25, 0.5, 0.5, 0.75))
 
 
+def thin_drill_point():
+    """1.000 in cube, a 0.250 in hole from +Z with a 118 deg drill point whose tip is 0.015 in above the bottom."""
+    c, top, r = 0.5 * IN, 1.0 * IN, 0.125 * IN
+    point = r / math.tan(math.radians(59.0))
+    start = 0.015 * IN + point  # where the point starts, above the bottom
+    cone = BRepPrimAPI_MakeCone(gp_Ax2(gp_Pnt(c, c, start), gp_Dir(0, 0, -1)), r, 0.0, point).Shape()
+    return cut(block(1, 1, 1), hole_from_top(c, c, top, 2 * r, top - start), cone)
+
+
+def hole_near_edge():
+    """2.000 x 1.000 x 0.500 in block, a 0.250 in through hole whose side is 0.020 in from the -Y face."""
+    return cut(block(2, 1, 0.5), through_z(1.0 * IN, 0.145 * IN, 0.5 * IN, 0.25 * IN))
+
+
+def holes_close():
+    """2.000 x 1.000 x 0.500 in block, two 0.250 in through holes with 0.025 in of material between them."""
+    h = 0.5 * IN
+    return cut(block(2, 1, 0.5), through_z(0.8625 * IN, 0.5 * IN, h, 0.25 * IN), through_z(1.1375 * IN, 0.5 * IN, h, 0.25 * IN))
+
+
 def single_face():
     return BRepBuilderAPI_MakeFace(gp_Pln(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)), 0, 20, 0, 10).Face()
 
@@ -354,6 +374,14 @@ def main() -> int:
     # base X, Y and Z pairs, each boss top to the base bottom, each boss's X and Y pairs; the outer
     # sides of the two bosses face away from each other with air between: no wall.
     add(clean_walls(), "clean_walls", "inch", 1, walls=9)
+    # D-016: material at a hole, measured up to 0.250 in, so the earlier parts' holes (0.364 in or more
+    # from any other face) add none. Each part below adds one wall to its block's 3.
+    add(thin_drill_point(), "thin_drill_point", "inch", 1, walls=4,  # the cone tip to the bottom face
+        findings=[finding("thin_wall", "high", 0.015, (0.5 * IN, 0.5 * IN, 0.015 * IN))])  # probe: the tip
+    add(hole_near_edge(), "hole_near_edge", "inch", 1, walls=4,  # the hole's side to the -Y face
+        findings=[finding("thin_wall", "high", 0.02, (1.0 * IN, 0.02 * IN, 0.25 * IN))])
+    add(holes_close(), "holes_close", "inch", 2, walls=4,  # one wall between the two holes, found from both
+        findings=[finding("thin_wall", "high", 0.025, (0.9875 * IN, 0.5 * IN, 0.25 * IN))])
 
     write_step(single_face(), "no_solid", "MM")
     (HERE / "not_step.step").write_text("This is a text file, not a STEP file.\n", encoding="utf-8", newline="\n")

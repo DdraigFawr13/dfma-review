@@ -8,7 +8,7 @@ from . import settings
 from .frame import extents_mm, face_info, part_frame
 from .mesh import mesh_faces
 from .errors import ReadError
-from .features import holes, number, pockets, walls
+from .features import hole_walls, holes, number, pockets, walls
 from .rules import RULES
 from .read import read_step
 from .units import mm_to_in
@@ -30,7 +30,7 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
     hole_list = holes(part.solid, part.faces, frame)
     hole_faces = {i for f in hole_list for i in f["faces"]}
     pocket_list, corner_list = pockets(part.solid, part.faces, frame, hole_faces)
-    wall_list = walls(part.solid, part.faces)
+    wall_list = walls(part.solid, part.faces) + hole_walls(part.solid, part.faces, hole_list)
     features = hole_list + number(pocket_list, "pocket") + number(corner_list, "corner") + number(wall_list, "wall")
     pocket_faces = {i for f in pocket_list for i in f["faces"]}
     summary = {"units_in_file": part.units_in_file}

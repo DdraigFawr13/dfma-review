@@ -479,3 +479,20 @@ def test_thin_wall_runs_for_turn():
     result = run("thin_floor", process="turn")
     assert result["rules_run"] == ["hole_depth", "hole_size", "thin_wall"]
     assert [f["rule"] for f in result["findings"]] == ["thin_wall"]
+
+
+def test_hole_walls():
+    """D-016: material under a drill point and around a hole's side is a wall, measured up to 0.250 in."""
+    tip = [w for w in walls_of(run("thin_drill_point")) if w.get("at") == "tip"]
+    assert [round(w["dims_mm"]["thickness"] / IN, 4) for w in tip] == [0.015]
+    assert tip[0]["hole"] == "hole-1" and tip[0]["axis"] is None and tip[0]["faces"] == sorted(tip[0]["faces"])
+    side = [w for w in walls_of(run("hole_near_edge")) if w.get("at") == "side"]
+    assert [round(w["dims_mm"]["thickness"] / IN, 3) for w in side] == [0.02]
+    # Two holes 0.025 in apart find each other: one wall between their two hole faces.
+    result = run("holes_close")
+    [web] = [w for w in walls_of(result) if "hole" in w]
+    hole_faces = {f for h in only_holes(result) for f in h["faces"]}
+    assert set(web["faces"]) <= hole_faces and web["dims_mm"]["thickness"] == pytest.approx(0.025 * IN, abs=0.001)
+    # Holes 0.375 in or more from other faces get no hole wall (the 0.250 in cap).
+    assert [w for w in walls_of(run("box_through_hole")) if "hole" in w] == []
+    assert [w for w in walls_of(run("drill_point_hole")) if "hole" in w] == []
