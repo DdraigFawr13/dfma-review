@@ -619,7 +619,7 @@ def _inner_points(shape, grid: int = 9) -> list[Vec]:
                 v = vmin + (vmax - vmin) * (j + 0.5) / grid
                 if BRepClass_FaceClassifier(face, gp_Pnt2d(u, v), 1e-6).State() == TopAbs_IN:
                     samples.append(_pt(surface.Value(u, v)))
-    return [p for _, p in sorted(centroids)] + samples
+    return [p for _, p in sorted(centroids)[:24]] + samples  # at most 24 centroids, then the grid
 
 
 class _Rays:
@@ -666,9 +666,12 @@ def walls(solid, faces) -> list[dict]:
             a_on_b = BRepBuilderAPI_Transform(faces[ia], move, True).Shape()
             if _box(a_on_b).IsOut(bb):  # only pairs whose boxes overlap, a moved onto b's plane
                 continue
-            common = BRepAlgoAPI_Common(a_on_b, faces[ib])
-            common.Build()
-            overlap = _area(common.Shape()) if common.IsDone() else 0.0
+            try:  # a failed boolean skips this pair, not the whole analysis
+                common = BRepAlgoAPI_Common(a_on_b, faces[ib])
+                common.Build()
+                overlap = _area(common.Shape()) if common.IsDone() else 0.0
+            except RuntimeError:
+                continue
             if overlap < MIN_OVERLAP_MM2:
                 continue
             # Solid material between them: a ray from a point inside the overlap on b, along -nb (into
@@ -694,6 +697,14 @@ TIP_TURNS = 12  # around the axis at each tilt
 HOLE_WALL_MAX_MM = 0.25 * 25.4  # material at a hole is measured up to 0.250 in (assumption): over every limit
 
 
+def _on_face(face, p: Vec) -> bool:
+    """The point lies on the face itself or its boundary (a seam between split faces), not where a cross
+    hole or an exit has cut the face away."""
+    from OCC.Core.BRepClass import BRepClass_FaceClassifier
+    from OCC.Core.TopAbs import TopAbs_OUT
+    return BRepClass_FaceClassifier(topods.Face(face), gp_Pnt(*p), 1e-4).State() != TopAbs_OUT
+
+
 class _NearRays:
     """First hits of rays from one hole, up to HOLE_WALL_MAX_MM, testing only the faces whose boxes lie
     within that distance of the hole's box: a face outside it is farther than any hit that counts."""
@@ -705,8 +716,9 @@ class _NearRays:
         for f in own:
             self.hole_box.Add(boxes[f])
 
-    def nearest(self, starts: list[tuple[Vec, Vec]]) -> tuple[int, float, int] | None:
-        """(face id, distance, index of the ray) of the nearest first hit, or None."""
+    def nearest(self, starts: list[tuple[Vec, Vec]], keep=None) -> tuple[int, float, int] | None:
+        """(face id, distance, index of the ray) of the nearest first hit, or None. `keep(n)` can turn
+        down a ray by its index; it is asked only for the nearest hits, nearest first."""
         from OCC.Core.BRep import BRep_Builder
         from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
         from OCC.Core.TopoDS import TopoDS_Compound
@@ -726,16 +738,17 @@ class _NearRays:
         inter = self.inter
         if inter is None:
             return None
-        best: tuple[int, float, int] | None = None
+        hits: list[tuple[float, int, int]] = []  # (distance, face id, ray) of each ray's first hit
         for n, (p, d) in enumerate(starts):
             inter.Perform(gp_Lin(gp_Pnt(*p), gp_Dir(*d)), 1e-3, radius)
-            if not inter.IsDone():
+            if not inter.IsDone() or inter.NbPnt() == 0:
                 continue
-            for k in range(1, inter.NbPnt() + 1):
-                w, fid = inter.WParameter(k), self.topo.fid(inter.Face(k))
-                if best is None or w < best[1] - 1e-9 or (abs(w - best[1]) <= 1e-9 and fid < best[0]):
-                    best = (fid, w, n)
-        return best
+            first = min((inter.WParameter(k), self.topo.fid(inter.Face(k))) for k in range(1, inter.NbPnt() + 1))
+            hits.append((round(first[0], 9), first[1], n))
+        for w, fid, n in sorted(hits):  # nearest first; ties go to the lower face id
+            if keep is None or keep(n):
+                return fid, w, n
+        return None
 
 
 def hole_walls(solid, faces, hole_list: list[dict]) -> list[dict]:
@@ -746,12 +759,15 @@ def hole_walls(solid, faces, hole_list: list[dict]) -> list[dict]:
     from OCC.Core.GeomAbs import GeomAbs_Cone as Cone
     topo = Topology(solid, faces)
     boxes = [_box(f) for f in faces]
-    out: dict[tuple[int, int], dict] = {}
+    out: dict[tuple, dict] = {}
+    hole_of = {f: h["id"] for h in hole_list for f in h["faces"]}
 
     def add(own: int, found: tuple[int, float], hole_id: str, where: str) -> None:
-        key = tuple(sorted((own, found[0])))
+        # Between two holes the key is the pair of holes, so split hole faces still give one wall.
+        other = hole_of.get(found[0])
+        key = ("holes", *sorted((hole_id, other))) if other else tuple(sorted((own, found[0])))
         if key not in out or found[1] < out[key]["dims_mm"]["thickness"]:
-            out[key] = {"kind": "wall", "faces": list(key), "axis": None, "open_dirs": [], "open_vectors": [],
+            out[key] = {"kind": "wall", "faces": sorted((own, found[0])), "axis": None, "open_dirs": [], "open_vectors": [],
                         "dims_mm": {"thickness": found[1]}, "hole": hole_id, "at": where}
 
     for h in hole_list:
@@ -775,13 +791,15 @@ def hole_walls(solid, faces, hole_list: list[dict]) -> list[dict]:
                     centre = tuple(c.origin[i] + (t - dot(c.origin, c.axis)) * c.axis[i] for i in range(3))
                     # a face covers only its own angles (split faces); bins are whole degrees
                     starts += [ray(c, centre, deg) for deg in range(0, 360, SIDE_STEP_DEG) if deg in c.bins]
-            found = rays.nearest([(p, d) for p, d, *_ in starts])
+            def on(rs):  # a ray counts only if it starts on its hole face, not in a gap cut through it
+                return lambda n: _on_face(faces[rs[n][2]], rs[n][0])
+            found = rays.nearest([(p, d) for p, d, *_ in starts], on(starts))
             if found:
                 _, _, cid, centre, deg = starts[found[2]]
                 c = next(c for c in cyls if c.id == cid)
                 fine = [ray(c, centre, (deg + k) % 360) for k in range(-SIDE_STEP_DEG, SIDE_STEP_DEG + 1)
                         if (deg + k) % 360 in c.bins]
-                close = rays.nearest([(p, d) for p, d, *_ in fine])
+                close = rays.nearest([(p, d) for p, d, *_ in fine], on(fine))
                 if close and close[1] < found[1]:
                     found, starts = close, fine
                 add(starts[found[2]][2], found, h["id"], "side")  # the hole face the nearest ray left from

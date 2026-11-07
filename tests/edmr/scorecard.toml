@@ -145,7 +145,7 @@ path = "models/NIST/Manfred_Osti/spectrometer/flange_pt202_16/flange_pt202_16.hh
 status = "ok"
 face_count = 84
 not_analysed = 0
-features = 48
+features = 45
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/linkage_arm1_42/linkage_arm1_42.hh.sat.stp"
@@ -208,21 +208,21 @@ path = "models/NIST/Manfred_Osti/spectrometer/main_block/main_block.prt.hh.sat.s
 status = "ok"
 face_count = 159
 not_analysed = 18
-features = 56
+features = 54
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/main_linkage_arm_6/main_linkage_arm_6.hh.sat.stp"
 status = "ok"
 face_count = 103
 not_analysed = 0
-features = 47
+features = 46
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/new_main/new_main.prt.hh.sat.stp"
 status = "ok"
 face_count = 159
 not_analysed = 18
-features = 56
+features = 54
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/nut_244/nut_244.hh.sat.stp"
@@ -404,7 +404,7 @@ path = "models/STEP/STI/bracket1-Part/bracket1-Part.stp"
 status = "ok"
 face_count = 45
 not_analysed = 0
-features = 37
+features = 36
 
 [[file]]
 path = "models/STEP/STI/clevis21/clevis21.stp"
@@ -432,7 +432,7 @@ path = "models/STEP/STI/daratech/daratech.stp"
 status = "ok"
 face_count = 175
 not_analysed = 2
-features = 95
+features = 94
 
 [[file]]
 path = "models/STEP/STI/gear/gear.stp"
@@ -460,7 +460,7 @@ path = "models/STEP/STI/mohne/mohne.stp"
 status = "ok"
 face_count = 205
 not_analysed = 0
-features = 181
+features = 184
 
 [[file]]
 path = "models/STEP/STI/monster4/monster4.stp"
@@ -544,7 +544,7 @@ path = "models/STEP/STI/weldment_asm_solid/weldment_asm_solid.stp"
 status = "ok"
 face_count = 145
 not_analysed = 12
-features = 56
+features = 54
 
 [[file]]
 path = "models/UMD/AES94/AES94.step"

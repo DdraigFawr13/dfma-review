@@ -24,9 +24,12 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
         t_in = f["dims_mm"]["thickness"] / MM_PER_IN
         if t_in >= limit - EPS:  # "under 0.030 in": a wall that is 0.030 in to rounding is not under it
             continue
+        shown = f"{t_in:.3f}"
+        if shown == f"{limit:.3f}":  # 0.02996 in would read "0.030 in thick (limit 0.030 in)"
+            shown = f"{t_in:.4f}"
         out.append({"rule": ID, "severity": "high",
-                    "title": f"Wall {t_in:.3f} in thick (limit {limit:.3f} in)",
-                    "measured": round(t_in, 4), "limit": limit, "unit": "in",
+                    "title": f"Wall {shown} in thick (limit {limit:.3f} in)",
+                    "measured": round(t_in, 5), "limit": limit, "unit": "in",
                     "faces": f["faces"], "feature": f["id"], "threshold_source": table["source"],
                     "suggestion": f"Make the wall {limit:.3f} in or thicker if the design allows."})
     return out

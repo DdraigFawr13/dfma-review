@@ -20,6 +20,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
+- 2026-11-07 S4 fresh review (96,088 tokens): 0 high, 5 medium, 4 low; fixed 4 with tests (rays start on the hole face, one wall per pair of holes, bounded points and guarded booleans, 4-place title at the limit); 3 declined with evidence (spec S4 Settled). Scorecards vs main: NIST 690 → 1,340, EDMR 1,090 → 3,110; slowest file 6.44 s.
 - 2026-11-07 S4 built on `s4-thin-walls` (#7, draft): walls (opposed planar pairs, overlap ≥10 mm², ray test for material between; the spec's midpoint test found 0 walls on a plain block, spec Features "Wall" updated), `thin_wall` rule (mill and turn), 4 test parts, wall counts on every expected entry, legend row "Walls checked, no finding" (`--ok-wall` #6b5d4f). Zero-decision check on d6502d4: builder defaults in spec S4 "Settled at build". Checks fail first: 27 of 28 J3 tests fail on main. Scorecards: NIST features 690 → 1,227, EDMR 1,090 → 2,345, none worse; max 3.94 s / 5.22 s. Mock-up [wall legend](https://claude.ai/artifact/JaEjos5QQvY7cbRVHwWpH2) (`mockups/wall-legend.html`, real screenshots; fresh check 73,109 tokens, 3 fixes) answered.
 - 2026-11-07 D-016 (Morgan: "Go with recommended"): walls box off by default; thin material at holes added to S4 (around a hole's side and under a drill point, measured up to 0.250 in): `hole_walls()`, parts `thin_drill_point`, `hole_near_edge`, `holes_close`. Scorecards vs main: NIST features 690 → 1,351, EDMR 1,090 → 3,119, none worse; slowest file 6.72 s.
 - 2026-11-06 S3 approved (D-015), merged in #6. Mock-up v3 used real-viewer screenshots (v1 sketch: "terrible and unrealistic"); selection got a 40% minimum frame and sharp corners as an edge bar (`edge_mm`). Fresh review (93,501 tokens): 2 medium fixed test-first (pocket rules ran for turning; plane-to-arc sharp corners missed), 3 low fixed, 3 declined, 1 deferred to S5. Checks: 221 service, 5 unit, 7 browser; NIST max 3.98 s. [Status](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu), [demo](https://claude.ai/artifact/KnnLF3YAHp5ZCmNuVWyvP4) updated.
@@ -30,7 +31,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-1. S4: fresh `reviewer` of the diff against the spec, update status page and demo (D-009), ask Morgan to approve, finish per GIT-08. Carry: S5 must make a hole end on a pocket floor take the floor normal; engraved lettering on NIST parts reads as pockets (assumption in the app).
+1. S4: update the status page and demo (D-009), ask Morgan to approve, finish per GIT-08. Carry: S5 must make a hole end on a pocket floor take the floor normal; engraved lettering on NIST parts reads as pockets (assumption in the app).
 2. NIST library merged in [#5](https://github.com/DdraigFawr13/dfma-review/pull/5) (069ef55).
 3. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
 

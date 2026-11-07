@@ -496,3 +496,90 @@ def test_hole_walls():
     # Holes 0.375 in or more from other faces get no hole wall (the 0.250 in cap).
     assert [w for w in walls_of(run("box_through_hole")) if "hole" in w] == []
     assert [w for w in walls_of(run("drill_point_hole")) if "hole" in w] == []
+
+
+def _write(tmp_path, shape, name):
+    from OCC.Core.STEPControl import STEPControl_AsIs, STEPControl_Writer
+    path = tmp_path / f"{name}.step"
+    writer = STEPControl_Writer()
+    writer.Transfer(shape, STEPControl_AsIs)
+    writer.Write(str(path))
+    return path
+
+
+def _box_mm(x, y, z, dx, dy, dz):
+    from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeBox
+    from OCC.Core.gp import gp_Pnt
+    return BRepPrimAPI_MakeBox(gp_Pnt(x, y, z), dx, dy, dz).Shape()
+
+
+def _cut(shape, *tools):
+    from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Cut
+    for tool in tools:
+        op = BRepAlgoAPI_Cut(shape, tool)
+        op.Build()
+        shape = op.Shape()
+    return shape
+
+
+def _cyl(x, y, z, d, h, axis=(0, 0, 1), angle=2 * 3.141592653589793, start=0.0):
+    from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeCylinder
+    from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Dir, gp_Pnt
+    ax = gp_Ax2(gp_Pnt(x, y, z), gp_Dir(*axis))
+    if start:
+        ax.Rotate(gp_Ax1(gp_Pnt(x, y, z), gp_Dir(*axis)), start)
+    return BRepPrimAPI_MakeCylinder(ax, d / 2, h, angle).Shape()
+
+
+def test_wall_just_under_the_limit_is_flagged_and_reads_clearly(tmp_path):
+    """0.0299 in is under 0.030 in: flagged, and the title doesn't read "0.030 in thick (limit 0.030 in)"."""
+    path = _write(tmp_path, _box_mm(0, 0, 0, 2 * IN, 1 * IN, 0.0299 * IN), "plate_0299")
+    [f] = [f for f in analyze(path, path.name)["findings"] if f["rule"] == "thin_wall"]
+    assert f["measured"] == pytest.approx(0.0299, abs=1e-6)
+    assert f["title"] == "Wall 0.0299 in thick (limit 0.030 in)"
+
+
+def test_hole_wall_cap_is_0_250_in(tmp_path):
+    """Material at a hole is measured up to 0.250 in: 0.240 in is a wall, 0.260 in is not."""
+    r = 0.125 * IN
+    for gap, walls in ((0.240, 1), (0.260, 0)):
+        shape = _cut(_box_mm(0, 0, 0, 2 * IN, 1 * IN, 0.5 * IN), _cyl(1.0 * IN, r + gap * IN, -1, 2 * r, 0.5 * IN + 2))
+        result = analyze(_write(tmp_path, shape, f"gap_{gap}"), "gap.step")
+        assert len([w for w in walls_of(result) if "hole" in w]) == walls, gap
+
+
+def test_split_holes_close_together_give_one_wall(tmp_path):
+    """holes_close with each hole made of two half-cylinders whose seam faces the other hole: still one wall."""
+    import math
+    r = 0.125 * IN
+    tools = [_cyl(x * IN, 0.5 * IN, -1, 2 * r, 0.5 * IN + 2, angle=math.pi, start=a)
+             for x in (0.8625, 1.1375) for a in (0.0, math.pi)]
+    result = analyze(_write(tmp_path, _cut(_box_mm(0, 0, 0, 2 * IN, 1 * IN, 0.5 * IN), *tools), "split_close"), "x.step")
+    assert len(only_holes(result)) == 2
+    [web] = [w for w in walls_of(result) if "hole" in w]
+    # The seam itself is no start point, so the nearest ray is 1 deg off it: within J3's 0.001 in.
+    assert web["dims_mm"]["thickness"] == pytest.approx(0.025 * IN, abs=0.001 * IN)
+
+
+def test_drill_point_tip_on_a_side_axis(tmp_path):
+    """A drill-point hole from -X with 0.015 in under its tip: the tip wall is found on any axis."""
+    import math
+    from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeCone
+    from OCC.Core.gp import gp_Ax2, gp_Dir, gp_Pnt
+    r = 0.125 * IN
+    point = r / math.tan(math.radians(59))
+    start = 1.0 * IN - 0.015 * IN - point
+    cone = BRepPrimAPI_MakeCone(gp_Ax2(gp_Pnt(start, 0.5 * IN, 0.5 * IN), gp_Dir(1, 0, 0)), r, 0.0, point).Shape()
+    shape = _cut(_box_mm(0, 0, 0, IN, IN, IN), _cyl(-1, 0.5 * IN, 0.5 * IN, 2 * r, 1 + start, axis=(1, 0, 0)), cone)
+    result = analyze(_write(tmp_path, shape, "drill_x"), "x.step")
+    tip = [w for w in walls_of(result) if w.get("at") == "tip"]
+    assert [round(w["dims_mm"]["thickness"] / IN, 4) for w in tip] == [0.015]
+
+
+def test_cross_hole_gives_no_false_hole_wall(tmp_path):
+    """Rays start only on a hole's own face, never in the gap a cross hole cuts through it."""
+    r = 0.125 * IN
+    shape = _cut(_box_mm(0, 0, 0, IN, IN, IN), _cyl(0.5 * IN, 0.5 * IN, -1, 2 * r, IN + 2),
+                 _cyl(-1, 0.5 * IN, 0.5 * IN, 2 * r, IN + 2, axis=(1, 0, 0)))
+    result = analyze(_write(tmp_path, shape, "cross"), "x.step")
+    assert [f for f in result["findings"] if f["rule"] == "thin_wall"] == []
