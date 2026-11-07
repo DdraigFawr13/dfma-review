@@ -181,9 +181,13 @@ def compare(pred: list[int], ref: list[int]) -> dict:
 
 # --- running (needs the dfma environment; not unit tested) ---
 
-def analyse(path: Path, python: str = sys.executable) -> dict:
+ENGINE = {"cmd": [sys.executable, str(CHILD)], "faces": "faces"}  # set by main() for --engine
+
+
+def analyse(path: Path, cmd: list[str] | None = None) -> dict:
+    """Run one file through an engine's child process (ours by default) and read its result line."""
     try:
-        proc = subprocess.run([python, str(CHILD), str(path)], capture_output=True, text=True, timeout=TIME_LIMIT_S)
+        proc = subprocess.run([*(cmd or ENGINE["cmd"]), str(path)], capture_output=True, text=True, timeout=TIME_LIMIT_S)
     except subprocess.TimeoutExpired:
         return {"status": "timeout"}
     lines = [ln for ln in proc.stdout.splitlines() if ln.startswith(MARK)]
@@ -191,6 +195,9 @@ def analyse(path: Path, python: str = sys.executable) -> dict:
         return {"status": "crash", "returncode": proc.returncode, "stderr": proc.stderr[-400:]}
     out = json.loads(lines[-1][len(MARK):])
     out["status"] = "read_error" if out.get("error") else "ok"
+    if ENGINE["faces"] != "faces":  # e.g. Quiddity's wider "constituent" face sets
+        for f in out.get("features", []):
+            f["faces"] = f.get(ENGINE["faces"], f["faces"])
     return out
 
 
@@ -256,7 +263,16 @@ def main() -> int:
     ap.add_argument("--limit", type=int)
     ap.add_argument("--jobs", type=int, default=4)
     ap.add_argument("--out", type=Path)
+    ap.add_argument("--engine", choices=("ours", "quiddity", "situs"), default="ours",
+                    help="ours: child.py in this interpreter; quiddity: qchild.py in --python; situs: schild.py with --situs-bin")
+    ap.add_argument("--python", help="interpreter for the quiddity engine (one with Quiddity 0.3.x installed)")
+    ap.add_argument("--faces", default="faces", help="quiddity only: 'faces' (defining) or 'constituent'")
+    ap.add_argument("--situs-bin", help="situs only: the built as_recognize program")
     a = ap.parse_args()
+    if a.engine == "quiddity":
+        ENGINE.update(cmd=[a.python, str(HERE / "qchild.py")], faces=a.faces)
+    elif a.engine == "situs":
+        ENGINE.update(cmd=[sys.executable, str(HERE / "schild.py"), a.situs_bin])
     out = mfcadpp(a.path, a.limit, a.jobs) if a.set == "mfcadpp" else situs(a.path, a.jobs)
     text = json.dumps(out, indent=1, default=str)
     if a.out:

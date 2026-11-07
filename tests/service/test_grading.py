@@ -106,3 +106,26 @@ def test_child_runs_our_part_end_to_end():
 
 def test_child_reports_a_read_error_as_a_result():
     assert grade.analyse(PARTS / "not_step.step")["status"] == "read_error"
+
+
+def test_analyse_reads_any_engine_and_can_swap_face_sets(tmp_path, monkeypatch):
+    """Other engines (Quiddity, Analysis Situs) print the same result line; noise before it is ignored,
+    and --faces picks another face list (Quiddity's "constituent" faces) for scoring."""
+    fake = tmp_path / "fake_child.py"
+    fake.write_text(
+        "import json, sys\n"
+        "print('kernel banner on stdout')\n"
+        f"print({grade.MARK!r} + json.dumps({{'faces': [{{'kind': 'plane'}}] * 3, 'ignored_solids': 0, 'error': None,"
+        " 'features': [{'kind': 'pocket', 'faces': [0], 'constituent': [0, 2], 'open_ends': 1}]}))\n",
+        encoding="utf-8")
+    r = grade.analyse(PARTS / "box_through_hole.step", [sys.executable, str(fake)])
+    assert r["status"] == "ok" and r["features"][0]["faces"] == [0]
+    monkeypatch.setitem(grade.ENGINE, "faces", "constituent")
+    r = grade.analyse(PARTS / "box_through_hole.step", [sys.executable, str(fake)])
+    assert r["features"][0]["faces"] == [0, 2]
+
+
+def test_analyse_reports_a_crash(tmp_path):
+    fake = tmp_path / "crash.py"
+    fake.write_text("import os\nos._exit(139)\n", encoding="utf-8")
+    assert grade.analyse(PARTS / "box_through_hole.step", [sys.executable, str(fake)])["status"] == "crash"
