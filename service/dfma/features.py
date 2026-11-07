@@ -54,6 +54,7 @@ class Segment:
     point_mm: float | None = None
     links: set[int] = field(default_factory=set)  # indices of linked segments
     groove: bool = False  # wider than the segments on both sides: an internal groove, not a hole (S6)
+    ring: bool = False  # ends on a flat ring round a raised core on its axis: an O-ring groove (D-018 round 2)
 
 
 def _sub(a: Vec, b: Vec) -> Vec:
@@ -169,10 +170,16 @@ class Topology:
         return out
 
 
+HALF_TURN_DEG = 189  # D-018 round 2: a hole cut by another feature still covers this much (1.05 pi, as Quiddity)
+
+
 def _segments(topo: Topology, cyls: dict[int, Cyl]) -> list[Segment]:
-    """Group concave cylinders that share edges, axis and radius; keep groups spanning 360 deg."""
+    """Group concave cylinders that share edges, axis and radius, then join groups on one axis
+    line with one radius whose heights overlap (the pieces of a hole another feature cuts through,
+    D-018 round 2). Keep groups that go all the way round, or at least HALF_TURN_DEG where no part
+    of them does; a fillet (90 deg) or a slot end (180 deg) stays out."""
     seen: set[int] = set()
-    out: list[Segment] = []
+    groups: list[list[int]] = []
     for fid in sorted(cyls):
         if fid in seen:
             continue
@@ -186,17 +193,33 @@ def _segments(topo: Topology, cyls: dict[int, Cyl]) -> list[Segment]:
                 if c and nb not in seen and abs(c.radius - cyls[fid].radius) <= RADIUS_TOL and _same_line(c, cyls[fid]):
                     seen.add(nb)
                     todo.append(nb)
-        members = [cyls[g] for g in sorted(group)]
-        span = _full_turn(members)
+        groups.append(sorted(group))
+    merged: list[list[int]] = []
+    for group in groups:
+        lo, hi = min(cyls[g].lo for g in group), max(cyls[g].hi for g in group)
+        for other in merged:
+            a, b = cyls[other[0]], cyls[group[0]]
+            olo, ohi = min(cyls[g].lo for g in other), max(cyls[g].hi for g in other)
+            if abs(a.radius - b.radius) <= RADIUS_TOL and _same_line(a, b) and min(hi, ohi) - max(lo, olo) > 0.01:
+                other.extend(group)
+                other.sort()
+                break
+        else:
+            merged.append(group)
+    out: list[Segment] = []
+    for group in merged:
+        members = [cyls[g] for g in group]
+        span = _full_turn(members) or _full_turn(members, HALF_TURN_DEG)
         if span is None:
             continue
         base = members[0]
-        out.append(Segment(sorted(group), base.origin, base.axis, base.radius, *span))
+        out.append(Segment(group, base.origin, base.axis, base.radius, *span))
     return out
 
 
-def _full_turn(members: list[Cyl]) -> tuple[float, float] | None:
+def _full_turn(members: list[Cyl], min_deg: int = 359) -> tuple[float, float] | None:
     """The height range where the group goes all the way round (360 deg within 1 deg), or None.
+    With a smaller `min_deg`: the range where it covers at least that much (a cut hole).
 
     Faces of one hole can be split lengthwise (halves) or across (stacked bands), and a hole that
     exits onto a sloped or curved face has halves of different lengths: the hole is the part that
@@ -205,7 +228,7 @@ def _full_turn(members: list[Cyl]) -> tuple[float, float] | None:
     """
     cuts = sorted({round(v, 4) for m in members for v in (m.lo, m.hi)})
     full = [(a, b) for a, b in zip(cuts, cuts[1:]) if b - a > 0.01 and len(set().union(
-        *(m.bins for m in members if m.lo <= a + 0.01 and m.hi >= b - 0.01))) >= 359]
+        *(m.bins for m in members if m.lo <= a + 0.01 and m.hi >= b - 0.01))) >= min_deg]
     if not full:
         return None
     return min(a for a, _ in full), max(b for _, b in full)
@@ -257,9 +280,19 @@ def _classify_ends(topo: Topology, segs: list[Segment]) -> None:
                     seg.shoulders.append(nb)
                 ends.setdefault(end, "link")
                 continue
+            # A flat ring at the end, with a second loop of edges inside it where a core rises on
+            # the same axis (directly or through a chamfer): an O-ring groove, not a hole (D-018 round 2).
+            if _is_shoulder(topo.faces[nb], seg) and any(
+                    _core(topo.faces[k], seg) or (_is_shoulder(topo.faces[k], seg) and BRepAdaptor_Surface(
+                        topo.faces[k], True).GetType() == GeomAbs_Cone and any(
+                        _core(topo.faces[j], seg) for j in topo.neighbours(k)))
+                    for k in nb_nbs if k not in seg.faces):
+                seg.ring = True
             # A bottom closes the hole: its faces touch only this segment and each other
-            # (a flat or cone point, or a filleted, ball or split bottom).
-            if nb_nbs <= set(seg.faces) | set(around):
+            # (a flat or cone point, or a filleted, ball or split bottom), and lie within its radius.
+            # A flat bottom that another feature cuts into still closes the hole.
+            flat = BRepAdaptor_Surface(topo.faces[nb], True).GetType() == GeomAbs_Plane and _is_shoulder(topo.faces[nb], seg)
+            if (nb_nbs <= set(seg.faces) | set(around) or flat) and _within(topo.faces[nb], seg):
                 if nb not in seg.bottom:
                     seg.bottom.append(nb)
                 if BRepAdaptor_Surface(topo.faces[nb], True).GetType() == GeomAbs_Cone:
@@ -273,6 +306,31 @@ def _classify_ends(topo: Topology, segs: list[Segment]) -> None:
         seg.open_ends = [e for e in ("hi", "lo") if ends.get(e) == "open"]
         seg.groove = ends.get("hi") == "link" and ends.get("lo") == "link" and all(
             segs[j].radius < seg.radius for j in seg.links)
+
+
+def _within(face, seg: Segment) -> bool:
+    """Every point on the face's edges lies within the segment's radius of its axis: the face can
+    close the hole. A pocket wall that meets a hole cut into it reaches further out."""
+    for p in _points(face):
+        off = cross(_sub(p, seg.origin), seg.axis)
+        if math.sqrt(dot(off, off)) > seg.radius + 0.01:
+            return False
+    return True
+
+
+def _core(face, seg: Segment) -> bool:
+    """A convex cylinder on the segment's axis, narrower than it: the raised core of a ring groove."""
+    surface = BRepAdaptor_Surface(face, True)
+    if surface.GetType() != GeomAbs_Cylinder or surface.Cylinder().Radius() >= seg.radius - RADIUS_TOL:
+        return False
+    ax = surface.Cylinder().Axis()
+    o, d = _pt(ax.Location()), unit(_pt(ax.Direction()))
+    off = cross(_sub(o, seg.origin), seg.axis)
+    if abs(dot(d, seg.axis)) < math.cos(ANGLE_TOL) or math.sqrt(dot(off, off)) > LINE_TOL:
+        return False
+    point, normal = _outward_normal(face)
+    rel = _sub(point, o)
+    return dot(normal, _sub(rel, tuple(dot(rel, d) * c for c in d))) > 0
 
 
 def _cone_length(face, seg: Segment) -> float:
@@ -321,7 +379,7 @@ def holes(solid, faces, frame: dict[str, Vec]) -> list[dict]:
                     vectors.append(v)
         for i in chain:
             s = segs[i]
-            if s.groove:
+            if s.groove or s.ring:
                 continue
             dims = {"diameter": 2 * s.radius, "depth": s.hi - s.lo}
             if s.point_mm is not None:
