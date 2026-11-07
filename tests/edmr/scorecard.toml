@@ -138,14 +138,14 @@ path = "models/NIST/Manfred_Osti/spectrometer/flange_pt201_11/flange_pt201_11.hh
 status = "ok"
 face_count = 67
 not_analysed = 0
-features = 40
+features = 38
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/flange_pt202_16/flange_pt202_16.hh.sat.stp"
 status = "ok"
 face_count = 84
 not_analysed = 0
-features = 45
+features = 43
 
 [[file]]
 path = "models/NIST/Manfred_Osti/spectrometer/linkage_arm1_42/linkage_arm1_42.hh.sat.stp"
@@ -460,7 +460,7 @@ path = "models/STEP/STI/mohne/mohne.stp"
 status = "ok"
 face_count = 205
 not_analysed = 0
-features = 184
+features = 171
 
 [[file]]
 path = "models/STEP/STI/monster4/monster4.stp"
@@ -481,7 +481,7 @@ path = "models/STEP/STI/nasty_cheese/nasty_cheese.stp"
 status = "ok"
 face_count = 331
 not_analysed = 1
-features = 365
+features = 143
 
 [[file]]
 path = "models/STEP/STI/piston/piston.stp"
@@ -579,7 +579,7 @@ path = "models/UMD/base2-Part/base2-Part.step"
 status = "ok"
 face_count = 52
 not_analysed = 0
-features = 37
+features = 35
 
 [[file]]
 path = "models/UMD/base2-Stock/base2-Stock.step"

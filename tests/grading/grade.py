@@ -153,6 +153,40 @@ def misses(name: str, labels: list[int | None], preds: list[str | None]) -> list
     return out
 
 
+def hole_groups(features: list[dict]) -> list[set[int]]:
+    """Each hole's faces: a hole feature's own, or the union of the segments that share a `chain`
+    (one stepped hole, e.g. a counterbore and its bore)."""
+    chains: dict[int, set[int]] = {}
+    out = []
+    for f in features:
+        if f["kind"] != "hole":
+            continue
+        if f.get("chain") is None:
+            out.append(set(f["faces"]))
+        else:
+            chains.setdefault(f["chain"], set()).update(f["faces"])
+    return out + list(chains.values())
+
+
+def instance_score(features: list[dict], instances: list[list[int]]) -> dict:
+    """Labelled holes found whole: one hole group holds all of the hole's faces and none of another
+    hole's. "split": the hole's faces lie in two or more groups; "merged": a group that holds all of
+    them also holds another hole's faces."""
+    groups = hole_groups(features)
+    owner = {i: k for k, inst in enumerate(instances) for i in inst}
+    whole, split, merged = 0, 0, 0
+    for k, inst in enumerate(instances):
+        holding = [g for g in groups if g & set(inst)]
+        full = [g for g in holding if set(inst) <= g]
+        if full and not any(owner.get(i, k) != k for i in full[0]):
+            whole += 1
+        elif full:
+            merged += 1
+        elif len(holding) > 1:
+            split += 1
+    return {"whole": whole, "of": len(instances), "split": split, "merged": merged}
+
+
 def parse_situs_case(text: str) -> dict:
     """datafile, refFids (1-based ids), and the limit variables of one Analysis Situs test case."""
     case: dict = {}
@@ -234,19 +268,29 @@ def score_part(name: str, r: dict, in_file: list[int]) -> tuple[dict, Counter, l
 
 
 def mfcadpp(folder: Path, limit: int | None, jobs: int, skip: int = 0) -> dict:
+    """Score every file; a set folder with INSTANCES.json (our own sets) also scores whole holes."""
     paths = select(list(folder.glob("*.step")), skip, limit)
     results = run_all(paths, jobs)
+    inst_file = folder / "INSTANCES.json"
+    instances = json.loads(inst_file.read_text(encoding="utf-8")) if inst_file.exists() else None
     total: Counter = Counter()
+    holes_whole: Counter = Counter()
     parts, all_misses = [], []
     for path, r in results.items():
         rec, counts, part_misses = score_part(path.name, r, file_labels(path.read_bytes()))
         total += counts
         all_misses += part_misses
+        if instances is not None:
+            rec["holes_whole"] = instance_score(rec.get("features", []), instances.get(path.stem, []))
+            holes_whole.update(rec["holes_whole"])
         parts.append(rec)
     status = Counter(p["status"] for p in parts)
     checks = {k: sum(1 for p in parts if p.get("checks", {}).get(k)) for k in ("same_count", "file_order", "names_agree", "kinds_agree")}
-    return {"set": str(folder), "parts": len(parts), "status": dict(status), "checks_true": checks,
-            "scores": scores(total), "misses": all_misses, "per_part": parts}
+    out = {"set": str(folder), "parts": len(parts), "status": dict(status), "checks_true": checks,
+           "scores": scores(total), "misses": all_misses, "per_part": parts}
+    if instances is not None:
+        out["holes_whole"] = dict(holes_whole)
+    return out
 
 
 def situs(root: Path, jobs: int) -> dict:

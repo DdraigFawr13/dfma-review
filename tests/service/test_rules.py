@@ -231,7 +231,9 @@ def test_groove_in_bore_is_not_a_hole(tmp_path):
     groove = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(IN, IN, 0.4 * IN), gp_Dir(0, 0, 1)), 0.3 * IN, 0.2 * IN).Shape()
     path = write(tmp_path, "groove", cut(box(2, 2, 1), bore, groove))
     holes = only_holes(analyze(path, path.name))
-    assert [round(h["dims_mm"]["diameter"] / IN, 3) for h in holes] == [0.5, 0.5]  # the bore either side, no 0.6 in groove
+    # One 0.5 in bore through the groove (HANDOFF 3a: it was two pieces, one either side), no 0.6 in groove
+    assert [round(h["dims_mm"]["diameter"] / IN, 3) for h in holes] == [0.5]
+    assert holes[0]["dims_mm"]["depth"] == pytest.approx(1.0 * IN, abs=1e-3)
 
 
 def test_cross_hole_does_not_open_a_blind_hole(tmp_path):

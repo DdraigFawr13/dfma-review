@@ -15,7 +15,7 @@ from OCC.Core.BRep import BRep_Tool
 from OCC.Core.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
 from OCC.Core.BRepGProp import BRepGProp_Face
 from OCC.Core.BRepTools import breptools
-from OCC.Core.GeomAbs import GeomAbs_Cone, GeomAbs_Cylinder, GeomAbs_Plane
+from OCC.Core.GeomAbs import GeomAbs_Cone, GeomAbs_Cylinder, GeomAbs_Plane, GeomAbs_Torus
 from OCC.Core.TopAbs import TopAbs_EDGE, TopAbs_FACE, TopAbs_VERTEX
 from OCC.Core.TopExp import TopExp_Explorer, topexp
 from OCC.Core.TopTools import TopTools_IndexedDataMapOfShapeListOfShape, TopTools_IndexedMapOfShape
@@ -61,6 +61,7 @@ class Segment:
     ring: bool = False  # ends on a flat ring round a raised core on its axis: an O-ring groove (D-018 round 2)
     taper_deg: float = 0.0  # a tapered hole: the cone's half-angle (D-018 tapered-holes round)
     small_radius: float | None = None  # a tapered hole: the radius at its narrow end
+    gap_joined: bool = False  # joined across an open gap (_open_between)
 
 
 def _sub(a: Vec, b: Vec) -> Vec:
@@ -167,11 +168,22 @@ def _same_line(a: Cyl | Segment, b: Cyl | Segment) -> bool:
 
 class Topology:
     def __init__(self, solid, faces):
+        self.solid = solid
         self.faces = faces
         self.face_index = TopTools_IndexedMapOfShape()
         topexp.MapShapes(solid, TopAbs_FACE, self.face_index)
         self.edge_faces = TopTools_IndexedDataMapOfShapeListOfShape()
         topexp.MapShapesAndAncestors(solid, TopAbs_EDGE, TopAbs_FACE, self.edge_faces)
+
+    def line_hits(self, p: Vec, d: Vec, t0: float, t1: float) -> bool:
+        """Whether any face crosses the line p + t d strictly between t0 and t1."""
+        if not hasattr(self, "_lines"):
+            from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
+            self._lines = IntCurvesFace_ShapeIntersector()
+            self._lines.Load(self.solid, 1e-7)
+        from OCC.Core.gp import gp_Dir, gp_Lin
+        self._lines.Perform(gp_Lin(gp_Pnt(*p), gp_Dir(*d)), t0 + 1e-6, t1 - 1e-6)
+        return self._lines.IsDone() and self._lines.NbPnt() > 0
 
     def fid(self, face) -> int:
         return self.face_index.FindIndex(face) - 1
@@ -195,11 +207,12 @@ class Topology:
 HALF_TURN_DEG = 189  # D-018 round 2: a hole cut by another feature still covers this much (1.05 pi, as Quiddity)
 
 
-def _segments(topo: Topology, cyls: dict[int, Cyl]) -> list[Segment]:
+def _segments(topo: Topology, cyls: dict[int, Cyl], no_gap: set[int] = frozenset()) -> list[Segment]:
     """Group concave cylinders that share edges, axis and radius, then join groups on one axis
     line with one radius whose heights overlap (the pieces of a hole another feature cuts through,
-    D-018 round 2). Keep groups that go all the way round, or at least HALF_TURN_DEG where no part
-    of them does; a fillet (90 deg) or a slot end (180 deg) stays out."""
+    D-018 round 2), or that leave an open gap between them (_open_between); groups holding a face in
+    `no_gap` are not joined across a gap. Keep groups that go all the way round, or at least
+    HALF_TURN_DEG where no part of them does; a fillet (90 deg) or a slot end (180 deg) stays out."""
     seen: set[int] = set()
     groups: list[list[int]] = []
     for fid in sorted(cyls):
@@ -218,13 +231,19 @@ def _segments(topo: Topology, cyls: dict[int, Cyl]) -> list[Segment]:
                     todo.append(nb)
         groups.append(sorted(group))
     merged: list[list[int]] = []
+    gap_joined: set[int] = set()
     for group in groups:
         lo, hi = min(cyls[g].lo for g in group), max(cyls[g].hi for g in group)
         for other in merged:
             a, b = cyls[other[0]], cyls[group[0]]
             olo, ohi = min(cyls[g].lo for g in other), max(cyls[g].hi for g in other)
-            if abs(a.radius - b.radius) <= RADIUS_TOL and _same_line(a, b) and abs(a.slope - b.slope) <= 1e-6 \
-                    and min(hi, ohi) - max(lo, olo) > 0.01:
+            if abs(a.radius - b.radius) <= RADIUS_TOL and _same_line(a, b) and abs(a.slope - b.slope) <= 1e-6:
+                if min(hi, ohi) - max(lo, olo) > 0.01:
+                    pass
+                elif not no_gap.intersection(group + other) and _open_between(topo, cyls, group, other):
+                    gap_joined.update(group + other)
+                else:
+                    continue
                 other.extend(group)
                 other.sort()
                 break
@@ -243,7 +262,47 @@ def _segments(topo: Topology, cyls: dict[int, Cyl]) -> list[Segment]:
                                taper_deg=math.degrees(math.atan(abs(base.slope))), small_radius=ends[0]))
         else:
             out.append(Segment(group, base.origin, base.axis, base.radius, *span))
+        out[-1].gap_joined = bool(gap_joined.intersection(group))
     return out
+
+
+GAP_LINE_RADIUS = 0.9  # of the bore's radius: where the lines that probe a gap run (inside any narrower hole's wall)
+GAP_MAX_DIAMETERS = 3.0  # assumption: one drill crosses a gap up to 3 diameters long (a cross hole, a groove, a
+# clevis slot); bores farther apart (two walls of a housing, NIST ctc_02) are each made from their own side
+
+
+def _open_between(topo: Topology, cyls: dict[int, Cyl], a: list[int], b: list[int]) -> bool:
+    """Two groups of one bore (one axis line, one radius) that leave a gap along it, with nothing
+    solid inside the bore across the gap: one hole crossed by another as wide or wider, a bore with a
+    groove, or a pin hole through both arms of a clevis (stress test, HANDOFF 3a). The gap runs between
+    the heights where each group is round all the way. Five lines along the axis cross it, on the axis
+    and at GAP_LINE_RADIUS of the radius every 90 deg; a face crossing any of them (a hole's bottom, a
+    wall with a narrower hole or none) closes the gap."""
+    spans = []
+    for g in (a, b):
+        members = [cyls[k] for k in g]
+        span = _full_turn(members) or _full_turn(members, HALF_TURN_DEG)
+        if span is None:
+            return False
+        spans.append(span)
+    (_, ahi), (blo, _) = sorted(spans)
+    if blo < ahi - 0.01:  # they overlap: not a gap (the caller joins overlapping groups)
+        return False
+    c = cyls[a[0]]
+    if blo - ahi > GAP_MAX_DIAMETERS * 2 * c.radius_at(ahi):
+        return False
+    x, y = _ref_frame(c.axis)
+    base = _sub(c.origin, tuple(dot(c.origin, c.axis) * v for v in c.axis))  # the axis point at height 0
+    # Groups whose faces only touch (two holes of one size crossing: each piece's edge reaches the
+    # other hole's axis) are probed across a short length round the height where they meet.
+    # The lines start and end 0.01 inside each group's round part, so a shoulder at the gap's end counts.
+    t0, t1 = (ahi - 0.01, blo + 0.01) if blo - ahi > 0.02 else ((ahi + blo) / 2 - 0.01, (ahi + blo) / 2 + 0.01)
+    r = GAP_LINE_RADIUS * min(c.radius_at(t0), c.radius_at(t1))
+    for ox, oy in ((0, 0), (r, 0), (0, r), (-r, 0), (0, -r)):
+        p = tuple(base[k] + ox * x[k] + oy * y[k] for k in range(3))
+        if topo.line_hits(p, c.axis, t0, t1):
+            return False
+    return True
 
 
 def _full_turn(members: list[Cyl], min_deg: int = 359) -> tuple[float, float] | None:
@@ -297,46 +356,105 @@ def _classify_ends(topo: Topology, segs: list[Segment]) -> None:
         ends: dict[str, str] = {}
         around = {nb: edges for fid in seg.faces for nb, edges in topo.neighbours(fid).items() if nb not in seg.faces}
         for nb, edges in around.items():
-            end = _edge_end(seg, edges)
-            if end is None:
-                continue
-            nb_nbs = set(topo.neighbours(nb))
-            others = {owner[n] for n in nb_nbs if n in owner and owner[n] != i}
-            linked = [j for j in others if _same_line(segs[j], seg)]
-            if linked and _is_shoulder(topo.faces[nb], seg):  # joins two segments of one stepped hole
-                seg.links.update(linked)
-                if seg.radius > max(segs[j].radius for j in linked) and nb not in seg.shoulders:
-                    seg.shoulders.append(nb)
-                ends.setdefault(end, "link")
-                continue
-            # A flat ring at the end, with a second loop of edges inside it where a core rises on
-            # the same axis (directly or through a chamfer): an O-ring groove, not a hole (D-018 round 2).
-            if _is_shoulder(topo.faces[nb], seg) and any(
-                    _core(topo.faces[k], seg) or (_is_shoulder(topo.faces[k], seg) and BRepAdaptor_Surface(
-                        topo.faces[k], True).GetType() == GeomAbs_Cone and any(
-                        _core(topo.faces[j], seg) for j in topo.neighbours(k)))
-                    for k in nb_nbs if k not in seg.faces):
-                seg.ring = True
-            # A bottom closes the hole: its faces touch only this segment and each other
-            # (a flat or cone point, or a filleted, ball or split bottom), and lie within its radius.
-            # A flat bottom that another feature cuts into still closes the hole.
-            flat = BRepAdaptor_Surface(topo.faces[nb], True).GetType() == GeomAbs_Plane and _is_shoulder(topo.faces[nb], seg)
-            closed = _closed_bottom(topo, seg, nb, end) if not (nb_nbs <= set(seg.faces) | set(around) or flat) else [nb]
-            if closed and _within(topo.faces[nb], seg):
-                for k in closed:
-                    if k not in seg.bottom:
-                        seg.bottom.append(k)
-                if BRepAdaptor_Surface(topo.faces[nb], True).GetType() == GeomAbs_Cone:
-                    seg.point_mm = _cone_length(topo.faces[nb], seg)
-                if ends.get(end) != "link":
-                    ends[end] = "bottom"
-                continue
-            # Anything else is an open end. S3: an end on a pocket floor will take the pocket's
-            # open direction (spec Features); until then it takes the hole's own axis.
-            ends.setdefault(end, "open")
+            # Each end the face meets, by edge: a radial hole through a round shaft opens onto the
+            # same round face at both ends (stress test, HANDOFF 3a).
+            by_end: dict[str, list] = {}
+            for e in edges:
+                if (end := _edge_end(seg, [e])) is not None:
+                    by_end.setdefault(end, []).append(e)
+            for end in by_end:
+                nb_nbs = set(topo.neighbours(nb))
+                bridge = _bridge(topo, segs, owner, i, nb)
+                if bridge:  # joins two segments of one stepped hole
+                    linked, shoulders = bridge
+                    seg.links.update(linked)
+                    if seg.radius > max(segs[j].radius for j in linked):
+                        seg.shoulders.extend(k for k in shoulders if k not in seg.shoulders)
+                    ends.setdefault(end, "link")
+                    continue
+                # A flat ring at the end, with a second loop of edges inside it where a core rises on
+                # the same axis (directly or through a chamfer): an O-ring groove, not a hole (D-018 round 2).
+                if _is_shoulder(topo.faces[nb], seg) and any(
+                        _core(topo.faces[k], seg) or (_is_shoulder(topo.faces[k], seg) and BRepAdaptor_Surface(
+                            topo.faces[k], True).GetType() == GeomAbs_Cone and any(
+                            _core(topo.faces[j], seg) for j in topo.neighbours(k)))
+                        for k in nb_nbs if k not in seg.faces):
+                    seg.ring = True
+                # A bottom closes the hole: its faces touch only this segment and each other
+                # (a flat or cone point, or a filleted, ball or split bottom), and lie within its radius.
+                # A flat bottom that another feature cuts into still closes the hole.
+                flat = BRepAdaptor_Surface(topo.faces[nb], True).GetType() == GeomAbs_Plane and _is_shoulder(topo.faces[nb], seg)
+                closed = _closed_bottom(topo, seg, nb, end) if not (nb_nbs <= set(seg.faces) | set(around) or flat) else [nb]
+                if closed and _within(topo.faces[nb], seg):
+                    for k in closed:
+                        if k not in seg.bottom:
+                            seg.bottom.append(k)
+                    if BRepAdaptor_Surface(topo.faces[nb], True).GetType() == GeomAbs_Cone:
+                        seg.point_mm = _cone_length(topo.faces[nb], seg)
+                    if ends.get(end) != "link":
+                        ends[end] = "bottom"
+                    continue
+                # Anything else is an open end. S3: an end on a pocket floor will take the pocket's
+                # open direction (spec Features); until then it takes the hole's own axis.
+                ends.setdefault(end, "open")
         seg.open_ends = [e for e in ("hi", "lo") if ends.get(e) == "open"]
         seg.groove = ends.get("hi") == "link" and ends.get("lo") == "link" and all(
             segs[j].radius < seg.radius for j in seg.links)
+    # A link found from one side only (a shoulder partway along a bore joined across a gap, so it is
+    # at no end of it) still joins the chain.
+    for i, seg in enumerate(segs):
+        for j in seg.links:
+            segs[j].links.add(i)
+
+
+BRIDGE_MAX_FACES = 4  # a shoulder with an edge break: a floor ring, a chamfer or fillet at the bore, a corner fillet
+
+
+def _round_about(face, seg: Segment) -> bool:
+    """A shoulder face (a plane square to the axis, or a cone on it), or a torus on the axis (a fillet)."""
+    if _is_shoulder(face, seg):
+        return True
+    surface = BRepAdaptor_Surface(face, True)
+    if surface.GetType() != GeomAbs_Torus:
+        return False
+    ax = surface.Torus().Axis()
+    o, d = _pt(ax.Location()), unit(_pt(ax.Direction()))
+    off = cross(_sub(o, seg.origin), seg.axis)
+    return abs(dot(d, seg.axis)) >= math.cos(ANGLE_TOL) and math.sqrt(dot(off, off)) <= LINE_TOL
+
+
+def _bridge(topo: Topology, segs: list[Segment], owner: dict[int, int], i: int, nb: int) -> tuple[list[int], list[int]] | None:
+    """Segments on segment i's axis line that face nb joins it to, through up to BRIDGE_MAX_FACES faces
+    round the axis (a counterbore floor, with a chamfer or fillet where the bore meets it, or a fillet
+    in the counterbore's corner; stress test, HANDOFF 3a), and the faces that are the shoulder: all of
+    them, except a chamfer or fillet at the narrower bore (an edge break, labelled a chamfer or round as
+    the tapered-hole round keeps chamfers out). None when nb joins no other segment."""
+    seg = segs[i]
+    if not _round_about(topo.faces[nb], seg):
+        return None
+    group, todo, linked = [nb], [nb], set()
+    while todo:
+        cur = todo.pop()
+        for k in topo.neighbours(cur):
+            if k in owner:
+                if owner[k] != i and _same_line(segs[owner[k]], seg):
+                    linked.add(owner[k])
+            elif k not in group and _round_about(topo.faces[k], seg):
+                if len(group) >= BRIDGE_MAX_FACES:
+                    return None
+                group.append(k)
+                todo.append(k)
+    if not linked:
+        return None
+    wide = max([seg, *(segs[j] for j in linked)], key=lambda s: s.radius)
+    if not all(_within(topo.faces[k], wide) for k in group):
+        return None
+    if len(group) == 1:
+        return sorted(linked), group
+    narrow = {f for j in [i, *linked] if segs[j] is not wide for f in segs[j].faces}
+    edge_break = [k for k in group if BRepAdaptor_Surface(topo.faces[k], True).GetType() != GeomAbs_Plane
+                  and narrow & set(topo.neighbours(k))]
+    return sorted(linked), [k for k in group if k not in edge_break]
 
 
 BOTTOM_MAX_FACES = 12  # a filleted, ball or split bottom has a few faces; more is another feature
@@ -434,8 +552,13 @@ def holes(solid, faces, frame: dict[str, Vec]) -> list[dict]:
     cyls = {i: c for i, f in enumerate(faces) if (c := _cylinder(i, f, tapers=True))}
     segs = _segments(topo, cyls)
     _classify_ends(topo, segs)
+    # Two counterbores that face each other across an open cavity (NIST ctc_02) join into one bore
+    # wider than both its ends, which reads as a groove and would drop out: keep them apart.
+    if undo := {f for s in segs if s.gap_joined and s.groove for f in s.faces}:
+        segs = _segments(topo, cyls, undo)
+        _classify_ends(topo, segs)
     features = []
-    for chain in _chains(segs):
+    for n_chain, chain in enumerate(_chains(segs), 1):
         vectors: list[Vec] = []
         for i in chain:
             s = segs[i]
@@ -461,10 +584,13 @@ def holes(solid, faces, frame: dict[str, Vec]) -> list[dict]:
                 "open_dirs": list(dict.fromkeys(dirs)),
                 "open_vectors": [list(v) for v in vectors],
                 "dims_mm": dims,
+                "chain": n_chain,  # the same for every segment of one stepped hole (renumbered below)
             })
     features.sort(key=lambda f: min(f["faces"]))
+    renumber: dict[int, int] = {}
     for n, f in enumerate(features, 1):
         f["id"] = f"hole-{n}"
+        f["chain"] = renumber.setdefault(f["chain"], len(renumber) + 1)
     return [{"id": f["id"], **{k: v for k, v in f.items() if k != "id"}} for f in features]
 
 

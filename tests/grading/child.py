@@ -11,7 +11,8 @@ Output: one line starting with MARK, then a JSON object:
              file_pos  = 0-based position of that entity among ADVANCED_FACEs in the file, or None
              shape_id  = 1-based index of the face in MapShapes over the whole file shape
                          (the id Analysis Situs uses), or None
-  features:  [{"kind", "faces", "open_ends"}] for holes and pockets
+  features:  [{"kind", "faces", "open_ends"}] for holes and pockets; a hole also has "chain", the
+             same for every segment of one stepped hole
   ignored_solids, error
 """
 
@@ -146,7 +147,8 @@ def run(path: str) -> dict:
         sid = whole.FindIndex(own[i]) if whole is not None and i < len(own) else 0
         faces.append({"kind": f["kind"], "kind2": kinds2[i] if i < len(kinds2) else None,
                       "name": name, "file_pos": pos, "shape_id": sid or None})
-    feats = [{"kind": f["kind"], "faces": f["faces"], "open_ends": len(f.get("open_vectors", []))}
+    feats = [{"kind": f["kind"], "faces": f["faces"], "open_ends": len(f.get("open_vectors", [])),
+              **({"chain": f["chain"]} if "chain" in f else {})}
              for f in r["features"] if f["kind"] in ("hole", "pocket")]
     topo = None
     for out, f in zip(feats, [f for f in r["features"] if f["kind"] in ("hole", "pocket")]):
