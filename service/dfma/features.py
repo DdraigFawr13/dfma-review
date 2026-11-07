@@ -1132,12 +1132,25 @@ class _Rays:
         return best, best_w
 
 
+WALL_DRAFT_MAX_DEG = 15.0  # D-020: a wall's faces may be this far from parallel (as pocket draft, D-018)
+WALL_DRAFT_REACH_MM = 25.4  # drafted pairs farther apart than this are not compared (assumption: no finding
+# reaches 1 in, and the overlap boolean on every far pair of a large part is slow)
+
+
+def _touching(topo: Topology, faces, a: int, b: int) -> bool:
+    """The two faces share an edge or a vertex."""
+    if b in topo.neighbours(a):
+        return True
+    va = {tuple(round(c, 6) for c in v) for v in _vertices(faces[a])}
+    return any(tuple(round(c, 6) for c in v) in va for v in _vertices(faces[b]))
+
+
 def walls(solid, faces) -> list[dict]:
-    """Pairs of parallel planar faces with outward normals pointing away from each other and solid
-    material between them. Unnumbered."""
+    """Pairs of planar faces with outward normals pointing away from each other, parallel or up to
+    WALL_DRAFT_MAX_DEG from it (draft, D-020), and solid material between them. Unnumbered."""
     from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common
     from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_Transform
-    from OCC.Core.gp import gp_Trsf
+    from OCC.Core.gp import gp_Ax1, gp_Dir, gp_Trsf
     topo = Topology(solid, faces)
     rays = _Rays(solid)
     planes = [(i, *_plane_info(f)) for i, f in enumerate(faces)
@@ -1145,14 +1158,24 @@ def walls(solid, faces) -> list[dict]:
     out = []
     for k, (ia, pa, na, ba) in enumerate(planes):
         for ib, pb, nb, bb in planes[k + 1:]:
-            if dot(na, nb) > -math.cos(ANGLE_TOL):
+            if dot(na, nb) > -math.cos(math.radians(WALL_DRAFT_MAX_DEG)):
                 continue
-            t = -dot(_sub(pb, pa), na)  # how far b lies behind a, into a's material side
+            drafted = dot(na, nb) > -1 + 1e-12  # not exactly parallel: a tilted face lands off b's plane
+            face_a, n_a = faces[ia], na
+            if drafted:  # D-020: up to WALL_DRAFT_MAX_DEG from parallel; turn a parallel to b first
+                if _touching(topo, faces, ia, ib) or (dot(na, nb) > -math.cos(ANGLE_TOL)
+                                                      and _box(faces[ia]).Distance(bb) > WALL_DRAFT_REACH_MM):
+                    continue  # faces that meet (a knife edge) are no wall; far ones are thick
+                axis = cross(na, tuple(-c for c in nb))
+                turn = gp_Trsf()
+                turn.SetRotation(gp_Ax1(gp_Pnt(*pa), gp_Dir(*unit(axis))), math.asin(min(1.0, math.sqrt(dot(axis, axis)))))
+                face_a, n_a = BRepBuilderAPI_Transform(faces[ia], turn, True).Shape(), tuple(-c for c in nb)
+            t = -dot(_sub(pb, pa), n_a)  # how far b lies behind a, into a's material side
             if t <= 1e-6:
                 continue  # facing each other (a slot's sides) or in one plane
             move = gp_Trsf()
-            move.SetTranslation(gp_Vec(*(c * -t for c in na)))
-            a_on_b = BRepBuilderAPI_Transform(faces[ia], move, True).Shape()
+            move.SetTranslation(gp_Vec(*(c * -t for c in n_a)))
+            a_on_b = BRepBuilderAPI_Transform(face_a, move, True).Shape()
             if _box(a_on_b).IsOut(bb):  # only pairs whose boxes overlap, a moved onto b's plane
                 continue
             try:  # a failed boolean skips this pair, not the whole analysis
@@ -1168,10 +1191,16 @@ def walls(solid, faces) -> list[dict]:
             # face in the way (a slot or pocket) fails; one clear ray of the sampled points is enough.
             for p in _inner_points(common.Shape()):
                 hit, w = rays.first_hit(p, tuple(-c for c in nb))
-                if hit is not None and topo.fid(hit) == ia and abs(w - t) <= 0.01:
+                if hit is not None and topo.fid(hit) == ia and (drafted or abs(w - t) <= 0.01):
                     break
             else:
                 continue
+            if drafted:  # its thickness is at its thinnest place (D-020)
+                from OCC.Core.BRepExtrema import BRepExtrema_DistShapeShape
+                dist = BRepExtrema_DistShapeShape(faces[ia], faces[ib])
+                if not dist.IsDone() or dist.Value() <= 1e-6:
+                    continue
+                t = dist.Value()
             out.append({"kind": "wall", "faces": [ia, ib], "axis": [-c for c in na], "open_dirs": [],
                         "open_vectors": [], "dims_mm": {"thickness": t, "overlap_mm2": overlap}})
     return out

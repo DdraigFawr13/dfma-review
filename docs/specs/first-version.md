@@ -249,7 +249,7 @@ probe_mm = [10.0, 5.0, 3.0]   # file coordinates, mm; matches the face within 0.
   - `open_dirs` is the floor normal.
   - Open-sided pockets are out of scope (see Non-goals).
 - **Inside corner:** the concave edge, or the cylinder or torus fillet, between two adjacent pocket walls. Its radius is the fillet radius, or 0 for a sharp edge.
-- **Wall:** two parallel planar faces whose outward normals point away from each other, with solid material between them. ~~The midpoint of the shortest segment between the two faces is classified IN by `BRepClass3d_SolidClassifier`.~~ Changed in S4: for parallel faces that segment ends on an edge, so its midpoint is ON, not IN, and a plain block had no walls. Instead:
+- **Wall:** two parallel planar faces whose outward normals point away from each other, with solid material between them. Added by D-020: faces up to 15 deg from parallel (draft) count too, with the thickness at the thinnest place; faces that meet (a knife edge) are no wall. ~~The midpoint of the shortest segment between the two faces is classified IN by `BRepClass3d_SolidClassifier`.~~ Changed in S4: for parallel faces that segment ends on an edge, so its midpoint is ON, not IN, and a plain block had no walls. Instead:
   - Only pairs with opposed normals (within 0.5°) whose bounding boxes overlap once one face is moved onto the other's plane are measured, to keep the search short.
   - Their overlap (`BRepAlgoAPI_Common` of the moved face and the other face) is at least 10 mm² (assumption).
   - Material between: a ray from a point inside the overlap, into the material, meets the other face first. The points tried are the centroids of the overlap's mesh triangles, then a 9 × 9 grid on it; one clear ray is enough.
