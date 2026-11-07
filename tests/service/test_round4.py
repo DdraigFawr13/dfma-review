@@ -86,3 +86,40 @@ def test_circular_end_pocket_with_chamfers_round_its_floor_is_a_pocket(tmp_path)
     found = pockets_of(part, tmp_path)
     assert len(found) == 1
     assert found[0]["dims_mm"]["depth"] == pytest.approx(0.5 * IN, abs=0.01)
+
+
+def _compound_step(path, *shapes):
+    from OCC.Core.BRep import BRep_Builder
+    from OCC.Core.TopoDS import TopoDS_Compound
+    comp, builder = TopoDS_Compound(), BRep_Builder()
+    builder.MakeCompound(comp)
+    for s in shapes:
+        builder.Add(comp, s)
+    return write(comp, path)
+
+
+def test_a_gapped_main_part_beside_a_small_closed_body_is_still_the_part(tmp_path):
+    """Stress test (HANDOFF 3a): a main part whose shell has a small gap, saved next to a small closed
+    body, was dropped silently and the small body analysed. The gap here is one small face cut out of
+    a block with 8 holes (its 2 rim circles open)."""
+    from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeCylinder
+    from OCC.Core.gp import gp_Ax2, gp_Dir, gp_Pnt
+    from dfma.analyze import analyze
+    main = BRepPrimAPI_MakeBox(4 * IN, 2 * IN, 1 * IN).Shape()
+    for i in range(8):
+        main = cut(main, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt((0.4 + 0.45 * i) * IN, 1 * IN, -1), gp_Dir(0, 0, 1)),
+                                                 0.1 * IN, 2 * IN).Shape())
+    small = BRepPrimAPI_MakeBox(gp_Pnt(10 * IN, 0, 0), 0.25 * IN, 0.25 * IN, 0.25 * IN).Shape()
+    path = _compound_step(tmp_path / "gapmix.step", main, small)
+    text = path.read_text()
+    shells = re.findall(r"CLOSED_SHELL\('',\(([^)]*)\)", text)
+    big = max(shells, key=lambda s: s.count("#"))
+    faces = [f.strip() for f in big.split(",")]
+    cyl = {m.group(1) for m in re.finditer(r"(#\d+)\s*=\s*CYLINDRICAL_SURFACE", text)}
+    gap = next(f for f in faces if re.search(rf"{f}\s*=\s*ADVANCED_FACE\([^;]*,({'|'.join(cyl)}),", text))
+    path.write_text(text.replace(big, ",".join(f for f in faces if f != gap), 1))  # drop one hole's wall
+    result = analyze(path, "gapmix.step")
+    assert result["part"]["bbox_in"] == pytest.approx([4.0, 2.0, 1.0], abs=1e-3) or \
+        sorted(result["part"]["bbox_in"]) == pytest.approx([1.0, 2.0, 4.0], abs=1e-3)
+    assert any("of its edges belong to one face only" in a for a in result["assumptions"])
+    assert result["part"]["ignored_solids"] == 1

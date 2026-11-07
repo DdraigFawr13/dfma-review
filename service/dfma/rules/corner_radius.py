@@ -8,7 +8,7 @@ names every reason (spec Rules; S3 "Settled at build").
 
 from __future__ import annotations
 
-from ..units import MM_PER_IN, fmt_in
+from ..units import MM_PER_IN, fmt_in, past_limit
 
 ID = "corner_radius"
 PROCESSES = ('mill',)  # spec Flow: which process runs this rule
@@ -41,7 +41,7 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
             reasons.append((f"Corner radius {fmt_in(r_in)} under {min_text}", round(r_in, 6), min_in, "in", SUGGEST_SMALL))
         ratio = dims["depth"] / dims["end_mill_mm"]
         if ratio > table["max_depth_ratio"] + EPS:
-            text = f"the end mill that fits cuts {ratio:.1f}× its diameter deep (limit {table['max_depth_ratio']:.1f}×)"
+            text = f"the end mill that fits cuts {past_limit(ratio, table['max_depth_ratio'], 1)}× its diameter deep (limit {table['max_depth_ratio']:.1f}×)"
             reasons.append((text, round(ratio, 4), table["max_depth_ratio"], "ratio", SUGGEST_TOOL))
         if not reasons:
             continue

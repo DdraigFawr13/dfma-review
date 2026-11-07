@@ -585,3 +585,16 @@ def test_cross_hole_gives_no_false_hole_wall(tmp_path):
                  _cyl(-1, 0.5 * IN, 0.5 * IN, 2 * r, IN + 2, axis=(1, 0, 0)))
     result = analyze(_write(tmp_path, shape, "cross"), "x.step")
     assert [f for f in result["findings"] if f["rule"] == "thin_wall"] == []
+
+
+def test_a_value_just_past_its_limit_never_reads_as_the_limit():
+    """Stress test (HANDOFF 3a): a 6.03x hole was titled "Hole depth 6.0× diameter (limit 6.0×)"."""
+    from dfma.rules import hole_depth
+    from dfma.units import past_limit
+    limits = {"hole_depth": {"medium": 6.0, "high": 10.0, "source": "estimate"}}
+    holes = [{"kind": "hole", "id": f"hole-{i}", "faces": [i], "dims_mm": {"diameter": 1.0, "depth": d}}
+             for i, d in enumerate((6.03, 6.5, 10.04))]
+    titles = [f["title"] for f in hole_depth.check(holes, {}, limits)]
+    assert titles == ["Hole depth 6.03× diameter (limit 6.0×)", "Hole depth 6.5× diameter (limit 6.0×)",
+                      "Hole depth 10.04× diameter (limit 10.0×)"]
+    assert past_limit(6.25, 6.0, 1) == "6.2" and past_limit(5.97, 6.0, 1) == "5.97"
