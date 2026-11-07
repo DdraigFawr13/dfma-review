@@ -187,4 +187,16 @@ def test_summary_counts_o_ring_faces_called_pockets():
     part = {"labels": [11, 11, 18, 24, 14], "features": [
         {"kind": "pocket", "faces": [0, 2, 3, 4]}, {"kind": "hole", "faces": [1]}]}
     assert summary.excluded_calls([part]) == {"o-ring-as-hole": 1, "o-ring-as-pocket": 1,
-                                              "slot-step-as-pocket": 1, "other-excluded": 1}
+                                              "slot-step-as-pocket": 1, "slot-shaped-as-pocket": 0,
+                                              "other-excluded": 1}
+
+
+def test_summary_puts_a_slot_shaped_like_a_pocket_beside_a_step_on_its_own_line():
+    """D-019: one short wall over a blind step's floor (20) is a pocket by shape (MFCAD++ 10649)."""
+    sys.path.insert(0, str(Path(grade.__file__).parent))
+    import summary
+    labels = [17, 17, 17, 17, 20, 18, 18, 18]
+    shaped = {"kind": "pocket", "faces": [0, 1, 2, 3], "short_walls": [[1, [4]]]}
+    two_short = {"kind": "pocket", "faces": [5, 6, 7], "short_walls": [[6, [4]], [7, [4]]]}
+    got = summary.excluded_calls([{"labels": labels, "features": [shaped, two_short]}])
+    assert got["slot-shaped-as-pocket"] == 4 and got["slot-step-as-pocket"] == 3

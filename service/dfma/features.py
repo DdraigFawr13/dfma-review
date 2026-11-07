@@ -492,6 +492,7 @@ class _Enclosure:
     def __init__(self, solid):
         self.solid = solid
         self.rays = None
+        self.classifier = None
 
     def inside(self, floor, n: Vec, edge) -> bool:
         """A floor edge with no wall (D-018 round 1): another feature (a passage, a through hole, a
@@ -508,7 +509,10 @@ class _Enclosure:
             return False
         out = tuple(-c for c in into)
         start = tuple(p[i] + BREAK_STEP * out[i] - BREAK_STEP * n[i] for i in range(3))
-        if BRepClass3d_SolidClassifier(self.solid, gp_Pnt(*start), 1e-6).State() != TopAbs_OUT:
+        if self.classifier is None:  # built once: building it costs about 27 ms on a NIST part
+            self.classifier = BRepClass3d_SolidClassifier(self.solid)
+        self.classifier.Perform(gp_Pnt(*start), 1e-6)
+        if self.classifier.State() != TopAbs_OUT:
             return False  # material past the edge: a slope or chamfer, not a cut
         if self.rays is None:
             self.rays = _Rays(self.solid)
