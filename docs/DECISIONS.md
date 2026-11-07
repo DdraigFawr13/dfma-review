@@ -118,3 +118,13 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - The selected finding's pin is solid in its severity colour (red for HIGH, orange for MEDIUM), larger, with its severity word ("F5 HIGH"), raised on a stem to a dot on its spot. Its faces still turn the Selected colour (`--accent`); nothing else dims.
   - Unselected pins show severity by their ring colour only; the findings list, which every pin's id points to, carries the severity word (APP-02 is met by the list and the selected pin).
 - **Why:** Morgan said the tags were "not clearly indicating what they are attached to" and looked "largely floating randomly" with many findings. Research: DFM tools list findings and highlight the selected one; web 3D viewers use numbered pins tied to a list. Morgan picked pins on the [workshop page](https://claude.ai/artifact/P3kT7ftt811y7qbQWb2gNk) ("b is good"), wanted only the selected one highlighted ("I liked the way they were"), then the warning colours: "go with these new solid colors … you can push and merge s4" (2026-11-07).
+
+## D-018 Recognition gold standard and target
+
+- **Status:** Accepted (2026-11-07). How the test files are kept for CI is still open (HANDOFF).
+- **Decision:**
+  - The grading sets are the gold standard for hole and pocket recognition: the first 500 MFCAD++ test parts (lexical order), Quiddity's 40-part MFCAD++ subset and Analysis Situs's 55 hole and cavity cases, scored by `tests/grading/grade.py`. D-011 (NIST) stays the standard for mapping whole parts.
+  - Target, in every category on the 500 parts: at least 10% fewer missed surfaces than the best other tool (Quiddity 0.3.12, Analysis Situs), and 100% of our hole and pocket calls right (0 wrong surfaces, wrong calls on grooves, slots and steps included). From the 2026-11-07 baseline: holes miss at most 14 of 602 (Quiddity misses 16), pockets at most 93 of 3,745 (Analysis Situs misses 104).
+  - Each round of recognition changes reruns our engine and shows that round's comparison with the other tools' fixed results (the [head-to-head page](https://claude.ai/artifact/YAAEriC8gktJkGi5VtNvhq)).
+  - Builder default: each round is also scored on MFCAD++ test parts 501-1,000, which are not used to tune the rules, so a gain that only fits the first 500 shows up.
+- **Why:** Morgan, 2026-11-07: "I want you to be at least 10% better in all categories with 100% accuracy in your guesses. Every round of changes you make please show me that rounds comparison with the others. Obviously you just need to rerun our engine. Also these testings are going to now be our new gold standard"; target chosen as "10% fewer misses" (the literal +10% is over 100 for holes and pockets).

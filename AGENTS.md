@@ -28,6 +28,7 @@ Shared rules come from AI-Master-Instructions and load through CLAUDE.md (`.clau
 - No AI at runtime unless Morgan approves it (D-001; Morgan: "I don't want to integrate ai into this if it can be avoided").
 - Show each slice to Morgan as a status page plus a view-only demo page (D-009).
 - When the GitHub API refuses a public repo, use the browser on github.com instead (Morgan, 2026-11-07); put this in research briefs.
+- Compare tools only like with like: each tool's current release, the same parts, through our own scorer (`tests/grading/grade.py --engine`); never set our numbers beside numbers another tool measured its own way, and say whose answer key each set is (LESSONS "reports", ×2).
 - Keep the app portable: it moves later to a company host and the company GitLab, so avoid lock-in to one hosting vendor (D-001).
 
 ## Overrides
