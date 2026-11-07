@@ -19,7 +19,7 @@ import grade  # noqa: E402
 
 SET = ROOT / "tests" / "grading" / "sets" / "bullnose_draft"
 FILES = sorted(SET.glob("*.step"))
-KNOWN_MISSES = {"dr_round_1deg.step"}  # a 1 deg tapered round recess: cone-walled holes are not read yet
+KNOWN_MISSES: set[str] = set()  # dr_round_1deg (a 1 deg tapered recess) is read since the tapered-holes round
 
 
 def _score(path):

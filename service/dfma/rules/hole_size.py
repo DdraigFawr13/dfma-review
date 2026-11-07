@@ -1,4 +1,5 @@
-"""hole_size: a diameter that matches no drill within 0.0005 in is medium (spec Rules, D-010)."""
+"""hole_size: a diameter that matches no drill within 0.0005 in is medium (spec Rules, D-010). A tapered
+hole (D-018 tapered-holes round) is reamed to its taper, so no drill size applies to it."""
 
 from __future__ import annotations
 
@@ -18,6 +19,8 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
         if f["kind"] != "hole":
             continue
         d = f["dims_mm"]["diameter"]
+        if f["dims_mm"].get("taper_deg"):  # a tapered hole is reamed to its taper, not drilled to a size
+            continue
         if d > top + tol:  # above the drill range: milled with an end mill instead (D-010)
             continue
         drill = nearest_drill(d, units)
