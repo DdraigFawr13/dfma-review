@@ -66,6 +66,17 @@ body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
 .fid { font: 600 0.875rem var(--mono); color: var(--muted); }
 .fmeta { color: var(--muted); font-size: 0.875rem; font-variant-numeric: tabular-nums; }
 .fsug { font-size: 0.875rem; }
+.side { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; min-height: 0; max-height: calc(100vh - 210px); }
+.side > .panel:first-child { flex: 1 1 auto; max-height: none; min-height: 14rem; }
+.plan { flex: 0 1 auto; max-height: none; min-height: 8rem; overflow-y: auto; }
+.plan dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: var(--space-1) var(--space-3); font-size: 0.875rem; }
+.plan dt { color: var(--muted); }
+.plan dd { margin: 0; font-variant-numeric: tabular-nums; }
+.plan .setup { border-top: 1px solid var(--line); padding-top: var(--space-1); display: grid; gap: 2px; }
+.plan .shead { font: 600 0.875rem var(--mono); }
+.plan .op { font-size: 0.875rem; display: flex; justify-content: space-between; gap: var(--space-2); }
+.plan .op .tid, .plan .ofeat { font-family: var(--mono); color: var(--muted); white-space: nowrap; }
+.plan .note { margin: 0; color: var(--muted); font-size: 0.875rem; }
 .assume { margin-top: auto; border-top: 1px solid var(--line); padding-top: var(--space-1); font-size: 0.875rem; color: var(--muted); }
 .assume summary { cursor: pointer; font-weight: 600; color: var(--ink); min-height: 32px; display: flex; align-items: center; }
 .assume ul { margin: 0; padding-left: 18px; display: grid; gap: var(--space-1); }
@@ -81,7 +92,7 @@ body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
 @media (max-width: 899px) {
   .cols { grid-template-columns: 1fr; min-height: 0; flex: none; }
   .viewer canvas { height: 420px; flex: none; }
-  .panel { max-height: none; }
+  .panel, .side { max-height: none; }
   .meta { margin-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

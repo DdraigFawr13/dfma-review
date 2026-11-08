@@ -42,6 +42,11 @@ ASSUMPTIONS = [
     "Walls are pairs of planar faces, parallel or up to 15 deg from it (draft, measured at the thinnest place), "
     "with at least 10 mm2 of overlap and material between them (assumption), plus the material around a hole's side and under a drill point, measured up to 0.250 in "
     "(assumption); other curved walls, such as thin cylindrical shells, are not measured.",
+    "Tool loads count every tool loaded, including the first in each setup (spec Plan).",
+    "Setups cover the holes and pockets a 3-axis mill reaches along the part's axes; a feature that needs a "
+    "4/5-axis mill or a fixture, and a void sealed inside the part, are in no setup and their tools are not listed.",
+    "A countersink or entry chamfer is cut from its own end after drilling, with one countersink tool per angle "
+    "(D-022).",
     "Engraved text and logos are read as pockets: their sharp corners are real geometry, but engraving tools may accept them.",
 ]
 

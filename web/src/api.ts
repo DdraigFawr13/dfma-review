@@ -1,4 +1,4 @@
-// POST /api/analyze (spec Flow and Response schema). Typed so far: the S1 and S2 fields.
+// POST /api/analyze (spec Flow and Response schema). Typed so far: the S1 to S5 fields.
 
 export type Process = "mill" | "turn";
 export type Material = "al6061" | "steel1018" | "ss304" | "plastic";
@@ -26,6 +26,18 @@ export interface Analysis {
   findings: Finding[];
   rules_run: string[];
   assumptions: string[];
+  machine: string | null; // S5
+  setups: { direction: string; features: string[] }[];
+  operations: { setup: number; tool: string; features: string[] }[];
+  tools: Tool[];
+  tool_changes: number;
+}
+
+export interface Tool {
+  id: string; // "dr-0.2500", "dr-6.5mm", "em-0.250", "cs-82"
+  kind: "drill" | "end_mill" | "countersink" | string;
+  diameter_in: number | null;
+  undersized: boolean;
 }
 
 export type Severity = "high" | "medium" | "low";

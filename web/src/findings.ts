@@ -1,10 +1,10 @@
 // The verdict line and the findings list in severity groups (spec "Web page", D-012).
 
-import type { Analysis, Finding, Severity } from "./api";
+import type { Analysis, Finding, Severity, Tool } from "./api";
 
 const RULE_NAMES: Record<string, string> = {
   hole_depth: "hole depth", hole_size: "hole size", corner_radius: "corner radius", pocket_depth: "pocket depth",
-  undercut: "undercut", thin_wall: "thin wall",
+  undercut: "undercut", thin_wall: "thin wall", access: "access",
 };
 const KIND_NAMES: [string, string, string][] = [["hole", "hole", "holes"], ["pocket", "pocket", "pockets"], ["corner", "corner", "corners"], ["wall", "wall", "walls"]];
 const GROUPS: Severity[] = ["high", "medium"];
@@ -115,4 +115,59 @@ export function renderFindings(host: HTMLElement, result: Analysis | null, messa
       host.append(row);
     }
   }
+}
+
+/** "1/4 in end mill", "0.250 in (1/4) drill", "6.5 mm drill", "82° countersink" (S5). */
+export function toolName(t: Tool): string {
+  if (t.kind === "countersink") return `${t.id.replace(/^cs-/, "")}° countersink`;
+  const metric = /^dr-(.+)mm$/.exec(t.id);
+  if (metric) return `${metric[1]} mm drill`;
+  const d = t.diameter_in ?? 0;
+  const name = t.kind === "drill" ? `${diameterText(d)} drill` : `${toolText(d)} end mill`;
+  return t.undersized ? `${name} (smallest; nothing fits)` : name;
+}
+
+/** The machine plan panel (S5, spec Plan): machine, tool loads, each setup with its tools and features,
+ *  and the features in no setup (the access finding). */
+export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analysis | null): void {
+  host.replaceChildren();
+  count.textContent = "";
+  if (!result || !result.machine) return;
+  const n = result.setups.length;
+  count.textContent = `${n} ${n === 1 ? "setup" : "setups"}`;
+  const dl = el("dl");
+  const row = (term: string, value: string, id: string) => {
+    const dd = el("dd", undefined, value);
+    dd.dataset.testid = id;
+    dl.append(el("dt", undefined, term), dd);
+  };
+  row("Machine", result.machine, "plan-machine");
+  row("Tool loads", `${result.tool_changes} (including the first in each setup)`, "plan-loads");
+  host.append(dl);
+  const tools = new Map(result.tools.map((t) => [t.id, t]));
+  result.setups.forEach((s, i) => {
+    const box = el("div", "setup");
+    box.dataset.testid = `plan-setup-${i + 1}`;
+    box.append(el("span", "shead", `Setup ${i + 1} · from ${s.direction.replace("-", "−")}`));
+    const ops = result.operations.filter((o) => o.setup === i);
+    if (ops.length === 0) box.append(el("p", "note", "Nothing to cut from this side."));
+    for (const o of ops) {
+      const line = el("span", "op");
+      const t = tools.get(o.tool);
+      const name = el("span");
+      name.append(document.createTextNode(t ? toolName(t) : o.tool), document.createTextNode(" "), el("span", "tid", o.tool));
+      line.append(name, el("span", "ofeat", o.features.join(", ")));
+      box.append(line);
+    }
+    host.append(box);
+  });
+  const away = result.findings.filter((f) => f.rule === "access");
+  if (away.length) {
+    const note = el("p", "note");
+    note.dataset.testid = "plan-not-planned";
+    note.textContent = `In no setup: ${away.map((f) => `${f.feature} (${f.id})`).join(", ")}. `
+      + "Each needs a 4/5-axis mill or a fixture; its tools are not listed.";
+    host.append(note);
+  }
+  host.append(el("p", "note", "Directions are the part's own axes: +Z is the outward normal of its largest flat face."));
 }

@@ -2,7 +2,7 @@
 // changes while a file is loaded. No submit button (spec S1, settled at build).
 
 import { analyze, ApiError, type Analysis, type Finding, type Material, type Process } from "./api";
-import { renderFindings, renderVerdict } from "./findings";
+import { renderFindings, renderPlan, renderVerdict } from "./findings";
 import { formatSize } from "./format";
 import { Viewer, type CheckedKind } from "./viewer";
 
@@ -95,6 +95,8 @@ function showFindings(result: Analysis | null, message: string): void {
   renderFindings(list, result, message, select, selected);
   count.textContent = result ? String(result.findings.length) : "";
   assumptions.hidden = !result;
+  renderPlan(byId("plan"), byId("plan-count"), result);
+  byId("plan-panel").hidden = !result?.machine;
   if (result) {
     byId("assumption-list").replaceChildren(...result.assumptions.map((a) => {
       const li = document.createElement("li");

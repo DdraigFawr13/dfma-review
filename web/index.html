@@ -62,11 +62,17 @@
           </div>
         </div>
       </section>
-      <section class="panel" aria-labelledby="findings-title">
-        <h2 id="findings-title">Findings <span class="count" id="findings-count"></span></h2>
-        <div class="groups" id="findings"><p class="none">No findings yet. Choose a STEP file to start.</p></div>
-        <details class="assume" id="assumptions" hidden><summary>Assumptions</summary><ul id="assumption-list"></ul></details>
-      </section>
+      <div class="side">
+        <section class="panel" aria-labelledby="findings-title">
+          <h2 id="findings-title">Findings <span class="count" id="findings-count"></span></h2>
+          <div class="groups" id="findings"><p class="none">No findings yet. Choose a STEP file to start.</p></div>
+          <details class="assume" id="assumptions" hidden><summary>Assumptions</summary><ul id="assumption-list"></ul></details>
+        </section>
+        <section class="panel plan" aria-labelledby="plan-title" data-testid="plan" id="plan-panel" hidden>
+          <h2 id="plan-title">Machine plan <span class="count" id="plan-count"></span></h2>
+          <div id="plan"></div>
+        </section>
+      </div>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

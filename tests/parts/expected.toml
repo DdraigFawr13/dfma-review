@@ -307,3 +307,83 @@ rule = "thin_wall"
 severity = "high"
 measured = 0.025
 probe_mm = [25.0825, 12.7, 6.35]
+
+[[part]]
+name = "two_sided_block"
+units = "inch"
+face_count = 26
+features = { hole = 1, pocket = 2, corner = 8, wall = 14 }
+machine = "3-axis mill"
+setups = [{ dir = "+Z", probes = [[25.4, 53.974999999999994, 6.35]] }, { dir = "-Z", probes = [[25.4, 19.049999999999997, 31.75]] }, { dir = "-X", probes = [[41.275, 41.275, 19.049999999999997]] }]
+tools = ["em-0.250", "dr-0.2500"]
+tool_changes = 3
+
+[[part]]
+name = "angled_hole"
+units = "inch"
+face_count = 7
+features = { hole = 1, pocket = 0, corner = 0, wall = 3 }
+machine = "4/5-axis mill or fixture"
+setups = [{ dir = "+Z", probes = [] }]
+tools = []
+tool_changes = 0
+[[part.finding]]
+rule = "access"
+severity = "high"
+measured = 30.0
+probe_mm = [25.4, 28.575, 12.7]
+
+[[part]]
+name = "angled_hole_in_pocket"
+units = "inch"
+face_count = 16
+features = { hole = 1, pocket = 1, corner = 4, wall = 8 }
+machine = "4/5-axis mill or fixture"
+setups = [{ dir = "-Z", probes = [[15.239999999999998, 25.4, 19.049999999999997]] }]
+tools = ["em-0.250"]
+tool_changes = 1
+[[part.finding]]
+rule = "access"
+severity = "high"
+measured = 20.0
+probe_mm = [28.2751, 28.575, 9.5027]
+
+[[part]]
+name = "through_hole_two_dirs"
+units = "inch"
+face_count = 7
+features = { hole = 1, pocket = 0, corner = 0, wall = 3 }
+machine = "3-axis mill"
+setups = [{ dir = "+X", probes = [[15.875, 34.925, 12.7]] }]
+tools = ["dr-0.2500"]
+tool_changes = 1
+
+[[part]]
+name = "clean_one_setup"
+units = "inch"
+face_count = 18
+features = { hole = 2, pocket = 1, corner = 4, wall = 9 }
+machine = "3-axis mill"
+setups = [{ dir = "-Z", probes = [[7.619999999999999, 25.4, 19.049999999999997], [47.625, 15.875, 12.7], [47.625, 41.275, 19.049999999999997]] }]
+tools = ["em-0.250", "dr-0.2500"]
+tool_changes = 2
+
+[[part]]
+name = "rotated_block"
+units = "inch"
+face_count = 18
+features = { hole = 2, pocket = 1, corner = 4, wall = 9 }
+machine = "3-axis mill"
+setups = [{ dir = "-Z", probes = [[2.6137472101651973, 24.71809850548683, 21.173351926287044], [39.39870971094087, 33.39190018097047, 3.7641633090394], [31.581602819196895, 55.87726607197426, 14.662955012284861]] }]
+tools = ["em-0.250", "dr-0.2500"]
+tool_changes = 2
+
+[[part]]
+name = "countersunk_hole"
+units = "inch"
+face_count = 8
+features = { hole = 1, pocket = 0, corner = 0, wall = 3 }
+machine = "3-axis mill"
+setups = [{ dir = "-Z", probes = [[25.4, 15.875, 5.08]] }]
+tools = ["dr-0.2500", "cs-82"]
+tool_changes = 2

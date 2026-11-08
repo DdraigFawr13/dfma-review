@@ -18,7 +18,7 @@ NO_SOLID = "No solid found in this file"
 TOO_LARGE = "File is larger than 50 MB"
 TOO_LONG = "This file took too long to analyse"
 
-EMPTY_UNTIL_LATER = ("setups", "operations", "tools", "cost_drivers")  # features and findings arrive in S2
+EMPTY_UNTIL_LATER = ("cost_drivers",)  # features and findings arrive in S2; setups, operations and tools in S5
 
 
 def check_box(result: dict, name: str, units: str) -> None:
@@ -76,9 +76,11 @@ def check_box(result: dict, name: str, units: str) -> None:
     walls = sorted(round(f["dims_mm"]["thickness"] / 25.4, 4) for f in result["features"] if f["kind"] == "wall")
     assert walls == [0.5, 1.0, 2.0]
     assert result["findings"] == []
-    assert result["machine"] is None
+    # S5 (spec Plan): the through hole opens +Z and -Z, so one setup, +Z first; one drill load.
+    assert result["machine"] == "3-axis mill"
+    assert result["setups"] == [{"direction": "+Z", "features": ["hole-1"]}]
+    assert [t["id"] for t in result["tools"]] == ["dr-0.2500"] and result["tool_changes"] == 1
     assert result["turn_axis"] is None
-    assert result["tool_changes"] == 0
     assert isinstance(result["assumptions"], list)
 
 
