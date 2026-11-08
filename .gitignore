@@ -17,3 +17,4 @@ __pycache__/
 /.pytest_cache/
 /tests/nist/.cache/
 /tests/grading/.cache/
+/tests/inventor/.local/

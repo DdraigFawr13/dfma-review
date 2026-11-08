@@ -44,7 +44,7 @@ To run the browser tests with a Chromium that is already installed, set `DFMA_CH
 
 ## Packages and licences
 
-Approved in D-004, D-007 and D-008; versions are pinned in `environment.yml` and `web/package-lock.json`. Licences checked on conda-forge and npm on 2026-11-06.
+Approved in D-004, D-007, D-008 and D-031; versions are pinned in `environment.yml` and `web/package-lock.json`. Licences checked on conda-forge and npm on 2026-11-06.
 
 | Package | Version | Licence | Use |
 |---|---|---|---|
@@ -53,6 +53,7 @@ Approved in D-004, D-007 and D-008; versions are pinned in `environment.yml` and
 | fastapi | 0.162.0 | MIT | web service |
 | uvicorn | 0.54.0 | BSD-3-Clause | web server |
 | python-multipart | 0.0.33 | Apache-2.0 | uploads |
+| olefile | 0.47 | BSD-2-Clause | Inventor `.ipt` files (from I1, D-031) |
 | nodejs | 22.23.4 | MIT | web build |
 | three | 0.187.0 | MIT | 3D viewer |
 | jspdf | 4.2.1 | MIT | PDF report (from S7) |
