@@ -151,8 +151,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 
 ## D-021 Undercut pockets get a finding; sealed voids do not
 
-- **Status:** Accepted (2026-11-08). The finding is built on the next branch.
+- **Status:** Accepted (2026-11-08).
 - **Decision:**
   - A pocket with an undercut (set 2: a ceiling facing its floor, D-018) gets a finding that it needs an undercut cutter (a T-slot or lollipop cutter), with the overhang measured on the model (D-001).
+  - Built 2026-11-08 as rule `undercut` (mill only, medium, measured in inches, limit 0, `config/thresholds.toml` source "D-021"). Builder defaults: the overhang is the distance from each edge where a ceiling meets a wall below it to the nearest edge where it meets a wall above it, the largest; a ceiling must lie wholly above the floor; the finding is given only when every floor edge has a wall (through a side another feature opens, a cutter may reach in from the side). Scan of 1,213 files (NIST, EDMR, our sets, MFCAD++ 1-1,000): it fires on the 3 undercut set parts only.
   - A void sealed inside the part (an inner shell) gets no finding; it keeps the pocket rules it had before set 2 (D-018).
 - **Why:** Morgan, 2026-11-08: "I approve. Go with your recommendations" ([head-to-head page](https://claude.ai/artifact/YAAEriC8gktJkGi5VtNvhq)): the undercut changes the tooling the shop needs; sealed voids come from how MFCAD++ made its parts, not from real parts.

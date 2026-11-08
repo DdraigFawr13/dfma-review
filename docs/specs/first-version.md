@@ -285,6 +285,7 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
   - A radius under 0.0313 in (1/32 in) is medium.
   - If the radius is over 0 and depth ÷ the diameter of the end mill `pick_end_mill` returns is over 4.0, that is also a medium reason: the tool that fits is long and thin.
 - **`pocket_depth`:** pocket depth ÷ the diameter from `pick_end_mill` is over 3.0. Medium. An undersized pick adds "smallest tool used" to the suggestion.
+- **`undercut`** (added by D-021, mill only): a pocket with an undercut (a ceiling facing its floor, D-018 set 2). Measured: how far the undercut reaches under its lip, in inches; limit 0. Medium: "needs a T-slot or lollipop cutter".
 - **`thin_wall`:** thickness under 0.030 in (`al6061`), 0.020 in (`steel1018`, `ss304`) or 0.060 in (`plastic`). High.
 - **`access`:** a hole or pocket with no `open_dirs` along ±X ±Y ±Z of the part frame (within 0.5°). Measured: the angle in degrees between its nearest open vector and the nearest frame axis; limit 0.5; unit `deg`. High: "needs a 4/5-axis mill or a fixture". It sets `machine` to "4/5-axis mill or fixture".
 - **`turn_slender`:** length ÷ diameter over 4.0 is medium; over 8.0 is high.

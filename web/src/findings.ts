@@ -4,7 +4,7 @@ import type { Analysis, Finding, Severity } from "./api";
 
 const RULE_NAMES: Record<string, string> = {
   hole_depth: "hole depth", hole_size: "hole size", corner_radius: "corner radius", pocket_depth: "pocket depth",
-  thin_wall: "thin wall",
+  undercut: "undercut", thin_wall: "thin wall",
 };
 const KIND_NAMES: [string, string, string][] = [["hole", "hole", "holes"], ["pocket", "pocket", "pockets"], ["corner", "corner", "corners"], ["wall", "wall", "walls"]];
 const GROUPS: Severity[] = ["high", "medium"];
