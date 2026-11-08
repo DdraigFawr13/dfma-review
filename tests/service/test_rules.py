@@ -477,10 +477,11 @@ def test_bosses_with_air_between_are_not_a_wall():
 
 
 def test_thin_wall_runs_for_turn():
-    """thin_wall is shared by mill and turn (spec Flow); the pocket rules are not."""
+    """thin_wall is shared by mill and turn (spec Flow); the pocket rules are not. A block has no turning axis
+    (S6 turn_axis), so the two turning rules don't run either: only the shared rules."""
     result = run("thin_floor", process="turn")
-    assert result["rules_run"] == ["hole_depth", "hole_size", "thin_wall"]
-    assert [f["rule"] for f in result["findings"]] == ["thin_wall"]
+    assert result["rules_run"] == ["hole_depth", "hole_size", "thin_wall", "turn_axis"]
+    assert [f["rule"] for f in result["findings"]] == ["thin_wall", "turn_axis"]
 
 
 def test_hole_walls():

@@ -343,6 +343,38 @@ def single_face():
     return BRepBuilderAPI_MakeFace(gp_Pln(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)), 0, 20, 0, 10).Face()
 
 
+
+# --- S6: turning (spec S6, J5) ---------------------------------------------------------------------
+
+
+def rod(d_in, l_in, at_in=(0.0, 0.0, 0.0), axis=(0, 0, 1)):
+    """A cylinder of diameter d_in and length l_in (inches) from at_in along axis, modelled in mm."""
+    return BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(*(a * IN for a in at_in)), gp_Dir(*axis)), d_in / 2 * IN,
+                                    l_in * IN).Shape()
+
+
+def slender_shaft():
+    """J5: 0.500 in diameter, 4.500 in long along Z, a 0.125 in cross hole through it along X at mid-length."""
+    return cut(rod(0.5, 4.5), rod(0.125, 1.0, (-0.5, 0.0, 2.25), (1, 0, 0)))
+
+
+def stout_shaft():
+    """1.000 in diameter, 5.000 in long: length 5.0x diameter."""
+    return rod(1.0, 5.0)
+
+
+def shaft_with_groove_and_bore():
+    """1.500 in diameter, 3.000 in long; an outside groove 0.125 in wide and 0.100 in deep from z 1.500 in; a 0.750 in
+    bore 1.000 in deep from the top, with an inside groove 0.875 in across and 0.125 in wide from z 2.400 in."""
+    ring = cut(rod(2.0, 0.125, (0, 0, 1.5)), rod(1.3, 0.125, (0, 0, 1.5)))
+    return cut(rod(1.5, 3.0), ring, rod(0.75, 1.5, (0, 0, 2.0)), rod(0.875, 0.125, (0, 0, 2.4)))
+
+
+def clean_shaft():
+    """1.000 in diameter for 2.000 in, then 0.750 in to 3.000 in long; a 0.1875 in (3/16) hole 0.5625 in deep on
+    the axis from the small end (3.0x diameter)."""
+    return cut(fuse(rod(1.0, 2.0), rod(0.75, 1.0, (0, 0, 2.0))), rod(0.1875, 1.0, (0, 0, 2.4375)))
+
 # --- expected.toml (small string writer; reading uses tomllib) -----------------
 
 
@@ -501,6 +533,43 @@ def main() -> int:
     add(countersunk_hole(), "countersunk_hole", "inch", 1, machine="3-axis mill",
         setups=[{"dir": "-Z", "probes": [[1.0 * IN, 0.625 * IN, 0.2 * IN]]}], tools=["dr-0.2500", "cs-82"],
         tool_changes=2)
+
+    # S6 turning (spec S6, J5). Walls counted by hand: opposed planar faces square to the axis with material
+    # between and 10 mm2 of overlap; no hole wall is measured to a face the hole opens onto (stress test 3a).
+    # `turn` counts the turning features (bore, groove, profile). Setups list features by probe points.
+    sl = [[0.0, 0.0625 * IN, 2.25 * IN]]  # the cross hole's wall
+    od = (0.25 * IN, 0.0, 1.0 * IN)  # on the 0.500 in outside diameter
+    add(slender_shaft(), "slender_shaft", "inch", 1, walls=1, process="turn", material="steel1018",  # the two ends
+        turn={"bore": 0, "groove": 0, "profile": 1}, machine="lathe with live tooling",
+        findings=[finding("turn_slender", "high", 9.0, od), finding("turn_offaxis", "medium", 90.0, sl[0])],
+        setups=[{"dir": "turn", "probes": [list(od)] + sl}], tools=["turn", "dr-0.1250"], tool_changes=2)
+    # The same part for milling (Morgan compares): no frame face square to Z, so +X is the file X axis; the
+    # hole opens +X and -X. The outside is not planned (assumptions).
+    add(slender_shaft(), "slender_shaft", "inch", 1, walls=1, material="steel1018", machine="3-axis mill",
+        setups=[{"dir": "+X", "probes": sl}], tools=["dr-0.1250"], tool_changes=1)
+    st = (0.5 * IN, 0.0, 2.0 * IN)
+    add(stout_shaft(), "stout_shaft", "inch", 0, walls=1, process="turn", turn={"bore": 0, "groove": 0, "profile": 1},
+        findings=[finding("turn_slender", "medium", 5.0, st)], machine="lathe",
+        setups=[{"dir": "turn", "probes": [list(st)]}], tools=["turn"], tool_changes=1)
+    # Walls: bottom to the lower groove side (1.500), to the top ring (3.000), to the bore floor (2.000) and to
+    # the inside groove's lower side (2.400); the upper groove side to the top (1.375); the inside groove's
+    # upper side to the top (0.475). The groove sides face each other across air.
+    add(shaft_with_groove_and_bore(), "shaft_with_groove_and_bore", "inch", 0, walls=6, process="turn",
+        material="steel1018", turn={"bore": 1, "groove": 2, "profile": 1}, machine="lathe",
+        setups=[{"dir": "turn", "probes": [[0.75 * IN, 0.0, 0.5 * IN], [0.375 * IN, 0.0, 2.2 * IN],
+                                            [0.65 * IN, 0.0, 1.56 * IN], [0.4375 * IN, 0.0, 2.46 * IN]]}],
+        tools=["turn", "bore", "groove-0.125"], tool_changes=3)
+    # box_through_hole for turning: the hole is the only round face, 5.4% of the area (spec: under 40%).
+    hole_area = math.pi * 0.25 * 0.5
+    share = 100 * hole_area / (7.0 - 2 * math.pi * 0.125 ** 2 + hole_area)
+    add(box_through_hole(), "block_as_turn", "inch", 1, process="turn", turn={"bore": 0, "groove": 0, "profile": 0},
+        findings=[finding("turn_axis", "high", round(share, 4), (1.125 * IN, 0.5 * IN, 0.25 * IN))],
+        setups=[], tools=[], tool_changes=0)  # no machine (test_turning)
+    # Walls: bottom to the shoulder (2.000), to the top ring (3.000) and to the hole's floor (2.4375); the hole is
+    # 0.281 in from the 0.750 in diameter, over the 0.250 in wall cap.
+    cs = [[0.5 * IN, 0.0, 1.0 * IN], [0.09375 * IN, 0.0, 2.7 * IN]]
+    add(clean_shaft(), "clean_shaft", "inch", 1, walls=3, process="turn", turn={"bore": 0, "groove": 0, "profile": 1},
+        machine="lathe", setups=[{"dir": "turn", "probes": cs}], tools=["turn", "dr-0.1875"], tool_changes=2)
 
     write_step(single_face(), "no_solid", "MM")
     (HERE / "not_step.step").write_text("This is a text file, not a STEP file.\n", encoding="utf-8", newline="\n")

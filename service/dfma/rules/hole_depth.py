@@ -1,4 +1,5 @@
-"""hole_depth: depth / diameter over 6.0 is medium, over 10.0 is high (limits per material)."""
+"""hole_depth: depth / diameter over 6.0 is medium, over 10.0 is high (limits per material). It judges a
+turned part's bores too (spec Features "Bore": an on-axis hole is a bore or a hole, and hole_depth applies once)."""
 
 from __future__ import annotations
 
@@ -6,6 +7,7 @@ from ..units import MM_PER_IN, past_limit
 
 ID = "hole_depth"
 PROCESSES = ('mill', 'turn')  # spec Flow: which process runs this rule
+KINDS = ("hole", "bore")  # bores exist on turned parts only
 SUGGESTION = {
     "medium": "Needs peck drilling. Make it shallower or larger if the design allows.",
     "high": "Needs a long drill and peck drilling. Make it shallower or larger if the design allows.",
@@ -18,7 +20,7 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
         return []
     out = []
     for f in features:
-        if f["kind"] != "hole":
+        if f["kind"] not in KINDS:
             continue
         ratio = f["dims_mm"]["depth"] / f["dims_mm"]["diameter"]
         eps = 1e-9  # "over 6.0": a ratio that is 6.0 to rounding is not over it
@@ -29,7 +31,7 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
         else:
             continue
         out.append({"rule": ID, "severity": severity,
-                    "title": f"Hole depth {past_limit(ratio, limit, 1)}× diameter (limit {limit:.1f}×)",
+                    "title": f"{f['kind'].capitalize()} depth {past_limit(ratio, limit, 1)}× diameter (limit {limit:.1f}×)",
                     "measured": round(ratio, 4), "limit": limit, "unit": "ratio",
                     "faces": f["faces"], "feature": f["id"], "threshold_source": table["source"],
                     "suggestion": SUGGESTION[severity] + _longest(f["dims_mm"])})
@@ -51,7 +53,7 @@ def passes(features: list[dict], part: dict, limits: dict) -> list[dict]:
         return []
     out = []
     for f in features:
-        if f["kind"] != "hole":
+        if f["kind"] not in KINDS:
             continue
         d, depth = f["dims_mm"]["diameter"], f["dims_mm"]["depth"]
         ratio = depth / d

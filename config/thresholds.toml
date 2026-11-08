@@ -88,3 +88,25 @@ source = "estimate"
 [plastic.thin_wall]   # wall thickness under min_in is high
 min_in = 0.060
 source = "estimate"
+
+# S6 turning (spec Rules "turn_slender"): length / largest outside diameter over medium is medium, over high is high
+
+[al6061.turn_slender]
+medium = 4.0
+high = 8.0
+source = "estimate"
+
+[steel1018.turn_slender]
+medium = 4.0
+high = 8.0
+source = "estimate"
+
+[ss304.turn_slender]
+medium = 4.0
+high = 8.0
+source = "estimate"
+
+[plastic.turn_slender]
+medium = 4.0
+high = 8.0
+source = "estimate"

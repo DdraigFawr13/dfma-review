@@ -9,21 +9,24 @@ from helpers import PARTS, expected_parts
 
 from dfma.analyze import analyze
 
-JUDGES = {"hole_depth": ("hole",), "hole_size": ("hole",), "corner_radius": ("corner",), "pocket_depth": ("pocket",),
-          "undercut": ("pocket",), "thin_wall": ("wall",), "access": ("hole", "pocket")}
+JUDGES = {"hole_depth": ("hole", "bore"), "hole_size": ("hole",), "corner_radius": ("corner",), "pocket_depth": ("pocket",),
+          "undercut": ("pocket",), "thin_wall": ("wall",), "access": ("hole", "pocket"),
+          # S6: turn_axis judges the part (no feature when it fires) and passes the profile it found
+          "turn_axis": ("profile",), "turn_slender": ("profile",), "turn_offaxis": ("hole", "pocket", "bore")}
+OPEN_ONLY = ("access", "turn_offaxis")  # a void sealed inside the part is not judged
 
 
-@pytest.mark.parametrize("entry", expected_parts(), ids=lambda e: f'{e["name"]}-{e.get("material", "al6061")}')
+@pytest.mark.parametrize("entry", expected_parts(), ids=lambda e: f'{e["name"]}-{e.get("process", "mill")}-{e.get("material", "al6061")}')
 def test_every_judged_feature_is_flagged_or_passed(entry):
     path = PARTS / f'{entry["name"]}.step'
     r = analyze(path, path.name, entry.get("process", "mill"), entry.get("material", "al6061"))
     for rule in r["rules_run"]:
-        flagged = {f["feature"] for f in r["findings"] if f["rule"] == rule}
+        flagged = {f["feature"] for f in r["findings"] if f["rule"] == rule and f["feature"] is not None}
         passed = [p["feature"] for p in r["passed"] if p["rule"] == rule]
         assert len(passed) == len(set(passed)), f"{rule}: a feature passed twice"
         assert flagged.isdisjoint(passed), f"{rule}: flagged and passed"
         judged = {f["id"] for f in r["features"] if f["kind"] in JUDGES[rule]
-                  and not (rule == "access" and not f["open_vectors"])}
+                  and not (rule in OPEN_ONLY and not f["open_vectors"])}
         assert flagged | set(passed) == judged, rule
     for p in r["passed"]:
         assert p["title"] and p["math"] and p["threshold_source"]

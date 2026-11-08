@@ -542,6 +542,16 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
   - `tests/service/test_turning.py`
   - test parts
 - **Waits on:** S5.
+- **Research first** (Morgan, 2026-11-08): [turning research page](https://claude.ai/artifact/W671Yt2gJgDqrfgf6iC3RH) (`docs/research/turning.html`). Its 5 proposals are not built; each goes to Morgan as its own question (WS-03).
+- **Settled at build** (2026-11-08):
+  - The turning axis is the axis line (direction within 0.5°, offset 0.001 in or less) carrying the most cylinder and cone area; its sign follows `frame.turning_axis`. The diameter is twice the largest distance of a mesh vertex from that line (the stock it turns from), the length the extent along it.
+  - `turn_axis` is its own rule module (`rules/turn_axis.py`), after `access`: no feature (`feature` null), faces = the round faces on the axis, measured share in % to 4 places, source "assumption". With it, `turn_slender` and `turn_offaxis` don't run, and nothing is planned (`machine` null, no setups).
+  - An on-axis hole of 0.500 in and over becomes `bore-n`; holes are renumbered and a hole wall's `hole` follows. `hole_depth` judges bores too ("Bore depth …"); `hole_size` does not (a bore is bored to size).
+  - Grooves: a cylinder on the axis whose two neighbours are planes square to the axis, each reaching further out (outside groove) or further in (inside a bore) than the floor. `dims_mm` width, depth (the shallower side) and diameter; `outside` true or false. Grooving inserts are `[turning] groove_widths_in` (0.125 only): the widest that fits, else the narrowest marked undersized.
+  - `profile-1`: the outside cylinders and cones on the axis and the faces square to it, other than holes, bores, grooves and pockets.
+  - Holes, bores and pockets carry `off_axis_deg` and `off_axis_mm` for turned parts (a pocket: its opening direction through its faces' area centroid). `turn_offaxis` measures the angle when tilted (unit deg, limit 0.5), else the offset (unit in, limit 0.001).
+  - Lathe plan: one setup `turn`; one operation per tool (turn, on-axis drills, bore, groove, then off-axis tools ranked as the mill plan); tool loads = operations. The panel shows "Turning axis" in the part's axes, "Setup 1 · on the lathe, about the turning axis", and why each feature is in it.
+  - Test parts: `slender_shaft` (also for milling), `stout_shaft`, `shaft_with_groove_and_bore`, `block_as_turn`, `clean_shaft`; `expected.toml` gains `process` and a `turn` count of bores, grooves and profiles.
 
 ### S7 Cost drivers, report and PDF
 

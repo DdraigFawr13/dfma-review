@@ -387,3 +387,95 @@ machine = "3-axis mill"
 setups = [{ dir = "-Z", probes = [[25.4, 15.875, 5.08]] }]
 tools = ["dr-0.2500", "cs-82"]
 tool_changes = 2
+
+[[part]]
+name = "slender_shaft"
+units = "inch"
+face_count = 4
+features = { hole = 1, pocket = 0, corner = 0, wall = 1 }
+process = "turn"
+material = "steel1018"
+turn = { bore = 0, groove = 0, profile = 1 }
+machine = "lathe with live tooling"
+setups = [{ dir = "turn", probes = [[6.35, 0.0, 25.4], [0.0, 1.5875, 57.15]] }]
+tools = ["turn", "dr-0.1250"]
+tool_changes = 2
+[[part.finding]]
+rule = "turn_slender"
+severity = "high"
+measured = 9.0
+probe_mm = [6.35, 0.0, 25.4]
+[[part.finding]]
+rule = "turn_offaxis"
+severity = "medium"
+measured = 90.0
+probe_mm = [0.0, 1.5875, 57.15]
+
+[[part]]
+name = "slender_shaft"
+units = "inch"
+face_count = 4
+features = { hole = 1, pocket = 0, corner = 0, wall = 1 }
+material = "steel1018"
+machine = "3-axis mill"
+setups = [{ dir = "+X", probes = [[0.0, 1.5875, 57.15]] }]
+tools = ["dr-0.1250"]
+tool_changes = 1
+
+[[part]]
+name = "stout_shaft"
+units = "inch"
+face_count = 3
+features = { hole = 0, pocket = 0, corner = 0, wall = 1 }
+process = "turn"
+turn = { bore = 0, groove = 0, profile = 1 }
+machine = "lathe"
+setups = [{ dir = "turn", probes = [[12.7, 0.0, 50.8]] }]
+tools = ["turn"]
+tool_changes = 1
+[[part.finding]]
+rule = "turn_slender"
+severity = "medium"
+measured = 5.0
+probe_mm = [12.7, 0.0, 50.8]
+
+[[part]]
+name = "shaft_with_groove_and_bore"
+units = "inch"
+face_count = 13
+features = { hole = 0, pocket = 0, corner = 0, wall = 6 }
+process = "turn"
+material = "steel1018"
+turn = { bore = 1, groove = 2, profile = 1 }
+machine = "lathe"
+setups = [{ dir = "turn", probes = [[19.049999999999997, 0.0, 12.7], [9.524999999999999, 0.0, 55.88], [16.509999999999998, 0.0, 39.624], [11.112499999999999, 0.0, 62.483999999999995]] }]
+tools = ["turn", "bore", "groove-0.125"]
+tool_changes = 3
+
+[[part]]
+name = "block_as_turn"
+units = "inch"
+face_count = 7
+features = { hole = 1, pocket = 0, corner = 0, wall = 3 }
+process = "turn"
+turn = { bore = 0, groove = 0, profile = 0 }
+setups = []
+tools = []
+tool_changes = 0
+[[part.finding]]
+rule = "turn_axis"
+severity = "high"
+measured = 5.3835
+probe_mm = [28.575, 12.7, 6.35]
+
+[[part]]
+name = "clean_shaft"
+units = "inch"
+face_count = 7
+features = { hole = 1, pocket = 0, corner = 0, wall = 3 }
+process = "turn"
+turn = { bore = 0, groove = 0, profile = 1 }
+machine = "lathe"
+setups = [{ dir = "turn", probes = [[12.7, 0.0, 25.4], [2.3812499999999996, 0.0, 68.58]] }]
+tools = ["turn", "dr-0.1875"]
+tool_changes = 2

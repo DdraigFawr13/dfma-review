@@ -1,0 +1,78 @@
+"""J5 in the browser (S6): a shaft reviewed for turning shows the turning axis, "lathe with live tooling", one
+lathe setup that lights every face its tools cut, the two turning findings and the Passed list; the same part
+for milling plans only the cross hole (Morgan's comparison). D-023: the Passed list and selectable setups apply
+to turned parts too."""
+
+from __future__ import annotations
+
+import pytest
+from playwright.sync_api import Page, expect
+
+from helpers import PARTS
+
+from dfma.analyze import analyze
+
+pytestmark = pytest.mark.e2e
+
+
+def _upload(page: Page, base_url: str, name: str, process: str, material: str = "steel1018") -> None:
+    page.goto(base_url)
+    page.get_by_test_id("upload-process").select_option(process)
+    page.get_by_test_id("upload-material").select_option(material)
+    page.get_by_test_id("upload-file").set_input_files(PARTS / name)
+
+
+def test_slender_shaft_on_the_lathe(page: Page, base_url: str):
+    r = analyze(PARTS / "slender_shaft.step", "slender_shaft.step", "turn", "steel1018")
+    _upload(page, base_url, "slender_shaft.step", "turn")
+    expect(page.get_by_test_id("plan-machine")).to_have_text("lathe with live tooling", timeout=30_000)
+    expect(page.get_by_test_id("plan-turn-axis")).to_have_text("along −Z of the part")
+    expect(page.locator("#plan-count")).to_have_text("1 setup")
+    expect(page.get_by_test_id("verdict")).to_contain_text("1 turned profile, 1 hole and 1 wall checked")
+    expect(page.get_by_test_id("plan-loads")).to_have_text("2 (including the first in each setup)")
+    expect(page.get_by_test_id("plan-why")).to_have_text(
+        "Turned in one setup about its axis. Off the axis, cut with live tooling: hole-1.")
+    setup = page.get_by_test_id("plan-setup-1")
+    expect(setup).to_contain_text("Setup 1 · on the lathe, about the turning axis")
+    expect(setup).to_contain_text("Turning tool turn")
+    expect(setup).to_contain_text("0.125 in (1/8) drill dr-0.1250")
+    setup.click()
+    expect(page.get_by_test_id("plan-setup-why-1")).to_contain_text("hole-1 is off the turning axis: live tooling.")
+    expect(page.get_by_test_id("plan-setup-why-1")).to_contain_text(
+        "profile-1 is the turned outside. Turning tool: turns the 0.500 in outside and faces the ends.")
+    cut = sorted({i for o in r["operations"] for i in o["faces"]})
+    assert page.evaluate("window.__dfma.highlightedFaces()") == cut
+    expect(page.get_by_test_id("finding-F1")).to_contain_text("Length 9.0× diameter (limit 8.0×)")
+    expect(page.get_by_test_id("finding-F1")).to_contain_text("profile-1 · 0.500 in (1/2) diameter, 4.500 in long")
+    expect(page.get_by_test_id("finding-F2")).to_contain_text(
+        "Hole not on the turning axis: needs a milling operation or live tooling")
+    expect(page.get_by_test_id("finding-F2")).to_contain_text("90.0° to the turning axis. Cut it with live tooling")
+    expect(page.get_by_test_id("passed")).to_contain_text("1 feature · 1 check")  # the wall
+    page.get_by_test_id("passed").locator("summary").click()
+    expect(page.get_by_test_id("passed-profile-1")).to_have_count(0)  # flagged: in a finding, never in Passed
+
+
+def test_clean_shaft_passed_list(page: Page, base_url: str):
+    _upload(page, base_url, "clean_shaft.step", "turn", "al6061")
+    expect(page.get_by_test_id("plan-machine")).to_have_text("lathe", timeout=30_000)
+    page.get_by_test_id("passed").locator("summary").click()
+    row = page.get_by_test_id("passed-profile-1")
+    expect(row).to_contain_text("1.000 in (1) diameter, 3.000 in long")
+    expect(row).to_contain_text("Round faces on one axis: a lathe part")
+    expect(row).to_contain_text("Length 3.0× diameter, at most 4.0×")
+    expect(page.get_by_test_id("passed-hole-1")).to_contain_text("On the turning axis: cut on the lathe")
+
+
+def test_slender_shaft_for_milling(page: Page, base_url: str):
+    _upload(page, base_url, "slender_shaft.step", "mill")
+    expect(page.get_by_test_id("plan-machine")).to_have_text("3-axis mill", timeout=30_000)
+    expect(page.get_by_test_id("plan-turn-axis")).to_have_count(0)
+    expect(page.get_by_test_id("plan-setup-1")).to_contain_text("Setup 1 · from +X")
+
+
+def test_block_as_turn_shows_no_plan(page: Page, base_url: str):
+    _upload(page, base_url, "block_as_turn.step", "turn", "al6061")
+    expect(page.get_by_test_id("finding-F1")).to_contain_text("No turning axis found; check the process",
+                                                              timeout=30_000)
+    expect(page.get_by_test_id("finding-F1")).to_contain_text("limit: assumption")
+    expect(page.get_by_test_id("plan-machine")).to_have_count(0)

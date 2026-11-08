@@ -24,6 +24,11 @@ from dfma.analyze import analyze  # noqa: E402
 PARTS = ROOT / "tests" / "parts"
 SET3 = ROOT / "tests" / "grading" / "sets" / "hole_ends_walls"
 DEMO = [  # (file, what Morgan looks for)
+    (PARTS / "slender_shaft.step", "S6: pick Turning, then Milling to compare"),
+    (PARTS / "stout_shaft.step", "S6 (Turning): length 5× diameter"),
+    (PARTS / "shaft_with_groove_and_bore.step", "S6 (Turning): grooves and a bore"),
+    (PARTS / "clean_shaft.step", "S6 (Turning): clean"),
+    (PARTS / "block_as_turn.step", "S6 (Turning): no turning axis"),
     (PARTS / "two_sided_block.step", "S5: 3 setups, 3 tool loads"),
     (PARTS / "angled_hole.step", "S5: access finding, 4/5-axis"),
     (PARTS / "angled_hole_in_pocket.step", "S5: angled hole in a pocket floor"),

@@ -20,3 +20,8 @@ step_mm = 0.5
 
 [end_mills]                   # inch end mills (spec "Tools"); every file uses them: no metric list in this version
 inch = [0.03125, 0.0625, 0.09375, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.625, 0.75, 1.0]
+
+[turning]                     # spec "Tools": the lathe's own tools (S6)
+bore_min_in = 0.5             # an on-axis hole this size and over is bored, not drilled
+groove_widths_in = [0.125]    # grooving inserts: a groove takes the widest that fits; narrower grooves get the
+                              # narrowest, marked undersized (nothing fits)

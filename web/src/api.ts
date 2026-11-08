@@ -28,6 +28,7 @@ export interface Analysis {
   passed: Passed[]; // D-023 proposed: each check a feature passed, with the math
   assumptions: string[];
   machine: string | null; // S5
+  turn_axis: number[] | null; // S6: the turning axis (file coordinates), for parts reviewed for turning
   setups: { direction: string; features: string[] }[];
   operations: { setup: number; tool: string; features: string[]; faces: number[] }[]; // faces each tool cuts
   tools: Tool[];
@@ -36,7 +37,7 @@ export interface Analysis {
 
 export interface Passed {
   rule: string;
-  feature: string;
+  feature: string | null; // null for turn_axis, which judges the whole part (S6)
   faces: number[];
   title: string;
   math: string;
@@ -44,9 +45,10 @@ export interface Passed {
 }
 
 export interface Tool {
-  id: string; // "dr-0.2500", "dr-6.5mm", "em-0.250", "cs-82"
-  kind: "drill" | "end_mill" | "countersink" | string;
+  id: string; // "dr-0.2500", "dr-6.5mm", "em-0.250", "cs-82", "turn", "bore", "groove-0.125"
+  kind: "drill" | "end_mill" | "countersink" | "turn" | "bore" | "groove" | string;
   diameter_in: number | null;
+  width_in?: number; // a grooving tool's insert width (S6)
   undersized: boolean;
 }
 

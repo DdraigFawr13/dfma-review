@@ -1,0 +1,121 @@
+<title>Turning Research for S6</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one reading column. The answer first, then one panel per topic with its sources, then the proposals. */
+:root{--bg:#eef2f6;--panel:#ffffff;--ink:#16263d;--muted:#55657a;--line:#c4cfdc;--accent:#1f5fa8;--good:#3f6b2a;--warn:#a35a00;
+--sans:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1824;--panel:#172334;--ink:#e3eaf2;--muted:#9fb0c4;--line:#2c3c52;--accent:#7fb0ea;--good:#8cc47a;--warn:#e0a050;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1824;--panel:#172334;--ink:#e3eaf2;--muted:#9fb0c4;--line:#2c3c52;--accent:#7fb0ea;--good:#8cc47a;--warn:#e0a050;color-scheme:dark}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+<style>
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--sans);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+main{max-width:44rem;margin:0 auto;display:grid;gap:20px}
+h1{font-size:1.5rem;margin:0;text-wrap:balance}h2{font-size:1.125rem;margin:0 0 8px;text-wrap:balance}
+p,ul{margin:0}ul{padding-left:1.2em;display:grid;gap:6px}
+.muted{color:var(--muted);font-size:.875rem}
+a{color:var(--accent)}
+.lead{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:2px;padding:14px;display:grid;gap:8px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:12px 14px;display:grid;gap:8px;min-width:0}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font-size:.9rem;font-variant-numeric:tabular-nums;width:100%}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{font-weight:600}
+.num{font-family:var(--mono);font-weight:600}
+.tag{font-family:var(--mono);font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;border:1px solid currentColor;border-radius:2px;padding:0 5px;white-space:nowrap}
+.est{color:var(--warn)}.ok{color:var(--good)}
+.prop{border-left:4px solid var(--warn)}
+</style>
+<main>
+<header style="display:grid;gap:6px">
+<h1>Turning research for S6</h1>
+<p class="muted">2026-11-08 · for Morgan · what a lathe can do, so the app judges turned parts sensibly</p>
+</header>
+
+<div class="lead">
+<p><b>The answer:</b> the turning rules in the spec are in the right range. A part held only in a chuck is safe to about 3× its diameter long; with a tailstock to about 6–10×; with a steady rest to about 12–20×; past about 10× most shops would use a Swiss-type lathe. The spec warns at 4× and flags high at 8×, which sits inside those ranges.</p>
+<p>Holes off the turning axis need live tooling or a mill, as the spec says. The research suggests 5 changes (listed at the bottom as proposals). I am building S6 as the spec says now and will ask you about each change one at a time.</p>
+</div>
+
+<section>
+<h2>How long can a turned part be? (length ÷ diameter)</h2>
+<div class="tbl"><table>
+<tr><th>Held by</th><th>Comfortable</th><th>Stretch (lighter cuts)</th><th>Source</th></tr>
+<tr><td>Chuck only</td><td class="num">under 3×</td><td class="num">up to 5×</td><td><a href="https://cadem.com/cnc-turning-work-holding-thumb-rules/">CADEM</a></td></tr>
+<tr><td>Chuck + tailstock</td><td class="num">3–6×</td><td class="num">up to 10×</td><td><a href="https://cadem.com/cnc-turning-work-holding-thumb-rules/">CADEM</a></td></tr>
+<tr><td>Steady rest</td><td class="num">6–12×</td><td class="num">up to 20×</td><td><a href="https://cadem.com/cnc-turning-work-holding-thumb-rules/">CADEM</a></td></tr>
+</table></div>
+<ul>
+<li>One shop's limits: no tailstock 3× (parts up to 3 in across), with tailstock 6× up to 1 in and 8× from 1 to 3 in across. <a href="https://www.protocase.com/products/cnc-machining/cnc-turning/work-envelope.php">Protocase work envelope</a> (table "L/D #1 (No Tailstock)", "L/D #2 (With Tailstock)").</li>
+<li>Material matters: 3× unsupported for steel and harder; 5× "only for aluminum and soft materials", light finishing cuts. <a href="https://jonilsson.github.io/lathe-mastery-wikibook/04-fundamental-operations/04-supporting-work">Lathe Mastery wikibook</a>. This is the only material-specific figure found.</li>
+<li>"Most manufacturers recommend that you use a tailstock to support any piece that exceeds a 3:1 length-to-diameter ratio." <a href="https://absolutemachine.com/blog/tailstock-cnc-machining-process/">Absolute Machine</a></li>
+<li>Swiss-type lathes: "Ratios above 3:1 favor Swiss; ratios above 10:1 practically require it"; most take bar up to 20–32 mm. <a href="https://www.wevolver.com/article/what-is-swiss-machining-swiss-type-cnc-lathes-explained">Wevolver</a>. MMS puts it at 4:1 or more. <a href="https://www.mmsonline.com/articles/consider-ld-when-choosing-a-lathe-for-small-parts">MMS</a></li>
+<li>A commercial DFM checker (CAD Exchanger) flags a turned part over 8× by default, using the part's <i>smallest</i> diameter. <a href="https://docs.cadexsoft.com/mtkcsharp/classcadex_1_1_d_f_m_machining___turning_analyzer_parameters">CAD Exchanger docs</a> ("Default value for this ratio is 8.")</li>
+</ul>
+</section>
+
+<section>
+<h2>Holding the part</h2>
+<ul>
+<li>A collet holds round stock true to about 0.0005 in; bored soft jaws repeat to 0.0006–0.0012 in; collets suit parts about 3 in across or less (5C about 1 in). <a href="https://s3.cnccookbook.com/MTLatheWorkHolding.htm">CNCCookbook lathe workholding</a></li>
+<li>Three-jaw chucks are quickest for round bar; four-jaw chucks also hold square bar and can be dialled true. <a href="https://www.emachineshop.com/turning/">eMachineShop</a>, CNCCookbook.</li>
+<li>Between centres gives very high repeatability when a part comes off and goes back on. CNCCookbook.</li>
+<li>A tailstock needs a centre hole on the part's end: "a small dimple or a through-hole with a countersink". <a href="https://www.protocase.com/products/cnc-machining/cnc-turning/work-envelope.php">Protocase</a></li>
+</ul>
+</section>
+
+<section>
+<h2>Turning the part round (second operations)</h2>
+<ul>
+<li>Taking a part out of a 3-jaw chuck and putting it back loses concentricity; a 4-jaw can be realigned. CNCCookbook.</li>
+<li>A sub-spindle picks the part off at cut-off and finishes the back side in the same cycle. <a href="https://www.productionmachining.com/articles/subspindle-workholding-options">Production Machining</a>. Parting stops about 1 mm before centre for the hand-off. <a href="https://www.sandvik.coromant.com/en-gb/knowledge/parting-and-grooving/parting-off">Sandvik Coromant</a></li>
+<li>Bar stock allowance for cut-off and the bar end: 5% extra for parts under 2 in long, up to 10% for parts 4 in and longer. <a href="https://www.productionmachining.com/blog/post/how-much-stock-is-required">Production Machining (PMPA)</a></li>
+<li>Putting internal features and threads on one end lets everything be cut before cut-off. <a href="https://wevolver.com/article/best-practices-designing-for-cnc-turning">Wevolver</a></li>
+</ul>
+</section>
+
+<section>
+<h2>Operations: boring, grooving, threading, drilling</h2>
+<ul>
+<li><b>Boring bar reach</b> (turning, as a multiple of the bar's diameter): steel bar 4×, carbide 6×, damped steel 10×, damped carbide 14×. <a href="https://www.sandvik.coromant.com/en-us/turning-appl-guide">Sandvik turning guide</a> ("maximum recommended overhang"). Vibration "will start to become an issue" from 4×. <a href="https://sandvik.coromant.com/en-us/knowledge/machine-tooling-solutions/tooling-considerations/long-overhangs">Sandvik long overhangs</a></li>
+<li><b>Holes on the axis</b>: 1 mm and up, at most 6× diameter deep. <a href="https://www.protolabs.com/resources/design-tips/mastering-complex-features-on-machined-parts/">Protolabs</a>. This matches the app's hole-depth warning at 6×.</li>
+<li><b>Grooves</b>: outside grooves at least 1.2 mm wide (0.5 mm in aluminium and brass); Protolabs does not do inside grooves at all. <a href="https://www.protolabs.com/services/cnc-machining/cnc-turning/design-guidelines/">Protolabs turning guidelines</a></li>
+<li><b>Thread relief</b>: at least 1.5 threads long and at least 0.015 in below the minor diameter. <a href="https://en.wikipedia.org/wiki/Undercut_(turning)">Undercut (turning)</a>. Limit thread length to 3× the hole diameter. <a href="https://www.hubs.com/knowledge-base/reducing-cnc-machining-costs-13-design-tips/">Hubs</a></li>
+<li><b>Thin walls</b>: under 0.5 mm "typically do not survive". Protolabs turning guidelines.</li>
+</ul>
+</section>
+
+<section>
+<h2>Features off the turning axis</h2>
+<ul>
+<li>A lathe with live tools can mill shapes and drill off-axis or radial holes. Protolabs. Without live tools the part goes to a mill as a second operation. <a href="https://www.mfgrobots.com/Article/equipment/cnc/53575.html">MFG Robots</a></li>
+<li>Radial holes 2 mm and up (1 mm in aluminium and brass); holes at odd angles only in soft metals. Protolabs turning guidelines.</li>
+<li>True flats, off-centre holes and straight-walled keyways need a Y axis; with only C and X a flat comes out "slightly concave or slightly convex". <a href="https://www.mmsonline.com/articles/on-a-cnc-turning-center-one-answer-might-be-39y39">MMS</a></li>
+</ul>
+</section>
+
+<section>
+<h2>Tools, corners and cost</h2>
+<ul>
+<li>Turrets: 12-station turrets are common on Haas lathes; one model has 24 (12 + 12). <a href="https://www.redlinetools.com/resources/bolt-on-tools-haas-lathes">Redline Tools</a></li>
+<li>Inside corners: "Sharp inside corners on a part will be radiused" (by the insert's nose). Protolabs turning guidelines. One Protolabs page names a 0.016 in finishing nose radius. <a href="https://www.protolabs.com/resources/design-tips/mastering-complex-features-on-machined-parts/">Protolabs</a></li>
+<li>Machining time is the main cost driver; aim for one setup. Hubs. Material, tight tolerance (±0.01 mm) and fine finish raise cost (one vendor's figures: carbon steel 1.3×, stainless 1.6–2.0× aluminium). MFG Robots.</li>
+<li>Deburring is manual and adds cost to every part; avoid unsupported small-diameter work. Wevolver.</li>
+</ul>
+<p class="muted">Not confirmed on an opened page, so not used: standard insert nose radii (0.4 and 0.8 mm), grooving insert widths, the smallest boring bar, thread relief width per DIN 76. Pages that refused to load: Xometry, Hubs design guide, Haas, GlobalSpec, Canadian Metalworking.</p>
+</section>
+
+<section class="prop">
+<h2>Proposals (not built; I will ask you one at a time)</h2>
+<ul>
+<li><b>1. Slender limits by material.</b> Spec: 4× medium, 8× high for every material. Research: 3× for steel, 5× for aluminium without support; tailstock 6–10×. Option: steel and stainless 3× / 8×, aluminium and plastic 4× / 8×.</li>
+<li><b>2. Say which support the part needs.</b> The finding would name chuck, tailstock, steady rest or Swiss-type from the ratio (CADEM tiers).</li>
+<li><b>3. A boring-bar reach check.</b> A bore deeper than 4× its diameter needs a carbide bar; over 6× a damped bar (Sandvik). The spec now uses the hole-depth limits (6× / 10×) for bores.</li>
+<li><b>4. Inside grooves.</b> Protolabs does not cut them; a note or a low finding could say so.</li>
+<li><b>5. Smallest diameter too.</b> The spec divides by the largest diameter; a thin section behind a big head reads as stocky. CAD Exchanger uses the smallest diameter.</li>
+</ul>
+<p class="muted">The 40% "no turning axis" share has no source either way; it stays an assumption.</p>
+</section>
+
+<p class="muted">Every figure above comes from a page that was opened and quoted. The four key pages (CADEM, Sandvik, Protocase, CAD Exchanger) were checked a second time by a separate fetch. Where sources disagree, each figure is given with its source.</p>
+</main>

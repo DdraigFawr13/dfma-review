@@ -63,7 +63,7 @@ window.__dfma = {
  *  in a hole or pocket shows that kind's colour; corners go last, so a corner fillet (also a pocket
  *  wall) shows the corner colour. */
 function checkedFaces(result: Analysis): Map<number, CheckedKind> {
-  const flagged = new Set(result.findings.map((f) => f.feature));
+  const flagged = new Set<string | null>(result.findings.map((f) => f.feature));
   const out = new Map<number, CheckedKind>();
   for (const kind of ["wall", "hole", "pocket", "corner"] as CheckedKind[]) {
     for (const f of result.features) {

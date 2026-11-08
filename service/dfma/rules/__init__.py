@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
-from . import access, corner_radius, hole_depth, hole_size, pocket_depth, thin_wall, undercut
+from . import (access, corner_radius, hole_depth, hole_size, pocket_depth, thin_wall, turn_axis, turn_offaxis,
+               turn_slender, undercut)
 
-RULES = [hole_depth, hole_size, corner_radius, pocket_depth, undercut, thin_wall, access]  # S6 adds turning
+# turn_axis (spec Features "Turned profile") runs before the two turning rules, which need its axis.
+RULES = [hole_depth, hole_size, corner_radius, pocket_depth, undercut, thin_wall, access, turn_axis, turn_slender,
+         turn_offaxis]

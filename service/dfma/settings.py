@@ -50,6 +50,14 @@ ASSUMPTIONS = [
     "Engraved text and logos are read as pockets: their sharp corners are real geometry, but engraving tools may accept them.",
 ]
 
+TURN_ASSUMPTIONS = [
+    "Turning: the diameter is the largest outside diameter and the length the extent along the axis, so a thin "
+    "section behind a large head can read as stocky (spec).",
+    "Turning: no turning axis is found when round faces on one axis are under 40% of the part's surface (assumption).",
+    "Turning: one setup; one tool load per tool (turn, drills on the axis, bore, groove, then off-axis tools). "
+    "Bores are on-axis holes of 0.500 in and over; parting off, threads and flipping the part are not planned.",
+]
+
 
 @cache
 def _toml(name: str) -> dict:
