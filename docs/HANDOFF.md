@@ -34,7 +34,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Open questions
 
-- Waiting on Morgan (2026-11-08): approve, change or rethink the [Machine plan mock-up](https://claude.ai/artifact/5Cmq85bG5CPpi7oZ3oZHGW), then approve PR #15. After approval: wait for the push's CI run to show before marking ready (LESSONS ci).
+- Waiting on Morgan (2026-11-08): the Machine plan panel is approved (D-023). Approve, change or rethink the [Passed checks and selectable setups mock-up](mockups/passed-and-setups.html) (D-023 proposed), then approve PR #15. After approval: wait for the push's CI run to show before marking ready (LESSONS ci).
 
 - Settled 2026-11-07: labels are pins (D-017); the scoring spike runs in a new session before S5 (Morgan: "We do the grading and testing in a new session before s5"). Research totals: 384,128 agent tokens (methods, labels, GitHub). S4 took 1 h 58 min to the first approval ask, $6.19 main session.
 - Backlog (Morgan, 2026-11-06): name each hole's type (through, blind, counterbore, countersink, drill point, threaded); recognise threads modelled as ring faces (NIST FTC 10's threaded hole is missed); catalogue NIST resources and commit the papers (research agents running).
@@ -50,6 +50,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-08 D-023: Machine plan panel approved; a Passed list with the math (collapsed by default) and selectable setups with a why, built on #15 as a mock-up for approval.
 - 2026-11-08 D-022: countersinks recorded on the hole and planned as a tool load; full-round depth for sloped exits; a hole on a pocket floor keeps its own axis.
 - 2026-11-08 D-021: undercut pockets get a finding (needs a T-slot or lollipop cutter); sealed voids get none.
 - 2026-11-07 D-020: cm and m files are metric; a no-unit file is read as mm with a note; walls may have up to 15 deg draft (Morgan chose the recommended options).
