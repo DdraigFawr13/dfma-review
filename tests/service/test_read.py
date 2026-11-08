@@ -159,10 +159,11 @@ def test_upload_limit(client, tmp_path):
     assert response.status_code == 413
     assert response.json() == {"error": TOO_LARGE}
 
-    # No Content-Length (chunked body): the stream is cut off at 50 MB.
+    # No Content-Length (chunked body): the stream is cut off at 100 MB, room for a STEP and its .ipt
+    # (I1 spec Builder defaults: the limit moved; each file is still held to 50 MB above).
     def chunks():
         block = b"0" * (1024 * 1024)
-        for _ in range(51):
+        for _ in range(101):
             yield block
 
     response = client.post("/api/analyze", content=chunks(),

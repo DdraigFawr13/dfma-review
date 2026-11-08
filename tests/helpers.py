@@ -37,3 +37,24 @@ def faces_near(step_path: Path, probe_mm, tol_mm: float = 0.01) -> set[int]:
         if dist.IsDone() and dist.Value() <= tol_mm:
             hits.add(face_id)
     return hits
+
+
+def rewrite_ipt_models(path: Path, change) -> None:
+    """Replace each model stream's inflated data with change(data), recompressed into the same size."""
+    import zlib
+
+    import olefile
+
+    with olefile.OleFileIO(str(path), write_mode=True) as f:
+        for e in f.listdir(streams=True, storages=False):
+            name = "/".join(e)
+            if not name.startswith("RSeStorage/B"):
+                continue
+            raw = f.openstream(name).read()
+            k = raw.find(b"x^")
+            if k < 0:
+                continue
+            data = zlib.decompressobj().decompress(raw[k:])
+            new = raw[:k] + zlib.compress(change(data), 5)  # level 2-5 writes the header `x^`, as Inventor does
+            assert len(new) <= len(raw), "the changed model must fit its stream"
+            f.write_stream(name, new + b"\x00" * (len(raw) - len(new)))

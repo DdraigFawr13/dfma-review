@@ -266,3 +266,16 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - Samples for the refuse list: Morgan "Not sure". Sheet metal and multi-body are refused from measured markers; parts with 2+ Model States are refused by the `UFRxDoc` rule (layout assumed); iParts, derived and Content Center parts are not detected and the report says so in its assumptions until a sample turns up.
 - **Why:** the `.ipt` stores no volume (no float in any property set, no mass or volume in any ACIS record of the 16 NIST files), and a corner check catches a moved hole that volume would miss; 5 fresh checks found no other open decision.
 
+## D-034 I1 S1: two file fields for the .ipt pair
+
+- **Status:** Accepted (2026-11-08; Morgan, in chat after the [mock-up](https://claude.ai/artifact/GfyRY7JTC9RHF97csbb18H): "Ok go with a").
+- **Decision:** the upload bar has two fields, "STEP file" and "Inventor part (.ipt), optional" (mock-up option A), instead of one field for both files (spec Design "web/", amended). Picking the STEP starts the review as today; adding or changing the `.ipt` runs it again with both (a new part); an `.ipt` picked first waits for its STEP. The bar shows the Inventor build beside the size and faces; the status line names both files. The wording listed in the mock-up's check record is approved with it.
+- **Why:** each file is picked on its own, in either order, and nothing changes for STEP-only users; one field needs both files picked in one dialog.
+- **Test of the .ipt alone** (Morgan, 2026-11-08, on the [page](https://claude.ai/artifact/WJPZdd5WSm2rcuvMksTNb3): "Yeah go with two fields and try now alongside s1"): a time-boxed test run, in its own worktree, builds an OpenCascade solid from the `.ipt` alone on the 7 NIST files with no spline faces or intcurve edges and compares it with the NIST STEP (volume, outer size, holes). Research only: nothing reaches the app until Morgan decides; shape from the `.ipt` stays a later phase (D-031, D-032) unless the result changes that.
+
+## D-035 Shape from the .ipt: its own phase after I1
+
+- **Status:** Accepted (2026-11-08; Morgan, in chat after the [results page](https://claude.ai/artifact/WJPZdd5WSm2rcuvMksTNb3): "Go with your recommendations and continue. Stop asking for th s1 pair until later this week").
+- **Decision:** finish I1 (threads) with the `.ipt` + STEP pair; then plan reading the shape from the `.ipt` alone as its own phase (planning-interview), starting from `docs/research/inventor-shape-spike/`. S1 goes on without the work pair: `check_pair` is built to the spec's rules and stays provisional until the first work pair is measured (spec S1 "First"); if that measurement breaks the rules, D-033's fallback still goes to Morgan. Don't ask Morgan for the pair again before 2026-11-12.
+- **Why:** the test run built a valid solid from the `.ipt` on all 7 analytic NIST files (volume within 0.11-1.06% and the same holes on 6; FTC 11 41% short, unexplained), but spline surfaces, intcurve edges and the work releases are untested (estimate 4-6 days); the STEP route works for every part now.
+

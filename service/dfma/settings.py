@@ -33,6 +33,17 @@ MSG_NO_UNIT = ("This file declares no length unit. It was read as millimetres; i
 MSG_TOO_LARGE = "File is larger than 50 MB"
 MSG_TOO_LONG = "This file took too long to analyse"
 MSG_FAILED = "The analysis failed on this file. Try again, or try another file."
+# Inventor .ipt with its STEP (I1 spec "Messages")
+MSG_IPT_NOT_IPT = "This is not an Inventor part file (.ipt) this tool can read"
+MSG_IPT_NEEDS_STEP = "Add the STEP export of this part: the shape is read from the STEP"  # also in web/src/main.ts
+MSG_IPT_TYPE = "This Inventor part is a {kind}. Only plain single-body parts can be read for now."
+MSG_PAIR_MISMATCH = "These files don't match: {reason}. Export the STEP again from this .ipt and upload both."
+MSG_IPT_TOO_BIG = "This .ipt holds more data than this tool will unpack"
+MSG_IPT_NO_MODEL = "No 3D model found inside this .ipt"
+MSG_IPT_FORMAT = "This .ipt uses a format this tool can't read yet (ACIS {version})"
+IPT_ASSUMPTION = ("iParts, derived and Content Center parts are not detected yet; the thread data of such a part "
+                  "may not match its STEP.")
+PAIR_TOL_MM = 0.01  # D-032: the .ipt and STEP must agree within this, corners and outer size
 
 ASSUMPTIONS = [
     "Mesh deflection 0.05 mm linear, 0.5 rad angular (assumption).",

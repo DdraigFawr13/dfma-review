@@ -10,7 +10,16 @@ export interface Face {
   indices: number[]; // local to this face
 }
 
+/** I1 (spec "Response"): present only when an .ipt was uploaded with the STEP. */
+export interface Inventor {
+  name: string;
+  saved_with: string;
+  acis_version: string;
+  checks: { faces: [number, number]; corners: [number, number]; worst_corner_gap_mm: number | null };
+}
+
 export interface Analysis {
+  inventor?: Inventor;
   part: {
     name: string;
     units_in_file: "mm" | "cm" | "m" | "inch" | "none" | "other";
@@ -95,9 +104,10 @@ export class ApiError extends Error {}
 
 const GENERIC = "The analysis failed. Try again, or try another file.";
 
-export async function analyze(file: File, process: Process, material: Material): Promise<Analysis> {
+export async function analyze(file: File, ipt: File | null, process: Process, material: Material): Promise<Analysis> {
   const body = new FormData();
   body.append("file", file);
+  if (ipt) body.append("ipt", ipt); // sent only when picked (I1)
   body.append("process", process);
   body.append("material", material);
   let response: Response;

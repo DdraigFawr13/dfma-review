@@ -14,6 +14,7 @@ function byId<T extends HTMLElement>(id: string): T {
 }
 
 const fileInput = byId<HTMLInputElement>("file");
+const iptInput = byId<HTMLInputElement>("ipt");
 const processSelect = byId<HTMLSelectElement>("process");
 const materialSelect = byId<HTMLSelectElement>("material");
 const status = byId<HTMLParagraphElement>("status");
@@ -36,6 +37,9 @@ for (const [kind, box] of SWITCHES) box.addEventListener("change", () => viewer.
 let run = 0;
 let selected: string | null = null;
 let shownFile: File | null = null;
+let shownIpt: File | null = null;
+// The same words as settings.MSG_IPT_NEEDS_STEP in the service (I1 spec Builder defaults)
+const NEEDS_STEP = "Add the STEP export of this part: the shape is read from the STEP";
 
 declare global {
   interface Window {
@@ -134,48 +138,68 @@ function showFindings(result: Analysis | null, message: string): void {
 }
 
 async function analyse(): Promise<void> {
-  const file = fileInput.files?.[0];
-  if (!file) return;
+  const file = fileInput.files?.[0] ?? null;
+  const ipt = iptInput.files?.[0] ?? null;
+  if (!file) {
+    // D-034: an .ipt picked first waits for its STEP
+    if (ipt) status.textContent = "Now choose the STEP file that Inventor exported from this .ipt.";
+    return;
+  }
   const mine = ++run;
-  status.textContent = `Analysing ${file.name}…`;
+  if (/\.ipt$/i.test(file.name)) { // the shape comes from the STEP (D-031): no upload
+    showError(NEEDS_STEP);
+    return;
+  }
+  const both = ipt ? ` with ${ipt.name}` : "";
+  status.textContent = `Analysing ${file.name}${both}…`;
   error.hidden = true;
   renderVerdict(verdict, null, true);
   try {
-    const result = await analyze(file, processSelect.value as Process, materialSelect.value as Material);
+    const result = await analyze(file, ipt, processSelect.value as Process, materialSelect.value as Material);
     if (mine !== run) return; // a newer upload replaced this one
-    const samePart = shownFile === file;
+    const samePart = shownFile === file && shownIpt === ipt; // a new .ipt is a new part (spec Builder defaults)
     byId("part-size").textContent = formatSize(result.part.bbox_in);
     byId("face-count").textContent = `${result.part.face_count} faces`;
     byId("part-units").textContent = result.part.units_in_file;
+    byId("ipt-build").textContent = result.inventor?.saved_with ?? "";
+    byId("inventor-meta").hidden = !result.inventor;
     summary.hidden = false;
     viewer.show(result.faces, samePart); // the same file re-analysed keeps the camera
     viewer.setFindings(result.findings, edgesOf(result));
     viewer.setChecked(checkedFaces(result));
     for (const [kind, box] of SWITCHES) viewer.setShowChecked(kind, box.checked);
     shownFile = file;
+    shownIpt = ipt;
     if (!samePart) collapsePassed();
     const keep = samePart ? stillThere(result, selected) : null; // a finding, passed feature or setup
     selected = keep?.id ?? null;
     if (keep) viewer.select(keep, false); // restore the selection without moving the camera
     renderVerdict(verdict, result);
     showFindings(result, "");
-    status.textContent = `Showing ${result.part.name}.`;
+    status.textContent = `Showing ${result.part.name}${result.inventor ? ` with ${result.inventor.name}` : ""}.`;
   } catch (e) {
     if (mine !== run) return;
-    error.textContent = e instanceof ApiError ? e.message : "Something went wrong showing this part.";
-    error.hidden = false;
-    summary.hidden = true; // don't leave the previous part's numbers beside the error
-    viewer.show([]);
-    shownFile = null;
-    selected = null;
-    renderVerdict(verdict, null);
-    showFindings(null, "No findings: this file could not be read.");
-    status.textContent = "Choose another file, or try again.";
+    showError(e instanceof ApiError ? e.message : "Something went wrong showing this part.");
     if (!(e instanceof ApiError)) console.error(e);
   }
 }
 
+/** A refused or failed part: the reason, and nothing left of the previous part on screen. */
+function showError(message: string): void {
+  error.textContent = message;
+  error.hidden = false;
+  summary.hidden = true; // don't leave the previous part's numbers beside the error
+  viewer.show([]);
+  shownFile = null;
+  shownIpt = null;
+  selected = null;
+  renderVerdict(verdict, null);
+  showFindings(null, "No findings: this file could not be read.");
+  status.textContent = "Choose another file, or try again.";
+}
+
 fileInput.addEventListener("change", analyse);
+iptInput.addEventListener("change", analyse);
 processSelect.addEventListener("change", analyse);
 materialSelect.addEventListener("change", analyse);
 

@@ -1,5 +1,6 @@
 """FastAPI routes (spec Flow). The app calls only run_analysis; ReadError and
-AnalysisTimeout become 422 {"error": message}; uploads over 50 MB get 413."""
+AnalysisTimeout become 422 {"error": message}; a file over 50 MB gets 413. An optional `ipt` (I1)
+rides beside the STEP `file`."""
 
 from __future__ import annotations
 
@@ -10,6 +11,7 @@ import tempfile
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import olefile
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -79,6 +81,14 @@ class UploadLimit:
             await self._send_413(send)
 
 
+def _copy(upload: UploadFile, suffix: str, temps: list[str]) -> str:
+    tmp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
+    temps.append(tmp.name)
+    with tmp:
+        shutil.copyfileobj(upload.file, tmp)
+    return tmp.name
+
+
 def create_app(dist_dir: Path | None = settings.DIST_DIR) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app):
@@ -89,28 +99,33 @@ def create_app(dist_dir: Path | None = settings.DIST_DIR) -> FastAPI:
     app = FastAPI(title="DFMA Review", lifespan=lifespan)
 
     @app.post(ANALYZE_PATH)
-    def analyze_upload(file: UploadFile = File(...), process: str = Form("mill"), material: str = Form("al6061")):
+    def analyze_upload(file: UploadFile = File(...), ipt: UploadFile | None = File(None),
+                       process: str = Form("mill"), material: str = Form("al6061")):
         if process not in settings.PROCESSES:
             return JSONResponse({"error": f"Unknown process: {process}"}, status_code=422)
         if material not in settings.MATERIALS:
             return JSONResponse({"error": f"Unknown material: {material}"}, status_code=422)
-        tmp = tempfile.NamedTemporaryFile(suffix=".step", delete=False)
+        temps = []
         try:
-            with tmp:
-                shutil.copyfileobj(file.file, tmp)
-            if os.path.getsize(tmp.name) > settings.MAX_UPLOAD_BYTES:  # exact file size, no envelope
+            step_tmp = _copy(file, ".step", temps)
+            ipt_tmp = _copy(ipt, ".ipt", temps) if ipt is not None else None
+            if any(os.path.getsize(t) > settings.MAX_UPLOAD_BYTES for t in temps):  # each file on its own, no envelope
                 return JSONResponse({"error": settings.MSG_TOO_LARGE}, status_code=413)
+            if olefile.isOleFile(step_tmp):  # an .ipt (or another compound file) where the STEP goes (I1)
+                return JSONResponse({"error": settings.MSG_IPT_NEEDS_STEP}, status_code=422)
             name = Path(file.filename or "upload.step").name
-            return run_analysis(tmp.name, name, process, material)
+            ipt_name = Path(ipt.filename or "part.ipt").name if ipt is not None else None
+            return run_analysis(step_tmp, name, process, material, ipt_tmp, ipt_name)
         except (ReadError, AnalysisTimeout) as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
         except RuntimeError:  # the worker crashed or the analysis hit a bug; the worker restarts itself
             return JSONResponse({"error": settings.MSG_FAILED}, status_code=500)
         finally:
-            os.unlink(tmp.name)  # nothing is kept (APP-01)
+            for t in temps:
+                os.unlink(t)  # nothing is kept (APP-01)
 
     if dist_dir is not None and Path(dist_dir).is_dir():
         app.mount("/", StaticFiles(directory=dist_dir, html=True), name="web")
 
-    app.add_middleware(UploadLimit, limit=settings.MAX_UPLOAD_BYTES)
+    app.add_middleware(UploadLimit, limit=2 * settings.MAX_UPLOAD_BYTES)  # a STEP and its .ipt (I1)
     return app

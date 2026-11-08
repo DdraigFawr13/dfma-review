@@ -33,13 +33,20 @@ def _off_axis(f: dict, faces, turn: dict) -> tuple[float, float]:
     return coaxial(line.origin, line.axis, turn["origin"], turn["axis"])
 
 
-def analyze(path: str | Path, name: str, process: str = "mill", material: str = "al6061") -> dict:
+def analyze(path: str | Path, name: str, process: str = "mill", material: str = "al6061",
+            ipt_path: str | Path | None = None, ipt_name: str | None = None) -> dict:
     if process not in settings.PROCESSES:
         raise ValueError(f"unknown process {process!r}")
     if material not in settings.MATERIALS:
         raise ValueError(f"unknown material {material!r}")
 
     part = read_step(path)
+    inventor = None
+    if ipt_path is not None:  # I1: the .ipt beside its STEP; checks before any analysis (spec I1 Builder defaults)
+        from . import inventor as inv
+        ipt = inv.read_ipt(ipt_path)
+        inv.check_part_type(ipt, part)
+        inventor = inv.inventor_block(ipt, ipt_name or Path(ipt_path).name, inv.check_pair(ipt, part))
     infos = [face_info(i, f) for i, f in enumerate(part.faces)]
     meshes = mesh_faces(part.solid, part.faces)
     vertices = [tuple(m["positions"][i:i + 3]) for m in meshes for i in range(0, len(m["positions"]), 3)]
@@ -90,7 +97,7 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
     else:
         stock = {"shape": "block", "size_in": bbox_in}
 
-    return {
+    result = {
         "part": {
             "name": name,
             "units_in_file": part.units_in_file,
@@ -119,3 +126,7 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
                                                      if part.free_edges else [])
                        + ([settings.MSG_NO_UNIT] if part.units_in_file == "none" else []),
     }
+    if inventor is not None:
+        result["inventor"] = inventor
+        result["assumptions"].append(settings.IPT_ASSUMPTION)
+    return result

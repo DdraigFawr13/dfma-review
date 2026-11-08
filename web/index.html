@@ -10,12 +10,16 @@
   <body>
     <header class="top">
       <h1>DFMA Review</h1>
-      <p class="privacy">Your file is analysed on this computer and deleted straight after. Nothing is kept.</p>
+      <p class="privacy">Your files are analysed on this computer and deleted straight after. Nothing is kept.</p>
     </header>
     <section class="bar" aria-label="Part">
       <div class="field">
         <label for="file">STEP file</label>
         <input id="file" data-testid="upload-file" type="file" accept=".step,.stp,.STEP,.STP" />
+      </div>
+      <div class="field">
+        <label for="ipt">Inventor part (.ipt), optional</label>
+        <input id="ipt" data-testid="upload-ipt" type="file" accept=".ipt,.IPT" />
       </div>
       <div class="field">
         <label for="process">Process</label>
@@ -40,9 +44,10 @@
         <div><dt>Size</dt><dd data-testid="part-size" id="part-size"></dd></div>
         <div><dt class="sr-only">Faces</dt><dd data-testid="face-count" id="face-count"></dd></div>
         <div><dt>Units in file</dt><dd id="part-units"></dd></div>
+        <div id="inventor-meta" hidden><dt>Inventor</dt><dd data-testid="ipt-build" id="ipt-build"></dd></div>
       </dl>
       <div class="statusrow">
-        <p id="status" class="status" role="status" aria-live="polite">Choose a STEP file to start.</p>
+        <p id="status" class="status" role="status" aria-live="polite">Choose a STEP file to start. Add its .ipt too, if you have one.</p>
         <p id="error" class="error" data-testid="error-message" role="alert" hidden></p>
       </div>
     </section>

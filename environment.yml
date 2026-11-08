@@ -17,6 +17,7 @@ dependencies:
   - playwright-python=1.60.0   # the Python client; must match the driver (1.64.1 needs Node 24+)
   - pytest-playwright=0.10.0
   - pypdf=7.0.0
+  - olefile=0.47               # Inventor .ipt compound files (D-031)
   - pip=26.2.2
   - pip:
       - -e ./service
