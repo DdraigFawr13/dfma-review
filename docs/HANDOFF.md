@@ -20,7 +20,8 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-08 S5 machine and setups, with set 3, on `s5-machine-setups` (D-022: Morgan picked the recommended option on 3 questions). `rules/access.py` (high, angle to the nearest frame axis), `plan.py` (smallest setup cover, tie order +Z -Z +X -X +Y -Y, tool loads, countersinks as `cs-<angle>` from their own end), Machine plan panel under Findings. 7 S5 test parts in `expected.toml` with plans; `test_plan.py`; browser `test_plan_panel.py`. Set 3 `tests/grading/sets/hole_ends_walls` (16 parts; on main 13 fail depth, countersink or walls; now 0). Engine: countersinks recorded (cone stays out of `faces`), depth where the hole is round all the way (`max_depth` = longest side; hole_joins r_through 30.0 -> 29.394), hole walls about every 1 mm and one per nearby face. MFCAD++ 1-500 and 501-1,000 unchanged (holes 12/0 and 23/0, pockets 78/1 and 112/1); set 3 faces: ours 20/20 0 wrong, Quiddity 20/20 0 wrong, Analysis Situs 20/20 8 wrong. NIST/EDMR scorecards regenerated: more hole walls (nasty_cheese 143 -> 386 features, 6.7 -> 9.4 s; 8 new thin walls 0.02-0.50 mm on hole-16/17, faces 0.009 mm apart at nearest); EDMR ex2 was a stale read_error (main reads it). Fresh review (2 medium, 5 low): countersink angle per end and cut-hole depth fixed (reproduced first, set part `cs_mixed`, `test_cut_hole_keeps_its_length`); a cone widening into the part as a countersink left (rare). Checks: 508 service, 6 unit, 13 browser. Draft [PR #15](https://github.com/DdraigFawr13/dfma-review/pull/15). Pages: [S5 status](https://claude.ai/artifact/KKXnxttj8dGhUU1HyzySFe), [demo](https://claude.ai/artifact/D3bfwpowEhoMCkUzEettYP) (new; built by `scripts/make_demo.py`), [Machine plan mock-up](https://claude.ai/artifact/5Cmq85bG5CPpi7oZ3oZHGW) (`mockups/plan-panel.html`; fresh check 0 blockers, 5 minor fixed).
+- 2026-11-08 Screenshot viewer (D-024; Morgan couldn't read the fixed 1280 px frames on a phone): `scripts/zoom_viewer.html` added by `scripts/add_zoom.py`; screenshots fit the screen, tap to open full screen and pinch, double-tap, drag or use − / Fit / + to zoom; shots at 2×. Applied to the S5 status page and both S5 mock-ups (same links). Checked on an emulated iPhone 13: page 390 px wide, double-tap 3× fit, + 4.5×, Close restores. Morgan: "screenshot view works you can merge that"; merged in [#16](https://github.com/DdraigFawr13/dfma-review/pull/16), with the G-code concept (isometric, animated).
+
 - 2026-11-06 Phone pages for Morgan: [S1 status](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu), [view-only demo](https://claude.ai/artifact/KnnLF3YAHp5ZCmNuVWyvP4) (to S4; S5 on: the new demo above, `python scripts/make_demo.py <out.html>` after `npm --prefix web run build`).
 
 ## Next
@@ -38,6 +39,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - Settled 2026-11-07: labels are pins (D-017); the scoring spike runs in a new session before S5 (Morgan: "We do the grading and testing in a new session before s5"). Research totals: 384,128 agent tokens (methods, labels, GitHub). S4 took 1 h 58 min to the first approval ask, $6.19 main session.
 - Backlog (Morgan, 2026-11-06): name each hole's type (through, blind, counterbore, countersink, drill point, threaded); recognise threads modelled as ring faces (NIST FTC 10's threaded hole is missed); catalogue NIST resources and commit the papers (research agents running).
 
+- After the project (Morgan, 2026-11-08: "I want it at the end of a project"): G-code for each operation with a live toolpath view; research open-source CAM first (to check: FreeCAD CAM, OpenCAMLib, Kiri:Moto, CAMotics) and its licences. [Concept](https://claude.ai/artifact/WnAU2EvXV5q3qHrJWdc5sp) (`mockups/gcode-concept.html`, illustrative feeds).
 - Nice to haves after the project is complete (Morgan, 2026-11-06), from the [research page](https://claude.ai/artifact/S2TDMa3VjXmz4AD7kUt1zm): waivers per finding, shop profiles, change review (rev A vs B, thinnest wall and smallest corner re-measured), comments and sign-off per finding, FMEA row export.
 
 - GitLab at work: are there CI runners, and can they download packages? Ask IT before the move (D-006).
@@ -49,11 +51,10 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-08 D-024: screenshots on Morgan's pages fit the screen and zoom on tap, taken at 2×.
 - 2026-11-08 D-023: Machine plan panel, a Passed list with the math (collapsed by default) and selectable setups with a why; all approved and merged in #15.
 - 2026-11-08 D-022: countersinks recorded on the hole and planned as a tool load; full-round depth for sloped exits; a hole on a pocket floor keeps its own axis.
 - 2026-11-08 D-021: undercut pockets get a finding (needs a T-slot or lollipop cutter); sealed voids get none.
-- 2026-11-07 D-020: cm and m files are metric; a no-unit file is read as mm with a note; walls may have up to 15 deg draft (Morgan chose the recommended options).
-- 2026-11-07 D-018: grading sets are the recognition gold standard; target 10% fewer misses than the best other tool, 0 wrong calls.
 - 2026-11-06 Concept chosen (D-001). Full master setup with web-app layer (D-002).
 - 2026-11-06 S1 build: extra packages and micromamba (D-008); slices shown as status page + demo (D-009); S1 merge approved.
 - 2026-11-06 First-version scope (D-003), stack (D-004), rules and units (D-005), company-move gates (D-006), spec approved (D-007).
