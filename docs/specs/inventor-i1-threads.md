@@ -1,7 +1,7 @@
 # Inventor parts I1: threads
 
-- **Status:** Draft (2026-11-08), fresh checks done (paraphrase, critic, zero-decision); waiting for Morgan.
-- **Planned in:** [round 1 form](https://claude.ai/artifact/UR1pmouDpuSahgVF5v5kbc), [review page](https://claude.ai/artifact/JKC9dFPSgWqzhpq65qzArK), chat 2026-11-08. **Decisions:** D-001, D-005, D-006, D-011, D-031, D-032. Research: [docs/research/inventor.html](../research/inventor.html) sections 0 and 3; spike in [docs/research/inventor-spike/](../research/inventor-spike/README.md).
+- **Status:** Approved 2026-11-08 (D-033)
+- **Planned in:** [round 1 form](https://claude.ai/artifact/UR1pmouDpuSahgVF5v5kbc), [review page](https://claude.ai/artifact/JKC9dFPSgWqzhpq65qzArK), chat 2026-11-08. **Decisions:** D-001, D-005, D-006, D-011, D-031, D-032, D-033. Research: [docs/research/inventor.html](../research/inventor.html) sections 0 and 3; spike in [docs/research/inventor-spike/](../research/inventor-spike/README.md).
 
 Every "measured" fact below was measured in this session (2026-11-08) on the 16 NIST `.ipt` files (zips checked against the SHA-256 in [CATALOG](../nist/CATALOG.md) "Native Inventor files"). Every unmeasured one says **Assumption**.
 
@@ -78,7 +78,7 @@ All Python tests go in `tests/service/` (the folder `scripts/check.py` runs); br
 - Our own reader with olefile, threads mapped by position (D-031).
 - Upload `.ipt` + STEP; shape from the STEP; exact frame within 0.01 mm, no rotation search; stale-pair check; refuse non-plain part types; three states; feature names in small print; NIST `.ipt` committed with checksums; work pairs off the repo (D-032).
 - olefile 0.47 (conda-forge, BSD-2-Clause) is a runtime dependency; the reader runs in the analysis worker under its time limit, caps every inflated stream and treats every count and pointer as untrusted (D-031).
-- Proposed here, for Morgan (Open questions 1-3): corners instead of volume; feature names may slip to I2 (a change to D-032's "every name"); four refuse-list types wait for samples (a change to D-032's "refused with a message").
+- Corners, face count and bounding box instead of volume; feature names move to I2 if S3's decode fails; Model States (2+), iParts, derived and Content Center parts keep the assumption line until a sample turns up (D-033, amends D-032).
 
 ## Alternatives rejected
 
@@ -187,6 +187,26 @@ S1 returns `inventor` without `threads`; S2 adds it. Holes gain `"thread": [...]
 ### Test files
 
 - `tests/inventor/files/`: the 16 NIST `.ipt` files, byte for byte (13,755,904 bytes); `tests/inventor/SOURCE.md`: both zip URLs and SHA-256, each file's SHA-256, the public-domain note. `tests/service/test_inventor_part.py::test_checksums`. `.gitattributes`: `*.ipt binary`.
+  SHA-256 of the 16 files as extracted on 2026-11-08 (`unzip -j` of `Inventor 2021/*.ipt` and `*.ipt` from the two zips):
+
+  ```
+  c3716769b86d5fb7db9b65fa4c785c0f98db92258af0a801d544ab7d83251ec3  INV_nist_ctc_01_asme1_2021.ipt
+  d0027e6469e71bdc7c9ed75c67ee8dafea1dd16e78e72249c1825f918168573d  INV_nist_ctc_02_asme1_2021.ipt
+  6015216e51931b3ff173f1fdccef1583b37d31540d12914319b59d5d6ef5011c  INV_nist_ctc_03_asme1_2021.ipt
+  c4b483d35ecdeeae98f8bfc206fb5d5e0c459c622c9e0fe34d55593478089d7f  INV_nist_ctc_04_asme1_2021.ipt
+  27af6adf58e41f13d18291c4e4ea5bf1ac4ed571751fb1c538c2d45feb255c26  INV_nist_ctc_05_asme1_2021.ipt
+  b726dec98a86e26fe9987bbbdeaff34396859130d576ae5bc3be7a69d7e60891  INV_nist_ftc_06_asme1_2021.ipt
+  3b6ef80aeb2aafb65327461ff04a33140d0a6888edc272c51273c7a1ab6e35e6  INV_nist_ftc_06_asme1_2024.ipt
+  afa1293e6d8852d04c0733947578d8f19949d99f49227521c248b9dc4104d99c  INV_nist_ftc_07_asme1_2021.ipt
+  b691d3d29a73ee9e0be4290692f79a85c7829754f786beff2fa901971c4f6a68  INV_nist_ftc_07_asme1_2024.ipt
+  d501948d2e752d1a4a24165873340b7effcd31194092b0033c46a86939b61fd1  INV_nist_ftc_08_asme1_2021.ipt
+  8fde251df9385988984a6a81f2f6b07cb113a862f87d931ca08abac4da5867f1  INV_nist_ftc_08_asme1_2024.ipt
+  98e01cb4bca340c3d2e8604893ace7ed3252975e27de611844c004bc70e3b3ac  INV_nist_ftc_09_asme1_2021.ipt
+  02cd8a89bedb341b39e65461859500769efde3ea33e78d142825d5d2bde71b37  INV_nist_ftc_09_asme1_2024.ipt
+  58db08fc38f417e63cea961e7cbb5d853ca5f9210c64a0ed9a0c4cbc1d556acd  INV_nist_ftc_10_asme1_2021.ipt
+  142317b7adec77791951180379673b82e138bf9446b713fc79f4e19905a25deb  INV_nist_ftc_10_asme1_2024.ipt
+  0f507d3d753855324a56088a387581fadfaf63b639c1231c2429f5632af76163  INV_nist_ftc_11_asme1_2021.ipt
+  ```
 - `tests/inventor/register.py` (S2): the spike's `register.py` (24 axis rotations + shift, vertex votes on a 0.1 mm grid, cylinder-axis hits), returning `(rows, shift)`.
 - `tests/inventor/nist_pair.py` (S2): `analyze_registered(step, ipt, process, material)`: `analyze` on the STEP, then `attach(..., transform=register(...), check=False)`. Used by `test_inventor_threads.py`, by `tests/inventor/make_fixture.py` (writes `tests/inventor/fixtures/ctc_04.json` and `stc_10.json`, committed), and by `scripts/make_demo.py`.
 - `tests/e2e/test_threads.py` and `test_pdf.py::test_pdf_threads` load the app, answer `/api/analyze` with the fixture through Playwright `page.route`, and pick two placeholder files named as the pair.
@@ -227,6 +247,4 @@ S1 returns `inventor` without `threads`; S2 adds it. Holes gain `"thread": [...]
 
 ## Open questions
 
-1. **Volume → corners.** D-032 says the pair must agree in volume, bounding box and face count. The `.ipt` stores no volume, and we can't compute one. Recommended: check every corner within 0.01 mm instead (a moved hole moves corners). Or: bounding box and face count only (weaker: a moved hole passes). And if your first work pair shows Inventor's STEP export changes the face or corner count (not measurable before then): recommended fallback, keep the bounding box as the refusal, show a face or corner mismatch as a warning on the Threads panel, and let each thread's own 0.01 mm tests decide matched or disagrees.
-2. **Feature names may slip to I2** if the decode fails (S3). D-032 says every name shows. Recommended: accept the fallback now, so S3 needs no new decision.
-3. **Samples for the refuse list.** Sheet metal and multi-body are detected from measured markers. More than one Model State, iParts, derived and Content Center parts have no sample here. Recommended: Morgan adds one of each the company uses to the work set (off the repo); S1 builds each refusal from its sample; types the company doesn't use keep the assumption line. Or (fail closed): refuse every `.ipt` saved by a release we haven't tested. Note: NIST CTC 03 and FTC 09 are sheet-metal parts in Inventor, so the app refuses them, as D-032 says.
+All three answered on the [approval page](https://claude.ai/artifact/We9PewcwKGm4GFnMrrQfxp) (D-033). Still open: if Morgan's first work pair changes the face or corner count, the fallback in D-033 needs Morgan's OK before S1 goes on.

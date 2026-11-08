@@ -256,3 +256,13 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - **Build order:** I1 threads; I2 hole features (type, designed sizes, names, patterns and mirrors, disagree and not-mapped states); I3 fillets and chamfers. Later phases: shape from the `.ipt`, material from iProperties, a folder of parts, `.iam` with assemblies.
 - **Why:** the review (own and an adversarial reviewer on the answers alone) found "all features mapped" untestable, Inventor 2023 and 2025 untested, and a mapping miss able to look like a design fault. Each item above closes one of those.
 
+## D-033 Inventor I1 threads spec approved
+
+- **Status:** Accepted (2026-11-08; Morgan, on the [approval page](https://claude.ai/artifact/We9PewcwKGm4GFnMrrQfxp): "Approved, start building"). Amends D-032.
+- **Decision:**
+  - Build I1 from [docs/specs/inventor-i1-threads.md](specs/inventor-i1-threads.md): S1 pair upload, checks and refusals; S2 threads mapped and shown; S3 feature names.
+  - The stale-pair check compares every corner (within 0.01 mm), the face count and the bounding box, instead of volume (Morgan: "Check every corner, plus the face count and outer size"). If Morgan's first work pair shows Inventor's STEP export changes the face or corner count, the spec's fallback (refuse on the bounding box only, warn on the rest) goes to Morgan before S1 goes on.
+  - Feature names move to I2 if S3's half-session decode fails (Morgan: "Yes, move them to I2 if needed").
+  - Samples for the refuse list: Morgan "Not sure". Sheet metal and multi-body are refused from measured markers; parts with 2+ Model States are refused by the `UFRxDoc` rule (layout assumed); iParts, derived and Content Center parts are not detected and the report says so in its assumptions until a sample turns up.
+- **Why:** the `.ipt` stores no volume (no float in any property set, no mass or volume in any ACIS record of the 16 NIST files), and a corner check catches a moved hole that volume would miss; 5 fresh checks found no other open decision.
+
