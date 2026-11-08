@@ -266,3 +266,10 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - Samples for the refuse list: Morgan "Not sure". Sheet metal and multi-body are refused from measured markers; parts with 2+ Model States are refused by the `UFRxDoc` rule (layout assumed); iParts, derived and Content Center parts are not detected and the report says so in its assumptions until a sample turns up.
 - **Why:** the `.ipt` stores no volume (no float in any property set, no mass or volume in any ACIS record of the 16 NIST files), and a corner check catches a moved hole that volume would miss; 5 fresh checks found no other open decision.
 
+## D-034 I1 S1: two file fields for the .ipt pair
+
+- **Status:** Accepted (2026-11-08; Morgan, in chat after the [mock-up](https://claude.ai/artifact/GfyRY7JTC9RHF97csbb18H): "Ok go with a").
+- **Decision:** the upload bar has two fields, "STEP file" and "Inventor part (.ipt), optional" (mock-up option A), instead of one field for both files (spec Design "web/", amended). Picking the STEP starts the review as today; adding or changing the `.ipt` runs it again with both (a new part); an `.ipt` picked first waits for its STEP. The bar shows the Inventor build beside the size and faces; the status line names both files. The wording listed in the mock-up's check record is approved with it.
+- **Why:** each file is picked on its own, in either order, and nothing changes for STEP-only users; one field needs both files picked in one dialog.
+- **Open (Morgan, same message):** "explore the idea of just using the .ipt file": shape from the `.ipt` alone, a later phase in D-031 and D-032. Proposed, not decided: see HANDOFF Open questions.
+
