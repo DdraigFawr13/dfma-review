@@ -190,8 +190,8 @@ function renderPassed(host: HTMLElement, result: Analysis, onSelect: (f: Pick) =
 /** "1/4 in end mill", "0.250 in (1/4) drill", "6.5 mm drill", "82° countersink" (S5). */
 export function toolName(t: Tool): string {
   if (t.kind === "countersink") return `${t.id.replace(/^cs-/, "")}° countersink`;
-  if (t.kind === "turn") return "Turning tool";
-  if (t.kind === "bore") return "Boring bar";
+  if (t.kind === "turn") return t.id.endsWith("finish") ? "Finish turning tool" : "Rough turning tool";
+  if (t.kind === "bore") return t.id.endsWith("finish") ? "Finish boring bar" : "Rough boring bar";
   if (t.kind === "groove") {
     const name = `${toolText(t.width_in ?? 0)} grooving tool`;
     return t.undersized ? `${name} (narrowest; wider than the groove)` : name;
@@ -216,9 +216,13 @@ function toolWhy(f: Feature, result: Analysis, setup: number, only?: string): st
     const t = result.tools.find((x) => x.id === o.tool);
     if (!t) return "";
     if (t.kind === "countersink") return `${toolName(t)}: its countersink faces this way.`;
-    if (t.kind === "turn") return `${toolName(t)}: turns the ${inch(d.diameter)} outside and faces the ends.`;
-    if (t.kind === "bore") return `${toolName(t)}: bores its ${inch(d.diameter)} diameter, ${inch(d.depth)} deep.`;
+    if (t.kind === "turn") return t.id.endsWith("finish") ? `${toolName(t)}: the finishing passes to size.`
+      : `${toolName(t)}: turns the ${inch(d.diameter)} outside and faces the ends, leaving stock for finishing.`;
+    if (t.kind === "bore") return t.id.endsWith("finish") ? `${toolName(t)}: the finishing pass to size.`
+      : `${toolName(t)}: bores its ${inch(d.diameter)} diameter, ${inch(d.depth)} deep, leaving stock for finishing.`;
     if (t.kind === "groove") return `${toolName(t)}: its ${inch(d.width)} width.`;
+    if (f.kind === "pocket" && (t.diameter_in ?? 0) * 25.4 > d.end_mill_mm + 1e-6) // D-029: the roughing tool
+      return `${toolName(t)}: roughs it out, the largest at most 75% of its ${inch(d.narrowest_width)} gap.`;
     if (f.kind === "pocket") {
       const gap = d.narrowest_width !== undefined ? ` and its ${inch(d.narrowest_width)} gap` : "";
       return `${toolName(t)}: the largest that fits its ${inch(d.min_corner_radius)} corners${gap}.`;

@@ -303,7 +303,7 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
 3. **Operations:**
    - One operation per (setup, tool), with setups in that same order.
    - Within a setup: end mills from largest to smallest, then drills from smallest to largest.
-   - Holes take the matching drill, or `pick_end_mill` when no drill matches. Pockets take `pick_end_mill`.
+   - Holes take the matching drill, or `pick_end_mill` when no drill matches. Pockets take `pick_end_mill`, after a roughing end mill when one larger fits (D-029).
 4. **Tool changes:** the number of operations. Every tool load counts, including the first in each setup; the screen calls it "Tool loads (including the first in each setup)". This counting rule is listed in `assumptions`.
 5. **At least one setup:** a part with no holes or pockets still gets 1 setup (+Z).
 6. **Exterior faces:** not planned in this version. This is listed in `assumptions`.

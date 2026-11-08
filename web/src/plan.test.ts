@@ -8,8 +8,10 @@ describe("toolName (S5 plan panel)", () => {
     expect(toolName({ id: "dr-6.5mm", kind: "drill", diameter_in: 0.255906, undersized: false })).toBe("6.5 mm drill");
     expect(toolName({ id: "cs-82", kind: "countersink", diameter_in: null, undersized: false })).toBe("82° countersink");
     expect(toolName({ id: "em-0.031", kind: "end_mill", diameter_in: 0.03125, undersized: true })).toBe("1/32 in end mill (smallest; nothing fits)");
-    expect(toolName({ id: "turn", kind: "turn", diameter_in: null, undersized: false })).toBe("Turning tool");
-    expect(toolName({ id: "bore", kind: "bore", diameter_in: null, undersized: false })).toBe("Boring bar");
+    expect(toolName({ id: "turn-rough", kind: "turn", diameter_in: null, undersized: false })).toBe("Rough turning tool");
+    expect(toolName({ id: "turn-finish", kind: "turn", diameter_in: null, undersized: false })).toBe("Finish turning tool");
+    expect(toolName({ id: "bore-rough", kind: "bore", diameter_in: null, undersized: false })).toBe("Rough boring bar");
+    expect(toolName({ id: "bore-finish", kind: "bore", diameter_in: null, undersized: false })).toBe("Finish boring bar");
     expect(toolName({ id: "groove-0.125", kind: "groove", diameter_in: null, width_in: 0.125, undersized: false })).toBe("1/8 in grooving tool");
   });
 });

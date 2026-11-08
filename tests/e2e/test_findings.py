@@ -212,7 +212,10 @@ def test_pins_sit_on_their_findings(page: Page, base_url: str):
     assert pin.evaluate("e => getComputedStyle(e).backgroundColor") == page.evaluate(
         f"(() => {{ const d = document.createElement('i'); d.style.color = '{colour}'; document.body.append(d);"
         " const c = getComputedStyle(d).color; d.remove(); return c; })()")
-    assert page.locator(".viewer svg.leaders line").count() == 1 and page.locator(".viewer svg.leaders circle").count() == 1
+    # D-029: every pin shown stands on a stem to a dot on its spot (before, only the selected one did)
+    shown_now = sum(1 for s in page.evaluate("window.__dfma.flagState()") if s["shown"])
+    assert page.locator(".viewer svg.leaders line").count() == shown_now
+    assert page.locator(".viewer svg.leaders circle").count() == shown_now
     assert _overlapping(page.evaluate("window.__dfma.flagBoxes()")) == []
 
 

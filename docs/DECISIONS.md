@@ -213,3 +213,13 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - Operations are numbered in the order they run, across setups, and a selected setup's reasons are listed in that order.
   - The demo opens a turning test part on Turning.
 - **Why:** Morgan, 2026-11-08, on the S6 demo: a turning part opened on Milling; "when I selected a turning part as milling it only had one setup and operation when the part had like grooves"; "the machine plan should say the stock size and it should list the operation details in order of operations listed". Morgan picked "Warn: looks turned" (recommended).
+
+## D-029 Roughing and finishing tools; pins stand above their spot
+
+- **Status:** Accepted (2026-11-08).
+- **Decision:**
+  - A pocket gets a roughing end mill before its finishing one: the largest end mill at most 75% of the pocket's narrowest width (assumption, `config/tools.toml` `[roughing]`), only when larger than the finishing tool (the one that fits its corners, as before). A pocket with no two walls facing each other keeps one tool.
+  - A turned outside gets `turn-rough` then `turn-finish`; a bore `bore-rough` then `bore-finish`. Grooves and drills stay one tool each.
+  - Each tool is its own tool load (spec Plan "Tool changes" unchanged), so plans gain loads: two_sided_block 3 → 5.
+  - Every finding pin stands 22 px above its spot on a stem to a dot, in its severity colour, so the feature under it stays visible (the selected pin stays at 26 px). Changes D-017, where only the selected pin had a stem.
+- **Why:** Morgan, 2026-11-08: "the tags are covering the features and making them hard to see"; "standard practice would be to mill out as much as possible with a larger tool and then do finishing passes with a second tool … look at logic across milling and turning for finishing passes". The 75% share is an assumption, not sourced; a shop can change it.

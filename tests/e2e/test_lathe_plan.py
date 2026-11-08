@@ -31,21 +31,23 @@ def test_slender_shaft_on_the_lathe(page: Page, base_url: str):
         "0.500 in round bar, 4.500 in long (the part's size; no allowance added)")
     expect(page.locator("#plan-count")).to_have_text("1 setup")
     expect(page.get_by_test_id("verdict")).to_contain_text("1 turned profile, 1 hole and 1 wall checked")
-    expect(page.get_by_test_id("plan-loads")).to_have_text("2 (including the first in each setup)")
+    expect(page.get_by_test_id("plan-loads")).to_have_text("3 (including the first in each setup)")
     expect(page.get_by_test_id("plan-why")).to_have_text(
         "Turned in one setup about its axis. Off the axis, cut with live tooling: hole-1.")
     setup = page.get_by_test_id("plan-setup-1")
     expect(setup).to_contain_text("Setup 1 · on the lathe, about the turning axis")
-    expect(setup).to_contain_text("Turning tool turn")
+    expect(setup).to_contain_text("Rough turning tool turn-rough")
     expect(setup).to_contain_text("0.125 in (1/8) drill dr-0.1250")
     setup.click()
     why = page.get_by_test_id("plan-setup-why-1").inner_text()
     # In the order the operations run (Morgan, 2026-11-08): 1. turn the outside, 2. drill the cross hole
-    assert why.index("1. profile-1 is the turned outside") < why.index("2. hole-1 is off the turning axis: live tooling."), why
-    expect(setup).to_contain_text("1. Turning tool turn")
-    expect(setup).to_contain_text("2. 0.125 in (1/8) drill dr-0.1250")
+    assert (why.index("1. profile-1 is the turned outside") < why.index("2. profile-1 is the turned outside")
+            < why.index("3. hole-1 is off the turning axis: live tooling.")), why
+    expect(setup).to_contain_text("1. Rough turning tool turn-rough")
+    expect(setup).to_contain_text("2. Finish turning tool turn-finish")
+    expect(setup).to_contain_text("3. 0.125 in (1/8) drill dr-0.1250")
     expect(page.get_by_test_id("plan-setup-why-1")).to_contain_text(
-        "profile-1 is the turned outside. Turning tool: turns the 0.500 in outside and faces the ends.")
+        "profile-1 is the turned outside. Rough turning tool: turns the 0.500 in outside and faces the ends")
     cut = sorted({i for o in r["operations"] for i in o["faces"]})
     assert page.evaluate("window.__dfma.highlightedFaces()") == cut
     expect(page.get_by_test_id("finding-F1")).to_contain_text("Length 9.0× diameter (limit 8.0×)")

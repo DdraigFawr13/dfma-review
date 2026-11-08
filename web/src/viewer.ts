@@ -380,12 +380,12 @@ export class Viewer {
   private placeFlags(): void {
     const svg = this.leaderLayer();
     const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-    const STEM = 26;
+    const STEM = 26, LIFT = 22; // D-029: every pin stands above its spot, so the feature under it stays visible
     const spots = new Map(this.flags.map((f) => [f, f.points.length ? this.anchorsOf(f.points) : []]));
     const order = this.flags.map((f, i) => ({ f, i })).sort((a, b) =>
       Number(this.selected?.id === b.f.finding.id) - Number(this.selected?.id === a.f.finding.id)
       || spread(spots.get(a.f)!) - spread(spots.get(b.f)!) || a.i - b.i).map((x) => x.f);
-    const placed: { r: DOMRect; el: HTMLElement; more: number }[] = [];
+    const placed: { r: DOMRect; el: HTMLElement; more: number; at: { x: number; y: number }; sev: string }[] = [];
     const host = this.canvas.parentElement?.getBoundingClientRect();
     for (const flag of order) {
       const { el, finding } = flag;
@@ -398,8 +398,8 @@ export class Viewer {
       if (!mine.length) continue;
       const put = (p: { x: number; y: number }): DOMRect => {
         el.style.left = `${p.x}px`;
-        el.style.top = `${on ? p.y - STEM : p.y}px`;
-        el.style.transform = on ? "translate(-50%, -100%)" : "translate(-50%, -50%)";
+        el.style.top = `${p.y - (on ? STEM : LIFT)}px`;
+        el.style.transform = "translate(-50%, -100%)";
         return el.getBoundingClientRect();
       };
       let at = mine[0];
@@ -417,8 +417,7 @@ export class Viewer {
         near.el.dataset.more = `+${near.more}`;
         continue;
       }
-      placed.push({ r, el, more: 0 });
-      if (on && host) this.stem(svg, r.left - host.left + r.width / 2, r.bottom - host.top, at.x, at.y, css(`--${finding.severity}`));
+      placed.push({ r, el, more: 0, at, sev: finding.severity });
     }
     // A "+n" makes a pin wider after it was placed: fold any pin it now covers, until none overlap.
     for (let changed = true, round = 0; changed && round < 20; round++) {
@@ -439,6 +438,11 @@ export class Viewer {
           break;
         }
       }
+    }
+    // A stem from each pin shown down to a dot on its spot, in its severity colour (D-029).
+    if (host) for (const p of placed) {
+      const r = p.el.getBoundingClientRect();
+      this.stem(svg, r.left - host.left + r.width / 2, r.bottom - host.top, p.at.x, p.at.y, css(`--${p.sev}`));
     }
   }
 

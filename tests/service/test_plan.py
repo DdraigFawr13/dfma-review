@@ -16,14 +16,26 @@ def _run(name: str, process: str = "mill") -> dict:
 
 
 def test_two_sided_block():
-    """J4: a pocket each side and a hole from the side: 3-axis mill, 3 setups, the tools per setup, 3 loads."""
+    """J4: a pocket each side and a hole from the side: 3-axis mill, 3 setups, the tools per setup. D-029: each
+    pocket is roughed (the largest end mill at most 75% of its narrowest width: 0.750 in -> 1/2 in, 1.000 in ->
+    3/4 in), then finished with the 1/4 in that fits its corners: 5 loads."""
     r = _run("two_sided_block")
     check_plan(PARTS / "two_sided_block.step", expected("two_sided_block"), r)
     assert r["machine"] == "3-axis mill"
     assert [(r["setups"][o["setup"]]["direction"], o["tool"]) for o in r["operations"]] == [
-        ("+Z", "em-0.250"), ("-Z", "em-0.250"), ("-X", "dr-0.2500")]
-    assert r["tool_changes"] == 3
+        ("+Z", "em-0.500"), ("+Z", "em-0.250"), ("-Z", "em-0.750"), ("-Z", "em-0.250"), ("-X", "dr-0.2500")]
+    assert r["tool_changes"] == 5
     assert r["findings"] == []
+
+
+def test_no_roughing_tool_when_one_tool_does_both():
+    """D-029: a pocket with no two walls facing each other has no width to size a roughing tool by, and a
+    roughing tool no larger than the finishing one is left out: one tool does both."""
+    from dfma.plan import pocket_tools
+    f = {"dims_mm": {"end_mill_mm": 6.35, "undersized": 0}}  # no narrowest_width
+    assert [t["id"] for t in pocket_tools(f)] == ["em-0.250"]
+    f = {"dims_mm": {"end_mill_mm": 12.7, "undersized": 0, "narrowest_width": 0.75 * 25.4}}  # 75% is 0.5625 in
+    assert [t["id"] for t in pocket_tools(f)] == ["em-0.500"]  # the 1/2 in finisher already is the largest
 
 
 @pytest.mark.parametrize("name, angle", [("angled_hole", 30.0), ("angled_hole_in_pocket", 20.0)])

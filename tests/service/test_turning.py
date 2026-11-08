@@ -104,7 +104,8 @@ def test_groove_and_bore():
     assert [(g["outside"], round(g["dims_mm"]["width"] / IN, 4), round(g["dims_mm"]["depth"] / IN, 4)) for g in grooves] \
         == [(True, 0.125, 0.1), (False, 0.125, 0.0625)]
     assert [(o["tool"], o["features"]) for o in r["operations"]] == [
-        ("turn", ["profile-1"]), ("bore", ["bore-1"]), ("groove-0.125", ["groove-1", "groove-2"])]
+        ("turn-rough", ["profile-1"]), ("turn-finish", ["profile-1"]), ("bore-rough", ["bore-1"]),
+        ("bore-finish", ["bore-1"]), ("groove-0.125", ["groove-1", "groove-2"])]  # D-029: rough, then finish
     # D-026: bore_depth judges the bore (1.33x, a steel bar reaches); hole_depth judges holes only
     assert [p["feature"] for p in r["passed"] if p["rule"] == "bore_depth"] == ["bore-1"]
     assert not [p for p in r["passed"] if p["rule"] == "hole_depth"]
@@ -125,7 +126,7 @@ def test_clean_shaft():
     assert r["findings"] == [] and r["machine"] == "lathe"
     (hole,) = [f for f in r["features"] if f["kind"] == "hole"]
     assert hole["off_axis_deg"] <= 0.5 and hole["off_axis_mm"] <= 0.0254
-    assert [o["tool"] for o in r["operations"]] == ["turn", "dr-0.1875"]
+    assert [o["tool"] for o in r["operations"]] == ["turn-rough", "turn-finish", "dr-0.1875"]
     passed = {(p["rule"], p["feature"]) for p in r["passed"]}
     assert {("turn_slender", "profile-1"), ("turn_offaxis", "hole-1"), ("turn_axis", "profile-1")} <= passed
     (profile,) = [f for f in r["features"] if f["kind"] == "profile"]

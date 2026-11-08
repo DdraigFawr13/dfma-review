@@ -58,6 +58,28 @@ def _hole_tool(f: dict, units: str) -> dict:
             "undersized": undersized}
 
 
+def _rough_tool(f: dict) -> dict | None:
+    """D-029: a roughing end mill for a pocket: the largest at most `pocket_width_share` of its narrowest width,
+    when that is larger than the finishing tool (the one that fits its corners). None for a pocket with no two
+    walls facing each other (no width to size it by) or when one tool does both."""
+    width = f["dims_mm"].get("narrowest_width")
+    if width is None:
+        return None
+    from . import settings
+    share = settings.tools_config()["roughing"]["pocket_width_share"]
+    fits = [d for d in T.end_mills_mm() if d <= share * width + T.PICK_TOL_MM]
+    if not fits or fits[-1] <= f["dims_mm"]["end_mill_mm"] + 1e-6:
+        return None
+    return {"id": _mill_id(fits[-1]), "kind": "end_mill", "diameter_in": round(fits[-1] / MM_PER_IN, 6),
+            "undersized": False}
+
+
+def pocket_tools(f: dict) -> list[dict]:
+    """A pocket's tools in the order they cut: the roughing end mill (D-029), then the finishing one."""
+    rough = _rough_tool(f)
+    return ([rough] if rough else []) + [_pocket_tool(f)]
+
+
 def _pocket_tool(f: dict) -> dict:
     mill = f["dims_mm"]["end_mill_mm"]
     return {"id": _mill_id(mill), "kind": "end_mill", "diameter_in": round(mill / MM_PER_IN, 6),
@@ -85,8 +107,8 @@ def plan(features: list[dict], findings: list[dict], frame: dict, units_in_file:
     for f in features:
         if f["kind"] not in ("hole", "pocket") or f["id"] in flagged or not f["open_dirs"]:
             continue  # flagged, or a void sealed inside the part (no open end): not planned (assumptions)
-        tool = _hole_tool(f, units_in_file) if f["kind"] == "hole" else _pocket_tool(f)
-        jobs.append((f["id"], set(f["open_dirs"]), tool, f["faces"]))
+        for tool in ([_hole_tool(f, units_in_file)] if f["kind"] == "hole" else pocket_tools(f)):
+            jobs.append((f["id"], set(f["open_dirs"]), tool, f["faces"]))
         for v, deg, cone in zip(f.get("countersink_vectors", []), f.get("countersink_degs", []),
                                 f.get("countersink_end_faces", [])):
             if d := _frame_dir(v, frame):  # always: a hole with no end along an axis is flagged above

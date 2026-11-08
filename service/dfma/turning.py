@@ -6,14 +6,15 @@ so tool loads are the number of operations."""
 from __future__ import annotations
 
 from . import settings
-from .plan import _hole_tool, _pocket_tool, _rank
+from .plan import _hole_tool, _rank, pocket_tools
 from .rules.turn_offaxis import off_axis
 from .units import MM_PER_IN
 
 MACHINE_LATHE = "lathe"
 MACHINE_LIVE = "lathe with live tooling"
-TURN_TOOL = {"id": "turn", "kind": "turn", "diameter_in": None, "undersized": False}
-BORE_TOOL = {"id": "bore", "kind": "bore", "diameter_in": None, "undersized": False}
+# D-029: the outside and each bore are roughed, then finished with a second tool
+TURN_TOOLS = [{"id": f"turn-{r}", "kind": "turn", "diameter_in": None, "undersized": False} for r in ("rough", "finish")]
+BORE_TOOLS = [{"id": f"bore-{r}", "kind": "bore", "diameter_in": None, "undersized": False} for r in ("rough", "finish")]
 
 
 def groove_tool(width_mm: float) -> dict:
@@ -29,14 +30,15 @@ def plan(features: list[dict], findings: list[dict], units_in_file: str) -> dict
     jobs: list[tuple[int, str, dict, list[int]]] = []  # (stage, feature id, tool, faces)
     for f in features:
         if f["kind"] == "profile":
-            jobs.append((0, f["id"], TURN_TOOL, f["faces"]))
+            jobs += [(0, f["id"], t, f["faces"]) for t in TURN_TOOLS]
         elif f["kind"] == "bore":
-            jobs.append((2, f["id"], BORE_TOOL, f["faces"]))
+            jobs += [(2, f["id"], t, f["faces"]) for t in BORE_TOOLS]
         elif f["kind"] == "groove":
             jobs.append((3, f["id"], groove_tool(f["dims_mm"]["width"]), f["faces"]))
         elif f["kind"] in ("hole", "pocket") and f["open_vectors"]:
-            tool = _hole_tool(f, units_in_file) if f["kind"] == "hole" else _pocket_tool(f)
-            jobs.append((1 if f["kind"] == "hole" and not off_axis(f) else 4, f["id"], tool, f["faces"]))
+            stage = 1 if f["kind"] == "hole" and not off_axis(f) else 4
+            for tool in ([_hole_tool(f, units_in_file)] if f["kind"] == "hole" else pocket_tools(f)):
+                jobs.append((stage, f["id"], tool, f["faces"]))
 
     ops: dict[str, dict] = {}
     stage_of: dict[str, tuple] = {}
@@ -44,7 +46,7 @@ def plan(features: list[dict], findings: list[dict], units_in_file: str) -> dict
     members: list[str] = []
     for stage, fid, tool, faces in jobs:
         tools.setdefault(tool["id"], tool)
-        stage_of.setdefault(tool["id"], (stage, *_rank(tool)))
+        stage_of.setdefault(tool["id"], (stage, *_rank(tool)[:2], len(stage_of)))  # rough before finish
         op = ops.setdefault(tool["id"], {"setup": 0, "tool": tool["id"], "features": [], "faces": []})
         op["features"].append(fid)
         op["faces"] = sorted({*op["faces"], *faces})
