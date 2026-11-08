@@ -1,0 +1,323 @@
+<title>G-code Concept</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one column; operation tabs, then the toolpath views beside the G-code (stacked on a phone), then the
+   practices list. Drawing office tokens from docs/UI_STYLE.md, with a dark version. */
+:root { --bg:#eef2f6; --panel:#ffffff; --ink:#16263d; --muted:#55657a; --line:#c4cfdc; --accent:#1f5fa8; --accent-ink:#ffffff;
+  --view:#e3eaf2; --grid:#cfd9e5; --stock:#a9b6c6; --cut:#1f5fa8; --rapid:#b3261e; --done:#8559b8; --hl:#fff1c2;
+  --sans:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#121820; --panel:#1a222c; --ink:#e3e9f0; --muted:#9aa8b8;
+  --line:#2e3a48; --accent:#6fa8e6; --accent-ink:#0d141c; --view:#16202b; --grid:#243243; --stock:#3b4a5c; --cut:#6fa8e6; --rapid:#f08a82;
+  --done:#b896e6; --hl:#3d3418; color-scheme:dark } }
+:root[data-theme="dark"] { --bg:#121820; --panel:#1a222c; --ink:#e3e9f0; --muted:#9aa8b8; --line:#2e3a48; --accent:#6fa8e6; --accent-ink:#0d141c;
+  --view:#16202b; --grid:#243243; --stock:#3b4a5c; --cut:#6fa8e6; --rapid:#f08a82; --done:#b896e6; --hl:#3d3418; color-scheme:dark }
+body { background:var(--bg); color:var(--ink); font:16px/1.5 var(--sans); padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px)); padding-block:20px 48px; }
+main { max-width:72rem; margin:0 auto; display:grid; gap:18px; }
+h1 { font-size:1.5rem; line-height:1.25; margin:0; text-wrap:balance; } h2 { font-size:1.1rem; margin:0; }
+p, ul { margin:0; } ul { padding-left:1.2rem; display:grid; gap:4px; }
+.meta { color:var(--muted); font-size:.9rem; }
+.note { background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--accent); padding:12px 14px; display:grid; gap:6px; }
+.tabs { display:flex; flex-wrap:wrap; gap:8px; }
+.tabs button, .ctl button { font:600 .9rem var(--sans); min-height:40px; padding:4px 12px; border:1px solid var(--line); background:var(--panel);
+  color:var(--ink); cursor:pointer; border-radius:2px; }
+.tabs button[aria-selected="true"] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.tabs small { display:block; font-weight:400; }
+button:focus-visible, input:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+.work { display:grid; grid-template-columns:minmax(0, 1.2fr) minmax(0, 1fr); gap:16px; }
+@media (max-width: 800px) { .work { grid-template-columns:1fr; } }
+.views, .codebox { background:var(--panel); border:1px solid var(--line); padding:12px; display:grid; gap:8px; min-width:0; align-content:start; }
+canvas { width:100%; display:block; background:var(--view); border:1px solid var(--line); }
+.ctl { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.ctl label { font-size:.9rem; display:flex; gap:6px; align-items:center; }
+.ctl input[type=range] { width:9rem; }
+.status { font:500 .85rem var(--mono); color:var(--muted); font-variant-numeric:tabular-nums; }
+.legend { display:flex; flex-wrap:wrap; gap:12px; font-size:.85rem; color:var(--muted); }
+.legend i { display:inline-block; width:18px; height:4px; vertical-align:middle; margin-right:4px; }
+.code { font:500 .85rem/1.5 var(--mono); max-height:40rem; overflow:auto; margin:0; padding:0; list-style:none; counter-reset:n; }
+.code li { padding:0 6px; white-space:pre; display:flex; gap:10px; }
+.code li::before { counter-increment:n; content:counter(n); color:var(--muted); min-width:2.2em; text-align:right; }
+.code li.on { background:var(--hl); }
+.code .c { color:var(--muted); }
+</style>
+<main>
+<header style="display:grid;gap:6px">
+  <p class="meta">DFMA Review · concept mock-up for after the first version · 8 Nov 2026</p>
+  <h1>G-code and a live view of each operation</h1>
+  <p>The J4 test part <code>two_sided_block.step</code>, with its plan from S5: 3 setups, the 1/4 in end mill for each pocket, and the 1/4 in drill for the hole. Pick an operation and press Play. The tool runs the path and the line it is running lights up.</p>
+</header>
+
+<section class="note" aria-label="What this is">
+  <p><b>A concept, not a CAM program.</b> The part, pockets, hole, setups and tools come from S5. The toolpath and G-code are made by this page from those numbers. The speeds, feeds and step sizes are <b>illustrative</b>, not checked against a machine or a tool maker's data. Never run this code on a machine.</p>
+</section>
+
+<div class="tabs" role="tablist" aria-label="Operations" id="tabs"></div>
+
+<section class="work">
+  <div class="views">
+    <canvas id="top" width="760" height="560" aria-label="Top view of the face being cut, from the spindle"></canvas>
+    <canvas id="side" width="760" height="200" aria-label="Side view: depth of the tool over the run"></canvas>
+    <div class="legend"><span><i style="background:var(--cut)"></i>cutting move (G1)</span><span><i style="background:var(--rapid)"></i>rapid move (G0)</span><span><i style="background:var(--done)"></i>material removed</span></div>
+    <div class="ctl">
+      <button type="button" id="play">Play</button>
+      <button type="button" id="step">Step</button>
+      <button type="button" id="reset">Reset</button>
+      <label for="speed">Speed <input type="range" id="speed" min="1" max="20" value="6"></label>
+      <span class="status" id="status" aria-live="polite"></span>
+    </div>
+  </div>
+  <div class="codebox">
+    <h2 id="codetitle">G-code</h2>
+    <ol class="code" id="code" aria-labelledby="codetitle"></ol>
+  </div>
+</section>
+
+<section class="note" aria-label="Practices">
+  <h2>Practices the code follows</h2>
+  <ul>
+    <li><b>Safe start block</b> each program: inches, absolute, XY plane, cancel cutter and length offsets and canned cycles (G20 G90 G17 G40 G49 G80).</li>
+    <li><b>Tool change and length offset</b>: T1 M6, then G43 H1 before the first Z move, so the machine knows the tool's length.</li>
+    <li><b>Rapids clear of the part</b>: G0 to a safe height (0.5 in) first; feed only below the clearance plane (0.1 in).</li>
+    <li><b>No straight plunge with an end mill</b>: it ramps in along the pocket's centre line.</li>
+    <li><b>Climb milling</b>: counter-clockwise inside the pocket, which is the cutter-on-the-left side of the wall with a clockwise spindle.</li>
+    <li><b>Depth in steps</b>: two passes of 0.125 in (half the tool diameter), then a finishing lap at full depth.</li>
+    <li><b>Peck drilling</b> for the hole (G83, 0.100 in pecks): depth 3 × diameter clears chips.</li>
+    <li><b>Safe end</b>: coolant off, spindle off, back to the tool-change height (G28), program end (M30).</li>
+  </ul>
+  <p class="meta">When this is built for real: research open-source CAM before writing any (Morgan's ask). From memory, to be checked: FreeCAD's CAM workbench, OpenCAMLib, Kiri:Moto, and CAMotics for simulation. Check every licence before using code (SAFE-05). Generated code would be checked by simulating it against the part's model, and would carry the same "show the evidence" rule as findings (D-001).</p>
+</section>
+</main>
+
+<script>
+(() => {
+  // Each face is drawn as seen from the spindle, in that setup's work coordinates (origin at the face's corner).
+  const OPS = [
+    { key: "s1", setup: "Setup 1 · from +Z", what: "pocket-2 · 1/4 in end mill", face: [2, 3], kind: "pocket",
+      pocket: { x0: 0.5, y0: 1.75, w: 1.0, h: 0.75, r: 0.125, depth: 0.25 }, tool: 0.25, T: 1 },
+    { key: "s2", setup: "Setup 2 · from −Z", what: "pocket-1 · 1/4 in end mill", face: [2, 3], kind: "pocket",
+      pocket: { x0: 0.375, y0: 0.25, w: 1.25, h: 1.0, r: 0.125, depth: 0.25 }, tool: 0.25, T: 1 },
+    { key: "s3", setup: "Setup 3 · from −X", what: "hole-1 · 1/4 in drill", face: [3, 1.5], kind: "hole",
+      hole: { x: 1.5, y: 0.75, d: 0.25, depth: 0.75 }, tool: 0.25, T: 2 },
+  ];
+  const SAFE = 0.5, CLEAR = 0.1, STEPDOWN = 0.125, STEPOVER = 0.1;
+  const f4 = (v) => (Math.abs(v) < 5e-5 ? 0 : v).toFixed(4);
+
+  function build(op) {
+    const lines = [], moves = []; // a move: {x, y, z, rapid, line}
+    let cur = { x: 0, y: 0, z: SAFE };
+    const say = (t, c) => lines.push({ t, c });
+    const go = (rapid, p, comment) => {
+      const n = { ...cur, ...p };
+      const words = [rapid ? "G0" : "G1"];
+      if (p.x !== undefined) words.push("X" + f4(n.x));
+      if (p.y !== undefined) words.push("Y" + f4(n.y));
+      if (p.z !== undefined) words.push("Z" + f4(n.z));
+      if (!rapid && p.f) words.push("F" + p.f);
+      lines.push({ t: words.join(" "), c: comment });
+      // the first rapid starts where the tool is, over its first point, not at the face's corner
+      moves.push({ from: moves.length ? cur : { ...n, z: SAFE }, to: n, rapid, line: lines.length - 1 });
+      cur = n;
+    };
+    say("%");
+    say(`O100${op.key.slice(1)}`, `${op.setup}: ${op.what}`);
+    say("G20 G90 G17 G40 G49 G80", "inches, absolute, XY plane, cancel offsets and cycles");
+    say("G54", "work offset: this setup's face corner");
+    if (op.kind === "pocket") {
+      const P = op.pocket, R = op.tool / 2;
+      say(`T${op.T} M6`, "1/4 in 3-flute carbide end mill");
+      say("S10000 M3", "spindle CW (illustrative)");
+      say(`G43 H${op.T} Z${f4(SAFE)}`, "tool length offset, safe height");
+      say("M8", "coolant on");
+      // tool-centre rectangles from the wall inwards, stepping STEPOVER (cleared from the middle out)
+      const cx0 = P.x0 + R, cy0 = P.y0 + R, cx1 = P.x0 + P.w - R, cy1 = P.y0 + P.h - R;
+      const rings = [];
+      for (let k = 0; ; k++) {
+        const a = [cx0 + k * STEPOVER, cy0 + k * STEPOVER, cx1 - k * STEPOVER, cy1 - k * STEPOVER];
+        if (a[0] > a[2] || a[1] > a[3]) break;
+        rings.push(a);
+      }
+      const inner = rings[rings.length - 1];
+      const midY = (inner[1] + inner[3]) / 2;
+      const line = [inner[0], midY, inner[2], midY]; // the centre line, for the ramp
+      go(true, { x: line[0], y: line[1] }, "over the pocket's centre line");
+      go(true, { z: CLEAR }, "clearance plane");
+      const passes = [];
+      for (let z = -STEPDOWN; z > -P.depth - 1e-9; z -= STEPDOWN) passes.push(Math.max(z, -P.depth));
+      let zTop = 0;
+      for (const z of passes) {
+        say(`(depth pass Z${f4(z)})`);
+        go(false, { z: zTop, f: 30 }, "feed down to the last floor");
+        go(false, { x: line[2], z: z, f: 30 }, "ramp in along the centre line");
+        go(false, { x: line[0], f: 40 }, "clear the centre line");
+        for (let k = rings.length - 1; k >= 0; k--) {
+          const [a, b, c, d] = rings[k];
+          go(false, { x: a, y: b, f: 40 });
+          go(false, { x: c }, k === rings.length - 1 ? "counter-clockwise: climb milling" : undefined);
+          go(false, { y: d });
+          go(false, { x: a });
+          go(false, { y: b });
+        }
+        go(false, { x: line[0], y: line[1] }, "back to the centre");
+        zTop = z;
+      }
+      say("(finishing lap at full depth: one more climb lap for a clean wall)");
+      const [a, b, c, d] = rings[0];
+      go(false, { x: a, y: b, f: 50 });
+      go(false, { x: c }); go(false, { y: d }); go(false, { x: a }); go(false, { y: b }, "corners: the tool's radius is the corner radius");
+      go(true, { z: SAFE }, "retract");
+    } else {
+      const H = op.hole;
+      say(`T${op.T} M6`, "0.250 in (1/4) jobber drill, carbide");
+      say("S3000 M3", "spindle CW (illustrative)");
+      say(`G43 H${op.T} Z${f4(SAFE)}`, "tool length offset, safe height");
+      say("M8", "coolant on");
+      go(true, { x: H.x, y: H.y }, "over the hole");
+      go(true, { z: CLEAR }, "R plane");
+      say(`G83 X${f4(H.x)} Y${f4(H.y)} Z${f4(-H.depth)} R${f4(CLEAR)} Q0.1000 F12.`, "peck drill: 0.100 in pecks, back to R each time");
+      const cycleLine = lines.length - 1;
+      for (let z = -0.1; ; z -= 0.1) {
+        const zz = Math.max(z, -H.depth);
+        moves.push({ from: { ...cur }, to: { ...cur, z: zz }, rapid: false, line: cycleLine });
+        cur = { ...cur, z: zz };
+        moves.push({ from: { ...cur }, to: { ...cur, z: CLEAR }, rapid: true, line: cycleLine });
+        cur = { ...cur, z: CLEAR };
+        if (zz <= -H.depth + 1e-9) break;
+        moves.push({ from: { ...cur }, to: { ...cur, z: zz + 0.02 }, rapid: true, line: cycleLine });
+        cur = { ...cur, z: zz + 0.02 };
+      }
+      say("G80", "cancel the cycle");
+      go(true, { z: SAFE }, "retract");
+    }
+    say("M9", "coolant off");
+    say("M5", "spindle off");
+    say("G91 G28 Z0", "to the tool-change height");
+    say("G90");
+    say("M30", "end");
+    say("%");
+    return { lines, moves };
+  }
+
+  const tabs = document.getElementById("tabs"), codeEl = document.getElementById("code");
+  const top = document.getElementById("top"), side = document.getElementById("side");
+  const statusEl = document.getElementById("status"), playBtn = document.getElementById("play");
+  const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  let op, prog, idx = 0, frac = 0, playing = false, last = 0, zTrace = [];
+
+  function select(i) {
+    op = OPS[i]; prog = build(op); idx = 0; frac = 0; playing = false; zTrace = [];
+    playBtn.textContent = "Play";
+    for (const [j, b] of [...tabs.children].entries()) b.setAttribute("aria-selected", String(j === i));
+    codeEl.replaceChildren(...prog.lines.map((l) => {
+      const li = document.createElement("li");
+      li.append(document.createTextNode(l.t));
+      if (l.c) { const c = document.createElement("span"); c.className = "c"; c.textContent = `(${l.c})`; li.append(c); }
+      return li;
+    }));
+    draw();
+  }
+  OPS.forEach((o, i) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.setAttribute("role", "tab");
+    b.innerHTML = `${o.setup}<small>${o.what}</small>`;
+    b.addEventListener("click", () => select(i));
+    tabs.append(b);
+  });
+
+  function pos() {
+    const m = prog.moves[Math.min(idx, prog.moves.length - 1)];
+    if (!m) return { x: 0, y: 0, z: SAFE };
+    const t = idx >= prog.moves.length ? 1 : frac;
+    return { x: m.from.x + (m.to.x - m.from.x) * t, y: m.from.y + (m.to.y - m.from.y) * t, z: m.from.z + (m.to.z - m.from.z) * t };
+  }
+
+  function draw() {
+    const W = top.width, H = top.height, [fw, fh] = op.face, pad = 40;
+    const s = Math.min((W - 2 * pad) / fw, (H - 2 * pad) / fh), ox = (W - fw * s) / 2, oy = (H + fh * s) / 2;
+    const X = (x) => ox + x * s, Y = (y) => oy - y * s;
+    const g = top.getContext("2d");
+    g.fillStyle = css("--view"); g.fillRect(0, 0, W, H);
+    g.strokeStyle = css("--grid"); g.lineWidth = 1;
+    for (let x = 0; x <= fw + 1e-9; x += 0.25) { g.beginPath(); g.moveTo(X(x), Y(0)); g.lineTo(X(x), Y(fh)); g.stroke(); }
+    for (let y = 0; y <= fh + 1e-9; y += 0.25) { g.beginPath(); g.moveTo(X(0), Y(y)); g.lineTo(X(fw), Y(y)); g.stroke(); }
+    g.fillStyle = css("--stock"); g.globalAlpha = 0.55; g.fillRect(X(0), Y(fh), fw * s, fh * s); g.globalAlpha = 1;
+    g.strokeStyle = css("--ink"); g.lineWidth = 1.5; g.strokeRect(X(0), Y(fh), fw * s, fh * s);
+    g.fillStyle = css("--muted"); g.font = `500 14px ${css("--mono")}`;
+    g.fillText(`${fw.toFixed(3)} × ${fh.toFixed(3)} in face · origin bottom left`, X(0), Y(0) + 26);
+    // the feature's outline
+    g.setLineDash([6, 4]); g.strokeStyle = css("--ink");
+    if (op.kind === "pocket") { const P = op.pocket; g.beginPath(); g.roundRect(X(P.x0), Y(P.y0 + P.h), P.w * s, P.h * s, P.r * s); g.stroke(); }
+    else { g.beginPath(); g.arc(X(op.hole.x), Y(op.hole.y), op.hole.d / 2 * s, 0, 7); g.stroke(); }
+    g.setLineDash([]);
+    // material removed so far: cutting moves below the face, swept with the tool's diameter
+    g.lineCap = "round"; g.lineJoin = "round";
+    const cur = pos();
+    const done = prog.moves.slice(0, idx);
+    g.strokeStyle = css("--done"); g.lineWidth = op.tool * s; g.globalAlpha = 0.6;
+    for (const m of done) if (!m.rapid && Math.min(m.from.z, m.to.z) < 0) { g.beginPath(); g.moveTo(X(m.from.x), Y(m.from.y)); g.lineTo(X(m.to.x), Y(m.to.y)); g.stroke(); }
+    if (op.kind === "hole" && Math.min(0, ...done.map((m) => m.to.z)) < 0) { g.fillStyle = css("--done"); g.beginPath(); g.arc(X(op.hole.x), Y(op.hole.y), op.tool / 2 * s, 0, 7); g.fill(); }
+    g.globalAlpha = 1;
+    // the whole path, thin: cutting and rapid
+    g.lineWidth = 1.5;
+    for (const m of prog.moves) {
+      g.strokeStyle = m.rapid ? css("--rapid") : css("--cut"); g.setLineDash(m.rapid ? [4, 4] : []);
+      g.beginPath(); g.moveTo(X(m.from.x), Y(m.from.y)); g.lineTo(X(m.to.x), Y(m.to.y)); g.stroke();
+    }
+    g.setLineDash([]);
+    // the tool
+    g.strokeStyle = css("--ink"); g.lineWidth = 2; g.fillStyle = css("--panel"); g.globalAlpha = 0.85;
+    g.beginPath(); g.arc(X(cur.x), Y(cur.y), op.tool / 2 * s, 0, 7); g.fill(); g.stroke(); g.globalAlpha = 1;
+    // side view: Z over the run
+    const sg = side.getContext("2d"), SW = side.width, SH = side.height, z0 = SAFE + 0.05, z1 = -(op.kind === "pocket" ? op.pocket.depth : op.hole.depth) - 0.05;
+    const SY = (z) => 14 + (z0 - z) / (z0 - z1) * (SH - 34);
+    sg.fillStyle = css("--view"); sg.fillRect(0, 0, SW, SH);
+    sg.fillStyle = css("--stock"); sg.globalAlpha = 0.55; sg.fillRect(0, SY(0), SW, SH - SY(0)); sg.globalAlpha = 1;
+    sg.fillStyle = css("--muted"); sg.font = `500 13px ${css("--mono")}`;
+    sg.fillText("Z 0 (face)", 6, SY(0) - 4); sg.fillText(`Z ${f4(z1 + 0.05)}`, 6, SY(z1 + 0.05) + 14);
+    sg.strokeStyle = css("--grid"); sg.beginPath(); sg.moveTo(0, SY(z1 + 0.05)); sg.lineTo(SW, SY(z1 + 0.05)); sg.stroke();
+    const n = prog.moves.length;
+    sg.lineWidth = 2;
+    prog.moves.forEach((m, i) => {
+      if (i > idx) return;
+      const t = i === idx ? frac : 1;
+      sg.strokeStyle = m.rapid ? css("--rapid") : css("--cut");
+      sg.beginPath(); sg.moveTo(i / n * SW, SY(m.from.z)); sg.lineTo((i + t) / n * SW, SY(m.from.z + (m.to.z - m.from.z) * t)); sg.stroke();
+    });
+    // highlight the G-code line
+    const line = prog.moves[Math.min(idx, n - 1)]?.line;
+    for (const [i, li] of [...codeEl.children].entries()) li.classList.toggle("on", i === line && (idx > 0 || frac > 0));
+    statusEl.textContent = `X${f4(cur.x)} Y${f4(cur.y)} Z${f4(cur.z)} · move ${Math.min(idx + 1, n)} of ${n}`;
+  }
+
+  function stepMove() { if (idx < prog.moves.length) { idx++; frac = 0; } }
+  function scrollLine() {
+    if (!codeEl.querySelector('.on')) return;
+    const on = codeEl.querySelector(".on");
+    if (on) { const box = codeEl.getBoundingClientRect(), r = on.getBoundingClientRect();
+      if (r.top < box.top || r.bottom > box.bottom) codeEl.scrollTop += r.top - box.top - box.height / 2; }
+  }
+  function tick(t) {
+    if (!playing) return;
+    const dt = Math.min(0.05, (t - last) / 1000); last = t;
+    let budget = dt * document.getElementById("speed").value * 0.15; // inches of travel per second, scaled
+    while (budget > 0 && idx < prog.moves.length) {
+      const m = prog.moves[idx], len = Math.hypot(m.to.x - m.from.x, m.to.y - m.from.y, m.to.z - m.from.z) || 0.001;
+      const left = (1 - frac) * len * (m.rapid ? 0.25 : 1);
+      if (budget >= left) { budget -= left; idx++; frac = 0; } else { frac += budget / (len * (m.rapid ? 0.25 : 1)); budget = 0; }
+    }
+    draw(); scrollLine();
+    if (idx >= prog.moves.length) { playing = false; playBtn.textContent = "Play"; return; }
+    requestAnimationFrame(tick);
+  }
+  playBtn.addEventListener("click", () => {
+    if (idx >= prog.moves.length) { idx = 0; frac = 0; }
+    playing = !playing; playBtn.textContent = playing ? "Pause" : "Play";
+    if (playing) { last = performance.now(); requestAnimationFrame(tick); }
+  });
+  document.getElementById("step").addEventListener("click", () => { playing = false; playBtn.textContent = "Play"; stepMove(); draw(); scrollLine(); });
+  document.getElementById("reset").addEventListener("click", () => { playing = false; playBtn.textContent = "Play"; idx = 0; frac = 0; draw(); codeEl.scrollTop = 0; });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => draw());
+  select(0);
+  // A still frame part-way through, so the page shows a cut before anyone presses Play.
+  idx = Math.floor(prog.moves.length * 0.45); draw(); scrollLine();
+})();
+</script>

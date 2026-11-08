@@ -39,6 +39,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - Settled 2026-11-07: labels are pins (D-017); the scoring spike runs in a new session before S5 (Morgan: "We do the grading and testing in a new session before s5"). Research totals: 384,128 agent tokens (methods, labels, GitHub). S4 took 1 h 58 min to the first approval ask, $6.19 main session.
 - Backlog (Morgan, 2026-11-06): name each hole's type (through, blind, counterbore, countersink, drill point, threaded); recognise threads modelled as ring faces (NIST FTC 10's threaded hole is missed); catalogue NIST resources and commit the papers (research agents running).
 
+- After the project (Morgan, 2026-11-08: "I want it at the end of a project"): G-code for each operation with a live toolpath view; research open-source CAM first (to check: FreeCAD CAM, OpenCAMLib, Kiri:Moto, CAMotics) and its licences. [Concept](https://claude.ai/artifact/WnAU2EvXV5q3qHrJWdc5sp) (`mockups/gcode-concept.html`, illustrative feeds).
 - Nice to haves after the project is complete (Morgan, 2026-11-06), from the [research page](https://claude.ai/artifact/S2TDMa3VjXmz4AD7kUt1zm): waivers per finding, shop profiles, change review (rev A vs B, thinnest wall and smallest corner re-measured), comments and sign-off per finding, FMEA row export.
 
 - GitLab at work: are there CI runners, and can they download packages? Ask IT before the move (D-006).
@@ -54,7 +55,6 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - 2026-11-08 D-023: Machine plan panel, a Passed list with the math (collapsed by default) and selectable setups with a why; all approved and merged in #15.
 - 2026-11-08 D-022: countersinks recorded on the hole and planned as a tool load; full-round depth for sloped exits; a hole on a pocket floor keeps its own axis.
 - 2026-11-08 D-021: undercut pockets get a finding (needs a T-slot or lollipop cutter); sealed voids get none.
-- 2026-11-07 D-020: cm and m files are metric; a no-unit file is read as mm with a note; walls may have up to 15 deg draft (Morgan chose the recommended options).
 - 2026-11-06 Concept chosen (D-001). Full master setup with web-app layer (D-002).
 - 2026-11-06 S1 build: extra packages and micromamba (D-008); slices shown as status page + demo (D-009); S1 merge approved.
 - 2026-11-06 First-version scope (D-003), stack (D-004), rules and units (D-005), company-move gates (D-006), spec approved (D-007).
