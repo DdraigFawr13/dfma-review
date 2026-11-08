@@ -2,7 +2,7 @@
 // changes while a file is loaded. No submit button (spec S1, settled at build).
 
 import { analyze, ApiError, type Analysis, type Material, type Process } from "./api";
-import { renderFindings, renderPlan, renderVerdict, type Pick } from "./findings";
+import { collapsePassed, renderFindings, renderPlan, renderVerdict, type Pick } from "./findings";
 import { formatSize } from "./format";
 import { Viewer, type CheckedKind } from "./viewer";
 
@@ -85,6 +85,21 @@ function edgesOf(result: Analysis): Map<string, number[][]> {
 
 let shown: Analysis | null = null;
 
+/** The selection again in a new result of the same file (a material change), if it is still there. */
+function stillThere(result: Analysis, id: string | null): Pick | null {
+  if (!id) return null;
+  if (id.startsWith("pass:")) {
+    const f = result.features.find((x) => `pass:${x.id}` === id);
+    const ok = f && !result.findings.some((x) => x.feature === f.id) && result.passed.some((p) => p.feature === f.id);
+    return ok ? { id, faces: f.faces } : null;
+  }
+  if (id.startsWith("setup:")) {
+    const s = result.setups[Number(id.slice(6))];
+    return s ? { id, faces: s.features.flatMap((fid) => result.features.find((x) => x.id === fid)?.faces ?? []) } : null;
+  }
+  return result.findings.find((f) => f.id === id) ?? null;
+}
+
 /** Select a finding, a passed feature or a setup (clicking the selected one again clears it). */
 function select(f: Pick): void {
   selected = selected === f.id ? null : f.id;
@@ -132,7 +147,8 @@ async function analyse(): Promise<void> {
     viewer.setChecked(checkedFaces(result));
     for (const [kind, box] of SWITCHES) viewer.setShowChecked(kind, box.checked);
     shownFile = file;
-    const keep = samePart ? result.findings.find((f) => f.id === selected) ?? null : null;
+    if (!samePart) collapsePassed();
+    const keep = samePart ? stillThere(result, selected) : null; // a finding, passed feature or setup
     selected = keep?.id ?? null;
     if (keep) viewer.select(keep, false); // restore the selection without moving the camera
     renderVerdict(verdict, result);

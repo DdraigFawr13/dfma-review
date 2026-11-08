@@ -45,7 +45,7 @@ def passes(features: list[dict], part: dict, limits: dict) -> list[dict]:
         if f["kind"] not in KINDS or not f["open_vectors"]:
             continue
         angle = min(_angle_to_axes(v, frame) for v in f["open_vectors"])
-        if not f["open_dirs"] and angle > LIMIT_DEG:
+        if not f["open_dirs"]:  # check() flags it, or (within 0.5 deg to rounding) neither: never passed
             continue
         out.append({"rule": ID, "feature": f["id"], "faces": f["faces"], "threshold_source": "spec",
                     "title": f"Opens along {' and '.join(d.replace('-', '−') for d in f['open_dirs'])}: a 3-axis mill reaches it",

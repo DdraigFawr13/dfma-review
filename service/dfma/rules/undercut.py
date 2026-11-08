@@ -32,11 +32,23 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
 
 
 def passes(features: list[dict], part: dict, limits: dict) -> list[dict]:
-    """The pockets with no undercut (D-023 proposed)."""
+    """The pockets this rule passed (D-023 proposed): no undercut, or one within the limit, the same test as
+    check() turned round."""
     table = limits.get(ID)
     if table is None:
         return []
-    return [{"rule": ID, "feature": f["id"], "faces": f["faces"], "threshold_source": table["source"],
-             "title": "No undercut: a cutter reaches the whole floor from its open side",
-             "math": "no ceiling faces its floor, so nothing reaches under a lip"}
-            for f in features if f["kind"] == "pocket" and "undercut_mm" not in f["dims_mm"]]
+    limit = table["max_in"]
+    out = []
+    for f in features:
+        if f["kind"] != "pocket":
+            continue
+        row = {"rule": ID, "feature": f["id"], "faces": f["faces"], "threshold_source": table["source"]}
+        if "undercut_mm" not in f["dims_mm"]:
+            out.append({**row, "title": "No undercut: a cutter reaches the whole floor from its open side",
+                        "math": "no ceiling faces its floor, so nothing reaches under a lip"})
+            continue
+        reach_in = f["dims_mm"]["undercut_mm"] / MM_PER_IN
+        if reach_in <= limit + EPS:
+            out.append({**row, "title": f"Undercut {reach_in:.3f} in, within {limit:.3f} in",
+                        "math": f"{reach_in:.4f} in ≤ {limit:.3f} in"})
+    return out

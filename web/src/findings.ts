@@ -123,6 +123,11 @@ export function renderFindings(host: HTMLElement, result: Analysis | null, messa
 
 let passedOpen = false;
 
+/** A new file starts with the Passed list collapsed again (D-023: collapsed by default). */
+export function collapsePassed(): void {
+  passedOpen = false;
+}
+
 const PASS_KINDS: [string, string][] = [["hole", "Holes"], ["pocket", "Pockets"], ["corner", "Corners"], ["wall", "Walls"]];
 
 /** One line on what a feature is, for the Passed list. */
@@ -158,7 +163,6 @@ function renderPassed(host: HTMLElement, result: Analysis, onSelect: (f: Pick) =
       row.type = "button";
       row.dataset.testid = `passed-${f.id}`;
       row.setAttribute("aria-pressed", String(selected === id));
-      row.setAttribute("aria-expanded", String(selected === id));
       const line = el("span", "row1");
       line.append(el("span", "sev ok", "ok"), el("span", "ftitle", featureLine(f)), el("span", "fid", f.id));
       row.append(line);

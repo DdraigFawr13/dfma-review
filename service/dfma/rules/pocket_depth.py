@@ -52,7 +52,7 @@ def passes(features: list[dict], part: dict, limits: dict) -> list[dict]:
         tool = fraction(d_in) or f"{d_in:.3f}"
         out.append({"rule": ID, "feature": f["id"], "faces": f["faces"], "threshold_source": table["source"],
                     "title": f"Depth {ratio:.1f}× the {tool} in end mill that fits, at most {table['medium']:.1f}×",
-                    "math": f"{_fits(dims)}; {dims['depth'] / MM_PER_IN:.3f} in deep ÷ {d_in:.3f} in = {ratio:.2f}× "
+                    "math": f"{_fits(dims)}; {dims['depth'] / MM_PER_IN:.4f} in deep ÷ {d_in:.4f} in = {ratio:.2f}× "
                             f"≤ {table['medium']:.1f}×"})
     return out
 

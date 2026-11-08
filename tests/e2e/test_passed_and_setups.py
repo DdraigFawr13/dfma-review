@@ -29,9 +29,33 @@ def test_passed_list(page: Page, base_url: str):
     row.click()
     expect(page.get_by_test_id("passed-hole-2")).to_have_attribute("aria-pressed", "true")
     expect(page.get_by_test_id("passed-hole-2").locator(".pmath").first).to_contain_text(
-        "0.500 in deep ÷ 0.250 in diameter = 2.00× ≤ 6.0× · limit: estimate")
+        "0.5000 in deep ÷ 0.2500 in diameter = 2.00× ≤ 6.0× · limit: estimate")
     assert page.evaluate("window.__dfma.highlightedFaces()") == sorted(hole["faces"])
     expect(page.get_by_test_id("passed")).to_have_attribute("open", "")  # stays open while selecting
+    # A material change re-analyses the same file: the list stays open and the selection is kept.
+    with page.expect_response(lambda r: r.url.endswith("/api/analyze"), timeout=30_000):
+        page.select_option("#material", "plastic")
+    expect(page.get_by_test_id("passed-hole-2")).to_have_attribute("aria-pressed", "true")
+    assert page.evaluate("window.__dfma.highlightedFaces()") == sorted(hole["faces"])
+    page.get_by_test_id("passed-hole-2").click()  # again: clears it
+    assert page.evaluate("window.__dfma.highlightedFaces()") == []
+    expect(page.get_by_test_id("passed-hole-2").locator(".pmath").first).to_be_hidden()
+    # A new file starts collapsed again (D-023: collapsed by default).
+    page.get_by_test_id("upload-file").set_input_files(PARTS / "two_sided_block.step")
+    expect(page.get_by_test_id("passed")).to_contain_text("25 features", timeout=30_000)
+    expect(page.get_by_test_id("passed")).not_to_have_attribute("open", "")
+
+
+def test_passed_open_at_200_percent_text_has_no_sideways_scroll(page: Page, base_url: str):
+    page.set_viewport_size({"width": 1280, "height": 900})
+    page.goto(base_url)
+    page.add_style_tag(content="html { font-size: 200% !important; }")
+    page.get_by_test_id("upload-file").set_input_files(PARTS / "clean_one_setup.step")
+    expect(page.get_by_test_id("passed")).to_be_visible(timeout=30_000)
+    page.get_by_test_id("passed").locator("summary").click()
+    page.get_by_test_id("passed-hole-2").click()
+    page.get_by_test_id("plan-setup-1").click()
+    assert page.evaluate("document.documentElement.scrollWidth") <= 1280
 
 
 def test_setup_select_shows_why(page: Page, base_url: str):

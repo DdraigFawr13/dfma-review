@@ -71,6 +71,6 @@ def passes(features: list[dict], part: dict, limits: dict) -> list[dict]:
             continue
         out.append({"rule": ID, "feature": f["id"], "faces": f["faces"], "threshold_source": table["source"],
                     "title": f"Radius {fmt_in(r_in)}, and the end mill that fits is short enough",
-                    "math": f"radius {r_in:.3f} in ≥ {min_in:.3f} in; {dims['depth'] / MM_PER_IN:.3f} in deep ÷ "
+                    "math": f"radius {r_in:.4f} in ≥ {min_in:.5f} in (1/32); {dims['depth'] / MM_PER_IN:.3f} in deep ÷ "
                             f"{dims['end_mill_mm'] / MM_PER_IN:.3f} in end mill = {ratio:.2f}× ≤ {max_ratio:.1f}×"})
     return out
