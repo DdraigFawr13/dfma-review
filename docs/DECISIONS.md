@@ -175,3 +175,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - Accepted: a "Passed" list. For each feature with no finding, the checks it passed, why, and the math to check it, with the same numbers and limits the rules use. It is collapsed by default ("collapsed and off by default... at least for demos").
   - Accepted: each setup in the Machine plan can be selected. Selecting one shows its features on the model and a brief why (which way each feature opens, and why this setup cuts it).
 - **Why:** Morgan, 2026-11-08: "I want the ability to turn on ok features and see the brief summary of why it is ok like what checks it passed and why with the math to check it. It should be collapsed and off by default" and "I approve of the machine plan but I want each one selectable to show the features so it can be checked with a brief why as well like above. I want to see what that would look like first though".
+
+## D-024 Screenshots fit the screen, tap to zoom
+
+- **Status:** Accepted (2026-11-08).
+- **Decision:** On every page with screenshots for Morgan (status pages, mock-ups, research pages), each screenshot fits the screen width, so the whole desktop view is visible at once. Tapping one opens it full screen, where pinch, double-tap, drag and the − / Fit / + / Close buttons zoom and pan. Screenshots for these pages are taken at 2× pixel density, so they stay sharp when zoomed. `scripts/add_zoom.py <page.html>` adds the viewer (`scripts/zoom_viewer.html`; no library, nothing sent anywhere). This replaces the `ui-mockups` skill's fixed-width frames in a sideways-scrolling strip for this project.
+- **Why:** Morgan, 2026-11-08: "I can't see those very well unfortunately can we start presenting these screenshots in a different way where I can see the desktop view fit on my screen and zoom in on areas that I want to see more of?"
