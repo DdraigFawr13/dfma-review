@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Analysis } from "./api";
-import { ascii, reportName, valueText, verdictText } from "./report";
+import { ascii, reportName, threadLine, valueText, verdictText } from "./report";
 
 const withFindings = (severities: string[]) => ({ findings: severities.map((severity) => ({ severity })) }) as unknown as Analysis;
 
@@ -28,5 +28,22 @@ describe("report text (S7)", () => {
     expect(valueText(6.04, "ratio", 6)).toBe("6.04×"); // 0.1 would read 6.0×, the same as the limit
     expect(valueText(6, "ratio", 6.04)).toBe("6.00×");
     expect(valueText(30, "deg", 0.5)).toBe("30.0°");
+  });
+});
+
+describe("thread lines (I1 S2, D-036)", () => {
+  const base = { id: "thread-2", designation: "M3x0.5", class: "6H", standard: null, pitch_mm: 0.5, depth_mm: 6, tap_drill_mm: 2.5,
+    minor_mm: null, major_mm: null, start: null, end: null, axis: null, feature_name: null };
+  const result = { findings: [{ id: "F26", rule: "thread_mismatch", thread: "thread-1" }] } as unknown as Analysis;
+  it("writes the hole, callout, sizes and state", () => {
+    expect(threadLine({ ...base, state: "matched", hole: "hole-36", gaps: [], reason: null }, result))
+      .toBe("hole-36  M3x0.5 - 6H  0.236 in [6 mm] deep  tap drill 0.098 in [2.5 mm]  matched");
+    expect(threadLine({ ...base, id: "thread-1", state: "disagrees", hole: "hole-38", reason: null,
+      gaps: [{ what: "axis", mm: 0.1, text: "0.10 mm off the hole's axis" }] }, result))
+      .toBe("hole-38  M3x0.5 - 6H  0.236 in [6 mm] deep  tap drill 0.098 in [2.5 mm]  disagrees: 0.004 in [0.10 mm] off the hole's axis; see F26");
+  });
+  it("starts a not-mapped line with the thread id", () => {
+    expect(threadLine({ ...base, state: "not_mapped", hole: null, gaps: [], reason: "external thread: not on a hole" }, result))
+      .toBe("thread-2  M3x0.5 - 6H  0.236 in [6 mm] deep  tap drill 0.098 in [2.5 mm]  not mapped: external thread: not on a hole (our limit, not a finding)");
   });
 });
