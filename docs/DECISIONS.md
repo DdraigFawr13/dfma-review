@@ -148,3 +148,11 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - A file that declares no length unit is read as millimetres; `units_in_file` is `none`, the report's assumptions say so (`MSG_NO_UNIT`), and it gets the inch drills, as `other` files.
   - A wall's two faces may be up to 15 deg from parallel (draft); its thickness is taken at the thinnest place. 15 deg is the same limit as pocket draft and tapered holes (D-018).
 - **Why:** the stress test ([page](https://claude.ai/artifact/4oufpheC26VYYwT2zBiiHs)): a 6.6 mm hole in a cm or m file was "not a standard drill"; a no-unit file drawn in inches would read 25.4 times too small with no note; a 0.4 mm wall with 0.01 deg of draft gave no finding. Morgan, 2026-11-07, choosing the recommended option on each: "Up to 15°", "Treat as metric", "Read as mm, say so".
+
+## D-021 Undercut pockets get a finding; sealed voids do not
+
+- **Status:** Accepted (2026-11-08). The finding is built on the next branch.
+- **Decision:**
+  - A pocket with an undercut (set 2: a ceiling facing its floor, D-018) gets a finding that it needs an undercut cutter (a T-slot or lollipop cutter), with the overhang measured on the model (D-001).
+  - A void sealed inside the part (an inner shell) gets no finding; it keeps the pocket rules it had before set 2 (D-018).
+- **Why:** Morgan, 2026-11-08: "I approve. Go with your recommendations" ([head-to-head page](https://claude.ai/artifact/YAAEriC8gktJkGi5VtNvhq)): the undercut changes the tooling the shop needs; sealed voids come from how MFCAD++ made its parts, not from real parts.
