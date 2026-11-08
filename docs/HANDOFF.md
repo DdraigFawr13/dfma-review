@@ -34,7 +34,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Open questions
 
-- Waiting on Morgan (2026-11-08): the Machine plan panel is approved (D-023). Approve, change or rethink the [Passed checks and selectable setups mock-up](mockups/passed-and-setups.html) (D-023 proposed), then approve PR #15. After approval: wait for the push's CI run to show before marking ready (LESSONS ci).
+- Waiting on Morgan (2026-11-08): the Machine plan panel is approved (D-023). Approve, change or rethink the [Passed checks and selectable setups mock-up](https://claude.ai/artifact/ACtTrQnaA8qUkRzZkUgMRX) (`mockups/passed-and-setups.html`; fresh check 10 items, all fixed) (D-023 proposed), then approve PR #15. After approval: wait for the push's CI run to show before marking ready (LESSONS ci).
 
 - Settled 2026-11-07: labels are pins (D-017); the scoring spike runs in a new session before S5 (Morgan: "We do the grading and testing in a new session before s5"). Research totals: 384,128 agent tokens (methods, labels, GitHub). S4 took 1 h 58 min to the first approval ask, $6.19 main session.
 - Backlog (Morgan, 2026-11-06): name each hole's type (through, blind, counterbore, countersink, drill point, threaded); recognise threads modelled as ring faces (NIST FTC 10's threaded hole is missed); catalogue NIST resources and commit the papers (research agents running).
