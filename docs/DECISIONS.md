@@ -226,7 +226,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 
 ## D-030 Cost drivers after turning: which findings feed which driver
 
-- **Status:** Proposed (2026-11-08). Built as the default; Morgan has not been asked yet.
+- **Status:** Accepted (2026-11-08; Morgan: "Ok I approve of all of this as recommended"). The mapping below was built as the default; the recommendation to add `deep_pockets`, `undercuts` and `slender_parts` is approved but not yet built.
 - **Decision:**
   - Added to the spec's driver list: `bore_depth` findings count as `deep_holes`.
   - `turn_offaxis` feeds `off_axis` and `access` feeds `multi_axis`, as the spec says.
