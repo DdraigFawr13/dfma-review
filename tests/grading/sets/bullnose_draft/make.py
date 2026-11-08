@@ -162,14 +162,17 @@ def _inner_point(face):
     s = BRepAdaptor_Surface(face, True)
     umin, umax, vmin, vmax = breptools.UVBounds(face)
     best = None
-    for i in range(1, 10):
-        for j in range(1, 10):
-            u, v = umin + (umax - umin) * i / 10, vmin + (vmax - vmin) * j / 10
-            p = s.Value(u, v)
-            if BRepClass_FaceClassifier(face, p, 1e-7).State() == TopAbs_IN:
-                d = (i - 5) ** 2 + (j - 5) ** 2
-                if best is None or d < best[0]:
-                    best = (d, p)
+    for n in (10, 100):  # a 100 grid only when the 10 grid misses the face (a thin ring, undercuts set)
+        for i in range(1, n):
+            for j in range(1, n):
+                u, v = umin + (umax - umin) * i / n, vmin + (vmax - vmin) * j / n
+                p = s.Value(u, v)
+                if BRepClass_FaceClassifier(face, p, 1e-7).State() == TopAbs_IN:
+                    d = (i - n / 2) ** 2 + (j - n / 2) ** 2
+                    if best is None or d < best[0]:
+                        best = (d, p)
+        if best:
+            break
     assert best, "no point inside a face"
     return best[1]
 
