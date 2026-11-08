@@ -166,3 +166,12 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - A hole that leaves through a sloped face: its `depth` is the full-round depth (where the drill still cuts all the way round), as a drill point is left out; the longest side is kept as `dims_mm.max_depth` and shown in the finding's detail. Measured on a d8 hole leaving a 20 deg slope: 23.544 mm full round, 26.456 mm longest side.
   - A hole end on a pocket floor keeps the hole's own axis (spec Features "Hole": the line giving it the pocket's open direction is dropped), so an angled hole drilled into a pocket floor gets the `access` finding.
 - **Why:** Morgan, 2026-11-08, answering the S5 questions: "Record + tool", "Full round", "Hole's own axis" (each the recommended option). An angled hole still needs an angled spindle or fixture, whatever it opens onto.
+
+## D-023 Machine plan panel approved; passed checks and selectable setups proposed
+
+- **Status:** The Machine plan panel is Accepted (2026-11-08). The two additions are Proposed: Morgan wants to see them first.
+- **Decision:**
+  - Accepted: the Machine plan panel as on the [mock-up](https://claude.ai/artifact/5Cmq85bG5CPpi7oZ3oZHGW) (`mockups/plan-panel.html`).
+  - Proposed: a "Passed" list. For each feature with no finding, the checks it passed, why, and the math to check it, with the same numbers and limits the rules use. It is collapsed by default ("collapsed and off by default... at least for demos").
+  - Proposed: each setup in the Machine plan can be selected. Selecting one shows its features on the model and a brief why (which way each feature opens, and why this setup cuts it).
+- **Why:** Morgan, 2026-11-08: "I want the ability to turn on ok features and see the brief summary of why it is ok like what checks it passed and why with the math to check it. It should be collapsed and off by default" and "I approve of the machine plan but I want each one selectable to show the features so it can be checked with a brief why as well like above. I want to see what that would look like first though".

@@ -52,3 +52,25 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
         out.append({**base, "severity": "medium", "title": title, "measured": lead[1], "limit": lead[2],
                     "unit": lead[3], "suggestion": " ".join(r[4] for r in reasons)})
     return out
+
+
+def passes(features: list[dict], part: dict, limits: dict) -> list[dict]:
+    """The corners this rule passed, with the math (D-023 proposed)."""
+    table = limits.get(ID)
+    if table is None:
+        return []
+    min_in, max_ratio = table["min_radius_in"], table["max_depth_ratio"]
+    out = []
+    for f in features:
+        if f["kind"] != "corner":
+            continue
+        dims = f["dims_mm"]
+        r_in = dims["radius"] / MM_PER_IN
+        ratio = dims["depth"] / dims["end_mill_mm"]
+        if dims["radius"] <= SHARP_MM or r_in < min_in - EPS or ratio > max_ratio + EPS:
+            continue
+        out.append({"rule": ID, "feature": f["id"], "faces": f["faces"], "threshold_source": table["source"],
+                    "title": f"Radius {fmt_in(r_in)}, and the end mill that fits is short enough",
+                    "math": f"radius {r_in:.3f} in ≥ {min_in:.3f} in; {dims['depth'] / MM_PER_IN:.3f} in deep ÷ "
+                            f"{dims['end_mill_mm'] / MM_PER_IN:.3f} in end mill = {ratio:.2f}× ≤ {max_ratio:.1f}×"})
+    return out

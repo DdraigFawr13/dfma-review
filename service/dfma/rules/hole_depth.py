@@ -42,3 +42,23 @@ def _longest(dims: dict) -> str:
         return ""
     return (f" Depth measured where the hole is round all the way ({dims['depth'] / MM_PER_IN:.3f} in); "
             f"its longest side is {dims['max_depth'] / MM_PER_IN:.3f} in.")
+
+
+def passes(features: list[dict], part: dict, limits: dict) -> list[dict]:
+    """The holes this rule passed, with the math (D-023 proposed: the "Passed" list)."""
+    table = limits.get(ID)
+    if table is None:
+        return []
+    out = []
+    for f in features:
+        if f["kind"] != "hole":
+            continue
+        d, depth = f["dims_mm"]["diameter"], f["dims_mm"]["depth"]
+        ratio = depth / d
+        if ratio > table["medium"] + 1e-9:
+            continue
+        out.append({"rule": ID, "feature": f["id"], "faces": f["faces"], "threshold_source": table["source"],
+                    "title": f"Depth {ratio:.1f}× diameter, at most {table['medium']:.1f}×",
+                    "math": f"{depth / MM_PER_IN:.3f} in deep ÷ {d / MM_PER_IN:.3f} in diameter = {ratio:.2f}× "
+                            f"≤ {table['medium']:.1f}×"})
+    return out

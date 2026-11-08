@@ -24,6 +24,9 @@ function overlaps(a: DOMRect, b: DOMRect): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
 
+/** What can be selected: a finding, a passed feature or a setup (D-023 proposed): an id and its faces. */
+export type Selection = Pick<Finding, "id" | "faces">;
+
 export class Viewer {
   private readonly renderer: THREE.WebGLRenderer;
   private readonly scene = new THREE.Scene();
@@ -37,7 +40,7 @@ export class Viewer {
   private readonly edgeMaterial = new THREE.LineBasicMaterial({ color: token("--ink") }); // one for every part
   private checked = new Map<number, CheckedKind>(); // faces of features checked with no finding
   private readonly showChecked: Record<CheckedKind, boolean> = { hole: false, pocket: false, corner: false, wall: false };
-  private selected: Finding | null = null;
+  private selected: Selection | null = null;
   private frame = 0;
 
   constructor(private readonly canvas: HTMLCanvasElement) {
@@ -161,7 +164,7 @@ export class Viewer {
 
   /** Select a finding (or clear with null): accent on its faces, the rest faded, camera framed.
    *  frame = false keeps the camera (restoring a selection after the material changes). */
-  select(finding: Finding | null, frame = true): void {
+  select(finding: Selection | null, frame = true): void {
     this.selected = finding;
     this.paint();
     if (finding && frame) this.frameFaces(finding.faces, this.edges.get(finding.id));

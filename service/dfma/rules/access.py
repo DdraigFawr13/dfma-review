@@ -35,3 +35,19 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
                     "faces": f["faces"], "feature": f["id"], "threshold_source": "spec",
                     "suggestion": "Line it up with a face of the part, or plan a 4/5-axis mill or an angled fixture."})
     return out
+
+
+def passes(features: list[dict], part: dict, limits: dict) -> list[dict]:
+    """The holes and pockets a 3-axis mill reaches (D-023 proposed)."""
+    frame = part["frame"]
+    out = []
+    for f in features:
+        if f["kind"] not in KINDS or not f["open_vectors"]:
+            continue
+        angle = min(_angle_to_axes(v, frame) for v in f["open_vectors"])
+        if not f["open_dirs"] and angle > LIMIT_DEG:
+            continue
+        out.append({"rule": ID, "feature": f["id"], "faces": f["faces"], "threshold_source": "spec",
+                    "title": f"Opens along {' and '.join(d.replace('-', '−') for d in f['open_dirs'])}: a 3-axis mill reaches it",
+                    "math": f"{angle:.2f}° off the nearest axis ≤ {LIMIT_DEG}°"})
+    return out

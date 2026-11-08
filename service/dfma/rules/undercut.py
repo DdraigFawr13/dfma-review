@@ -29,3 +29,14 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
                     "suggestion": "Cut it with a T-slot or lollipop cutter that reaches this far, or open the undercut "
                                   "to the top or split the part, if the design allows."})
     return out
+
+
+def passes(features: list[dict], part: dict, limits: dict) -> list[dict]:
+    """The pockets with no undercut (D-023 proposed)."""
+    table = limits.get(ID)
+    if table is None:
+        return []
+    return [{"rule": ID, "feature": f["id"], "faces": f["faces"], "threshold_source": table["source"],
+             "title": "No undercut: a cutter reaches the whole floor from its open side",
+             "math": "no ceiling faces its floor, so nothing reaches under a lip"}
+            for f in features if f["kind"] == "pocket" and "undercut_mm" not in f["dims_mm"]]

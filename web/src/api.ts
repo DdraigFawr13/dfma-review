@@ -25,12 +25,22 @@ export interface Analysis {
   features: Feature[];
   findings: Finding[];
   rules_run: string[];
+  passed: Passed[]; // D-023 proposed: each check a feature passed, with the math
   assumptions: string[];
   machine: string | null; // S5
   setups: { direction: string; features: string[] }[];
   operations: { setup: number; tool: string; features: string[] }[];
   tools: Tool[];
   tool_changes: number;
+}
+
+export interface Passed {
+  rule: string;
+  feature: string;
+  faces: number[];
+  title: string;
+  math: string;
+  threshold_source: string;
 }
 
 export interface Tool {

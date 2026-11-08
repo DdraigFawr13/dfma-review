@@ -39,6 +39,7 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
     rules = [rule for rule in RULES if process in rule.PROCESSES]
     findings = [f for rule in rules for f in rule.check(features, summary, limits)]
     findings = [{"id": f"F{n}", **f} for n, f in enumerate(findings, 1)]
+    passed = [p for rule in rules if hasattr(rule, "passes") for p in rule.passes(features, summary, limits)]
     milled = plan(features, findings, frame, part.units_in_file) if process == "mill" else {
         "machine": None, "setups": [], "operations": [], "tools": [], "tool_changes": 0}  # S6 adds turning
 
@@ -58,6 +59,7 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
         "features": features,
         "findings": findings,
         "rules_run": [rule.ID for rule in rules],
+        "passed": passed,  # D-023 proposed: the checks each feature passed, with the math
         "machine": milled["machine"],
         "turn_axis": None,
         "setups": milled["setups"],

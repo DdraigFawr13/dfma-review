@@ -1,8 +1,8 @@
 // Page wiring: analyse as soon as a file is chosen, and again when process or material
 // changes while a file is loaded. No submit button (spec S1, settled at build).
 
-import { analyze, ApiError, type Analysis, type Finding, type Material, type Process } from "./api";
-import { renderFindings, renderPlan, renderVerdict } from "./findings";
+import { analyze, ApiError, type Analysis, type Material, type Process } from "./api";
+import { renderFindings, renderPlan, renderVerdict, type Pick } from "./findings";
 import { formatSize } from "./format";
 import { Viewer, type CheckedKind } from "./viewer";
 
@@ -83,19 +83,24 @@ function edgesOf(result: Analysis): Map<string, number[][]> {
   return out;
 }
 
-function select(f: Finding): void {
-  selected = selected === f.id ? null : f.id; // clicking the selected finding again clears it
+let shown: Analysis | null = null;
+
+/** Select a finding, a passed feature or a setup (clicking the selected one again clears it). */
+function select(f: Pick): void {
+  selected = selected === f.id ? null : f.id;
   viewer.select(selected ? f : null);
-  for (const row of list.querySelectorAll<HTMLButtonElement>(".finding")) {
-    row.setAttribute("aria-pressed", String(row.dataset.testid === `finding-${selected}`));
-  }
+  showFindings(shown, "");
 }
 
 function showFindings(result: Analysis | null, message: string): void {
+  const keepScroll = list.scrollTop, planBox = byId("plan-panel"), keepPlan = planBox.scrollTop; // keep the reader's place
   renderFindings(list, result, message, select, selected);
   count.textContent = result ? String(result.findings.length) : "";
   assumptions.hidden = !result;
-  renderPlan(byId("plan"), byId("plan-count"), result);
+  shown = result;
+  renderPlan(byId("plan"), byId("plan-count"), result, select, selected);
+  list.scrollTop = keepScroll;
+  planBox.scrollTop = keepPlan;
   byId("plan-panel").hidden = !result?.machine;
   if (result) {
     byId("assumption-list").replaceChildren(...result.assumptions.map((a) => {
