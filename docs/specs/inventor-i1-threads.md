@@ -118,7 +118,7 @@ All Python tests go in `tests/service/` (the folder `scripts/check.py` runs); br
 ### Thread records (measured)
 
 - Inventor 2021: record `NMx_Thread_Entity-NamingMatching-attrib`. Inventor 2024: `ATTRIB_CUSTOM-attrib` whose first string is `INV_NMX_THREAD_TAG`.
-- Its pointer values in order are `-1`, then two linked attributes, then the threaded `face` (the 4th value, index 3; CTC 04: `-1, 4438, 3783, 3456`, record 3456 is a `face`). Its first two points are the thread's ends; their distance is the thread depth (CTC 04 25.0 mm; FTC 10 and STC 10 6.0 mm). Its last vector is the axis.
+- Its pointer values in order are `-1`, then two linked attributes, then the threaded `face` (the 4th value, index 3; CTC 04: `-1, 4438, 3783, 3456`, record 3456 is a `face`). The distance between its first two points is the thread depth (CTC 04 25.0 mm; FTC 10 and STC 10 6.0 mm); its second-last vector is the thread's start and its last the axis (corrected in S2: "Builder defaults, S2 re-check").
 - Its strings after the tag, in order (CTC 04; FTC 10 and STC 10 the same layout): `12` (nominal size), `M12x1.75` (designation), `ANSI Metric M Profile` (standard), `''`, `''`, `6H` (class), `1.75` (pitch), then `12`, `12.453`, `10.863`, `11.063`, `10.106`, `10.441`, `10.25`. Reading of the last seven (**inference**: the M12 and M3 numbers match ISO 6H limits): major min, major max, pitch min, pitch max, minor min, minor max, tap drill. Shown as "tap drill (as stored in the .ipt)".
 - Thread ids `thread-1` … in record order in the main model.
 
@@ -199,6 +199,22 @@ A fresh zero-decision re-check of S1 found 14 gaps (3 high, 8 medium, 3 low); ea
 - **Order details:** `Worker.run` and `run_analysis` take `ipt_path=None, ipt_name=None` before `time_limit_s`; the `.ipt` assumption line goes last in `assumptions`; FTC 09 2024 pairs with `nist_stc_09_asme1_ap242*.stp`.
 - **`local_pairs.py`:** `tests/inventor/.local/<pair>/` holds one `.ipt` and one `.stp` or `.step`; `local_pairs.toml` has a `[[pair]]` table per folder with `name`, `ipt_sha256`, `step_sha256`, `release`, `faces`, `corners`; it prints `pair check: pass` or `pair check: FAIL - <reason>` per pair.
 - **Added tests:** Model States, a STEP with extra solids, an unknown subtype and no subtype (`test_inventor_part.py`); an OLE file sent as `file`, a STEP sent as `ipt`, an `.ipt` over 50 MB (`test_inventor_api.py`); the web messages for a wrong mix and an `.ipt` alone (`tests/e2e/test_upload_pair.py`, `set_input_files`).
+
+### Builder defaults, S2 re-check (2026-11-08, against main 8929f05)
+
+A fresh zero-decision re-check of S2 found 24 gaps (9 high, 11 medium, 4 low); none changed the design, so each takes the default below. One spec fact was wrong and is corrected from a measurement.
+- **Thread position (measured, corrects "Thread records"):** the record's first two vectors give the depth only; they are the same for every thread of one hole feature (CTC 04's 4 threads all hold `(-22.5, 12, 7)` cm). The **second-last vector is the start** (on the threaded face's axis, 0.0000 mm off on all 16 NIST threads) and the last the axis into the material; `end = start + depth × axis`. Points ×10 (cm → mm); the axis is a unit vector.
+- **Face kind:** the face's surface is a `cone-surface`; its 2nd float (sine of the half-angle) 0 → cylinder, else `cone`; no `cone-surface` → `other`. Concave (a hole) when the face's first bool is True (all 16 NIST threads, all in holes); False → `shaft`. **Assumption:** no external-thread sample. Order of `not_mapped` reasons: record not understood, external, tapered, not a cylinder, no hole.
+- **Through:** two `open_vectors` pointing opposite ways. **Heights:** `dot(p, cyl.axis)` in world coordinates, as `Cyl.lo/hi`; the hole's line is its `Cyl` face with the largest overlap. Hole diameter < minor min − 0.01 gives `hole Ø<d> is <x> mm under the thread's minor diameter`.
+- **`Thread`** is a dataclass in `threads.py` (`id, designation, cls, standard, pitch_mm, depth_mm, tap_drill_mm, minor_mm, major_mm, start, end, axis, face, reason`); `read_ipt` fills `IptPart.threads` with `read_threads(recs)`; `map_threads` returns the response list. Strings are kept as stored (inch threads untested).
+- **Holes' `thread`:** present only on a hole or bore with a matched or disagreeing thread. `inventor.threads` is always a list when an `.ipt` is read.
+- **No `attach`:** rules must see the threads, so `analyze` maps them itself between the final hole list and `summary`; the harness calls `analyze(..., ipt_transform=(rows, shift), ipt_check=False)` (test-only keywords; with `ipt_check=False` the checks block is still computed). `nist_pair.analyze_registered` runs a plain `analyze` to get the holes, `register`, then that call.
+- **Rule:** `thread_mismatch` runs only when an `.ipt` was read (`analyze.NEEDS_IPT`), so `rules_run` is unchanged without one. Title `<designation> thread on <hole>: <gap texts joined by "; ">. Possible cause: the part or an old STEP export differs from the .ipt`; `measured`, `limit` rounded to 6 decimals; finding carries `thread`. No `passes`.
+- **register:** reads the `.ipt` cylinders itself (`register.ipt_cylinders`, harness only); STEP holes from `_cylinder`; after the spike's vote, the shift is refined by the median offset of corner pairs within 0.2, 0.05, then 0.02 mm (a mean put CTC 04 0.013 mm off: two CAD systems place some corners differently). Measured shifts: CTC 04 (250, 0, 30), STC 10 (79, 0, 37.5), FTC 10 (0, 0, 0) mm.
+- **Built threads:** `tests/inventor/built.py` (an `IptPart` from a STEP test part plus threads); the depth case uses `drill_point_hole.step` (box_through_hole's hole is through).
+- **Fixtures:** the full Milling / Aluminum 6061 response, compact JSON (CTC 04 1.06 MB, STC 10 0.66 MB); CTC 04 drives `test_threads_panel`, STC 10 `test_pdf_threads`.
+- **`local_pairs.toml`:** `threads_matched`, `threads_disagrees`, `threads_not_mapped` per pair; `local_pairs.py` runs `analyze` with `ipt_path`.
+- **PDF:** jsPDF text is ASCII (`report.ascii`), so `Ø` is written `dia.` there.
 
 ### Test files
 

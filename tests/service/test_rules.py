@@ -600,3 +600,69 @@ def test_a_value_just_past_its_limit_never_reads_as_the_limit():
     assert titles == ["Hole depth 6.03× diameter (limit 6.0×)", "Hole depth 6.5× diameter (limit 6.0×)",
                       "Hole depth 10.04× diameter (limit 10.0×)"]
     assert past_limit(6.25, 6.0, 1) == "6.2" and past_limit(5.97, 6.0, 1) == "5.97"
+
+
+def _with_threads(monkeypatch, tmp_path, step: str, threads) -> dict:
+    """The app path with read_ipt patched to an IptPart built from the STEP plus `threads` (I1 S2)."""
+    import dfma.inventor
+    from inventor.built import ipt_from_step
+    part = ipt_from_step(PARTS / f"{step}.step", threads)
+    monkeypatch.setattr(dfma.inventor, "read_ipt", lambda path: part)
+    return analyze(PARTS / f"{step}.step", f"{step}.step", ipt_path=tmp_path / "p.ipt", ipt_name="p.ipt")
+
+
+def _mismatches(result: dict) -> list[dict]:
+    return [f for f in result["findings"] if f["rule"] == "thread_mismatch"]
+
+
+@pytest.mark.parametrize("case", ["axis", "diameter", "depth", "centred"])
+def test_thread_mismatch(monkeypatch, tmp_path, case):
+    """D-005: built cases, each one medium finding with its gap; a centred thread gives none (STC 10:
+    test_inventor_threads.py)."""
+    from inventor.built import BOX_TOP, DOWN, DRILL_TOP, thread
+    if case == "axis":  # 0.10 mm off the hole's axis
+        result = _with_threads(monkeypatch, tmp_path, "box_through_hole",
+                               [thread((25.5, 12.7, 12.7), DOWN, 10.0)])
+        gap, mm, text = "axis", 0.10, "0.10 mm off the hole's axis"
+    elif case == "diameter":  # the Ø6.35 hole is 0.50 mm over a 5.85 mm major diameter
+        result = _with_threads(monkeypatch, tmp_path, "box_through_hole",
+                               [thread(BOX_TOP, DOWN, 10.0, major=(5.85, 5.95), minor=(4.9, 5.1))])
+        gap, mm, text = "diameter", 0.50, "hole Ø6.35 is 0.50 mm over the thread's major diameter"
+    elif case == "depth":  # 30 mm of thread in the 25.4 mm blind hole
+        result = _with_threads(monkeypatch, tmp_path, "drill_point_hole", [thread(DRILL_TOP, DOWN, 30.0)])
+        gap, mm, text = "depth", 4.6, "thread 30.00 deep in a 25.40 hole"
+    else:
+        result = _with_threads(monkeypatch, tmp_path, "box_through_hole", [thread(BOX_TOP, DOWN, 12.7)])
+        assert result["inventor"]["threads"][0]["state"] == "matched"
+        assert _mismatches(result) == []
+        return
+    [t] = result["inventor"]["threads"]
+    assert (t["state"], t["hole"]) == ("disagrees", "hole-1")
+    [g] = t["gaps"]
+    assert (g["what"], g["text"]) == (gap, text) and g["mm"] == pytest.approx(mm, abs=1e-4)
+    [f] = _mismatches(result)
+    assert f["severity"] == "medium" and f["feature"] == "hole-1" and f["unit"] == "in"
+    assert f["measured"] == pytest.approx(mm / 25.4, abs=1e-6) and f["limit"] == pytest.approx(0.01 / 25.4, abs=1e-6)
+    assert f["title"] == (f"1/4-20 UNC thread on hole-1: {text}. Possible cause: the part or an old STEP export "
+                          "differs from the .ipt")
+    assert f["threshold_source"] == "D-032: the .ipt and STEP must agree"
+    assert f["suggestion"] == "Export the STEP again from this .ipt, or check this thread in Inventor."
+    assert f["id"] == f"F{len(result['findings'])}"  # last in RULES: the other findings keep their numbers
+
+
+@pytest.mark.parametrize("face, reason", [("shaft", "external thread: not on a hole"),
+                                          ("cone", "tapered thread: not supported yet"),
+                                          ("other", "the threaded face is not a cylinder")])
+def test_thread_not_mapped(monkeypatch, tmp_path, face, reason):
+    """Not mapped is our limit, never a finding (D-032)."""
+    from inventor.built import BOX_TOP, DOWN, thread
+    result = _with_threads(monkeypatch, tmp_path, "box_through_hole", [thread(BOX_TOP, DOWN, 10.0, face=face)])
+    [t] = result["inventor"]["threads"]
+    assert (t["state"], t["hole"], t["reason"]) == ("not_mapped", None, reason)
+    assert _mismatches(result) == [] and "thread" not in next(f for f in result["features"] if f["id"] == "hole-1")
+
+
+def test_thread_no_hole(monkeypatch, tmp_path):
+    from inventor.built import thread
+    result = _with_threads(monkeypatch, tmp_path, "box_through_hole", [thread((5.0, 5.0, 12.7), (0, 0, -1), 5.0)])
+    assert result["inventor"]["threads"][0]["reason"] == "no hole on this thread's axis"
