@@ -234,3 +234,10 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - `small_tools` counts tools marked undersized or under 1/8 in across (`under_in` in drivers.toml). The spec disagreed with itself: its driver list says "undersized or sub-1/8 in tools", its Counts line "`undersized` tools". The first build followed the Counts line; the merge review (2026-11-08) took the driver list, because a small tool costs even when it fits: `pocket_small_radius`'s 1/32 in end mill is not undersized but now counts. The Counts line is updated to match.
   - Drivers live in `config/drivers.toml`, so adding one is a config edit.
 - **Why:** the spec's nine drivers were written before S3 to S6; a slender shaft needing a steady rest, or a deep pocket needing a long end mill, is a cost with no driver. Weights stay 1.0 and are estimates (REP-01).
+
+## D-031 Inventor parts: our own reader
+
+- **Status:** Accepted (2026-11-08; Morgan, on the [research page](https://claude.ai/artifact/94JciyGLeYsorjas1XCyUw): "Ok go with our own reader. See if there is any way you can get that inventory data for like threads and holes and have it mapped to the part if possible maybe by hole size or position"). The rest of the phase plan is still open (round 1).
+- **Decision:** read `.ipt` files with code of our own on Linux, no Autodesk software, cloud or paid SDK (research routes B to E not taken). The feature data (threads first) is mapped onto the part by position: each thread attribute sits on a B-rep face whose axis we match to a hole we find.
+- **Why:** no free Linux tool reads Inventor features fully; the spike (`docs/research/inventor-spike/`) read and mapped 15 of 16 NIST threads, matching the NIST keys. Still to approve: olefile as a runtime dependency (SAFE-01), and whether the shape also comes from the `.ipt`.
+

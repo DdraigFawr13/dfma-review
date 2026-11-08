@@ -43,6 +43,25 @@ details summary{cursor:pointer;font-weight:600}
 <p><strong>My suggestion, to decide in round 1:</strong> keep STEP for the shape, which already works. Add a small reader of our own that takes the <em>feature data</em> from the <code>.ipt</code>, which STEP loses (hole type, thread callout). Build it by comparing the 16 NIST <code>.ipt</code> files with their STEP twins. A second route is an Inventor add-in on the engineer's PC that exports STEP plus a feature list through Autodesk's API. That one only works if your company has Inventor seats.</p>
 </div>
 
+<section class="route pick">
+<h2>0. Update: threads read and mapped to the part <span class="tag ok">your pick: own reader</span></h2>
+<p>You chose our own reader (D-031). I wrote a small decoder from the NIST files' bytes and ran it on all 16 parts. Every thread in the <code>.ipt</code> sits on a face of its built-in 3D model. I take that face's axis and find the hole our app sees in the STEP on the same axis. The match is by position and axis, with no guessing by size.</p>
+<div class="tbl"><table>
+<tr><th>Part</th><th>Threads in the .ipt</th><th>Mapped to a STEP hole</th><th>NIST's own answer</th></tr>
+<tr><td>CTC 04 (Inventor 2021)</td><td>4 × M12x1.75 6H, 25 mm deep</td><td class="ok num">4 of 4</td><td>"4X M12 x 1.75 - 6H ↧25 ±0.25" <span class="ok">✔</span></td></tr>
+<tr><td>FTC 10 (2021)</td><td>6 × M3x0.5 6H, 6 mm deep</td><td class="ok num">6 of 6</td><td>drawing "2X M3x0.5-6g" three times: count <span class="ok">✔</span>; class 6g vs 6H differs</td></tr>
+<tr><td>STC 10 (2024)</td><td>6 × M3x0.5 6H, 6 mm deep</td><td class="est num">5 of 6</td><td>the hole note in the file: "M3x0.5 x 6.000 mm ThreadDepth" <span class="ok">✔</span>; one thread sits 0.10 mm off the STEP hole's axis</td></tr>
+</table></div>
+<p>The other 13 parts have no threads, in the <code>.ipt</code> or in NIST's tables. Each thread also carries its tap-drill size as stored (10.25 for M12, 2.5 for M3; my reading of the last value) and the diameter Inventor models (10.106 mm for M12, the minor diameter). The STEP from the other CAD systems models the same hole at Ø10.2 (CTC 04) or Ø3.0 (STC 10). That's why the shape alone can't name a thread.</p>
+<p><strong>Not done yet:</strong></p>
+<ul>
+<li><strong>Plain holes and their type</strong> (counterbore and so on): the hole tags only reach some faces. They cover 10 of 10 STEP holes on CTC 01 but only 4 of 22 on FTC 06, so patterned and mirrored copies are probably tagged another way. Hole sizes as designed live in a part of the file I haven't decoded.</li>
+<li><strong>FTC 07</strong> didn't line up with its STEP at all.</li>
+<li><strong>The NIST STEP files come from other CAD systems</strong>, so I had to find the rotation between the two models first. An engineer's own STEP export should share the <code>.ipt</code>'s frame <span class="est">(assumption, not checked)</span>.</li>
+</ul>
+<p class="muted">Scripts: <code>docs/research/inventor-spike/</code>. olefile ran in a scratch folder, not in the app.</p>
+</section>
+
 <section>
 <h2>1. NIST has Inventor files</h2>
 <p>The <a href="https://www.nist.gov/ctl/smart-connected-systems-division/smart-connected-manufacturing-systems-group/mbe-pmi-0">MBE PMI page</a> lists, verbatim: "Autodesk Inventor [STC] Inventor 2024 [FTC/CTC] Inventor 2021". Our catalogue only had the hole test case zip, which has no Inventor file. I downloaded the zips and listed them myself:</p>
