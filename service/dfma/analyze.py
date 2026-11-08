@@ -18,7 +18,7 @@ from .units import mm_to_in
 
 __all__ = ["ReadError", "analyze"]
 
-TURN_NEEDS_AXIS = ("turn_slender", "turn_offaxis")
+TURN_NEEDS_AXIS = ("turn_slender", "turn_offaxis", "bore_depth")
 
 
 def _off_axis(f: dict, faces, turn: dict) -> tuple[float, float]:

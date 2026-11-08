@@ -1785,12 +1785,17 @@ def pocket_on_axis(pocket: dict, faces, turn: dict) -> tuple[float, float]:
 def profile_feature(faces, turn: dict, taken: set[int]) -> dict:
     """The turned profile (kind "profile"): the outside cylinders and cones on the axis and the faces square
     to it, other than those of holes, bores and grooves."""
-    own = []
+    own, radii = [], []
     for i, f in enumerate(faces):
         if i in taken:
             continue
         r = _round(i, f) if i in turn["faces"] else None
         if (r is not None and r.convex) or _plane_on(f, turn["axis"]):
             own.append(i)
+            if r is not None and r.radius is not None:
+                radii.append(r.radius)
+    # D-026: the smallest outside diameter too (a thin neck behind a big head is slender; grooves excluded)
+    smallest = min(2 * min(radii), turn["diameter"]) if radii else turn["diameter"]
     return {"kind": "profile", "faces": own, "axis": list(turn["axis"]), "open_dirs": [], "open_vectors": [],
-            "dims_mm": {"diameter": turn["diameter"], "length": turn["length"], "share_pct": turn["share_pct"]}}
+            "dims_mm": {"diameter": turn["diameter"], "min_diameter": smallest, "length": turn["length"],
+                        "share_pct": turn["share_pct"]}}

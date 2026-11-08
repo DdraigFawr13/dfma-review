@@ -62,6 +62,7 @@ export interface Feature {
   open_dirs: string[];
   open_vectors: number[][];
   dims_mm: Record<string, number>;
+  outside?: boolean; // a groove: outside (true) or inside a bore (false), S6
   edge_mm?: number[][]; // a sharp corner's edge (two end points), drawn by the viewer (S3)
 }
 

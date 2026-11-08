@@ -292,7 +292,9 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
         if (s.direction === "turn") {
           const off = result.findings.some((x) => x.rule === "turn_offaxis" && x.feature === fid);
           const where = f.kind === "profile" ? "is the turned outside" : off ? "is off the turning axis: live tooling"
-            : f.kind === "groove" ? "is a groove on the axis" : "is on the turning axis";
+            : f.kind === "groove" ? (f.outside === false
+              ? "is an inside groove on the axis; not every shop cuts inside grooves (Protolabs does not, D-026)"
+              : "is a groove on the axis") : "is on the turning axis";
           why.append(el("span", undefined, `${fid} ${where}. ${toolWhy(f, result, i)}`));
           continue;
         }

@@ -59,8 +59,18 @@ def test_clean_shaft_passed_list(page: Page, base_url: str):
     row = page.get_by_test_id("passed-profile-1")
     expect(row).to_contain_text("1.000 in (1) diameter, 3.000 in long")
     expect(row).to_contain_text("Round faces on one axis: a lathe part")
-    expect(row).to_contain_text("Length 3.0× diameter, at most 4.0×")
+    expect(row).to_contain_text("Length 4.0× its smallest diameter, 0.750 in, at most 4.0×")
     expect(page.get_by_test_id("passed-hole-1")).to_contain_text("On the turning axis: cut on the lathe")
+
+
+def test_inside_groove_note(page: Page, base_url: str):
+    """D-026: the plan says an inside groove is not cut by every shop."""
+    _upload(page, base_url, "shaft_with_groove_and_bore.step", "turn")
+    expect(page.get_by_test_id("plan-setup-1")).to_be_visible(timeout=30_000)
+    page.get_by_test_id("plan-setup-1").click()
+    why = page.get_by_test_id("plan-setup-why-1")
+    expect(why).to_contain_text("groove-1 is a groove on the axis.")
+    expect(why).to_contain_text("groove-2 is an inside groove on the axis; not every shop cuts inside grooves")
 
 
 def test_slender_shaft_for_milling(page: Page, base_url: str):

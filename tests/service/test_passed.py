@@ -9,7 +9,7 @@ from helpers import PARTS, expected_parts
 
 from dfma.analyze import analyze
 
-JUDGES = {"hole_depth": ("hole", "bore"), "hole_size": ("hole",), "corner_radius": ("corner",), "pocket_depth": ("pocket",),
+JUDGES = {"hole_depth": ("hole",), "bore_depth": ("bore",), "hole_size": ("hole",), "corner_radius": ("corner",), "pocket_depth": ("pocket",),
           "undercut": ("pocket",), "thin_wall": ("wall",), "access": ("hole", "pocket"),
           # S6: turn_axis judges the part (no feature when it fires) and passes the profile it found
           "turn_axis": ("profile",), "turn_slender": ("profile",), "turn_offaxis": ("hole", "pocket", "bore")}

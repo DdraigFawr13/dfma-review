@@ -20,7 +20,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-08 S6 turning on `s6-turning` (Morgan: "begin s6 … research on turning … then report … I approve of whatever report it comes up with"). Research [page](https://claude.ai/artifact/W671Yt2gJgDqrfgf6iC3RH) (`docs/research/turning.html`; 2 research agents, 244k tokens, 4 key sources re-fetched and confirmed): spec limits sit inside the sourced ranges; 5 proposals listed, none built. Built per spec: `turning.py`, profile/groove/bore in `features.py`, `rules/turn_axis.py`, `turn_slender.py`, `turn_offaxis.py`, `[turning]` in tools.toml, `[*.turn_slender]` in thresholds.toml, lathe plan in the Machine plan panel (D-023), 5 test parts, `test_turning.py`, browser `test_lathe_plan.py`. Settled-at-build notes in the spec's S6. Checks: 576+ service, 6 unit, 21 browser. Demo [updated](https://claude.ai/artifact/D3bfwpowEhoMCkUzEettYP) with the S6 parts. Draft [PR #17](https://github.com/DdraigFawr13/dfma-review/pull/17); [S6 status](https://claude.ai/artifact/4k6NRVgis3yhnBCFXF9yEg), [lathe plan mock-up](https://claude.ai/artifact/XceFs75tHjeEpzhxZ9tZ6o) (`mockups/lathe-plan.html`; fresh check 46,828 tokens, 1 major and 3 minor, all fixed). Open: the research's 5 proposals, asked one at a time (WS-03); Morgan's approval of S6.
+- 2026-11-08 S6 turning on `s6-turning` (Morgan: "begin s6 … research on turning … then report … I approve of whatever report it comes up with"). Research [page](https://claude.ai/artifact/W671Yt2gJgDqrfgf6iC3RH) (`docs/research/turning.html`; 2 research agents, 244k tokens, 4 key sources re-fetched and confirmed): spec limits sit inside the sourced ranges; 5 proposals listed, none built. Built per spec: `turning.py`, profile/groove/bore in `features.py`, `rules/turn_axis.py`, `turn_slender.py`, `turn_offaxis.py`, `[turning]` in tools.toml, `[*.turn_slender]` in thresholds.toml, lathe plan in the Machine plan panel (D-023), 5 test parts, `test_turning.py`, browser `test_lathe_plan.py`. Settled-at-build notes in the spec's S6. Checks: 576+ service, 6 unit, 21 browser. Demo [updated](https://claude.ai/artifact/D3bfwpowEhoMCkUzEettYP) with the S6 parts. Draft [PR #17](https://github.com/DdraigFawr13/dfma-review/pull/17); [S6 status](https://claude.ai/artifact/4k6NRVgis3yhnBCFXF9yEg), [lathe plan mock-up](https://claude.ai/artifact/XceFs75tHjeEpzhxZ9tZ6o) (`mockups/lathe-plan.html`; fresh check 46,828 tokens, 1 major and 3 minor, all fixed). All 5 research proposals built (D-025, D-026). Open: Morgan's approval of S6. No public labelled turned-part dataset like MFCAD++ exists (agent search, 2026-11-08); NIST spectrometer parts are turned but unlabelled.
 
 - 2026-11-06 Phone pages for Morgan: [S1 status](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu), [view-only demo](https://claude.ai/artifact/KnnLF3YAHp5ZCmNuVWyvP4) (to S4; S5 on: the new demo above, `python scripts/make_demo.py <out.html>` after `npm --prefix web run build`).
 
@@ -50,11 +50,11 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-08 D-026: turning research proposals 2-5 approved together: support named, `bore_depth` (4×/6×), inside-groove note, slender by smallest diameter.
 - 2026-11-08 D-025: turning slender warning over 3.0× for the steels, 4.0× for aluminium and plastic; high over 8.0× (research proposal 1).
 - 2026-11-08 D-024: screenshots on Morgan's pages fit the screen and zoom on tap, taken at 2×.
 - 2026-11-08 D-023: Machine plan panel, a Passed list with the math (collapsed by default) and selectable setups with a why; all approved and merged in #15.
 - 2026-11-08 D-022: countersinks recorded on the hole and planned as a tool load; full-round depth for sloped exits; a hole on a pocket floor keeps its own axis.
 - 2026-11-08 D-021: undercut pockets get a finding (needs a T-slot or lollipop cutter); sealed voids get none.
-- 2026-11-06 Concept chosen (D-001). Full master setup with web-app layer (D-002).
-- 2026-11-06 S1 build: extra packages and micromamba (D-008); slices shown as status page + demo (D-009); S1 merge approved.
+- 2026-11-06 Concept (D-001), master setup (D-002), S1 packages (D-008), status page + demo (D-009).
 - 2026-11-06 First-version scope (D-003), stack (D-004), rules and units (D-005), company-move gates (D-006), spec approved (D-007).

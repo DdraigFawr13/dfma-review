@@ -1,5 +1,5 @@
-"""hole_depth: depth / diameter over 6.0 is medium, over 10.0 is high (limits per material). It judges a
-turned part's bores too (spec Features "Bore": an on-axis hole is a bore or a hole, and hole_depth applies once)."""
+"""hole_depth: depth / diameter over 6.0 is medium, over 10.0 is high (limits per material). Holes only: a
+turned part's bores are judged by bore_depth (D-026), so each on-axis hole is judged once (spec "Bore")."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from ..units import MM_PER_IN, past_limit
 
 ID = "hole_depth"
 PROCESSES = ('mill', 'turn')  # spec Flow: which process runs this rule
-KINDS = ("hole", "bore")  # bores exist on turned parts only
+KINDS = ("hole",)
 SUGGESTION = {
     "medium": "Needs peck drilling. Make it shallower or larger if the design allows.",
     "high": "Needs a long drill and peck drilling. Make it shallower or larger if the design allows.",
@@ -31,7 +31,7 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
         else:
             continue
         out.append({"rule": ID, "severity": severity,
-                    "title": f"{f['kind'].capitalize()} depth {past_limit(ratio, limit, 1)}× diameter (limit {limit:.1f}×)",
+                    "title": f"Hole depth {past_limit(ratio, limit, 1)}× diameter (limit {limit:.1f}×)",
                     "measured": round(ratio, 4), "limit": limit, "unit": "ratio",
                     "faces": f["faces"], "feature": f["id"], "threshold_source": table["source"],
                     "suggestion": SUGGESTION[severity] + _longest(f["dims_mm"])})

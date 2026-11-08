@@ -187,3 +187,13 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-08).
 - **Decision:** `turn_slender` warns (medium) at over 3.0× length to diameter for `steel1018` and `ss304`, and stays at over 4.0× for `al6061` and `plastic`. High stays at over 8.0× for all four. Changes the spec's single 4.0× (Rules "turn_slender").
 - **Why:** the S6 [turning research](https://claude.ai/artifact/W671Yt2gJgDqrfgf6iC3RH): a part held only in a chuck is safe to 3× in steel and harder, 5× only in aluminium and soft materials (Lathe Mastery wikibook); CADEM: chuck only under 3×. Morgan picked the recommended option on 2026-11-08 (proposal 1 of 5).
+
+## D-026 Turning: support named, bore reach, inside grooves, smallest diameter
+
+- **Status:** Accepted (2026-11-08).
+- **Decision:** the S6 turning research proposals 2 to 5, as recommended:
+  - `turn_slender`'s suggestion names the support its ratio needs: chuck alone to 3×, tailstock to 6×, tailstock and steady rest to 12×, then one more holding point per 3×; Swiss-type from 6× (CADEM thumb rules; Wevolver: Swiss practically required over 10×).
+  - New rule `bore_depth` (turn only, bores only): depth ÷ diameter over 4.0 medium (needs a carbide boring bar), over 6.0 high (needs a damped bar); per material in `thresholds.toml`. `hole_depth` judges holes only, so a bore is still judged once.
+  - An inside groove gets a note in the lathe plan: not every shop cuts inside grooves (Protolabs does not). No finding.
+  - `turn_slender` divides by the profile's smallest outside diameter (`dims_mm.min_diameter`; grooves excluded), not the largest. Changes the spec's Features "Turned profile" and Rules "turn_slender".
+- **Why:** the [turning research](https://claude.ai/artifact/W671Yt2gJgDqrfgf6iC3RH): Sandvik's boring-bar overhang table (steel 4×, carbide 6×, damped 10× and 14×); Protolabs: "ID grooves are not supported"; CAD Exchanger's turned-part check divides by the minimum diameter. Morgan, 2026-11-08: "I approve of all your findings and recommendations from the turning research".

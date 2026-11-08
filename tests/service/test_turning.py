@@ -44,7 +44,7 @@ def test_slender_shaft_for_milling_has_no_turning_rules():
     """Morgan's comparison: the same part for milling plans the cross hole on a 3-axis mill, with no lathe checks."""
     r = _run("slender_shaft", "mill", "steel1018")
     assert r["machine"] == "3-axis mill" and r["turn_axis"] is None and r["findings"] == []
-    assert not {"turn_axis", "turn_slender", "turn_offaxis"} & set(r["rules_run"])
+    assert not {"turn_axis", "turn_slender", "turn_offaxis", "bore_depth"} & set(r["rules_run"])
     assert not [f for f in r["features"] if f["kind"] in ("profile", "bore", "groove")]
 
 
@@ -86,8 +86,9 @@ def test_groove_and_bore():
         == [(True, 0.125, 0.1), (False, 0.125, 0.0625)]
     assert [(o["tool"], o["features"]) for o in r["operations"]] == [
         ("turn", ["profile-1"]), ("bore", ["bore-1"]), ("groove-0.125", ["groove-1", "groove-2"])]
-    hd = [p for p in r["passed"] if p["rule"] == "hole_depth"]
-    assert [p["feature"] for p in hd] == ["bore-1"]  # hole_depth judges the bore once
+    # D-026: bore_depth judges the bore (1.33x, a steel bar reaches); hole_depth judges holes only
+    assert [p["feature"] for p in r["passed"] if p["rule"] == "bore_depth"] == ["bore-1"]
+    assert not [p for p in r["passed"] if p["rule"] == "hole_depth"]
 
 
 def test_block_as_turn():
@@ -108,6 +109,37 @@ def test_clean_shaft():
     assert [o["tool"] for o in r["operations"]] == ["turn", "dr-0.1875"]
     passed = {(p["rule"], p["feature"]) for p in r["passed"]}
     assert {("turn_slender", "profile-1"), ("turn_offaxis", "hole-1"), ("turn_axis", "profile-1")} <= passed
+    (profile,) = [f for f in r["features"] if f["kind"] == "profile"]
+    assert profile["dims_mm"]["min_diameter"] == pytest.approx(0.75 * IN, abs=1e-3)  # D-026: the 0.750 in end
+    (row,) = [p for p in r["passed"] if p["rule"] == "turn_slender"]
+    assert row["title"] == "Length 4.0× its smallest diameter, 0.750 in, at most 4.0×"
+
+
+def test_clean_shaft_in_steel_is_slender_by_its_smallest_diameter():
+    """D-025 and D-026: 3.000 in long over the 0.750 in end is 4.0x, past the steels' 3.0x."""
+    f = _one(_run("clean_shaft", material="steel1018"), "turn_slender")
+    assert (f["severity"], f["limit"]) == ("medium", 3.0)
+    assert f["title"] == "Length 4.0× its smallest diameter (0.750 in) (limit 3.0×)"
+    assert f["suggestion"].startswith("Support the free end with a tailstock centre")
+
+
+@pytest.mark.parametrize("ratio, words", [(2.5, "A chuck alone"), (5.0, "tailstock centre"),
+                                          (9.0, "a tailstock and a steady rest"),
+                                          (15.0, "a tailstock and 3 steady rests (5 holding points)")])
+def test_support_named_by_ratio(ratio, words):
+    """D-026, CADEM tiers: chuck under 3x, tailstock 3-6x, steady rest 6-12x, one holding point per 3x."""
+    from dfma.rules.turn_slender import support
+    assert words in support(ratio)
+
+
+@pytest.mark.parametrize("depth_d, severity", [(4.0, None), (5.0, "medium"), (7.0, "high")])
+def test_bore_depth(depth_d, severity):
+    """D-026 (Sandvik): over 4x a carbide bar (medium), over 6x a damped bar (high)."""
+    from dfma import settings
+    from dfma.rules import bore_depth
+    f = {"kind": "bore", "id": "bore-1", "faces": [2], "dims_mm": {"diameter": 20.0, "depth": 20.0 * depth_d}}
+    got = bore_depth.check([f], {}, settings.thresholds("steel1018"))
+    assert [g["severity"] for g in got] == ([severity] if severity else [])
 
 
 def test_offset_hole_is_off_axis():

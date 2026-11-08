@@ -110,3 +110,26 @@ source = "D-025"
 medium = 4.0
 high = 8.0
 source = "estimate"
+
+# D-026 bore_depth: a bore's depth / diameter (boring bar reach, Sandvik): over medium (steel bar 4x) is medium,
+# over high (carbide bar 6x) is high
+
+[al6061.bore_depth]
+medium = 4.0
+high = 6.0
+source = "D-026 (Sandvik)"
+
+[steel1018.bore_depth]
+medium = 4.0
+high = 6.0
+source = "D-026 (Sandvik)"
+
+[ss304.bore_depth]
+medium = 4.0
+high = 6.0
+source = "D-026 (Sandvik)"
+
+[plastic.bore_depth]
+medium = 4.0
+high = 6.0
+source = "D-026 (Sandvik)"
