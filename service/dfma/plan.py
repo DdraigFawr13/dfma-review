@@ -64,9 +64,8 @@ def _pocket_tool(f: dict) -> dict:
             "undersized": bool(f["dims_mm"].get("undersized", 0))}
 
 
-def _countersink_tool(f: dict) -> dict:
-    return {"id": f"cs-{f['dims_mm']['countersink_deg']:g}", "kind": "countersink", "diameter_in": None,
-            "undersized": False}
+def _countersink_tool(deg: float) -> dict:
+    return {"id": f"cs-{deg:g}", "kind": "countersink", "diameter_in": None, "undersized": False}
 
 
 def _rank(tool: dict) -> tuple:
@@ -88,9 +87,9 @@ def plan(features: list[dict], findings: list[dict], frame: dict, units_in_file:
             continue  # flagged, or a void sealed inside the part (no open end): not planned (assumptions)
         tool = _hole_tool(f, units_in_file) if f["kind"] == "hole" else _pocket_tool(f)
         jobs.append((f["id"], set(f["open_dirs"]), tool))
-        for v in f.get("countersink_vectors", []):
-            if d := _frame_dir(v, frame):
-                jobs.append((f["id"], {d}, _countersink_tool(f)))
+        for v, deg in zip(f.get("countersink_vectors", []), f.get("countersink_degs", [])):
+            if d := _frame_dir(v, frame):  # always: a hole with no end along an axis is flagged above
+                jobs.append((f["id"], {d}, _countersink_tool(deg)))  # each end its own angle
 
     setups = _cover([dirs for _, dirs, _ in jobs])
     members: list[list[str]] = [[] for _ in setups]

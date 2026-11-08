@@ -62,6 +62,7 @@ class Segment:
     taper_deg: float = 0.0  # a tapered hole: the cone's half-angle (D-018 tapered-holes round)
     small_radius: float | None = None  # a tapered hole: the radius at its narrow end
     gap_joined: bool = False  # joined across an open gap (_open_between)
+    cut: bool = False  # round only part of the way (HALF_TURN_DEG): no full-round depth for it
     countersinks: list = field(default_factory=list)  # (end, cone face ids, diameter, included deg) per open end (D-022)
     full_lo: float | None = None  # where the hole is round all the way, when an end leaves through a slope (D-022)
     full_hi: float | None = None
@@ -255,7 +256,8 @@ def _segments(topo: Topology, cyls: dict[int, Cyl], no_gap: set[int] = frozenset
     out: list[Segment] = []
     for group in merged:
         members = [cyls[g] for g in group]
-        span = _full_turn(members) or _full_turn(members, HALF_TURN_DEG)
+        whole = _full_turn(members)
+        span = whole or _full_turn(members, HALF_TURN_DEG)
         if span is None:
             continue
         base = members[0]
@@ -266,6 +268,7 @@ def _segments(topo: Topology, cyls: dict[int, Cyl], no_gap: set[int] = frozenset
         else:
             out.append(Segment(group, base.origin, base.axis, base.radius, *span))
         out[-1].gap_joined = bool(gap_joined.intersection(group))
+        out[-1].cut = whole is None
     return out
 
 
@@ -401,7 +404,7 @@ def _classify_ends(topo: Topology, segs: list[Segment]) -> None:
                 ends.setdefault(end, "open")
                 if (csk := _countersink(topo, seg, nb)) and not any(c[0] == end for c in seg.countersinks):
                     seg.countersinks.append((end, *csk))
-            for end, es in by_end.items():  # where the hole is round all the way at this end (D-022)
+            for end, es in (by_end.items() if not seg.cut else ()):  # where it is round all the way (D-022)
                 for e in es:
                     along = [dot(v, seg.axis) for v in _points(e)]
                     if end == "hi" and min(along) > seg.lo + 0.01:
@@ -607,6 +610,8 @@ def holes(solid, faces, frame: dict[str, Vec]) -> list[dict]:
                 continue
             lo = s.full_lo if s.full_lo is not None else s.lo
             hi = s.full_hi if s.full_hi is not None else s.hi
+            if hi - lo <= 0.01:  # slopes at both ends that cross: no full-round part, so the longest side
+                lo, hi = s.lo, s.hi
             dims = {"diameter": 2 * s.radius, "depth": hi - lo}
             if (s.hi - s.lo) - (hi - lo) > 0.01:  # an end leaves through a slope: the longest side (D-022)
                 dims["max_depth"] = s.hi - s.lo
@@ -622,7 +627,8 @@ def holes(solid, faces, frame: dict[str, Vec]) -> list[dict]:
                 dims["countersink_deg"] = s.countersinks[0][3]
                 csk = {"countersink_faces": sorted({f for c in s.countersinks for f in c[1]}),
                        "countersink_vectors": [list(s.axis if c[0] == "hi" else tuple(-a for a in s.axis))
-                                               for c in s.countersinks]}
+                                               for c in s.countersinks],
+                       "countersink_degs": [c[3] for c in s.countersinks]}  # per end, as the vectors
             features.append({
                 "kind": "hole",
                 "faces": sorted(s.faces + s.bottom + s.shoulders),

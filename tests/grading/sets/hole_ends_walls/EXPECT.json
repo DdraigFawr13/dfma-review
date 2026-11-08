@@ -87,6 +87,24 @@
   ],
   "walls": []
  },
+ "cs_mixed": {
+  "holes": [
+   {
+    "depth": 23.2914,
+    "countersinks": [
+     [
+      13.0,
+      90
+     ],
+     [
+      12.7,
+      82
+     ]
+    ]
+   }
+  ],
+  "walls": []
+ },
  "ch_entry": {
   "holes": [
    {

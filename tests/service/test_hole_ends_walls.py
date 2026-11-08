@@ -59,7 +59,7 @@ def test_depths_countersinks_and_walls(path):
     if h["countersinks"]:
         assert len(hole["countersink_vectors"]) == len(h["countersinks"])
         assert dims["countersink_diameter"] == pytest.approx(max(d for d, _ in h["countersinks"]), abs=1e-3)
-        assert dims["countersink_deg"] == pytest.approx(h["countersinks"][0][1], abs=0.1)
+        assert sorted(hole["countersink_degs"]) == pytest.approx(sorted(a for _, a in h["countersinks"]), abs=0.1)
         assert set(hole["countersink_faces"]).isdisjoint(hole["faces"])  # D-018: the cone stays out
     else:
         assert "countersink_deg" not in dims and "countersink_vectors" not in hole
@@ -72,9 +72,9 @@ def test_set_totals():
     for path in FILES:
         total += _score(path)[0]
     s = grade.scores(total)
-    assert len(FILES) == len(EXPECT) == 16
+    assert len(FILES) == len(EXPECT) == 17
     holes = sum(s["recall"][c]["of"] for c in grade.HOLE_CLASSES)
-    assert sum(s["recall"][c]["n"] for c in grade.HOLE_CLASSES) == holes == 20  # MANIFEST: classes 1 and 12
+    assert sum(s["recall"][c]["n"] for c in grade.HOLE_CLASSES) == holes == 21  # MANIFEST: classes 1 and 12
 
 
 def test_sloped_exit_names_the_longest_side():
@@ -83,3 +83,32 @@ def test_sloped_exit_names_the_longest_side():
     f = {"kind": "hole", "id": "hole-1", "faces": [1], "dims_mm": {"diameter": 2.0, "depth": 14.0, "max_depth": 16.0}}
     (out,) = hole_depth.check([f], {}, {"hole_depth": {"medium": 6.0, "high": 10.0, "source": "estimate"}})
     assert out["measured"] == 7.0 and "its longest side is 0.630 in" in out["suggestion"]
+
+
+def test_each_countersink_angle_is_its_own_tool():
+    """Review finding: a 90 deg countersink at the top and an 82 deg one at the bottom are two tools, each
+    cut from its own end."""
+    from dfma.analyze import analyze
+    r = analyze(SET / "cs_mixed.step", "cs_mixed.step")
+    by_tool = {o["tool"]: r["setups"][o["setup"]]["direction"] for o in r["operations"]}
+    assert set(by_tool) == {"dr-6.6mm", "cs-90", "cs-82"} and by_tool["cs-90"] != by_tool["cs-82"]
+
+
+def test_cut_hole_keeps_its_length(tmp_path):
+    """A hole only partly round (a d4 cross hole 1 mm under the top, open to it all along) has no full-round
+    part: its depth stays its length (100), not a length from its broken ends (53.6 before the fix). The d8 hole
+    it crosses is not round all the way in its top 3 mm, so by D-022 its depth is 27 and its longest side 30."""
+    import importlib.util
+    from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeCylinder
+    from OCC.Core.gp import gp_Ax2, gp_Dir, gp_Pnt
+    from dfma.analyze import analyze
+    spec = importlib.util.spec_from_file_location("hew", SET / "make.py")
+    hew = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(hew)
+    hl = hew.through_hole(50, 30, 4)
+    x = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(-5, 30, hew.TOP - 1), gp_Dir(1, 0, 0)), 2, 120).Shape()
+    path = tmp_path / "crossnear.step"
+    hew.write(path, hew.cut(hew.cut(hew.block(), hl), x), [(hl, 1), (x, 1)])
+    holes = sorted((f["dims_mm"]["diameter"], f["dims_mm"]["depth"], f["dims_mm"].get("max_depth"))
+                   for f in analyze(path, path.name)["features"] if f["kind"] == "hole")
+    assert holes == [pytest.approx((4.0, 100.0, None)), pytest.approx((8.0, 27.0, 30.0))]

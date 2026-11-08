@@ -9,6 +9,7 @@ Part · what it tests · faces by class
 - `cs_120` · d6.6 through hole, 120 deg countersink to d13 · 0: 1, 1: 1, 24: 6
 - `cs_blind` · d5 blind hole 15 deep (flat bottom), 90 deg countersink to d10 · 0: 1, 12: 2, 24: 6
 - `cs_both` · d6.6 through hole, 90 deg countersink to d13 at both ends · 0: 2, 1: 1, 24: 6
+- `cs_mixed` · d6.6 through hole, 90 deg countersink to d13 at the top, 82 deg to d12.7 at the bottom (two tools, review finding) · 0: 2, 1: 1, 24: 6
 - `ch_entry` · d10 through hole, 0.5 x 45 deg entry chamfer (a 90 deg countersink to d11) · 0: 1, 1: 1, 24: 6
 - `ng_drill_point` · d8 blind hole 10 deep with a 118 deg drill point (a point, not a countersink) · 12: 2, 24: 6
 - `sx_bottom_20` · d8 through hole leaving a 20 deg sloped bottom (plane through z 5 at the hole) · 1: 1, 24: 7

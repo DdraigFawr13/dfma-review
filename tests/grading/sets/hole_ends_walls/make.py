@@ -93,6 +93,12 @@ def parts():
     hl = through_hole(CX, CY, 3.3)
     P.append(("cs_both", "d6.6 through hole, 90 deg countersink to d13 at both ends", cut(cut(cut(block(), hl), top), bot),
               [(top, 0), (bot, 0), (hl, 1)], {"holes": [hole(TOP - 2 * h, csk=[(13.0, 90), (13.0, 90)])], "walls": []}))
+    top, h1 = countersink(3.3, 6.5, 90)
+    bot, h2 = countersink(3.3, 6.35, 82, at_top=False)
+    hl = through_hole(CX, CY, 3.3)
+    P.append(("cs_mixed", "d6.6 through hole, 90 deg countersink to d13 at the top, 82 deg to d12.7 at the bottom "
+              "(two tools, review finding)", cut(cut(cut(block(), hl), top), bot), [(top, 0), (bot, 0), (hl, 1)],
+              {"holes": [hole(TOP - h1 - h2, csk=[(13.0, 90), (12.7, 82)])], "walls": []}))
     cone, h = countersink(5.0, 5.5, 90)
     hl = through_hole(CX, CY, 5.0)
     P.append(("ch_entry", "d10 through hole, 0.5 x 45 deg entry chamfer (a 90 deg countersink to d11)",
