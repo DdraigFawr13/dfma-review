@@ -7,3 +7,6 @@
 # step_sha256 = "..."
 # faces = 0
 # corners = 0
+# threads_matched = 0     # S2: thread counts per state from the app path
+# threads_disagrees = 0
+# threads_not_mapped = 0

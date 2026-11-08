@@ -6,7 +6,7 @@ export const RULE_NAMES: Record<string, string> = {
   hole_depth: "hole depth", hole_size: "hole size", corner_radius: "corner radius", pocket_depth: "pocket depth",
   undercut: "undercut", thin_wall: "thin wall", access: "access",
   turn_axis: "turning axis", turn_slender: "length to diameter", turn_offaxis: "off the turning axis",
-  bore_depth: "bore depth", looks_turned: "looks turned",
+  bore_depth: "bore depth", looks_turned: "looks turned", thread_mismatch: "thread vs hole", // I1 S2
 };
 const KIND_NAMES: [string, string, string][] = [["profile", "turned profile", "turned profiles"], ["hole", "hole", "holes"], ["bore", "bore", "bores"], ["groove", "groove", "grooves"],
   ["pocket", "pocket", "pockets"], ["corner", "corner", "corners"], ["wall", "wall", "walls"]];
