@@ -55,8 +55,23 @@ def test_stout_shaft_is_medium():
 
 
 def test_slender_limits_come_from_thresholds():
+    """D-025: medium over 3.0x for the steels, over 4.0x for aluminium and plastic; high over 8.0x for all."""
     from dfma import settings
-    assert settings.thresholds("steel1018")["turn_slender"] == {"medium": 4.0, "high": 8.0, "source": "estimate"}
+    for m in ("steel1018", "ss304"):
+        assert settings.thresholds(m)["turn_slender"] == {"medium": 3.0, "high": 8.0, "source": "D-025"}
+    for m in ("al6061", "plastic"):
+        assert settings.thresholds(m)["turn_slender"] == {"medium": 4.0, "high": 8.0, "source": "estimate"}
+
+
+@pytest.mark.parametrize("material, flagged", [("steel1018", True), ("ss304", True), ("al6061", False),
+                                               ("plastic", False)])
+def test_slender_limit_by_material(material, flagged):
+    """D-025: a 3.5x shaft is medium in the steels and clean in aluminium and plastic."""
+    from dfma import settings
+    from dfma.rules import turn_slender
+    f = {"kind": "profile", "id": "profile-1", "faces": [0], "dims_mm": {"diameter": 10.0, "length": 35.0}}
+    got = turn_slender.check([f], {}, settings.thresholds(material))
+    assert [(g["severity"], g["limit"]) for g in got] == ([("medium", 3.0)] if flagged else [])
 
 
 def test_groove_and_bore():

@@ -181,3 +181,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-08).
 - **Decision:** On every page with screenshots for Morgan (status pages, mock-ups, research pages), each screenshot fits the screen width, so the whole desktop view is visible at once. Tapping one opens it full screen, where pinch, double-tap, drag and the − / Fit / + / Close buttons zoom and pan. Screenshots for these pages are taken at 2× pixel density, so they stay sharp when zoomed. `scripts/add_zoom.py <page.html>` adds the viewer (`scripts/zoom_viewer.html`; no library, nothing sent anywhere). This replaces the `ui-mockups` skill's fixed-width frames in a sideways-scrolling strip for this project.
 - **Why:** Morgan, 2026-11-08: "I can't see those very well unfortunately can we start presenting these screenshots in a different way where I can see the desktop view fit on my screen and zoom in on areas that I want to see more of?"
+
+## D-025 Turning: slender limit by material
+
+- **Status:** Accepted (2026-11-08).
+- **Decision:** `turn_slender` warns (medium) at over 3.0× length to diameter for `steel1018` and `ss304`, and stays at over 4.0× for `al6061` and `plastic`. High stays at over 8.0× for all four. Changes the spec's single 4.0× (Rules "turn_slender").
+- **Why:** the S6 [turning research](https://claude.ai/artifact/W671Yt2gJgDqrfgf6iC3RH): a part held only in a chuck is safe to 3× in steel and harder, 5× only in aluminium and soft materials (Lathe Mastery wikibook); CADEM: chuck only under 3×. Morgan picked the recommended option on 2026-11-08 (proposal 1 of 5).

@@ -97,14 +97,14 @@ high = 8.0
 source = "estimate"
 
 [steel1018.turn_slender]
-medium = 4.0
+medium = 3.0             # D-025: chuck only, steel and harder
 high = 8.0
-source = "estimate"
+source = "D-025"
 
 [ss304.turn_slender]
-medium = 4.0
+medium = 3.0             # D-025: chuck only, steel and harder
 high = 8.0
-source = "estimate"
+source = "D-025"
 
 [plastic.turn_slender]
 medium = 4.0

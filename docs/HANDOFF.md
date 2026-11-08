@@ -35,7 +35,6 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Open questions
 
-
 - Settled 2026-11-07: labels are pins (D-017); the scoring spike runs in a new session before S5 (Morgan: "We do the grading and testing in a new session before s5"). Research totals: 384,128 agent tokens (methods, labels, GitHub). S4 took 1 h 58 min to the first approval ask, $6.19 main session.
 - Backlog (Morgan, 2026-11-06): name each hole's type (through, blind, counterbore, countersink, drill point, threaded); recognise threads modelled as ring faces (NIST FTC 10's threaded hole is missed); catalogue NIST resources and commit the papers (research agents running).
 
@@ -51,6 +50,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-08 D-025: turning slender warning over 3.0× for the steels, 4.0× for aluminium and plastic; high over 8.0× (research proposal 1).
 - 2026-11-08 D-024: screenshots on Morgan's pages fit the screen and zoom on tap, taken at 2×.
 - 2026-11-08 D-023: Machine plan panel, a Passed list with the math (collapsed by default) and selectable setups with a why; all approved and merged in #15.
 - 2026-11-08 D-022: countersinks recorded on the hole and planned as a tool load; full-round depth for sloped exits; a hole on a pocket floor keeps its own axis.

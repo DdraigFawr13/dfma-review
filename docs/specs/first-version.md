@@ -288,7 +288,7 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
 - **`undercut`** (added by D-021, mill only): a pocket with an undercut (a ceiling facing its floor, D-018 set 2). Measured: how far the undercut reaches under its lip, in inches; limit 0. Medium: "needs a T-slot or lollipop cutter".
 - **`thin_wall`:** thickness under 0.030 in (`al6061`), 0.020 in (`steel1018`, `ss304`) or 0.060 in (`plastic`). High.
 - **`access`:** a hole or pocket with no `open_dirs` along ±X ±Y ±Z of the part frame (within 0.5°). Measured: the angle in degrees between its nearest open vector and the nearest frame axis; limit 0.5; unit `deg`. High: "needs a 4/5-axis mill or a fixture". It sets `machine` to "4/5-axis mill or fixture".
-- **`turn_slender`:** length ÷ diameter over 4.0 is medium; over 8.0 is high.
+- **`turn_slender`:** length ÷ diameter over 4.0 is medium (over 3.0 for `steel1018` and `ss304`, D-025); over 8.0 is high.
 - **`turn_offaxis`:** flags a hole or pocket whose axis is not coaxial with the turning axis. Coaxial means within 0.5°, with an offset of 0.001 in or less. Medium: "needs a milling operation or live tooling". It sets `machine` to "lathe with live tooling".
 
 ### Plan (`plan.py`, mill)
