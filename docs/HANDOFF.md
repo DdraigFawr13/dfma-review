@@ -36,7 +36,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Open questions
 
-- 2026-11-08 Morgan: "explore the idea of just using the .ipt file". Measured on the 16 NIST main models: 3,189 faces, 94% analytic (plane 1,156, cone/cylinder 1,555, torus 154, sphere 140), spline 184 in 6 files; edges 6,714 line/ellipse, 197 `intcurve` in 7 files. 7 files have neither (CTC 03, CTC 04, FTC 06 x2, FTC 09 x2, FTC 11). Proposed: a time-boxed spike that builds an OpenCascade solid from the `.ipt` and compares it with the NIST STEP; waiting for Morgan's go and timing.
+- 2026-11-08 Running: the test run of shape from the `.ipt` alone (D-034; [page](https://claude.ai/artifact/WJPZdd5WSm2rcuvMksTNb3)), a helper in its own worktree on the 7 NIST files without spline faces or intcurve edges (CTC 03, CTC 04, FTC 06 x2, FTC 09 x2, FTC 11; NIST main models are 94% analytic faces). Its scratch code goes in `docs/research/inventor-shape-spike/`; report the numbers to Morgan.
 - 2026-11-08 `test_nist.py` ctc_02 (limit 10 s): measured in this container 5.8-6.1 s alone (5 runs), 7.07 s in the full service suite (653 passed); no stage dominates (hole_walls 1.3, holes 1.2, pockets 1.0, walls 0.9, read 0.7, mesh 0.6 s); garbage collection 0.02-0.08 s per run and no slowdown after 16 other files in one process, so not the cause. The 10.4 s run came from a slower or busier container (inference). S1 adds no time to it: the NIST tests pass no `.ipt`; `read_ipt` takes under 0.2 s on every NIST file. Limit unchanged (VER-04).
 - Settled 2026-11-07: labels are pins (D-017); the scoring spike runs in a new session before S5 (Morgan: "We do the grading and testing in a new session before s5"). Research totals: 384,128 agent tokens (methods, labels, GitHub). S4 took 1 h 58 min to the first approval ask, $6.19 main session.
 - Backlog (Morgan, 2026-11-06): name each hole's type (through, blind, counterbore, countersink, drill point, threaded); recognise threads modelled as ring faces (NIST FTC 10's threaded hole is missed); catalogue NIST resources and commit the papers (research agents running).
@@ -44,12 +44,9 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - Nice to haves after the project is complete (Morgan, 2026-11-06), from the [research page](https://claude.ai/artifact/S2TDMa3VjXmz4AD7kUt1zm): waivers per finding, shop profiles, change review (rev A vs B, thinnest wall and smallest corner re-measured), comments and sign-off per finding, FMEA row export.
 - GitLab at work: are there CI runners, and can they download packages? Ask IT before the move (D-006).
 
-## Brainstorm trial (master D-048)
-
-- 2026-11-06: 4 concepts; dropped with reasons: yes; kill criteria: yes; rounds: 1; measured agent cost $0.74; measure 2 (design round 1 asked nothing the brief answered): yes, every question came from the brief's open list; measure 3 (concept survived design unchanged): yes (Morgan, 2026-11-06: "Yes").
-
 ## Decisions since the last plan update
 
+- 2026-11-08 D-034: two file fields for the `.ipt` pair (mock-up A); test shape from the `.ipt` alone now, alongside S1.
 - 2026-11-08 D-033: I1 threads spec approved; corners, faces and outer size replace volume.
 - 2026-11-08 D-031, D-032: Inventor parts by our own reader (olefile); plan approved: threads first, three mapping states, `.ipt` + STEP upload, exact-frame and stale-pair checks.
 - 2026-11-08 D-030: cost drivers after turning: bore_depth is a deep hole; new drivers deep_pockets, undercuts, slender_parts; small_tools counts undersized or under 1/8 in.
