@@ -146,7 +146,7 @@ function featureLine(f: Feature): string {
   return "";
 }
 
-/** D-023 (proposed): the features with no finding, each with the checks it passed and the math.
+/** D-023 (accepted): the features with no finding, each with the checks it passed and the math.
  *  Collapsed by default; a row selects its faces like a finding and opens its math. */
 function renderPassed(host: HTMLElement, result: Analysis, onSelect: (f: Pick) => void, selected: string | null): void {
   const flagged = new Set<string | null>(result.findings.map((f) => f.feature));
