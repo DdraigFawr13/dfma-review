@@ -903,6 +903,25 @@ def _undercut(topo: Topology, walls: list[int], n: Vec, skip: set[int], over) ->
     return ceilings, added
 
 
+def _overhang(topo: Topology, ceilings: list[int], walls: list[int], upper: list[int]) -> float:
+    """How far an undercut reaches under its lip (D-021), in mm: for each edge where a ceiling meets
+    a wall below it, the distance from the edge's middle to the nearest edge where the ceiling meets
+    a wall above it; the largest. 2 for a 2 mm lip, 4 for each side of a T-slot 10 wide with an 18 wide head."""
+    from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeVertex
+    from OCC.Core.BRepExtrema import BRepExtrema_DistShapeShape
+    best = 0.0
+    for c in ceilings:
+        nbs = topo.neighbours(c)
+        below = [e for w in walls if w not in upper for e in nbs.get(w, [])]
+        above = [e for w in upper for e in nbs.get(w, [])]
+        for e in below:
+            p, _ = _edge_mid(e)
+            v = BRepBuilderAPI_MakeVertex(gp_Pnt(*p)).Vertex()
+            d = min((BRepExtrema_DistShapeShape(v, a).Value() for a in above), default=0.0)
+            best = max(best, d)
+    return best
+
+
 KNIFE_DEG = 1.0  # deg: material angle under this at a wall's edge is no material (D-018 round 6)
 
 
@@ -1210,6 +1229,8 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
                                     "end_mill_mm": tool, "undersized": int(undersized)}})
         if width != math.inf:  # no two walls face each other: no width limit, and no key
             found_p[-1]["dims_mm"]["narrowest_width"] = width
+        if ceilings:  # an undercut (set 2, D-021): how far it reaches under the lip
+            found_p[-1]["dims_mm"]["undercut_mm"] = _overhang(topo, ceilings, walls, upper)
         for cfaces, r, edge in corners:
             ctool, _ = pick_end_mill(r, width)
             corner = {"kind": "corner", "faces": cfaces, "axis": list(n), "open_dirs": [], "open_vectors": [],

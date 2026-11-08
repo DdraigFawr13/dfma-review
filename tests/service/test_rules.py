@@ -20,7 +20,7 @@ def only_holes(result: dict) -> list[dict]:
 
 def test_deep_hole():
     result = run("deep_hole")
-    assert result["rules_run"] == ["hole_depth", "hole_size", "corner_radius", "pocket_depth", "thin_wall"]
+    assert result["rules_run"] == ["hole_depth", "hole_size", "corner_radius", "pocket_depth", "undercut", "thin_wall"]
     [hole] = only_holes(result)
     assert hole["id"] == "hole-1" and hole["kind"] == "hole"
     assert hole["dims_mm"]["diameter"] == pytest.approx(6.35, abs=0.001)
