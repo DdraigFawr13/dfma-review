@@ -35,7 +35,7 @@ MSG_TOO_LONG = "This file took too long to analyse"
 MSG_FAILED = "The analysis failed on this file. Try again, or try another file."
 # Inventor .ipt with its STEP (I1 spec "Messages")
 MSG_IPT_NOT_IPT = "This is not an Inventor part file (.ipt) this tool can read"
-MSG_IPT_NEEDS_STEP = "Add the STEP export of this part: the shape is read from the STEP"
+MSG_IPT_NEEDS_STEP = "Add the STEP export of this part: the shape is read from the STEP"  # also in web/src/main.ts
 MSG_IPT_TYPE = "This Inventor part is a {kind}. Only plain single-body parts can be read for now."
 MSG_PAIR_MISMATCH = "These files don't match: {reason}. Export the STEP again from this .ipt and upload both."
 MSG_IPT_TOO_BIG = "This .ipt holds more data than this tool will unpack"

@@ -5,12 +5,12 @@ from __future__ import annotations
 import hashlib
 import re
 import shutil
-import zlib
 from pathlib import Path
 from types import SimpleNamespace
 
-import olefile
 import pytest
+
+from helpers import rewrite_ipt_models
 
 from dfma import settings
 from dfma.errors import ReadError
@@ -135,23 +135,6 @@ def _copy(tmp_path: Path, name: str = "INV_nist_ftc_11_asme1_2021.ipt") -> Path:
     return out
 
 
-def _rewrite_models(path: Path, change) -> None:
-    """Replace each model stream's inflated data with change(data), recompressed into the same size."""
-    with olefile.OleFileIO(str(path), write_mode=True) as f:
-        for e in f.listdir(streams=True, storages=False):
-            name = "/".join(e)
-            if not name.startswith("RSeStorage/B"):
-                continue
-            raw = f.openstream(name).read()
-            k = raw.find(b"x^")
-            if k < 0:
-                continue
-            data = zlib.decompressobj().decompress(raw[k:])
-            new = raw[:k] + zlib.compress(change(data), 5)  # level 2-5 writes the header `x^`, as Inventor does
-            assert len(new) <= len(raw), "the changed model must fit its stream"
-            f.write_stream(name, new + b"\x00" * (len(raw) - len(new)))
-
-
 def test_not_an_ipt(tmp_path):
     p = tmp_path / "x.ipt"
     p.write_bytes(b"ISO-10303-21;\nHEADER;\n")
@@ -170,7 +153,7 @@ def test_over_cap(tmp_path):
 
 def test_no_model(tmp_path):
     p = _copy(tmp_path)
-    _rewrite_models(p, lambda d: d.replace(b"asmheader", b"xxxxxxxxx"))
+    rewrite_ipt_models(p, lambda d: d.replace(b"asmheader", b"xxxxxxxxx"))
     with pytest.raises(ReadError, match=re.escape(settings.MSG_IPT_NO_MODEL)):
         read_ipt(p)
 
@@ -190,7 +173,7 @@ def test_broken_model(tmp_path, cut):
             return d[:j] + b"\xee" + d[j + 1:]
         return d[:k + 200]
     p = _copy(tmp_path)
-    _rewrite_models(p, change)
+    rewrite_ipt_models(p, change)
     with pytest.raises(ReadError) as e:
         read_ipt(p)
     assert str(e.value) in (settings.MSG_IPT_FORMAT.format(version="226.0.3.65535"),

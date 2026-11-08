@@ -91,10 +91,11 @@ class Worker:
             self._kill()
 
     def run(self, path: str | Path, name: str, process: str, material: str,
+            ipt_path: str | Path | None = None, ipt_name: str | None = None,
             time_limit_s: float = settings.TIME_LIMIT_S) -> dict:
         with self._lock:
             self._start()
-            self._conn.send((str(path), name, process, material))
+            self._conn.send((str(path), name, process, material, None if ipt_path is None else str(ipt_path), ipt_name))
             if not self._conn.poll(time_limit_s):
                 self._kill()
                 self._start()
@@ -120,5 +121,6 @@ def default_worker() -> Worker:
 
 
 def run_analysis(path: str | Path, name: str, process: str, material: str,
+                 ipt_path: str | Path | None = None, ipt_name: str | None = None,
                  time_limit_s: float = settings.TIME_LIMIT_S) -> dict:
-    return _default.run(path, name, process, material, time_limit_s)
+    return _default.run(path, name, process, material, ipt_path, ipt_name, time_limit_s=time_limit_s)

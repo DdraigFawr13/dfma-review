@@ -1,0 +1,9 @@
+# Morgan's work pairs (D-032): checksums and expected counts only; the files stay in tests/inventor/.local/.
+# One table per folder in .local/, e.g.
+# [[pair]]
+# name = "bracket-2024"      # the folder name
+# release = "2024"
+# ipt_sha256 = "..."
+# step_sha256 = "..."
+# faces = 0
+# corners = 0
