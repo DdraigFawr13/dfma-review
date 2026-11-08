@@ -214,7 +214,7 @@ A fresh zero-decision re-check of S2 found 24 gaps (9 high, 11 medium, 4 low); n
 - **Built threads:** `tests/inventor/built.py` (an `IptPart` from a STEP test part plus threads); the depth case uses `drill_point_hole.step` (box_through_hole's hole is through).
 - **Fixtures:** the full Milling / Aluminum 6061 response, compact JSON (CTC 04 1.06 MB, STC 10 0.66 MB); CTC 04 drives `test_threads_panel`, STC 10 `test_pdf_threads`.
 - **`local_pairs.toml`:** `threads_matched`, `threads_disagrees`, `threads_not_mapped` per pair; `local_pairs.py` runs `analyze` with `ipt_path`.
-- **PDF:** jsPDF text is ASCII (`report.ascii`), so `Ø` is written `dia.` there.
+- **PDF:** `report.ascii` keeps Latin-1, so `Ø` (code 216) prints as is; threads list in record order; inches first, the stored mm in brackets; a not-mapped line starts with its thread id.
 
 ### Test files
 
