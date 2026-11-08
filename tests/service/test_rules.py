@@ -20,7 +20,8 @@ def only_holes(result: dict) -> list[dict]:
 
 def test_deep_hole():
     result = run("deep_hole")
-    assert result["rules_run"] == ["hole_depth", "hole_size", "corner_radius", "pocket_depth", "undercut", "thin_wall", "access"]
+    assert result["rules_run"] == ["hole_depth", "hole_size", "corner_radius", "pocket_depth", "undercut", "thin_wall", "access",
+                                   "looks_turned"]  # D-028
     [hole] = only_holes(result)
     assert hole["id"] == "hole-1" and hole["kind"] == "hole"
     assert hole["dims_mm"]["diameter"] == pytest.approx(6.35, abs=0.001)
@@ -477,10 +478,11 @@ def test_bosses_with_air_between_are_not_a_wall():
 
 
 def test_thin_wall_runs_for_turn():
-    """thin_wall is shared by mill and turn (spec Flow); the pocket rules are not."""
+    """thin_wall is shared by mill and turn (spec Flow); the pocket rules are not. A block has no turning axis
+    (S6 turn_axis), so the two turning rules don't run either: only the shared rules."""
     result = run("thin_floor", process="turn")
-    assert result["rules_run"] == ["hole_depth", "hole_size", "thin_wall"]
-    assert [f["rule"] for f in result["findings"]] == ["thin_wall"]
+    assert result["rules_run"] == ["hole_depth", "hole_size", "thin_wall", "turn_axis"]
+    assert [f["rule"] for f in result["findings"]] == ["thin_wall", "turn_axis"]
 
 
 def test_hole_walls():

@@ -16,10 +16,14 @@ def test_plan_panel_two_sided_block(page: Page, base_url: str):
     expect(page.get_by_test_id("plan")).to_be_hidden()
     page.get_by_test_id("upload-file").set_input_files(PARTS / "two_sided_block.step")
     expect(page.get_by_test_id("plan-machine")).to_have_text("3-axis mill", timeout=30_000)
-    expect(page.get_by_test_id("plan-loads")).to_have_text("3 (including the first in each setup)")
+    expect(page.get_by_test_id("plan-loads")).to_have_text("5 (including the first in each setup)")  # D-029
     expect(page.locator("#plan-count")).to_have_text("3 setups")
     expect(page.get_by_test_id("plan-setup-1")).to_contain_text("Setup 1 · from +Z")
-    expect(page.get_by_test_id("plan-setup-1")).to_contain_text("1/4 in end mill em-0.250")
+    expect(page.get_by_test_id("plan-setup-1")).to_contain_text("1. 1/2 in end mill em-0.500")  # roughs
+    expect(page.get_by_test_id("plan-setup-1")).to_contain_text("2. 1/4 in end mill em-0.250")  # finishes
+    page.get_by_test_id("plan-setup-1").click()
+    expect(page.get_by_test_id("plan-setup-why-1")).to_contain_text(
+        "1/2 in end mill: roughs it out, the largest at most 75% of its 0.750 in gap.")
     expect(page.get_by_test_id("plan-setup-3")).to_contain_text("Setup 3 · from −X")
     expect(page.get_by_test_id("plan-setup-3")).to_contain_text("0.250 in (1/4) drill dr-0.2500")
     expect(page.get_by_test_id("plan-setup-3")).to_contain_text("hole-1")

@@ -23,7 +23,13 @@ from dfma.analyze import analyze  # noqa: E402
 
 PARTS = ROOT / "tests" / "parts"
 SET3 = ROOT / "tests" / "grading" / "sets" / "hole_ends_walls"
-DEMO = [  # (file, what Morgan looks for)
+DEMO = [  # (file, what Morgan looks for[, the process a tap picks: turning parts open on Turning])
+    (PARTS / "slender_shaft.step", "S6: opens on Turning; switch to Milling to compare", "turn"),
+    (PARTS / "flange_bolt_hole.step", "S6 (Turning): off-centre bolt hole", "turn"),
+    (PARTS / "stout_shaft.step", "S6 (Turning): length 5× diameter", "turn"),
+    (PARTS / "shaft_with_groove_and_bore.step", "S6 (Turning): grooves and a bore", "turn"),
+    (PARTS / "clean_shaft.step", "S6 (Turning): clean", "turn"),
+    (PARTS / "block_as_turn.step", "S6 (Turning): no turning axis", "turn"),
     (PARTS / "two_sided_block.step", "S5: 3 setups, 3 tool loads"),
     (PARTS / "angled_hole.step", "S5: access finding, 4/5-axis"),
     (PARTS / "angled_hole_in_pocket.step", "S5: angled hole in a pocket floor"),
@@ -44,7 +50,7 @@ def main() -> int:
     dist = ROOT / "web" / "dist"
     html = (dist / "index.html").read_text(encoding="utf-8")
     results = {}
-    for path, _ in DEMO:
+    for path, *_ in DEMO:
         for process in settings.PROCESSES:
             for material in settings.MATERIALS:
                 results[f"{path.name}|{process}|{material}"] = analyze(path, path.name, process, material)
@@ -59,7 +65,7 @@ def main() -> int:
     js_src = re.search(r'<script type="module"[^>]*src="([^"]+)"[^>]*></script>', html)
     js = (dist / js_src.group(1).lstrip("/")).read_text(encoding="utf-8")
     html = html.replace(js_src.group(0), "")
-    names = [[p.name, what] for p, what in DEMO]
+    names = [[d[0].name, d[1], d[2] if len(d) > 2 else "mill"] for d in DEMO]
     shim = """
 <script>
 window.__DEMO = %s;
@@ -76,7 +82,7 @@ window.fetch = async (url, init) => {
 </script>""" % json.dumps(results, separators=(",", ":"))
     picker = """
 <div class="demo-bar" role="group" aria-label="Demo parts">
-  <p class="demo-note"><b>View-only demo</b> of the real app, with these test parts analysed in advance. Tap a part; process and material work as in the app. Your files can't be uploaded here.</p>
+  <p class="demo-note"><b>View-only demo</b> of the real app, with these test parts analysed in advance. Tap a part (a turning part opens on Turning); process and material work as in the app. Your files can't be uploaded here.</p>
   <div class="demo-parts">%s</div>
 </div>
 <style>
@@ -90,13 +96,14 @@ window.fetch = async (url, init) => {
 <script>
 for (const b of document.querySelectorAll(".demo-parts button")) b.addEventListener("click", () => {
   for (const o of document.querySelectorAll(".demo-parts button")) o.setAttribute("aria-pressed", String(o === b));
+  document.getElementById("process").value = b.dataset.process; // a turning part opens on Turning
   const input = document.getElementById("file"), dt = new DataTransfer();
   dt.items.add(new File(["demo"], b.dataset.name));
   input.files = dt.files;
   input.dispatchEvent(new Event("change"));
 });
-</script>""" % "".join(f'<button type="button" data-name="{n}" aria-pressed="false">{n.removesuffix(".step")}'
-                        f'<small>{w}</small></button>' for n, w in names)
+</script>""" % "".join(f'<button type="button" data-name="{n}" data-process="{pr}" aria-pressed="false">'
+                        f'{n.removesuffix(".step")}<small>{w}</small></button>' for n, w, pr in names)
     html = html.replace("<title>DFMA Review</title>", "<title>DFMA Review Demo</title>")
     html = html.replace("<head>", "<head>" + shim, 1)
     html = re.sub(r"(<body[^>]*>)", lambda m: m.group(1) + picker, html, count=1)

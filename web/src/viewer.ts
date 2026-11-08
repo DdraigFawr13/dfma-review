@@ -20,6 +20,13 @@ function token(name: string): THREE.Color {
   return new THREE.Color(value || "#888888");
 }
 
+/** How far a finding's visible spots spread on screen (the diagonal of their box, px); 0 for none. */
+function spread(spots: { x: number; y: number }[]): number {
+  if (!spots.length) return 0;
+  const xs = spots.map((p) => p.x), ys = spots.map((p) => p.y);
+  return Math.hypot(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+}
+
 function overlaps(a: DOMRect, b: DOMRect): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
@@ -311,9 +318,9 @@ export class Viewer {
 
   private leaders: SVGSVGElement | null = null;
 
-  /** A finding's spot on screen: of up to 24 of its sampled points, those the camera can see
-   *  (nothing nearer on the ray to them), the one nearest the middle of them; null if none is visible. */
-  private anchorOf(points: THREE.Vector3[]): { x: number; y: number } | null {
+  /** A finding's spots on screen: of up to 24 of its sampled points, those the camera can see (nothing
+   *  nearer on the ray to them), nearest the middle of them first; empty if none is visible. */
+  private anchorsOf(points: THREE.Vector3[]): { x: number; y: number }[] {
     const w = this.canvas.clientWidth, h = this.canvas.clientHeight;
     const left = this.canvas.offsetLeft, top = this.canvas.offsetTop;
     const eye = this.camera.position;
@@ -333,9 +340,9 @@ export class Viewer {
       if (p.z >= 1 || Math.abs(p.x) > 1 || Math.abs(p.y) > 1) continue;
       seen.push({ x: left + ((p.x + 1) / 2) * w, y: top + ((1 - p.y) / 2) * h });
     }
-    if (seen.length === 0) return null;
+    if (seen.length === 0) return [];
     const cx = seen.reduce((a, s) => a + s.x, 0) / seen.length, cy = seen.reduce((a, s) => a + s.y, 0) / seen.length;
-    return seen.reduce((best, s) => (Math.hypot(s.x - cx, s.y - cy) < Math.hypot(best.x - cx, best.y - cy) ? s : best));
+    return seen.sort((a, b) => Math.hypot(a.x - cx, a.y - cy) - Math.hypot(b.x - cx, b.y - cy));
   }
 
   /** The leader layer over the canvas, emptied. */
@@ -364,30 +371,44 @@ export class Viewer {
     svg.append(line, dot);
   }
 
-  /** Pins (D-017): each finding's pin sits on a visible spot of its faces; a pin that would cover one
-   *  already placed folds into it ("F4 +2"); a pin whose spot is behind the part is hidden. The selected
-   *  finding's pin is placed first, solid in its severity colour, larger, with its severity word, raised
-   *  on a stem to a dot on its spot. */
+  /** Pins (D-017, D-027): each finding's pin sits on a visible spot of its faces. The selected finding's pin
+   *  is placed first, solid in its severity colour, larger, with its severity word, raised on a stem to a dot
+   *  on its spot; then the findings whose visible spots spread least on screen (a hole before the whole outside of a shaft).
+   *  A pin tries its spots nearest its middle first and takes the first that covers no pin already placed
+   *  (D-027: so a part-wide pin no longer hides a small feature); only when every spot is covered does it
+   *  fold into the pin there ("F4 +2"). A pin whose spots are all behind the part is hidden. */
   private placeFlags(): void {
     const svg = this.leaderLayer();
     const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-    const STEM = 26;
-    const order = [...this.flags].sort((a, b) =>
-      Number(this.selected?.id === b.finding.id) - Number(this.selected?.id === a.finding.id));
-    const placed: { r: DOMRect; el: HTMLElement; more: number }[] = [];
+    const STEM = 26, LIFT = 22; // D-029: every pin stands above its spot, so the feature under it stays visible
+    const spots = new Map(this.flags.map((f) => [f, f.points.length ? this.anchorsOf(f.points) : []]));
+    const order = this.flags.map((f, i) => ({ f, i })).sort((a, b) =>
+      Number(this.selected?.id === b.f.finding.id) - Number(this.selected?.id === a.f.finding.id)
+      || spread(spots.get(a.f)!) - spread(spots.get(b.f)!) || a.i - b.i).map((x) => x.f);
+    const placed: { r: DOMRect; el: HTMLElement; more: number; at: { x: number; y: number }; sev: string }[] = [];
     const host = this.canvas.parentElement?.getBoundingClientRect();
-    for (const { el, points, finding } of order) {
+    for (const flag of order) {
+      const { el, finding } = flag;
       el.dataset.more = "";
       el.dataset.mergedInto = "";
-      const at = points.length ? this.anchorOf(points) : null;
+      const mine = spots.get(flag)!;
       const on = this.selected?.id === finding.id;
       el.classList.toggle("chosen", on);
-      el.hidden = !at;
-      if (!at) continue;
-      el.style.left = `${at.x}px`;
-      el.style.top = `${on ? at.y - STEM : at.y}px`;
-      el.style.transform = on ? "translate(-50%, -100%)" : "translate(-50%, -50%)";
-      const r = el.getBoundingClientRect();
+      el.hidden = mine.length === 0;
+      if (!mine.length) continue;
+      const put = (p: { x: number; y: number }): DOMRect => {
+        el.style.left = `${p.x}px`;
+        el.style.top = `${p.y - (on ? STEM : LIFT)}px`;
+        el.style.transform = "translate(-50%, -100%)";
+        return el.getBoundingClientRect();
+      };
+      let at = mine[0];
+      let r = put(at);
+      for (const p of mine) { // the first spot that covers no placed pin (D-027)
+        const tried = put(p);
+        if (!placed.some((o) => overlaps(o.r, tried))) { at = p; r = tried; break; }
+      }
+      if (placed.some((o) => overlaps(o.r, r))) r = put(at); // none free: back to its middle, and fold
       const near = placed.find((o) => overlaps(o.r, r));
       if (near) { // fold into the pin already there
         el.hidden = true;
@@ -396,8 +417,7 @@ export class Viewer {
         near.el.dataset.more = `+${near.more}`;
         continue;
       }
-      placed.push({ r, el, more: 0 });
-      if (on && host) this.stem(svg, r.left - host.left + r.width / 2, r.bottom - host.top, at.x, at.y, css(`--${finding.severity}`));
+      placed.push({ r, el, more: 0, at, sev: finding.severity });
     }
     // A "+n" makes a pin wider after it was placed: fold any pin it now covers, until none overlap.
     for (let changed = true, round = 0; changed && round < 20; round++) {
@@ -418,6 +438,11 @@ export class Viewer {
           break;
         }
       }
+    }
+    // A stem from each pin shown down to a dot on its spot, in its severity colour (D-029).
+    if (host) for (const p of placed) {
+      const r = p.el.getBoundingClientRect();
+      this.stem(svg, r.left - host.left + r.width / 2, r.bottom - host.top, p.at.x, p.at.y, css(`--${p.sev}`));
     }
   }
 

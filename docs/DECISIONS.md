@@ -181,3 +181,45 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-08).
 - **Decision:** On every page with screenshots for Morgan (status pages, mock-ups, research pages), each screenshot fits the screen width, so the whole desktop view is visible at once. Tapping one opens it full screen, where pinch, double-tap, drag and the − / Fit / + / Close buttons zoom and pan. Screenshots for these pages are taken at 2× pixel density, so they stay sharp when zoomed. `scripts/add_zoom.py <page.html>` adds the viewer (`scripts/zoom_viewer.html`; no library, nothing sent anywhere). This replaces the `ui-mockups` skill's fixed-width frames in a sideways-scrolling strip for this project.
 - **Why:** Morgan, 2026-11-08: "I can't see those very well unfortunately can we start presenting these screenshots in a different way where I can see the desktop view fit on my screen and zoom in on areas that I want to see more of?"
+
+## D-025 Turning: slender limit by material
+
+- **Status:** Accepted (2026-11-08).
+- **Decision:** `turn_slender` warns (medium) at over 3.0× length to diameter for `steel1018` and `ss304`, and stays at over 4.0× for `al6061` and `plastic`. High stays at over 8.0× for all four. Changes the spec's single 4.0× (Rules "turn_slender").
+- **Why:** the S6 [turning research](https://claude.ai/artifact/W671Yt2gJgDqrfgf6iC3RH): a part held only in a chuck is safe to 3× in steel and harder, 5× only in aluminium and soft materials (Lathe Mastery wikibook); CADEM: chuck only under 3×. Morgan picked the recommended option on 2026-11-08 (proposal 1 of 5).
+
+## D-026 Turning: support named, bore reach, inside grooves, smallest diameter
+
+- **Status:** Accepted (2026-11-08).
+- **Decision:** the S6 turning research proposals 2 to 5, as recommended:
+  - `turn_slender`'s suggestion names the support its ratio needs: chuck alone to 3×, tailstock to 6×, tailstock and steady rest to 12×, then one more holding point per 3×; Swiss-type from 6× (CADEM thumb rules; Wevolver: Swiss practically required over 10×).
+  - New rule `bore_depth` (turn only, bores only): depth ÷ diameter over 4.0 medium (needs a carbide boring bar), over 6.0 high (needs a damped bar); per material in `thresholds.toml`. `hole_depth` judges holes only, so a bore is still judged once.
+  - An inside groove gets a note in the lathe plan: not every shop cuts inside grooves (Protolabs does not). No finding.
+  - `turn_slender` divides by the profile's smallest outside diameter (`dims_mm.min_diameter`; grooves excluded), not the largest. Changes the spec's Features "Turned profile" and Rules "turn_slender".
+- **Why:** the [turning research](https://claude.ai/artifact/W671Yt2gJgDqrfgf6iC3RH): Sandvik's boring-bar overhang table (steel 4×, carbide 6×, damped 10× and 14×); Protolabs: "ID grooves are not supported"; CAD Exchanger's turned-part check divides by the minimum diameter. Morgan, 2026-11-08: "I approve of all your findings and recommendations from the turning research".
+
+## D-027 A part-wide pin doesn't hide a small finding
+
+- **Status:** Accepted (2026-11-08). Changes D-017's "overlapping pins fold into the first placed".
+- **Decision:** pins are placed selected first, then the findings whose visible spots spread least on screen (a hole before the whole outside of a shaft), then in finding order. A pin tries its own visible spots, nearest its middle first, and takes the first that covers no placed pin; it folds ("+n") only when every spot is covered. Also added: the test part `flange_bolt_hole` (a bolt hole parallel to the axis, 0.750 in off it).
+- **Why:** Morgan, 2026-11-08, on the S6 example: "I don't see that off center hole". The length finding's pin sat at the shaft's middle, on top of the cross hole, and folded the hole's pin into it. Morgan picked both fixes (move the pin, add an off-centre hole part).
+
+## D-028 Milling warns on a turned part; stock and operation order in the plan
+
+- **Status:** Accepted (2026-11-08).
+- **Decision:**
+  - New rule `looks_turned` (mill only): when round faces on one axis are 40% or more of the part's surface, high: "This part looks turned; review it for Turning". The mirror of `turn_axis`; the mill plan is unchanged. Changes the spec's Non-goal line "the tool warns only when turning is picked and no turning axis is found".
+  - The Machine plan shows the stock: a round bar (largest outside diameter × length) for Turning, a block (the part's three sizes) for Milling. Both are the part's own size; no machining allowance is added.
+  - Operations are numbered in the order they run, across setups, and a selected setup's reasons are listed in that order.
+  - The demo opens a turning test part on Turning.
+- **Why:** Morgan, 2026-11-08, on the S6 demo: a turning part opened on Milling; "when I selected a turning part as milling it only had one setup and operation when the part had like grooves"; "the machine plan should say the stock size and it should list the operation details in order of operations listed". Morgan picked "Warn: looks turned" (recommended).
+
+## D-029 Roughing and finishing tools; pins stand above their spot
+
+- **Status:** Accepted (2026-11-08).
+- **Decision:**
+  - A pocket gets a roughing end mill before its finishing one: the largest end mill at most 75% of the pocket's narrowest width (assumption, `config/tools.toml` `[roughing]`), only when larger than the finishing tool (the one that fits its corners, as before). A pocket with no two walls facing each other keeps one tool.
+  - A turned outside gets `turn-rough` then `turn-finish`; a bore `bore-rough` then `bore-finish`. Grooves and drills stay one tool each.
+  - Each tool is its own tool load (spec Plan "Tool changes" unchanged), so plans gain loads: two_sided_block 3 → 5.
+  - Every finding pin stands 22 px above its spot on a stem to a dot, in its severity colour, so the feature under it stays visible (the selected pin stays at 26 px). Changes D-017, where only the selected pin had a stem.
+- **Why:** Morgan, 2026-11-08: "the tags are covering the features and making them hard to see"; "standard practice would be to mill out as much as possible with a larger tool and then do finishing passes with a second tool … look at logic across milling and turning for finishing passes". The 75% share is an assumption, not sourced; a shop can change it.

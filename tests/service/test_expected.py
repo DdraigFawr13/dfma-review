@@ -12,19 +12,23 @@ from dfma.analyze import analyze
 
 ENTRIES = expected_parts()
 KINDS = ("hole", "pocket", "corner", "wall")
+PLANNED = ("hole", "pocket", "profile", "bore", "groove")  # what a setup holds (S5 mill, S6 lathe)
 
 
 def test_enough_parts():
     assert len(ENTRIES) >= 21
 
 
-@pytest.mark.parametrize("entry", ENTRIES, ids=lambda e: f'{e["name"]}-{e.get("material", "al6061")}')
+@pytest.mark.parametrize("entry", ENTRIES,
+                         ids=lambda e: f'{e["name"]}-{e.get("process", "mill")}-{e.get("material", "al6061")}')
 def test_part(entry):
     path = PARTS / f'{entry["name"]}.step'
     result = analyze(path, path.name, entry.get("process", "mill"), entry.get("material", "al6061"))
     assert result["part"]["face_count"] == entry["face_count"]
     kinds = Counter(f["kind"] for f in result["features"])
     assert {k: kinds.get(k, 0) for k in KINDS} == entry["features"]
+    if "turn" in entry:  # S6: the turning features of a part uploaded for turning
+        assert {k: kinds.get(k, 0) for k in entry["turn"]} == entry["turn"]
 
     want = entry.get("finding", [])
     got = result["findings"]
@@ -52,7 +56,7 @@ def check_plan(path, entry: dict, result: dict) -> None:
         assert result["machine"] == entry["machine"]
     if "setups" in entry:
         assert [s["direction"] for s in result["setups"]] == [s["dir"] for s in entry["setups"]]
-        planned = [f for f in result["features"] if f["kind"] in ("hole", "pocket")]
+        planned = [f for f in result["features"] if f["kind"] in PLANNED]
         for want, got in zip(entry["setups"], result["setups"]):
             named = set()
             for probe in want["probes"]:

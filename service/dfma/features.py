@@ -1622,3 +1622,180 @@ def hole_walls(solid, faces, hole_list: list[dict]) -> list[dict]:
         if tip:
             add(tip[0], tip[1], h["id"], "tip")
     return list(out.values())
+
+
+# --- S6: turning (spec Features "Turned profile", "Groove", "Bore"; turn only) ---
+
+TURN_SHARE_MIN_PCT = 40.0  # assumption (spec): under this share of cylinder and cone area, no turning axis
+COAX_DEG = 0.5  # spec Rules "turn_offaxis": coaxial means within 0.5 deg ...
+COAX_OFFSET_MM = 0.001 * 25.4  # ... and an offset of 0.001 in or less
+BORE_MIN_MM = 0.5 * 25.4  # spec: an on-axis hole of 0.500 in and over is a bore
+
+
+@dataclass
+class Round:
+    """A cylinder or cone face: its axis line, radius (cylinders) and whether its material is inside."""
+    id: int
+    origin: Vec
+    axis: Vec
+    radius: float | None  # None for a cone
+    convex: bool  # the outward normal points away from the axis: an outside diameter
+
+
+def _round(face_id: int, face) -> Round | None:
+    surface = BRepAdaptor_Surface(face, True)
+    kind = surface.GetType()
+    if kind == GeomAbs_Cylinder:
+        geo, radius = surface.Cylinder(), surface.Cylinder().Radius()
+    elif kind == GeomAbs_Cone:
+        geo, radius = surface.Cone(), None
+    else:
+        return None
+    ax = geo.Axis()
+    origin, axis = _pt(ax.Location()), _canon(unit(_pt(ax.Direction())))
+    point, normal = _outward_normal(face)
+    rel = _sub(point, origin)
+    radial = _sub(rel, tuple(dot(rel, axis) * a for a in axis))
+    return Round(face_id, origin, axis, radius, dot(normal, radial) > 0)
+
+
+def _off_line(p: Vec, origin: Vec, axis: Vec) -> float:
+    """Distance from a point to the line origin + t axis."""
+    off = cross(_sub(p, origin), axis)
+    return math.sqrt(dot(off, off))
+
+
+def coaxial(origin: Vec, axis: Vec, line_origin: Vec, line_axis: Vec) -> tuple[float, float]:
+    """(angle in deg, offset in mm) of a line from the turning axis line: coaxial when both are within
+    COAX_DEG and COAX_OFFSET_MM (spec Rules "turn_offaxis")."""
+    angle = math.degrees(math.acos(min(1.0, abs(dot(axis, line_axis)))))
+    return angle, _off_line(origin, line_origin, line_axis)
+
+
+def turned_profile(faces, areas: list[float], vertices: list[Vec], sign_axis: Vec | None) -> dict:
+    """The turning axis line: the one shared by the most cylinder and cone area (spec "Turned profile").
+    Returns its share of the part's face area in %, the faces on it, and (when the share is at least
+    TURN_SHARE_MIN_PCT) the profile's diameter and length. `sign_axis` is frame.turning_axis's direction,
+    whose sign rule (the end with more face area at its extreme) the axis takes."""
+    rounds = [r for i, f in enumerate(faces) if (r := _round(i, f))]
+    lines: list[list] = []  # [origin, axis, area, [face ids]]
+    for r in rounds:
+        for line in lines:
+            angle, off = coaxial(r.origin, r.axis, line[0], line[1])
+            if angle <= COAX_DEG and off <= COAX_OFFSET_MM:
+                line[2] += areas[r.id]
+                line[3].append(r.id)
+                break
+        else:
+            lines.append([r.origin, r.axis, areas[r.id], [r.id]])
+    total = sum(areas)
+    if not lines or total <= 0:
+        return {"share_pct": 0.0, "faces": [], "axis": None}
+    origin, axis, area, ids = max(lines, key=lambda line: (line[2], -min(line[3])))
+    if sign_axis is not None and dot(axis, sign_axis) < 0:
+        axis = tuple(-a for a in axis)
+    share = 100.0 * area / total
+    out = {"share_pct": share, "faces": sorted(ids), "axis": axis, "origin": origin}
+    if share + 1e-9 >= TURN_SHARE_MIN_PCT:
+        along = [dot(v, axis) for v in vertices]
+        out["diameter"] = 2 * max(_off_line(v, origin, axis) for v in vertices)  # the stock it turns from
+        out["length"] = max(along) - min(along)
+    return out
+
+
+def _plane_on(face, axis: Vec) -> bool:
+    n = _plane_normal(face)
+    return n is not None and abs(dot(n, axis)) >= math.cos(ANGLE_TOL)
+
+
+def _radii(face, origin: Vec, axis: Vec) -> tuple[float, float]:
+    """The smallest and largest distance of a face's edge points from the axis line."""
+    d = [_off_line(p, origin, axis) for p in _points(face)]
+    return min(d), max(d)
+
+
+def grooves(solid, faces, turn: dict, skip: set[int]) -> list[dict]:
+    """Grooves on the turning axis (spec Features "Groove"), unnumbered: a cylindrical floor on the axis
+    between two planar faces square to the axis, deeper than the cylinders on both sides (an outside
+    groove: each side face reaches further out than the floor; inside a bore: further in). Width is the
+    distance between the two side faces; depth how far the shallower side rises past the floor."""
+    topo = Topology(solid, faces)
+    origin, axis = turn["origin"], turn["axis"]
+    out = []
+    for fid in turn["faces"]:
+        if fid in skip:
+            continue
+        r = _round(fid, faces[fid])
+        if r is None or r.radius is None:
+            continue
+        sides = [nb for nb in topo.neighbours(fid) if _plane_on(faces[nb], axis)]
+        if len(sides) != 2:
+            continue
+        rise = []
+        for nb in sides:
+            lo, hi = _radii(faces[nb], origin, axis)
+            rise.append(hi - r.radius if r.convex else r.radius - lo)
+        if min(rise) <= RADIUS_TOL:
+            continue
+        a, b = (dot(_outward_normal(faces[nb])[0], axis) for nb in sides)
+        out.append({"kind": "groove", "faces": sorted([fid, *sides]), "axis": list(axis), "open_dirs": [],
+                    "open_vectors": [], "outside": r.convex,
+                    "dims_mm": {"width": abs(a - b), "depth": min(rise), "diameter": 2 * r.radius}})
+    return out
+
+
+def split_bores(hole_list: list[dict], faces, turn: dict) -> tuple[list[dict], list[dict], dict[str, str]]:
+    """On-axis holes of 0.500 in and over become bores; the rest stay holes (spec Features "Bore": never
+    both). Returns (holes, bores) renumbered in face order, and the old id -> new id map. Each keeps
+    `on_axis` (bool) for turn_offaxis and the lathe plan."""
+    keep, bores = [], []
+    for h in hole_list:
+        line = next((c for f in h["faces"] if (c := _cylinder(f, faces[f], tapers=True))), None)
+        on = False
+        if line is not None:
+            angle, off = coaxial(line.origin, line.axis, turn["origin"], turn["axis"])
+            on = angle <= COAX_DEG and off <= COAX_OFFSET_MM
+        h = {**h, "on_axis": on}
+        (bores if on and h["dims_mm"]["diameter"] >= BORE_MIN_MM - 1e-6 else keep).append(h)
+    ids: dict[str, str] = {}
+    for kind, group in (("hole", keep), ("bore", bores)):
+        for n, h in enumerate(group, 1):
+            ids[h["id"]] = f"{kind}-{n}"
+            h["id"] = f"{kind}-{n}"
+            h["kind"] = kind
+    return keep, bores, ids
+
+
+def pocket_on_axis(pocket: dict, faces, turn: dict) -> tuple[float, float]:
+    """(angle deg, offset mm) of a pocket from the turning axis: its opening direction, through the
+    area centroid of its faces."""
+    from OCC.Core.BRep import BRep_Builder
+    from OCC.Core.BRepGProp import brepgprop
+    from OCC.Core.GProp import GProp_GProps
+    from OCC.Core.TopoDS import TopoDS_Compound
+    comp, builder = TopoDS_Compound(), BRep_Builder()
+    builder.MakeCompound(comp)
+    for f in pocket["faces"]:
+        builder.Add(comp, faces[f])
+    props = GProp_GProps()
+    brepgprop.SurfaceProperties(comp, props)
+    return coaxial(_pt(props.CentreOfMass()), tuple(pocket["axis"]), turn["origin"], turn["axis"])
+
+
+def profile_feature(faces, turn: dict, taken: set[int]) -> dict:
+    """The turned profile (kind "profile"): the outside cylinders and cones on the axis and the faces square
+    to it, other than those of holes, bores and grooves."""
+    own, radii = [], []
+    for i, f in enumerate(faces):
+        if i in taken:
+            continue
+        r = _round(i, f) if i in turn["faces"] else None
+        if (r is not None and r.convex) or _plane_on(f, turn["axis"]):
+            own.append(i)
+            if r is not None and r.radius is not None:
+                radii.append(r.radius)
+    # D-026: the smallest outside diameter too (a thin neck behind a big head is slender; grooves excluded)
+    smallest = min(2 * min(radii), turn["diameter"]) if radii else turn["diameter"]
+    return {"kind": "profile", "faces": own, "axis": list(turn["axis"]), "open_dirs": [], "open_vectors": [],
+            "dims_mm": {"diameter": turn["diameter"], "min_diameter": smallest, "length": turn["length"],
+                        "share_pct": turn["share_pct"]}}

@@ -1,4 +1,5 @@
-"""hole_depth: depth / diameter over 6.0 is medium, over 10.0 is high (limits per material)."""
+"""hole_depth: depth / diameter over 6.0 is medium, over 10.0 is high (limits per material). Holes only: a
+turned part's bores are judged by bore_depth (D-026), so each on-axis hole is judged once (spec "Bore")."""
 
 from __future__ import annotations
 
@@ -6,6 +7,7 @@ from ..units import MM_PER_IN, past_limit
 
 ID = "hole_depth"
 PROCESSES = ('mill', 'turn')  # spec Flow: which process runs this rule
+KINDS = ("hole",)
 SUGGESTION = {
     "medium": "Needs peck drilling. Make it shallower or larger if the design allows.",
     "high": "Needs a long drill and peck drilling. Make it shallower or larger if the design allows.",
@@ -18,7 +20,7 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
         return []
     out = []
     for f in features:
-        if f["kind"] != "hole":
+        if f["kind"] not in KINDS:
             continue
         ratio = f["dims_mm"]["depth"] / f["dims_mm"]["diameter"]
         eps = 1e-9  # "over 6.0": a ratio that is 6.0 to rounding is not over it
@@ -51,7 +53,7 @@ def passes(features: list[dict], part: dict, limits: dict) -> list[dict]:
         return []
     out = []
     for f in features:
-        if f["kind"] != "hole":
+        if f["kind"] not in KINDS:
             continue
         d, depth = f["dims_mm"]["diameter"], f["dims_mm"]["depth"]
         ratio = depth / d

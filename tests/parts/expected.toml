@@ -315,8 +315,8 @@ face_count = 26
 features = { hole = 1, pocket = 2, corner = 8, wall = 14 }
 machine = "3-axis mill"
 setups = [{ dir = "+Z", probes = [[25.4, 53.974999999999994, 6.35]] }, { dir = "-Z", probes = [[25.4, 19.049999999999997, 31.75]] }, { dir = "-X", probes = [[41.275, 41.275, 19.049999999999997]] }]
-tools = ["em-0.250", "dr-0.2500"]
-tool_changes = 3
+tools = ["em-0.500", "em-0.250", "em-0.750", "dr-0.2500"]
+tool_changes = 5
 
 [[part]]
 name = "angled_hole"
@@ -340,8 +340,8 @@ face_count = 16
 features = { hole = 1, pocket = 1, corner = 4, wall = 8 }
 machine = "4/5-axis mill or fixture"
 setups = [{ dir = "-Z", probes = [[15.239999999999998, 25.4, 19.049999999999997]] }]
-tools = ["em-0.250"]
-tool_changes = 1
+tools = ["em-0.750", "em-0.250"]
+tool_changes = 2
 [[part.finding]]
 rule = "access"
 severity = "high"
@@ -365,8 +365,8 @@ face_count = 18
 features = { hole = 2, pocket = 1, corner = 4, wall = 9 }
 machine = "3-axis mill"
 setups = [{ dir = "-Z", probes = [[7.619999999999999, 25.4, 19.049999999999997], [47.625, 15.875, 12.7], [47.625, 41.275, 19.049999999999997]] }]
-tools = ["em-0.250", "dr-0.2500"]
-tool_changes = 2
+tools = ["em-0.750", "em-0.250", "dr-0.2500"]
+tool_changes = 3
 
 [[part]]
 name = "rotated_block"
@@ -375,8 +375,8 @@ face_count = 18
 features = { hole = 2, pocket = 1, corner = 4, wall = 9 }
 machine = "3-axis mill"
 setups = [{ dir = "-Z", probes = [[2.6137472101651973, 24.71809850548683, 21.173351926287044], [39.39870971094087, 33.39190018097047, 3.7641633090394], [31.581602819196895, 55.87726607197426, 14.662955012284861]] }]
-tools = ["em-0.250", "dr-0.2500"]
-tool_changes = 2
+tools = ["em-0.750", "em-0.250", "dr-0.2500"]
+tool_changes = 3
 
 [[part]]
 name = "countersunk_hole"
@@ -387,3 +387,118 @@ machine = "3-axis mill"
 setups = [{ dir = "-Z", probes = [[25.4, 15.875, 5.08]] }]
 tools = ["dr-0.2500", "cs-82"]
 tool_changes = 2
+
+[[part]]
+name = "slender_shaft"
+units = "inch"
+face_count = 4
+features = { hole = 1, pocket = 0, corner = 0, wall = 1 }
+process = "turn"
+material = "steel1018"
+turn = { bore = 0, groove = 0, profile = 1 }
+machine = "lathe with live tooling"
+setups = [{ dir = "turn", probes = [[6.35, 0.0, 25.4], [0.0, 1.5875, 57.15]] }]
+tools = ["turn-rough", "turn-finish", "dr-0.1250"]
+tool_changes = 3
+[[part.finding]]
+rule = "turn_slender"
+severity = "high"
+measured = 9.0
+probe_mm = [6.35, 0.0, 25.4]
+[[part.finding]]
+rule = "turn_offaxis"
+severity = "medium"
+measured = 90.0
+probe_mm = [0.0, 1.5875, 57.15]
+
+[[part]]
+name = "slender_shaft"
+units = "inch"
+face_count = 4
+features = { hole = 1, pocket = 0, corner = 0, wall = 1 }
+material = "steel1018"
+machine = "3-axis mill"
+setups = [{ dir = "+X", probes = [[0.0, 1.5875, 57.15]] }]
+tools = ["dr-0.1250"]
+tool_changes = 1
+[[part.finding]]
+rule = "looks_turned"
+severity = "high"
+measured = 92.3203
+probe_mm = [6.35, 0.0, 25.4]
+
+[[part]]
+name = "stout_shaft"
+units = "inch"
+face_count = 3
+features = { hole = 0, pocket = 0, corner = 0, wall = 1 }
+process = "turn"
+turn = { bore = 0, groove = 0, profile = 1 }
+machine = "lathe"
+setups = [{ dir = "turn", probes = [[12.7, 0.0, 50.8]] }]
+tools = ["turn-rough", "turn-finish"]
+tool_changes = 2
+[[part.finding]]
+rule = "turn_slender"
+severity = "medium"
+measured = 5.0
+probe_mm = [12.7, 0.0, 50.8]
+
+[[part]]
+name = "shaft_with_groove_and_bore"
+units = "inch"
+face_count = 13
+features = { hole = 0, pocket = 0, corner = 0, wall = 6 }
+process = "turn"
+material = "steel1018"
+turn = { bore = 1, groove = 2, profile = 1 }
+machine = "lathe"
+setups = [{ dir = "turn", probes = [[19.049999999999997, 0.0, 12.7], [9.524999999999999, 0.0, 55.88], [16.509999999999998, 0.0, 39.624], [11.112499999999999, 0.0, 62.483999999999995]] }]
+tools = ["turn-rough", "turn-finish", "bore-rough", "bore-finish", "groove-0.125"]
+tool_changes = 5
+
+[[part]]
+name = "block_as_turn"
+units = "inch"
+face_count = 7
+features = { hole = 1, pocket = 0, corner = 0, wall = 3 }
+process = "turn"
+turn = { bore = 0, groove = 0, profile = 0 }
+setups = []
+tools = []
+tool_changes = 0
+[[part.finding]]
+rule = "turn_axis"
+severity = "high"
+measured = 5.3835
+probe_mm = [28.575, 12.7, 6.35]
+
+[[part]]
+name = "flange_bolt_hole"
+units = "inch"
+face_count = 6
+features = { hole = 1, pocket = 0, corner = 0, wall = 3 }
+process = "turn"
+material = "steel1018"
+turn = { bore = 0, groove = 0, profile = 1 }
+machine = "lathe with live tooling"
+setups = [{ dir = "turn", probes = [[25.4, 0.0, 6.35], [22.224999999999998, 0.0, 6.35]] }]
+tools = ["turn-rough", "turn-finish", "dr-0.2500"]
+tool_changes = 3
+[[part.finding]]
+rule = "turn_offaxis"
+severity = "medium"
+measured = 0.75
+probe_mm = [22.225, 0.0, 6.35]
+
+[[part]]
+name = "clean_shaft"
+units = "inch"
+face_count = 7
+features = { hole = 1, pocket = 0, corner = 0, wall = 3 }
+process = "turn"
+turn = { bore = 0, groove = 0, profile = 1 }
+machine = "lathe"
+setups = [{ dir = "turn", probes = [[12.7, 0.0, 25.4], [2.3812499999999996, 0.0, 68.58]] }]
+tools = ["turn-rough", "turn-finish", "dr-0.1875"]
+tool_changes = 3

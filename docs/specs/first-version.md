@@ -28,7 +28,7 @@ Design reviews for manufacturability are "not really done at all" today (Morgan)
   - number and letter drill sizes
 - Exterior profiles, steps, open-sided pockets, threads, floor fillets and thin cylindrical shells (tubes, sleeves) are not planned or ruled on in this version. They are listed in `assumptions`.
 - Faces other than planes, cylinders, cones, and the cylinder or torus fillets between pocket walls. The tool lists any other face in `not_analysed_faces` instead of guessing.
-- Choosing milling or turning automatically. The user picks; the tool warns only when turning is picked and no turning axis is found.
+- Choosing milling or turning automatically. The user picks; the tool warns when turning is picked and no turning axis is found, and (D-028) when milling is picked for a part that looks turned.
 - Any AI at runtime (D-001).
 - The drawing check and drawing generation (stages 3 and 4).
 
@@ -288,7 +288,8 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
 - **`undercut`** (added by D-021, mill only): a pocket with an undercut (a ceiling facing its floor, D-018 set 2). Measured: how far the undercut reaches under its lip, in inches; limit 0. Medium: "needs a T-slot or lollipop cutter".
 - **`thin_wall`:** thickness under 0.030 in (`al6061`), 0.020 in (`steel1018`, `ss304`) or 0.060 in (`plastic`). High.
 - **`access`:** a hole or pocket with no `open_dirs` along ±X ±Y ±Z of the part frame (within 0.5°). Measured: the angle in degrees between its nearest open vector and the nearest frame axis; limit 0.5; unit `deg`. High: "needs a 4/5-axis mill or a fixture". It sets `machine` to "4/5-axis mill or fixture".
-- **`turn_slender`:** length ÷ diameter over 4.0 is medium; over 8.0 is high.
+- **`turn_slender`:** length ÷ the smallest outside diameter (D-026) over 4.0 is medium (over 3.0 for `steel1018` and `ss304`, D-025); over 8.0 is high. The suggestion names the support (D-026).
+- **`bore_depth`** (D-026, turn only): a bore's depth ÷ diameter over 4.0 is medium (carbide bar), over 6.0 is high (damped bar).
 - **`turn_offaxis`:** flags a hole or pocket whose axis is not coaxial with the turning axis. Coaxial means within 0.5°, with an offset of 0.001 in or less. Medium: "needs a milling operation or live tooling". It sets `machine` to "lathe with live tooling".
 
 ### Plan (`plan.py`, mill)
@@ -302,7 +303,7 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
 3. **Operations:**
    - One operation per (setup, tool), with setups in that same order.
    - Within a setup: end mills from largest to smallest, then drills from smallest to largest.
-   - Holes take the matching drill, or `pick_end_mill` when no drill matches. Pockets take `pick_end_mill`.
+   - Holes take the matching drill, or `pick_end_mill` when no drill matches. Pockets take `pick_end_mill`, after a roughing end mill when one larger fits (D-029).
 4. **Tool changes:** the number of operations. Every tool load counts, including the first in each setup; the screen calls it "Tool loads (including the first in each setup)". This counting rule is listed in `assumptions`.
 5. **At least one setup:** a part with no holes or pockets still gets 1 setup (+Z).
 6. **Exterior faces:** not planned in this version. This is listed in `assumptions`.
@@ -542,6 +543,16 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
   - `tests/service/test_turning.py`
   - test parts
 - **Waits on:** S5.
+- **Research first** (Morgan, 2026-11-08): [turning research page](https://claude.ai/artifact/W671Yt2gJgDqrfgf6iC3RH) (`docs/research/turning.html`). Proposal 1 became D-025; Morgan approved proposals 2-5 together (D-026).
+- **Settled at build** (2026-11-08):
+  - The turning axis is the axis line (direction within 0.5°, offset 0.001 in or less) carrying the most cylinder and cone area; its sign follows `frame.turning_axis`. The diameter is twice the largest distance of a mesh vertex from that line (the stock it turns from), the length the extent along it.
+  - `turn_axis` is its own rule module (`rules/turn_axis.py`), after `access`: no feature (`feature` null), faces = the round faces on the axis, measured share in % to 4 places, source "assumption". With it, `turn_slender` and `turn_offaxis` don't run, and nothing is planned (`machine` null, no setups).
+  - An on-axis hole of 0.500 in and over becomes `bore-n`; holes are renumbered and a hole wall's `hole` follows. `bore_depth` judges bores (D-026; `hole_depth` holes only); `hole_size` does not (a bore is bored to size).
+  - Grooves: a cylinder on the axis whose two neighbours are planes square to the axis, each reaching further out (outside groove) or further in (inside a bore) than the floor. `dims_mm` width, depth (the shallower side) and diameter; `outside` true or false. Grooving inserts are `[turning] groove_widths_in` (0.125 only): the widest that fits, else the narrowest marked undersized.
+  - `profile-1`: the outside cylinders and cones on the axis and the faces square to it, other than holes, bores, grooves and pockets.
+  - Holes, bores and pockets carry `off_axis_deg` and `off_axis_mm` for turned parts (a pocket: its opening direction through its faces' area centroid). `turn_offaxis` measures the angle when tilted (unit deg, limit 0.5), else the offset (unit in, limit 0.001).
+  - Lathe plan: one setup `turn`; one operation per tool (turn, on-axis drills, bore, groove, then off-axis tools ranked as the mill plan); tool loads = operations. The panel shows "Turning axis" in the part's axes, "Setup 1 · on the lathe, about the turning axis", and why each feature is in it.
+  - Test parts: `slender_shaft` (also for milling), `stout_shaft`, `shaft_with_groove_and_bore`, `block_as_turn`, `clean_shaft`, `flange_bolt_hole` (D-027); `expected.toml` gains `process` and a `turn` count of bores, grooves and profiles.
 
 ### S7 Cost drivers, report and PDF
 
