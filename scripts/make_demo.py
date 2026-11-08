@@ -18,8 +18,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "service"))
 
+sys.path.insert(0, str(ROOT / "tests"))
+
 from dfma import settings  # noqa: E402
 from dfma.analyze import analyze  # noqa: E402
+from dfma.errors import ReadError  # noqa: E402
+from nist_files import ap242_files  # noqa: E402
 
 PARTS = ROOT / "tests" / "parts"
 SET3 = ROOT / "tests" / "grading" / "sets" / "hole_ends_walls"
@@ -45,6 +49,13 @@ DEMO = [  # (file, what Morgan looks for[, the process a tap picks: turning part
     (PARTS / "thin_floor.step", "S4: thin floor"),
 ]
 
+INV = ROOT / "tests" / "inventor" / "files"
+# I1 S1: NIST pairs the app refuses, answered by the real service here (step stem, .ipt, what Morgan looks for)
+PAIRS = [
+    ("nist_ctc_04_asme1_ap242", "INV_nist_ctc_04_asme1_2021.ipt", "I1: NIST CTC 04 + its .ipt, refused (other CAD wrote the STEP)"),
+    ("nist_ctc_03_asme1_ap242", "INV_nist_ctc_03_asme1_2021.ipt", "I1: NIST CTC 03 + its .ipt, sheet metal refused"),
+]
+
 
 def main() -> int:
     out = Path(sys.argv[1])
@@ -55,6 +66,17 @@ def main() -> int:
         for process in settings.PROCESSES:
             for material in settings.MATERIALS:
                 results[f"{path.name}|{process}|{material}"] = analyze(path, path.name, process, material)
+    pairs = []
+    for stem, ipt, what in PAIRS:
+        step = next(p for p in ap242_files() if p.name.startswith(stem))
+        pairs.append([step.name, ipt, what])
+        for process in settings.PROCESSES:
+            for material in settings.MATERIALS:
+                try:
+                    hit = analyze(step, step.name, process, material, ipt_path=INV / ipt, ipt_name=ipt)
+                except ReadError as e:
+                    hit = {"__status": 422, "error": str(e)}
+                results[f"{step.name}+{ipt}|{process}|{material}"] = hit
 
     def inline_css(m):
         css = (dist / m.group(1).lstrip("/")).read_text(encoding="utf-8")
@@ -73,17 +95,19 @@ window.__DEMO = %s;
 const realFetch = window.fetch;
 window.fetch = async (url, init) => {
   if (String(url).endsWith("/api/analyze")) {
-    const b = init.body, key = [b.get("file").name, b.get("process"), b.get("material")].join("|");
+    const b = init.body, ipt = b.get("ipt");
+    const key = [b.get("file").name + (ipt ? "+" + ipt.name : ""), b.get("process"), b.get("material")].join("|");
     await new Promise((r) => setTimeout(r, 150));
     const hit = window.__DEMO[key];
-    return new Response(JSON.stringify(hit || {error: "Not in this demo"}), {status: hit ? 200 : 422});
+    const code = !hit ? 422 : (hit.__status || 200);
+    return new Response(JSON.stringify(hit || {error: "Not in this demo"}), {status: code});
   }
   return realFetch(url, init);
 };
 </script>""" % json.dumps(results, separators=(",", ":"))
     picker = """
 <div class="demo-bar" role="group" aria-label="Demo parts">
-  <p class="demo-note"><b>View-only demo</b> of the real app, with these test parts analysed in advance. Tap a part (a turning part opens on Turning); process and material work as in the app. Your files can't be uploaded here. Export PDF builds the file only in the app on a computer: this viewer blocks downloads, so here it saves nothing (the S7 mock-up shows the PDF pages).</p>
+  <p class="demo-note"><b>View-only demo</b> of the real app, with these test parts analysed in advance. Tap a part (a turning part opens on Turning); process and material work as in the app. Your files can't be uploaded here; the two I1 pairs show the app's refusals, and a matching pair needs your own files in the app. Export PDF builds the file only in the app on a computer: this viewer blocks downloads, so here it saves nothing (the S7 mock-up shows the PDF pages).</p>
   <div class="demo-parts">%s</div>
 </div>
 <style>
@@ -99,12 +123,17 @@ for (const b of document.querySelectorAll(".demo-parts button")) b.addEventListe
   for (const o of document.querySelectorAll(".demo-parts button")) o.setAttribute("aria-pressed", String(o === b));
   document.getElementById("process").value = b.dataset.process; // a turning part opens on Turning
   const input = document.getElementById("file"), dt = new DataTransfer();
+  const ipt = document.getElementById("ipt"), dti = new DataTransfer();
+  if (b.dataset.ipt) dti.items.add(new File(["demo"], b.dataset.ipt));
+  ipt.files = dti.files; // set first, without its own change event: one analysis per tap
   dt.items.add(new File(["demo"], b.dataset.name));
   input.files = dt.files;
   input.dispatchEvent(new Event("change"));
 });
-</script>""" % "".join(f'<button type="button" data-name="{n}" data-process="{pr}" aria-pressed="false">'
-                        f'{n.removesuffix(".step")}<small>{w}</small></button>' for n, w, pr in names)
+</script>""" % ("".join(f'<button type="button" data-name="{s}" data-ipt="{i}" data-process="mill" aria-pressed="false">'
+                         f'{s.removesuffix(".stp")} + .ipt<small>{w}</small></button>' for s, i, w in pairs)
+       + "".join(f'<button type="button" data-name="{n}" data-process="{pr}" aria-pressed="false">'
+                 f'{n.removesuffix(".step")}<small>{w}</small></button>' for n, w, pr in names))
     html = html.replace("<title>DFMA Review</title>", "<title>DFMA Review Demo</title>")
     html = html.replace("<head>", "<head>" + shim, 1)
     html = re.sub(r"(<body[^>]*>)", lambda m: m.group(1) + picker, html, count=1)
