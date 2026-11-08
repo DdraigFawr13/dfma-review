@@ -33,3 +33,22 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
                     "faces": f["faces"], "feature": f["id"], "threshold_source": table["source"],
                     "suggestion": f"Make the wall {limit:.3f} in or thicker if the design allows."})
     return out
+
+
+def passes(features: list[dict], part: dict, limits: dict) -> list[dict]:
+    """The walls this rule passed, with the math (D-023 proposed)."""
+    table = limits.get(ID)
+    if table is None:
+        return []
+    limit = table["min_in"]
+    out = []
+    for f in features:
+        if f["kind"] != "wall":
+            continue
+        t_in = f["dims_mm"]["thickness"] / MM_PER_IN
+        if t_in < limit - EPS:
+            continue
+        out.append({"rule": ID, "feature": f["id"], "faces": f["faces"], "threshold_source": table["source"],
+                    "title": f"{t_in:.3f} in thick, at least {limit:.3f} in",
+                    "math": f"{t_in:.4f} in ≥ {limit:.3f} in"})
+    return out

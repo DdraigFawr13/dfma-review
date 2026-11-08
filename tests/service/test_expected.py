@@ -42,3 +42,26 @@ def test_part(entry):
         match = max(fits, key=lambda f: len(probe_faces & set(f["faces"])), default=None)
         assert match, f"no finding matches {w}; got {got}"
         unmatched.remove(match)
+    check_plan(path, entry, result)
+
+
+def check_plan(path, entry: dict, result: dict) -> None:
+    """S5 (J4): machine, setups (each holding the features its probes name, in order), tools and tool loads,
+    for entries that list them."""
+    if "machine" in entry:
+        assert result["machine"] == entry["machine"]
+    if "setups" in entry:
+        assert [s["direction"] for s in result["setups"]] == [s["dir"] for s in entry["setups"]]
+        planned = [f for f in result["features"] if f["kind"] in ("hole", "pocket")]
+        for want, got in zip(entry["setups"], result["setups"]):
+            named = set()
+            for probe in want["probes"]:
+                near = faces_near(path, probe)
+                hit = [f["id"] for f in planned if near & set(f["faces"])]
+                assert len(hit) == 1, f"probe {probe} names {hit}"
+                named.add(hit[0])
+            assert set(got["features"]) == named, (want["dir"], got["features"], named)
+    if "tools" in entry:
+        assert [t["id"] for t in result["tools"]] == entry["tools"]
+    if "tool_changes" in entry:
+        assert result["tool_changes"] == entry["tool_changes"] == len(result["operations"])

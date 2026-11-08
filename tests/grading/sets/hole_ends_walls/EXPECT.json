@@ -1,0 +1,215 @@
+{
+ "cs_90": {
+  "holes": [
+   {
+    "depth": 26.8,
+    "countersinks": [
+     [
+      13.0,
+      90
+     ]
+    ]
+   }
+  ],
+  "walls": []
+ },
+ "cs_82": {
+  "holes": [
+   {
+    "depth": 26.4914,
+    "countersinks": [
+     [
+      12.7,
+      82
+     ]
+    ]
+   }
+  ],
+  "walls": []
+ },
+ "cs_100": {
+  "holes": [
+   {
+    "depth": 27.6925,
+    "countersinks": [
+     [
+      11.0,
+      100
+     ]
+    ]
+   }
+  ],
+  "walls": []
+ },
+ "cs_120": {
+  "holes": [
+   {
+    "depth": 28.1525,
+    "countersinks": [
+     [
+      13.0,
+      120
+     ]
+    ]
+   }
+  ],
+  "walls": []
+ },
+ "cs_blind": {
+  "holes": [
+   {
+    "depth": 12.5,
+    "countersinks": [
+     [
+      10.0,
+      90
+     ]
+    ]
+   }
+  ],
+  "walls": []
+ },
+ "cs_both": {
+  "holes": [
+   {
+    "depth": 23.6,
+    "countersinks": [
+     [
+      13.0,
+      90
+     ],
+     [
+      13.0,
+      90
+     ]
+    ]
+   }
+  ],
+  "walls": []
+ },
+ "cs_mixed": {
+  "holes": [
+   {
+    "depth": 23.2914,
+    "countersinks": [
+     [
+      13.0,
+      90
+     ],
+     [
+      12.7,
+      82
+     ]
+    ]
+   }
+  ],
+  "walls": []
+ },
+ "ch_entry": {
+  "holes": [
+   {
+    "depth": 29.5,
+    "countersinks": [
+     [
+      11.0,
+      90
+     ]
+    ]
+   }
+  ],
+  "walls": []
+ },
+ "ng_drill_point": {
+  "holes": [
+   {
+    "depth": 10.0,
+    "countersinks": []
+   }
+  ],
+  "walls": []
+ },
+ "sx_bottom_20": {
+  "holes": [
+   {
+    "depth": 23.5441,
+    "countersinks": [],
+    "max_depth": 26.4559
+   }
+  ],
+  "walls": []
+ },
+ "sx_bottom_45": {
+  "holes": [
+   {
+    "depth": 17.0,
+    "countersinks": [],
+    "max_depth": 23.0
+   }
+  ],
+  "walls": []
+ },
+ "sx_top_30": {
+  "holes": [
+   {
+    "depth": 18.2679,
+    "countersinks": [],
+    "max_depth": 21.7321
+   }
+  ],
+  "walls": []
+ },
+ "sx_control": {
+  "holes": [
+   {
+    "depth": 30.0,
+    "countersinks": []
+   }
+  ],
+  "walls": []
+ },
+ "hw_top": {
+  "holes": [
+   {
+    "depth": 25.0,
+    "countersinks": []
+   }
+  ],
+  "walls": [
+   0.4
+  ]
+ },
+ "hw_bottom": {
+  "holes": [
+   {
+    "depth": 30.0,
+    "countersinks": []
+   }
+  ],
+  "walls": [
+   0.5
+  ]
+ },
+ "hw_mid": {
+  "holes": [
+   {
+    "depth": 30.0,
+    "countersinks": []
+   }
+  ],
+  "walls": [
+   0.5
+  ]
+ },
+ "hw_two_sides": {
+  "holes": [
+   {
+    "depth": 30.0,
+    "countersinks": []
+   }
+  ],
+  "walls": [
+   0.4,
+   0.6
+  ]
+ }
+}

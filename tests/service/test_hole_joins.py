@@ -10,6 +10,8 @@ clevis pin hole split into pieces; a radial hole through a round shaft was calle
 
 from __future__ import annotations
 
+import math
+
 import json
 import sys
 from collections import Counter
@@ -75,7 +77,9 @@ def test_radial_hole_through_a_shaft_is_through():
     from dfma.analyze import analyze
     r = analyze(SET / "r_through.step", "r_through.step")
     (hole,) = [f for f in r["features"] if f["kind"] == "hole"]
-    assert len(hole["open_vectors"]) == 2 and hole["dims_mm"]["depth"] == pytest.approx(30.0)
+    # D-022: the depth is where the hole is round all the way (2 x sqrt(15^2 - 3^2)); the longest side is max_depth.
+    assert len(hole["open_vectors"]) == 2 and hole["dims_mm"]["depth"] == pytest.approx(2 * math.sqrt(15 ** 2 - 3 ** 2))
+    assert hole["dims_mm"]["max_depth"] == pytest.approx(30.0)
 
 
 def test_counterbore_with_a_chamfer_at_the_bore_is_one_through_hole():

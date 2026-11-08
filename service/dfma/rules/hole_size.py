@@ -38,3 +38,33 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
                     "threshold_source": "drill list in config/tools.toml",
                     "suggestion": f"{nearest} Use it if the fit allows."})
     return out
+
+
+def passes(features: list[dict], part: dict, limits: dict) -> list[dict]:
+    """The holes this rule passed or did not judge, and why (D-023 proposed)."""
+    units = part["units_in_file"]
+    tol = match_tolerance_mm()
+    _, top = drill_range_mm(units)
+    out = []
+    for f in features:
+        if f["kind"] != "hole":
+            continue
+        d = f["dims_mm"]["diameter"]
+        row = {"rule": ID, "feature": f["id"], "faces": f["faces"], "threshold_source": "drill list in config/tools.toml"}
+        if f["dims_mm"].get("taper_deg"):
+            out.append({**row, "title": "Tapered: reamed, so no drill size applies",
+                        "math": f"taper {f['dims_mm']['taper_deg']:.2f}° a side"})
+            continue
+        if d > top + tol:
+            out.append({**row, "title": "Above the drill range: cut with an end mill",
+                        "math": f"{d / MM_PER_IN:.3f} in > largest drill {top / MM_PER_IN:.3f} in"})
+            continue
+        drill = nearest_drill(d, units)
+        gap = abs(d - drill.diameter_mm)
+        if gap > tol:
+            continue
+        name = drill.label if drill.metric else fmt_in(drill.diameter_mm / MM_PER_IN, with_fraction=True)
+        out.append({**row, "title": f"Standard drill: {name}",
+                    "math": f"|{d / MM_PER_IN:.4f} − {drill.diameter_mm / MM_PER_IN:.4f}| = {gap / MM_PER_IN:.4f} in "
+                            f"≤ {tol / MM_PER_IN:.4f} in"})
+    return out

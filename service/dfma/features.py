@@ -62,6 +62,10 @@ class Segment:
     taper_deg: float = 0.0  # a tapered hole: the cone's half-angle (D-018 tapered-holes round)
     small_radius: float | None = None  # a tapered hole: the radius at its narrow end
     gap_joined: bool = False  # joined across an open gap (_open_between)
+    cut: bool = False  # round only part of the way (HALF_TURN_DEG): no full-round depth for it
+    countersinks: list = field(default_factory=list)  # (end, cone face ids, diameter, included deg) per open end (D-022)
+    full_lo: float | None = None  # where the hole is round all the way, when an end leaves through a slope (D-022)
+    full_hi: float | None = None
 
 
 def _sub(a: Vec, b: Vec) -> Vec:
@@ -252,7 +256,8 @@ def _segments(topo: Topology, cyls: dict[int, Cyl], no_gap: set[int] = frozenset
     out: list[Segment] = []
     for group in merged:
         members = [cyls[g] for g in group]
-        span = _full_turn(members) or _full_turn(members, HALF_TURN_DEG)
+        whole = _full_turn(members)
+        span = whole or _full_turn(members, HALF_TURN_DEG)
         if span is None:
             continue
         base = members[0]
@@ -263,6 +268,7 @@ def _segments(topo: Topology, cyls: dict[int, Cyl], no_gap: set[int] = frozenset
         else:
             out.append(Segment(group, base.origin, base.axis, base.radius, *span))
         out[-1].gap_joined = bool(gap_joined.intersection(group))
+        out[-1].cut = whole is None
     return out
 
 
@@ -394,10 +400,19 @@ def _classify_ends(topo: Topology, segs: list[Segment]) -> None:
                     if ends.get(end) != "link":
                         ends[end] = "bottom"
                     continue
-                # Anything else is an open end. S3: an end on a pocket floor will take the pocket's
-                # open direction (spec Features); until then it takes the hole's own axis.
+                # Anything else is an open end, with the hole's own axis also on a pocket floor (D-022).
                 ends.setdefault(end, "open")
+                if (csk := _countersink(topo, seg, nb)) and not any(c[0] == end for c in seg.countersinks):
+                    seg.countersinks.append((end, *csk))
+            for end, es in (by_end.items() if not seg.cut else ()):  # where it is round all the way (D-022)
+                for e in es:
+                    along = [dot(v, seg.axis) for v in _points(e)]
+                    if end == "hi" and min(along) > seg.lo + 0.01:
+                        seg.full_hi = min(seg.full_hi if seg.full_hi is not None else seg.hi, min(along))
+                    elif end == "lo" and max(along) < seg.hi - 0.01:
+                        seg.full_lo = max(seg.full_lo if seg.full_lo is not None else seg.lo, max(along))
         seg.open_ends = [e for e in ("hi", "lo") if ends.get(e) == "open"]
+        seg.countersinks = [c for c in seg.countersinks if c[0] in seg.open_ends]
         seg.groove = ends.get("hi") == "link" and ends.get("lo") == "link" and all(
             segs[j].radius < seg.radius for j in seg.links)
     # A link found from one side only (a shoulder partway along a bore joined across a gap, so it is
@@ -405,6 +420,29 @@ def _classify_ends(topo: Topology, segs: list[Segment]) -> None:
     for i, seg in enumerate(segs):
         for j in seg.links:
             segs[j].links.add(i)
+
+
+COUNTERSINK_MAX_DEG = 60.0  # half-angle: 82, 90, 100 and 120 deg countersinks, and 45 deg entry chamfers
+
+
+def _countersink(topo: Topology, seg: Segment, nb: int) -> tuple[list[int], float, float] | None:
+    """A cone on the hole's axis at an open end, steeper than a taper and widening out of the part: a
+    countersink or an entry chamfer (D-022). Returns (its cone faces, its wide diameter, included angle)."""
+    surface = BRepAdaptor_Surface(topo.faces[nb], True)
+    if surface.GetType() != GeomAbs_Cone or not _is_shoulder(topo.faces[nb], seg):
+        return None
+    half = abs(math.degrees(surface.Cone().SemiAngle()))
+    if not TAPER_MAX_DEG < half <= COUNTERSINK_MAX_DEG + math.degrees(ANGLE_TOL):  # 120 deg: 60 to rounding
+        return None
+    cones = [nb] + [k for k in topo.neighbours(nb) if k not in seg.faces and BRepAdaptor_Surface(
+        topo.faces[k], True).GetType() == GeomAbs_Cone and _is_shoulder(topo.faces[k], seg)]  # a split cone
+    def radius(p: Vec) -> float:
+        off = cross(_sub(p, seg.origin), seg.axis)
+        return math.sqrt(dot(off, off))
+    wide = max(radius(p) for k in cones for p in _points(topo.faces[k]))
+    if wide <= seg.radius + 0.01:
+        return None
+    return sorted(cones), 2 * wide, round(2 * half, 1)
 
 
 BRIDGE_MAX_FACES = 4  # a shoulder with an edge break: a floor ring, a chamfer or fillet at the bore, a corner fillet
@@ -570,13 +608,28 @@ def holes(solid, faces, frame: dict[str, Vec]) -> list[dict]:
             s = segs[i]
             if s.groove or s.ring:
                 continue
-            dims = {"diameter": 2 * s.radius, "depth": s.hi - s.lo}
+            lo = s.full_lo if s.full_lo is not None else s.lo
+            hi = s.full_hi if s.full_hi is not None else s.hi
+            if hi - lo <= 0.01:  # slopes at both ends that cross: no full-round part, so the longest side
+                lo, hi = s.lo, s.hi
+            dims = {"diameter": 2 * s.radius, "depth": hi - lo}
+            if (s.hi - s.lo) - (hi - lo) > 0.01:  # an end leaves through a slope: the longest side (D-022)
+                dims["max_depth"] = s.hi - s.lo
             if s.point_mm is not None:
                 dims["point_mm"] = s.point_mm
             if s.taper_deg:
                 dims["taper_deg"] = s.taper_deg
                 dims["small_diameter"] = 2 * s.small_radius
             dirs = [d for v in vectors if (d := _frame_dir(v, frame))]
+            csk = {}
+            if s.countersinks:  # D-022: the cone stays out of `faces`; the hole records it
+                dims["countersink_diameter"] = max(c[2] for c in s.countersinks)
+                dims["countersink_deg"] = s.countersinks[0][3]
+                csk = {"countersink_faces": sorted({f for c in s.countersinks for f in c[1]}),
+                       "countersink_vectors": [list(s.axis if c[0] == "hi" else tuple(-a for a in s.axis))
+                                               for c in s.countersinks],
+                       "countersink_degs": [c[3] for c in s.countersinks],  # per end, as the vectors
+                       "countersink_end_faces": [list(c[1]) for c in s.countersinks]}  # each end's cone faces
             features.append({
                 "kind": "hole",
                 "faces": sorted(s.faces + s.bottom + s.shoulders),
@@ -585,6 +638,7 @@ def holes(solid, faces, frame: dict[str, Vec]) -> list[dict]:
                 "open_vectors": [list(v) for v in vectors],
                 "dims_mm": dims,
                 "chain": n_chain,  # the same for every segment of one stepped hole (renumbered below)
+                **csk,
             })
     features.sort(key=lambda f: min(f["faces"]))
     renumber: dict[int, int] = {}
@@ -1417,7 +1471,8 @@ def walls(solid, faces) -> list[dict]:
 # --- S4 (D-016): thin material at holes ---
 
 SIDE_STEP_DEG = 15  # rays around a hole's side every 15 deg, then every 1 deg within 15 deg of the nearest
-SIDE_HEIGHTS = 3  # at 3 heights along its round part
+SIDE_STEP_MM = 1.0  # at heights about 1 mm apart along its round part (set 3: 3 heights missed thin material
+SIDE_HEIGHTS_MIN, SIDE_HEIGHTS_MAX = 3, 48  # near the top of a hole), at least 3 and at most 48
 TIP_TILTS = (0, 10, 20, 30)  # deg off the axis, for rays from a drill point's tip (its surface is 31 deg off it)
 TIP_TURNS = 12  # around the axis at each tilt
 HOLE_WALL_MAX_MM = 0.25 * 25.4  # material at a hole is measured up to 0.250 in (assumption): over every limit
@@ -1449,6 +1504,13 @@ class _NearRays:
     def nearest(self, starts: list[tuple[Vec, Vec]], keep=None) -> tuple[int, float, int] | None:
         """(face id, distance, index of the ray) of the nearest first hit, or None. `keep(n)` can turn
         down a ray by its index; it is asked only for the nearest hits, nearest first."""
+        for w, fid, n in self.hits(starts):  # nearest first; ties go to the lower face id
+            if keep is None or keep(n):
+                return fid, w, n
+        return None
+
+    def hits(self, starts: list[tuple[Vec, Vec]]) -> list[tuple[float, int, int]]:
+        """(distance, face id, index of the ray) of each ray's first hit within reach, nearest first."""
         from OCC.Core.BRep import BRep_Builder
         from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
         from OCC.Core.TopoDS import TopoDS_Compound
@@ -1467,7 +1529,7 @@ class _NearRays:
                 self.inter.Load(comp, 1e-6)
         inter = self.inter
         if inter is None:
-            return None
+            return []
         hits: list[tuple[float, int, int]] = []  # (distance, face id, ray) of each ray's first hit
         for n, (p, d) in enumerate(starts):
             inter.Perform(gp_Lin(gp_Pnt(*p), gp_Dir(*d)), 1e-3, radius)
@@ -1475,15 +1537,12 @@ class _NearRays:
                 continue
             first = min((inter.WParameter(k), self.topo.fid(inter.Face(k))) for k in range(1, inter.NbPnt() + 1))
             hits.append((round(first[0], 9), first[1], n))
-        for w, fid, n in sorted(hits):  # nearest first; ties go to the lower face id
-            if keep is None or keep(n):
-                return fid, w, n
-        return None
+        return sorted(hits)
 
 
 def hole_walls(solid, faces, hole_list: list[dict]) -> list[dict]:
-    """Walls at holes (D-016), unnumbered: per hole, the thinnest material around its side (rays square
-    to the axis from its round part) and, for a drill point, under its tip (rays from the tip, up to
+    """Walls at holes (D-016), unnumbered: per hole, the thinnest material between its side and each face
+    near it (rays square to the axis from its round part, about every 1 mm along it; set 3) and, for a drill point, under its tip (rays from the tip, up to
     30 deg off the axis, deeper into the part), when it is at most 0.250 in. The first face a ray from the hole meets bounds solid
     material, so a ray measures material only. Two holes that find each other give one wall."""
     from OCC.Core.GeomAbs import GeomAbs_Cone as Cone
@@ -1514,9 +1573,10 @@ def hole_walls(solid, faces, hole_list: list[dict]) -> list[dict]:
                 return tuple(centre[i] + r * d[i] for i in range(3)), d, c.id, centre, deg
 
             starts = []
+            heights = min(SIDE_HEIGHTS_MAX, max(SIDE_HEIGHTS_MIN, math.ceil((hi - lo) / SIDE_STEP_MM)))
             for c in cyls:
-                for k in range(SIDE_HEIGHTS):
-                    t = lo + (hi - lo) * (k + 1) / (SIDE_HEIGHTS + 1)
+                for k in range(heights):
+                    t = lo + (hi - lo) * (k + 0.5) / heights
                     if not c.lo - 1e-6 <= t <= c.hi + 1e-6:
                         continue
                     centre = tuple(c.origin[i] + (t - dot(c.origin, c.axis)) * c.axis[i] for i in range(3))
@@ -1524,16 +1584,24 @@ def hole_walls(solid, faces, hole_list: list[dict]) -> list[dict]:
                     starts += [ray(c, centre, deg) for deg in range(0, 360, SIDE_STEP_DEG) if deg in c.bins]
             def on(rs):  # a ray counts only if it starts on its hole face, not in a gap cut through it
                 return lambda n: _on_face(faces[rs[n][2]], rs[n][0])
-            found = rays.nearest([(p, d) for p, d, *_ in starts], on(starts))
-            if found:
-                _, _, cid, centre, deg = starts[found[2]]
+            keep, seen = on(starts), set()
+            # The nearest hit on each other face (or other hole): every thin side, not only the thinnest (set 3).
+            for w, fid, n in rays.hits([(p, d) for p, d, *_ in starts]):
+                other = hole_of.get(fid, fid)
+                if other in seen or not keep(n):
+                    continue
+                seen.add(other)
+                found, rs = (fid, w, n), starts
+                _, _, cid, centre, deg = starts[n]
                 c = next(c for c in cyls if c.id == cid)
                 fine = [ray(c, centre, (deg + k) % 360) for k in range(-SIDE_STEP_DEG, SIDE_STEP_DEG + 1)
                         if (deg + k) % 360 in c.bins]
-                close = rays.nearest([(p, d) for p, d, *_ in fine], on(fine))
+                on_fine = on(fine)
+                close = next(((f2, w2, m) for w2, f2, m in rays.hits([(p, d) for p, d, *_ in fine])
+                              if hole_of.get(f2, f2) == other and on_fine(m)), None)
                 if close and close[1] < found[1]:
-                    found, starts = close, fine
-                add(starts[found[2]][2], found, h["id"], "side")  # the hole face the nearest ray left from
+                    found, rs = close, fine
+                add(rs[found[2]][2], found, h["id"], "side")  # the hole face the nearest ray left from
         tip = None
         for f in h["faces"]:
             surface = BRepAdaptor_Surface(faces[f], True)

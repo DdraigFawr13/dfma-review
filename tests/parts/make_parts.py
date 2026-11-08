@@ -258,6 +258,87 @@ def holes_close():
     return cut(block(2, 1, 0.5), through_z(0.8625 * IN, 0.5 * IN, h, 0.25 * IN), through_z(1.1375 * IN, 0.5 * IN, h, 0.25 * IN))
 
 
+# --- S5: machine and setups (spec S5; D-022) ---------------------------------------------------
+
+
+def rotate_30(shape):
+    """The shape turned 30 deg about the axis (1, 2, 3) through the origin: off every file axis."""
+    from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_Transform
+    return BRepBuilderAPI_Transform(shape, ROT30, True).Shape()
+
+
+def _rot30():
+    from OCC.Core.gp import gp_Trsf
+    t = gp_Trsf()
+    t.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(1, 2, 3)), math.radians(30))
+    return t
+
+
+ROT30 = _rot30()
+
+
+def rotated(p):
+    q = gp_Pnt(*p).Transformed(ROT30)
+    return (q.X(), q.Y(), q.Z())
+
+
+def tilted_cylinder(centre_in, d_in, tilt_deg, before_in, after_in):
+    """A cylinder tool of diameter d_in whose axis runs through centre_in (inches), tilted tilt_deg from -Z
+    towards -X; it starts before_in up the axis from the centre and runs after_in down past it."""
+    a = math.radians(tilt_deg)
+    u = (-math.sin(a), 0.0, -math.cos(a))  # down the hole
+    start = tuple((centre_in[i] - before_in * u[i]) * IN for i in range(3))
+    return BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(*start), gp_Dir(*u)), d_in / 2 * IN, (before_in + after_in) * IN).Shape(), u
+
+
+def two_sided_block():
+    """J4: 2 x 3 x 1.5 in block; a 1.25 x 1.0 x 0.25 in pocket open to the top (model +Z), a 1.0 x 0.75 x 0.25 in
+    pocket open to the bottom (model -Z), both r 0.125 in, and a 0.250 in blind hole 0.750 in deep from the
+    model +X face at y 1.5, z 0.75."""
+    top = pocket_tool(0.375, 0.25, 1.25, 1.0, 1.25, 0.75, 0.125)
+    bottom = pocket_tool(0.5, 1.75, 1.0, 0.75, -0.5, 0.75, 0.125)
+    hole = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(1.25 * IN, 1.5 * IN, 0.75 * IN), gp_Dir(1, 0, 0)), 0.125 * IN, 1.0 * IN).Shape()
+    return cut(block(2, 3, 1.5), top, bottom, hole)
+
+
+def angled_hole():
+    """2 x 2 x 1 in block, a 0.250 in hole through its middle, tilted 30 deg from Z towards X."""
+    tool, _ = tilted_cylinder((1.0, 1.0, 0.5), 0.25, 30, 1.0, 1.0)
+    return cut(block(2, 2, 1), tool)
+
+
+def angled_hole_in_pocket():
+    """D-022: 2.5 x 2 x 1 in block, a 1.5 x 1.0 x 0.25 in pocket (r 0.125 in) from the top, and a 0.250 in hole
+    drilled from the middle of its floor through the bottom, tilted 20 deg."""
+    pocket = pocket_tool(0.5, 0.5, 1.5, 1.0, 0.75, 0.75, 0.125)
+    tool, u = tilted_cylinder((1.25, 1.0, 0.75), 0.25, 20, 0.3, 1.1)
+    return cut(block(2.5, 2, 1), pocket, tool), u
+
+
+def through_hole_two_dirs():
+    """1.25 x 2.5 x 1 in block, a 0.250 in hole through it along X (open both ways: 1 setup, not 2)."""
+    hole = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(-1.0, 1.25 * IN, 0.5 * IN), gp_Dir(1, 0, 0)), 0.125 * IN, 1.25 * IN + 2.0).Shape()
+    return cut(block(1.25, 2.5, 1), hole)
+
+
+def clean_one_setup():
+    """2.5 x 2 x 1 in block; from the top: a 1.0 x 1.0 x 0.25 in pocket (r 0.125 in), a 0.250 in through hole
+    and a 0.250 in blind hole 0.500 in deep."""
+    pocket = pocket_tool(0.25, 0.5, 1.0, 1.0, 0.75, 0.75, 0.125)
+    return cut(block(2.5, 2, 1), pocket, through_z(1.875 * IN, 0.5 * IN, 1.0 * IN, 0.25 * IN),
+               hole_from_top(1.875 * IN, 1.5 * IN, 1.0 * IN, 0.25 * IN, 0.5 * IN))
+
+
+def countersunk_hole():
+    """D-022: 2 x 1 x 0.5 in block, a 0.250 in through hole with an 82 deg countersink to 0.500 in at the top."""
+    r, R = 0.125 * IN, 0.25 * IN
+    h = (R - r) / math.tan(math.radians(41))
+    # from radius r at depth h below the top, widening 41 deg from the axis, to 1 mm above the top
+    cone = BRepPrimAPI_MakeCone(gp_Ax2(gp_Pnt(1.0 * IN, 0.5 * IN, 0.5 * IN - h), gp_Dir(0, 0, 1)),
+                                r, r + (h + 1.0) * math.tan(math.radians(41)), h + 1.0).Shape()
+    return cut(block(2, 1, 0.5), through_z(1.0 * IN, 0.5 * IN, 0.5 * IN, 0.25 * IN), cone)
+
+
 def single_face():
     return BRepBuilderAPI_MakeFace(gp_Pln(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)), 0, 20, 0, 10).Face()
 
@@ -382,6 +463,44 @@ def main() -> int:
         findings=[finding("thin_wall", "high", 0.02, (1.0 * IN, 0.02 * IN, 0.25 * IN))])
     add(holes_close(), "holes_close", "inch", 2, walls=4,  # one wall between the two holes, found from both
         findings=[finding("thin_wall", "high", 0.025, (0.9875 * IN, 0.5 * IN, 0.25 * IN))])
+
+    # S5 plan (spec Plan; D-022). Frame (spec Flow 5): +Z is the largest planar face's normal, so with features
+    # cut into the top the bottom face is larger and the top reads -Z; +X is the largest face square to it.
+    # Setups list each one's features by probe points (file coordinates, mm).
+    two = two_sided_block()
+    # Bottom face larger (smaller pocket) -> +Z is model -Z; the -X face is larger than the drilled +X face ->
+    # +X is model -X. The bottom pocket opens +Z, the top pocket -Z, the hole -X. Walls: block 3; each pocket
+    # 4 walls to their outer faces and the floor to the far face (5 each); the hole's flat bottom to the -X face.
+    add(two, "two_sided_block", "inch", 1, pockets=2, corners=8, walls=14, machine="3-axis mill",
+        setups=[{"dir": "+Z", "probes": [[1.0 * IN, 2.125 * IN, 0.25 * IN]]},
+                {"dir": "-Z", "probes": [[1.0 * IN, 0.75 * IN, 1.25 * IN]]},
+                {"dir": "-X", "probes": [[1.625 * IN, 1.625 * IN, 0.75 * IN]]}],
+        tools=["em-0.250", "dr-0.2500"], tool_changes=3)
+    # 30 deg off every axis: the access finding, and nothing to plan (it is in no setup).
+    add(angled_hole(), "angled_hole", "inch", 1, machine="4/5-axis mill or fixture",
+        findings=[finding("access", "high", 30.0, (1.0 * IN, 1.125 * IN, 0.5 * IN))],
+        setups=[{"dir": "+Z", "probes": []}], tools=[], tool_changes=0)
+    shape, u = angled_hole_in_pocket()
+    mid = tuple((c + 0.4 * ui) * IN for c, ui in zip((1.25, 1.0, 0.75), u))
+    # The hole keeps its own axis on the pocket floor (D-022): flagged; the pocket opens -Z (top).
+    add(shape, "angled_hole_in_pocket", "inch", 1, pockets=1, corners=4, walls=8, machine="4/5-axis mill or fixture",
+        findings=[finding("access", "high", 20.0, (mid[0], mid[1] + 0.125 * IN, mid[2]))],
+        setups=[{"dir": "-Z", "probes": [[0.6 * IN, 1.0 * IN, 0.75 * IN]]}], tools=["em-0.250"], tool_changes=1)
+    # The X faces are the largest square to Z: the hole opens +X and -X, and +X comes first.
+    add(through_hole_two_dirs(), "through_hole_two_dirs", "inch", 1, machine="3-axis mill",
+        setups=[{"dir": "+X", "probes": [[0.625 * IN, 1.375 * IN, 0.5 * IN]]}], tools=["dr-0.2500"], tool_changes=1)
+    one = clean_one_setup()
+    one_setup = [[0.3 * IN, 1.0 * IN, 0.75 * IN], [1.875 * IN, 0.625 * IN, 0.5 * IN], [1.875 * IN, 1.625 * IN, 0.75 * IN]]
+    # block 3, pocket 5, the blind hole's flat bottom to the bottom face 1
+    add(one, "clean_one_setup", "inch", 2, pockets=1, corners=4, walls=9, machine="3-axis mill",
+        setups=[{"dir": "-Z", "probes": one_setup}], tools=["em-0.250", "dr-0.2500"], tool_changes=2)
+    add(rotate_30(one), "rotated_block", "inch", 2, pockets=1, corners=4, walls=9, machine="3-axis mill",
+        setups=[{"dir": "-Z", "probes": [list(rotated(p)) for p in one_setup]}], tools=["em-0.250", "dr-0.2500"],
+        tool_changes=2)
+    # The countersink is cut from its own end (the top, -Z), so the hole is drilled from there too.
+    add(countersunk_hole(), "countersunk_hole", "inch", 1, machine="3-axis mill",
+        setups=[{"dir": "-Z", "probes": [[1.0 * IN, 0.625 * IN, 0.2 * IN]]}], tools=["dr-0.2500", "cs-82"],
+        tool_changes=2)
 
     write_step(single_face(), "no_solid", "MM")
     (HERE / "not_step.step").write_text("This is a text file, not a STEP file.\n", encoding="utf-8", newline="\n")

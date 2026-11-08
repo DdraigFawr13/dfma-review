@@ -1,8 +1,8 @@
 // Page wiring: analyse as soon as a file is chosen, and again when process or material
 // changes while a file is loaded. No submit button (spec S1, settled at build).
 
-import { analyze, ApiError, type Analysis, type Finding, type Material, type Process } from "./api";
-import { renderFindings, renderVerdict } from "./findings";
+import { analyze, ApiError, type Analysis, type Material, type Process } from "./api";
+import { collapsePassed, renderFindings, renderPlan, renderVerdict, type Pick } from "./findings";
 import { formatSize } from "./format";
 import { Viewer, type CheckedKind } from "./viewer";
 
@@ -83,18 +83,41 @@ function edgesOf(result: Analysis): Map<string, number[][]> {
   return out;
 }
 
-function select(f: Finding): void {
-  selected = selected === f.id ? null : f.id; // clicking the selected finding again clears it
-  viewer.select(selected ? f : null);
-  for (const row of list.querySelectorAll<HTMLButtonElement>(".finding")) {
-    row.setAttribute("aria-pressed", String(row.dataset.testid === `finding-${selected}`));
+let shown: Analysis | null = null;
+
+/** The selection again in a new result of the same file (a material change), if it is still there. */
+function stillThere(result: Analysis, id: string | null): Pick | null {
+  if (!id) return null;
+  if (id.startsWith("pass:")) {
+    const f = result.features.find((x) => `pass:${x.id}` === id);
+    const ok = f && !result.findings.some((x) => x.feature === f.id) && result.passed.some((p) => p.feature === f.id);
+    return ok ? { id, faces: f.faces } : null;
   }
+  if (id.startsWith("setup:")) {
+    const s = result.setups[Number(id.slice(6))];
+    const i = Number(id.slice(6));
+    return s ? { id, faces: [...new Set(result.operations.filter((o) => o.setup === i).flatMap((o) => o.faces))] } : null;
+  }
+  return result.findings.find((f) => f.id === id) ?? null;
+}
+
+/** Select a finding, a passed feature or a setup (clicking the selected one again clears it). */
+function select(f: Pick): void {
+  selected = selected === f.id ? null : f.id;
+  viewer.select(selected ? f : null);
+  showFindings(shown, "");
 }
 
 function showFindings(result: Analysis | null, message: string): void {
+  const keepScroll = list.scrollTop, planBox = byId("plan-panel"), keepPlan = planBox.scrollTop; // keep the reader's place
   renderFindings(list, result, message, select, selected);
   count.textContent = result ? String(result.findings.length) : "";
   assumptions.hidden = !result;
+  shown = result;
+  renderPlan(byId("plan"), byId("plan-count"), result, select, selected);
+  list.scrollTop = keepScroll;
+  planBox.scrollTop = keepPlan;
+  byId("plan-panel").hidden = !result?.machine;
   if (result) {
     byId("assumption-list").replaceChildren(...result.assumptions.map((a) => {
       const li = document.createElement("li");
@@ -125,7 +148,8 @@ async function analyse(): Promise<void> {
     viewer.setChecked(checkedFaces(result));
     for (const [kind, box] of SWITCHES) viewer.setShowChecked(kind, box.checked);
     shownFile = file;
-    const keep = samePart ? result.findings.find((f) => f.id === selected) ?? null : null;
+    if (!samePart) collapsePassed();
+    const keep = samePart ? stillThere(result, selected) : null; // a finding, passed feature or setup
     selected = keep?.id ?? null;
     if (keep) viewer.select(keep, false); // restore the selection without moving the camera
     renderVerdict(verdict, result);

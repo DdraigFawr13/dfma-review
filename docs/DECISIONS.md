@@ -157,3 +157,21 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - Built 2026-11-08 as rule `undercut` (mill only, medium, measured in inches, limit 0, `config/thresholds.toml` source "D-021"). Builder defaults: the overhang is the distance from each edge where a ceiling meets a wall below it to the nearest edge where it meets a wall above it, the largest; a ceiling must lie wholly above the floor; the finding is given only when every floor edge has a wall (through a side another feature opens, a cutter may reach in from the side). Scan of 1,213 files (NIST, EDMR, our sets, MFCAD++ 1-1,000): it fires on the 3 undercut set parts only.
   - A void sealed inside the part (an inner shell) gets no finding; it keeps the pocket rules it had before set 2 (D-018).
 - **Why:** Morgan, 2026-11-08: "I approve. Go with your recommendations" ([head-to-head page](https://claude.ai/artifact/YAAEriC8gktJkGi5VtNvhq)): the undercut changes the tooling the shop needs; sealed voids come from how MFCAD++ made its parts, not from real parts.
+
+## D-022 S5 and set 3: countersinks, sloped exits, holes in pocket floors
+
+- **Status:** Accepted (2026-11-08; Morgan chose the recommended option on each of 3 questions).
+- **Decision:**
+  - Countersinks: the cone stays out of the hole's `faces` for scoring (D-018 unchanged). The hole records it (`dims_mm.countersink_diameter`, `countersink_deg`; its cone faces in `countersink_faces`), and the plan adds one countersink tool load per angle per setup (tool id `cs-<angle>`, for example `cs-90`).
+  - A hole that leaves through a sloped face: its `depth` is the full-round depth (where the drill still cuts all the way round), as a drill point is left out; the longest side is kept as `dims_mm.max_depth` and shown in the finding's detail. Measured on a d8 hole leaving a 20 deg slope: 23.544 mm full round, 26.456 mm longest side.
+  - A hole end on a pocket floor keeps the hole's own axis (spec Features "Hole": the line giving it the pocket's open direction is dropped), so an angled hole drilled into a pocket floor gets the `access` finding.
+- **Why:** Morgan, 2026-11-08, answering the S5 questions: "Record + tool", "Full round", "Hole's own axis" (each the recommended option). An angled hole still needs an angled spindle or fixture, whatever it opens onto.
+
+## D-023 Machine plan panel, Passed list and selectable setups
+
+- **Status:** Accepted (2026-11-08). The Machine plan panel first; the two additions after their [mock-up](https://claude.ai/artifact/ACtTrQnaA8qUkRzZkUgMRX) (Morgan: "Approved, merge when ready").
+- **Decision:**
+  - Accepted: the Machine plan panel as on the [mock-up](https://claude.ai/artifact/5Cmq85bG5CPpi7oZ3oZHGW) (`mockups/plan-panel.html`).
+  - Accepted: a "Passed" list. For each feature with no finding, the checks it passed, why, and the math to check it, with the same numbers and limits the rules use. It is collapsed by default ("collapsed and off by default... at least for demos").
+  - Accepted: each setup in the Machine plan can be selected. Selecting one shows its features on the model and a brief why (which way each feature opens, and why this setup cuts it).
+- **Why:** Morgan, 2026-11-08: "I want the ability to turn on ok features and see the brief summary of why it is ok like what checks it passed and why with the math to check it. It should be collapsed and off by default" and "I approve of the machine plan but I want each one selectable to show the features so it can be checked with a brief why as well like above. I want to see what that would look like first though".

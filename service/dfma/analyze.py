@@ -7,6 +7,7 @@ from pathlib import Path
 from . import settings
 from .frame import extents_mm, face_info, part_frame
 from .mesh import mesh_faces
+from .plan import plan
 from .errors import ReadError
 from .features import hole_walls, holes, number, pockets, walls
 from .rules import RULES
@@ -33,11 +34,14 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
     wall_list = walls(part.solid, part.faces) + hole_walls(part.solid, part.faces, hole_list)
     features = hole_list + number(pocket_list, "pocket") + number(corner_list, "corner") + number(wall_list, "wall")
     pocket_faces = {i for f in pocket_list for i in f["faces"]}
-    summary = {"units_in_file": part.units_in_file}
+    summary = {"units_in_file": part.units_in_file, "frame": frame}
     limits = settings.thresholds(material)
     rules = [rule for rule in RULES if process in rule.PROCESSES]
     findings = [f for rule in rules for f in rule.check(features, summary, limits)]
     findings = [{"id": f"F{n}", **f} for n, f in enumerate(findings, 1)]
+    passed = [p for rule in rules if hasattr(rule, "passes") for p in rule.passes(features, summary, limits)]
+    milled = plan(features, findings, frame, part.units_in_file) if process == "mill" else {
+        "machine": None, "setups": [], "operations": [], "tools": [], "tool_changes": 0}  # S6 adds turning
 
     return {
         "part": {
@@ -55,12 +59,13 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
         "features": features,
         "findings": findings,
         "rules_run": [rule.ID for rule in rules],
-        "machine": None,
+        "passed": passed,  # D-023 proposed: the checks each feature passed, with the math
+        "machine": milled["machine"],
         "turn_axis": None,
-        "setups": [],
-        "operations": [],
-        "tools": [],
-        "tool_changes": 0,
+        "setups": milled["setups"],
+        "operations": milled["operations"],
+        "tools": milled["tools"],
+        "tool_changes": milled["tool_changes"],
         "cost_drivers": [],
         "assumptions": list(settings.ASSUMPTIONS) + ([settings.MSG_OPEN_SHELL.format(n=part.free_edges)]
                                                      if part.free_edges else [])
