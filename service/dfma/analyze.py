@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from . import settings
+from .drivers import cost_drivers
 from .frame import extents_mm, face_info, part_frame, turning_axis
 from .mesh import mesh_faces
 from .plan import plan
@@ -113,7 +114,7 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
         "operations": milled["operations"],
         "tools": milled["tools"],
         "tool_changes": milled["tool_changes"],
-        "cost_drivers": [],
+        "cost_drivers": cost_drivers(findings, milled["setups"], milled["tools"]),
         "assumptions": list(settings.ASSUMPTIONS) + (settings.TURN_ASSUMPTIONS if process == "turn" else []) + ([settings.MSG_OPEN_SHELL.format(n=part.free_edges)]
                                                      if part.free_edges else [])
                        + ([settings.MSG_NO_UNIT] if part.units_in_file == "none" else []),

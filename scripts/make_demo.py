@@ -24,6 +24,7 @@ from dfma.analyze import analyze  # noqa: E402
 PARTS = ROOT / "tests" / "parts"
 SET3 = ROOT / "tests" / "grading" / "sets" / "hole_ends_walls"
 DEMO = [  # (file, what Morgan looks for[, the process a tap picks: turning parts open on Turning])
+    (PARTS / "report_sample.step", "S7: cost drivers, then Export PDF"),
     (PARTS / "slender_shaft.step", "S6: opens on Turning; switch to Milling to compare", "turn"),
     (PARTS / "flange_bolt_hole.step", "S6 (Turning): off-centre bolt hole", "turn"),
     (PARTS / "stout_shaft.step", "S6 (Turning): length 5× diameter", "turn"),
@@ -82,7 +83,7 @@ window.fetch = async (url, init) => {
 </script>""" % json.dumps(results, separators=(",", ":"))
     picker = """
 <div class="demo-bar" role="group" aria-label="Demo parts">
-  <p class="demo-note"><b>View-only demo</b> of the real app, with these test parts analysed in advance. Tap a part (a turning part opens on Turning); process and material work as in the app. Your files can't be uploaded here.</p>
+  <p class="demo-note"><b>View-only demo</b> of the real app, with these test parts analysed in advance. Tap a part (a turning part opens on Turning); process and material work as in the app. Your files can't be uploaded here. Export PDF builds the file only in the app on a computer: this viewer blocks downloads, so here it saves nothing (the S7 mock-up shows the PDF pages).</p>
   <div class="demo-parts">%s</div>
 </div>
 <style>

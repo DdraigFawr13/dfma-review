@@ -18,8 +18,6 @@ NO_SOLID = "No solid found in this file"
 TOO_LARGE = "File is larger than 50 MB"
 TOO_LONG = "This file took too long to analyse"
 
-EMPTY_UNTIL_LATER = ("cost_drivers",)  # features and findings arrive in S2; setups, operations and tools in S5
-
 
 def check_box(result: dict, name: str, units: str) -> None:
     part = result["part"]
@@ -68,8 +66,8 @@ def check_box(result: dict, name: str, units: str) -> None:
     xs = [v for f in faces for v in f["positions"][0::3]]
     assert max(xs) - min(xs) == pytest.approx(50.8, abs=0.01)  # file coordinates, mm
 
-    for key in EMPTY_UNTIL_LATER:
-        assert result[key] == []
+    # S7: one setup and one drill, so the only driver is the one tool
+    assert [(d["driver"], d["count"], d["score"]) for d in result["cost_drivers"]] == [("distinct_tools", 1, 1.0)]
     # S2: one hole, 1/4 in (6.35 mm), a standard drill in both files (D-013). S4: the block's
     # X, Y and Z pairs of faces are 3 walls, 2.000, 1.000 and 0.500 in thick, none thin.
     assert [f["kind"] for f in result["features"]] == ["hole", "wall", "wall", "wall"]

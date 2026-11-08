@@ -400,6 +400,14 @@ def flange_bolt_hole():
     return cut(fuse(rod(2.0, 0.5), rod(1.0, 1.0, (0, 0, 0.5))), rod(0.25, 1.0, (0.75, 0.0, -0.25)))
 
 
+def report_sample():
+    """J6's part: a 4.000 x 2.000 x 2.500 in block with a sharp 2.000 x 1.000 x 0.250 in pocket in the top, a
+    0.250 in blind hole 1.800 in deep from the bottom (x 0.5 in) and a 0.260 in through hole (x 3.5 in)."""
+    shape = pocket_part(0.25, 0, size=(4, 2, 2.5))
+    blind = through_z(0.5 * IN, 1.0 * IN, 1.8 * IN - 1.0, 0.25 * IN)  # from the bottom, ends 1.800 in up
+    return cut(shape, blind, through_z(3.5 * IN, 1.0 * IN, 2.5 * IN, 0.26 * IN))
+
+
 def clean_shaft():
     """1.000 in diameter for 2.000 in, then 0.750 in to 3.000 in long; a 0.1875 in (3/16) hole 0.5625 in deep on
     the axis from the small end (3.0x diameter)."""
@@ -609,6 +617,18 @@ def main() -> int:
     cs = [[0.5 * IN, 0.0, 1.0 * IN], [0.09375 * IN, 0.0, 2.7 * IN]]
     add(clean_shaft(), "clean_shaft", "inch", 1, walls=3, process="turn", turn={"bore": 0, "groove": 0, "profile": 1},
         machine="lathe", setups=[{"dir": "turn", "probes": cs}], tools=["turn-rough", "turn-finish", "dr-0.1875"], tool_changes=3)
+
+    # J6 / S7: findings from 4 rules. Pocket as pocket_sharp (4 sharp corners, 0.250 in deep over a 1/32 in end
+    # mill = 8.0); the blind hole 1.800 / 0.250 = 7.2; the 0.260 in hole (hole_size, and 2.500 / 0.260 = 9.6154 deep).
+    # Walls: block 3, pocket 5, the blind
+    # hole's flat bottom to the top face 1.
+    shape = report_sample()
+    add(shape, "report_sample", "inch", 2, pockets=1, corners=4, walls=9, machine="3-axis mill",
+        findings=corners(0.25, 0, "high", 0.0, size=(4, 2, 2.5)) + [
+            pocket_finding(0.25, 8.0, size=(4, 2, 2.5)),
+            finding("hole_depth", "medium", 7.2, (0.5 * IN + 0.125 * IN, 1.0 * IN, 0.9 * IN)),
+            finding("hole_size", "medium", 0.26, (3.5 * IN + 0.13 * IN, 1.0 * IN, 1.0 * IN)),
+            finding("hole_depth", "medium", round(2.5 / 0.26, 4), (3.5 * IN + 0.13 * IN, 1.0 * IN, 1.0 * IN))])
 
     write_step(single_face(), "no_solid", "MM")
     (HERE / "not_step.step").write_text("This is a text file, not a STEP file.\n", encoding="utf-8", newline="\n")

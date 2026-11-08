@@ -223,3 +223,15 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - Each tool is its own tool load (spec Plan "Tool changes" unchanged), so plans gain loads: two_sided_block 3 → 5.
   - Every finding pin stands 22 px above its spot on a stem to a dot, in its severity colour, so the feature under it stays visible (the selected pin stays at 26 px). Changes D-017, where only the selected pin had a stem.
 - **Why:** Morgan, 2026-11-08: "the tags are covering the features and making them hard to see"; "standard practice would be to mill out as much as possible with a larger tool and then do finishing passes with a second tool … look at logic across milling and turning for finishing passes". The 75% share is an assumption, not sourced; a shop can change it.
+
+## D-030 Cost drivers after turning: which findings feed which driver
+
+- **Status:** Proposed (2026-11-08). Built as the default; Morgan has not been asked yet.
+- **Decision:**
+  - Added to the spec's driver list: `bore_depth` findings count as `deep_holes`.
+  - `turn_offaxis` feeds `off_axis` and `access` feeds `multi_axis`, as the spec says.
+  - `pocket_depth`, `undercut`, `turn_slender`, `looks_turned` and `turn_axis` feed no driver. Proposal for Morgan: add drivers `deep_pockets` (pocket_depth), `undercuts` (undercut) and `slender_parts` (turn_slender); leave out the two process warnings.
+  - `small_tools` counts tools marked `undersized`; the label's "sub-1/8 in" adds nothing.
+  - Drivers live in `config/drivers.toml`, so adding one is a config edit.
+- **Why:** the spec's nine drivers were written before S3 to S6; a slender shaft needing a steady rest, or a deep pocket needing a long end mill, is a cost with no driver. Weights stay 1.0 and are estimates (REP-01).
+

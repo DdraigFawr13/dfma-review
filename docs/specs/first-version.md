@@ -564,6 +564,15 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
   - `tests/e2e/test_pdf.py`
   - `report_sample` test part
 - **Waits on:** S6, and Morgan having a real STEP export to try.
+- **Settled at build (2026-11-08, S7):**
+  - `config/drivers.toml` holds each driver's `label`, `count` (how it is counted), `weight` and `source`, and for finding drivers the `rules` that feed it. The response adds `label` and `weight_source` to each `cost_drivers` entry.
+  - After S6, `distinct_tools` counts the plan's tools as listed, so a turned outside is two tools (`turn-rough`, `turn-finish`) and a roughed pocket two end mills (D-029). A lathe has one setup, so `extra_setups` is 0.
+  - `small_tools` counts tools marked `undersized`, as the Counts line says. The "sub-1/8 in" in its label is not counted separately (default; D-030).
+  - New rules map as a default (D-030, Proposed): `bore_depth` joins `deep_holes`; `turn_offaxis` feeds `off_axis`; `access` feeds `multi_axis`. `pocket_depth`, `undercut`, `turn_slender`, `looks_turned` and `turn_axis` feed no driver.
+  - Screen: an **Export PDF** button beside Material (off until a part is loaded) and a collapsed **Cost drivers** list under the Machine plan. Mock-up: `mockups/report-pdf.html`.
+  - PDF (`report.ts`, jsPDF 4.2.1, built in the browser): page 1 opens with the verdict, then Part summary, Machine plan (the screen's own sentences, from `findings.ts`: stock, numbered operations, tool loads), Tools and Cost drivers; then one page per finding (picture with that finding in the accent colour, measured, limit and source, where, faces, what to do); the assumptions last. Two findings on the same faces get the same picture, stored once.
+  - `report_sample.step`: 4.000 × 2.000 × 2.500 in block, a sharp pocket, a 0.250 in blind hole and a 0.260 in through hole: 8 findings from 4 rules (corner_radius ×4, pocket_depth, hole_depth ×2, hole_size).
+  - `jspdf` is imported up front, not on demand, because the view-only demo page inlines one script (D-009); the main script is about 994 kB (281 kB gzipped).
 
 ## Verification
 

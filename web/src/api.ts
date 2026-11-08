@@ -34,6 +34,16 @@ export interface Analysis {
   operations: { setup: number; tool: string; features: string[]; faces: number[] }[]; // faces each tool cuts
   tools: Tool[];
   tool_changes: number;
+  cost_drivers: CostDriver[]; // S7: counts above 0, ranked by score
+}
+
+export interface CostDriver {
+  driver: string; // a key in config/drivers.toml
+  label: string;
+  count: number;
+  weight: number;
+  score: number; // count x weight
+  weight_source: string; // "estimate" for every starting weight
 }
 
 export interface Passed {

@@ -2,8 +2,9 @@
 // changes while a file is loaded. No submit button (spec S1, settled at build).
 
 import { analyze, ApiError, type Analysis, type Material, type Process } from "./api";
-import { collapsePassed, renderFindings, renderPlan, renderVerdict, type Pick } from "./findings";
+import { collapsePassed, renderDrivers, renderFindings, renderPlan, renderVerdict, type Pick } from "./findings";
 import { formatSize } from "./format";
+import { buildReport, reportName } from "./report";
 import { Viewer, type CheckedKind } from "./viewer";
 
 function byId<T extends HTMLElement>(id: string): T {
@@ -118,6 +119,10 @@ function showFindings(result: Analysis | null, message: string): void {
   list.scrollTop = keepScroll;
   planBox.scrollTop = keepPlan;
   byId("plan-panel").hidden = !result?.machine;
+  renderDrivers(byId("drivers"), result);
+  byId("drivers-panel").hidden = !result;
+  byId("drivers-count").textContent = result ? `${result.cost_drivers.length}` : "";
+  byId<HTMLButtonElement>("export-pdf").disabled = !result;
   if (result) {
     byId("assumption-list").replaceChildren(...result.assumptions.map((a) => {
       const li = document.createElement("li");
@@ -173,3 +178,31 @@ async function analyse(): Promise<void> {
 fileInput.addEventListener("change", analyse);
 processSelect.addEventListener("change", analyse);
 materialSelect.addEventListener("change", analyse);
+
+/** Export PDF (spec J6): the report for the part on screen, built here in the browser. */
+byId<HTMLButtonElement>("export-pdf").addEventListener("click", async () => {
+  const result = shown;
+  if (!result) return;
+  const button = byId<HTMLButtonElement>("export-pdf");
+  button.disabled = true;
+  status.textContent = "Building the PDF…";
+  await new Promise((r) => setTimeout(r, 0)); // let the message show before the build holds the page
+  try {
+    const label = (select: HTMLSelectElement) => select.selectedOptions[0]?.textContent ?? select.value;
+    const doc = buildReport({
+      result,
+      processLabel: label(processSelect),
+      materialLabel: label(materialSelect),
+      date: new Date().toISOString().slice(0, 10),
+      picture: (f) => viewer.snapshot(f),
+    });
+    doc.save(reportName(result.part.name));
+    status.textContent = `Saved the PDF for ${result.part.name}.`;
+  } catch (e) {
+    console.error(e);
+    error.textContent = "The PDF could not be built. Try again.";
+    error.hidden = false;
+  } finally {
+    button.disabled = shown === null;
+  }
+});

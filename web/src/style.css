@@ -81,6 +81,19 @@ body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
 .plan .op .onum { font-family: var(--mono); font-weight: 600; }
 .plan .op .tid, .plan .ofeat { font-family: var(--mono); color: var(--muted); white-space: nowrap; }
 .plan .note { margin: 0; color: var(--muted); font-size: 0.875rem; }
+/* S7: cost drivers and the Export PDF button */
+.drivers-panel { flex: 0 0 auto; max-height: none; }
+.drivers-panel > summary { cursor: pointer; min-height: 32px; display: flex; gap: var(--space-2); align-items: center; font-size: 1.125rem; font-weight: 600; }
+.drivers-panel > summary::marker { content: ""; }
+.drivers-panel > summary::before { content: "▸"; } .drivers-panel[open] > summary::before { content: "▾"; }
+.drivers-panel > summary .count { margin-left: auto; }
+.drivers-panel[open] > summary { margin-bottom: var(--space-2); }
+.drivers { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); font-size: 0.875rem; }
+.drivers li { display: flex; justify-content: space-between; gap: var(--space-3); border-top: 1px solid var(--line); padding-top: var(--space-1); }
+.dscore { font: 600 0.875rem var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.drivers-panel .note { margin: 0; color: var(--muted); font-size: 0.875rem; }
+.action { font: 600 0.9375rem var(--sans); min-height: 36px; padding: 5px 16px; color: var(--accent-ink); background: var(--accent); border: 1px solid var(--accent); border-radius: var(--radius); cursor: pointer; }
+.action:disabled { color: var(--muted); background: var(--panel); border-color: var(--line); cursor: not-allowed; }
 /* D-023 (proposed): the Passed list, collapsed by default */
 .passed { display: grid; gap: var(--space-2); }
 .passed > summary { cursor: pointer; min-height: 32px; align-items: center; color: var(--low); }

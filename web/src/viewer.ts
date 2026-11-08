@@ -178,6 +178,24 @@ export class Viewer {
     else this.render();
   }
 
+  /** A picture of the canvas with `finding` selected and framed, for the PDF report (S7); the selection and
+   *  camera the reader had come back afterwards. JPEG: the view background is opaque. */
+  snapshot(finding: Selection | null): { url: string; width: number; height: number } {
+    const keep = { selected: this.selected, position: this.camera.position.clone(), target: this.controls.target.clone() };
+    this.selected = finding;
+    this.paint();
+    if (finding) this.frameFaces(finding.faces, this.edges.get(finding.id));
+    this.renderer.render(this.scene, this.camera); // now: the queued frame would come after the read
+    const url = this.canvas.toDataURL("image/jpeg", 0.85);
+    this.selected = keep.selected;
+    this.camera.position.copy(keep.position);
+    this.controls.target.copy(keep.target);
+    this.controls.update();
+    this.paint();
+    this.render();
+    return { url, width: this.canvas.width, height: this.canvas.height };
+  }
+
   /** The faces drawn in the accent colour, read from the materials themselves. */
   paintedFaces(): number[] {
     const accent = token("--accent");
