@@ -226,12 +226,11 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 
 ## D-030 Cost drivers after turning: which findings feed which driver
 
-- **Status:** Accepted (2026-11-08; Morgan: "Ok I approve of all of this as recommended"). The mapping below was built as the default; the recommendation to add `deep_pockets`, `undercuts` and `slender_parts` is approved but not yet built.
+- **Status:** Accepted (2026-11-08; Morgan: "Ok I approve of all of this as recommended", and on the merge review: "go ahead and make whatever recommended changes"). Built in S7.
 - **Decision:**
   - Added to the spec's driver list: `bore_depth` findings count as `deep_holes`.
   - `turn_offaxis` feeds `off_axis` and `access` feeds `multi_axis`, as the spec says.
-  - `pocket_depth`, `undercut`, `turn_slender`, `looks_turned` and `turn_axis` feed no driver. Proposal for Morgan: add drivers `deep_pockets` (pocket_depth), `undercuts` (undercut) and `slender_parts` (turn_slender); leave out the two process warnings.
-  - `small_tools` counts tools marked `undersized`; the label's "sub-1/8 in" adds nothing.
+  - Three more drivers: `deep_pockets` (pocket_depth), `undercuts` (undercut) and `slender_parts` (turn_slender). `looks_turned` and `turn_axis` feed none: they warn about the process picked, not a cost of the part.
+  - `small_tools` counts tools marked undersized or under 1/8 in across (`under_in` in drivers.toml). The spec disagreed with itself: its driver list says "undersized or sub-1/8 in tools", its Counts line "`undersized` tools". The first build followed the Counts line; the merge review (2026-11-08) took the driver list, because a small tool costs even when it fits: `pocket_small_radius`'s 1/32 in end mill is not undersized but now counts. The Counts line is updated to match.
   - Drivers live in `config/drivers.toml`, so adding one is a config edit.
 - **Why:** the spec's nine drivers were written before S3 to S6; a slender shaft needing a steady rest, or a deep pocket needing a long end mill, is a cost with no driver. Weights stay 1.0 and are estimates (REP-01).
-

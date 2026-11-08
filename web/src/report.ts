@@ -6,7 +6,7 @@
 import { jsPDF } from "jspdf";
 import type { Analysis, Finding } from "./api";
 import { RULE_NAMES, axisText, checkedLine, driverLine, meta, notPlanned, planFoot, planWhy, setupHead, stockText, toolName } from "./findings";
-import { formatSize } from "./format";
+import { formatIn, formatRatio, formatSize } from "./format";
 
 /** What the report needs besides the analysis: the labels the reader chose, today's date, and a picture per finding. */
 export interface ReportInput {
@@ -15,7 +15,7 @@ export interface ReportInput {
   materialLabel: string;
   date: string; // YYYY-MM-DD
   /** A picture of the model with this finding selected and framed. */
-  picture: (f: Finding) => { url: string; width: number; height: number };
+  picture: (f: Finding) => { url: string; width: number; height: number; spot: [number, number] | null };
 }
 
 const PAGE = { w: 612, h: 792, margin: 48 };
@@ -35,6 +35,19 @@ export function verdictText(result: Analysis): string {
   const by = (s: string) => result.findings.filter((f) => f.severity === s).length;
   const parts = [`${by("high")} high`, `${by("medium")} medium`].filter((p) => !p.startsWith("0 "));
   return `${n} ${n === 1 ? "finding" : "findings"}: ${parts.join(", ")}.`;
+}
+
+/** A finding's measured value or limit in the screen's units (spec Units): inches to 0.001, ratios to 0.1 (to 0.01
+ *  when 0.1 would show the measured value equal to its limit), degrees and percent to 0.1. */
+export function valueText(value: number, unit: string, other?: number): string {
+  if (unit === "in") return formatIn(value);
+  if (unit === "ratio") {
+    const close = other !== undefined && value !== other && value.toFixed(1) === other.toFixed(1);
+    return close ? `${value.toFixed(2)}×` : formatRatio(value);
+  }
+  if (unit === "deg") return `${value.toFixed(1)}°`;
+  if (unit === "%") return `${value.toFixed(1)}%`;
+  return `${value} ${unit}`;
 }
 
 /** The file name the download gets: the part's name without its extension, then "-dfma-review.pdf". */
@@ -139,12 +152,26 @@ function findingPage(p: Page, f: Finding, input: ReportInput): void {
   p.text(f.title, { size: 14, bold: true, gap: 6 });
   const pic = input.picture(f);
   const h = Math.min(330, WIDTH * pic.height / pic.width), w = h * pic.width / pic.height;
+  const colour: [number, number, number] = f.severity === "high" ? [179, 38, 30] : [163, 90, 0];
   p.doc.addImage(pic.url, "JPEG", PAGE.margin, p.y, w, h);
   p.doc.setDrawColor(196, 207, 220);
   p.doc.rect(PAGE.margin, p.y, w, h);
+  const at = pic.spot, ringed = !!at && at[0] >= 0 && at[0] <= 1 && at[1] >= 0 && at[1] <= 1;
+  if (at && ringed) { // a ring and the finding's id on its spot, as its pin on screen (D-017): small features stay findable
+    const cx = PAGE.margin + at[0] * w, cy = p.y + at[1] * h;
+    p.doc.setDrawColor(...colour);
+    p.doc.setLineWidth(2);
+    p.doc.circle(cx, cy, 16);
+    p.doc.setLineWidth(0.5);
+    p.doc.setFont("helvetica", "bold");
+    p.doc.setFontSize(10);
+    p.doc.setTextColor(...colour);
+    p.doc.text(f.id, Math.min(cx + 19, PAGE.margin + w - p.doc.getTextWidth(f.id) - 3), Math.max(cy - 14, p.y + 12));
+  }
   p.y += h + 8;
-  p.text("The faces in blue are the ones this finding is about; the rest of the part is faded.", { size: 9, colour: [85, 101, 122], gap: 8 });
-  p.text(`Measured ${f.measured} ${f.unit}; limit ${f.limit} ${f.unit}; limit source: ${f.threshold_source}.`);
+  p.text(`The faces in blue are the ones this finding is about${ringed ? ", ringed" : ""}; the rest of the part is faded.`,
+    { size: 9, colour: [85, 101, 122], gap: 8 });
+  p.text(`Measured ${valueText(f.measured, f.unit, f.limit)}; limit ${valueText(f.limit, f.unit, f.measured)}; limit source: ${f.threshold_source}.`);
   p.text(`Where: ${meta(f, result)}`);
   const feature = result.features.find((x) => x.id === f.feature);
   p.text(f.feature ? `Feature ${f.feature}; face ids ${f.faces.join(", ")}${feature ? ` (${feature.kind})` : ""}.` : `Whole part; face ids ${f.faces.join(", ")}.`);

@@ -180,20 +180,34 @@ export class Viewer {
 
   /** A picture of the canvas with `finding` selected and framed, for the PDF report (S7); the selection and
    *  camera the reader had come back afterwards. JPEG: the view background is opaque. */
-  snapshot(finding: Selection | null): { url: string; width: number; height: number } {
-    const keep = { selected: this.selected, position: this.camera.position.clone(), target: this.controls.target.clone() };
+  snapshot(finding: Selection | null): { url: string; width: number; height: number; spot: [number, number] | null } {
+    const keep = { selected: this.selected, position: this.camera.position.clone(), target: this.controls.target.clone(),
+                   near: this.camera.near, far: this.camera.far };
     this.selected = finding;
     this.paint();
     if (finding) this.frameFaces(finding.faces, this.edges.get(finding.id));
     this.renderer.render(this.scene, this.camera); // now: the queued frame would come after the read
     const url = this.canvas.toDataURL("image/jpeg", 0.85);
+    // Where the finding's centre lands in the picture (0-1 across, 0-1 down), for the report's ring (D-017's pin)
+    let spot: [number, number] | null = null;
+    if (finding) {
+      const bar = this.edges.get(finding.id);
+      const box = bar ? new THREE.Box3().setFromObject(bar) : this.boxOf(finding.faces);
+      if (!box.isEmpty()) {
+        const c = box.getCenter(new THREE.Vector3()).project(this.camera);
+        spot = [(c.x + 1) / 2, (1 - c.y) / 2];
+      }
+    }
     this.selected = keep.selected;
     this.camera.position.copy(keep.position);
+    this.camera.near = keep.near; // framing moves the clip planes with the camera: put the reader's back
+    this.camera.far = keep.far;
+    this.camera.updateProjectionMatrix();
     this.controls.target.copy(keep.target);
     this.controls.update();
     this.paint();
     this.render();
-    return { url, width: this.canvas.width, height: this.canvas.height };
+    return { url, width: this.canvas.width, height: this.canvas.height, spot };
   }
 
   /** The faces drawn in the accent colour, read from the materials themselves. */

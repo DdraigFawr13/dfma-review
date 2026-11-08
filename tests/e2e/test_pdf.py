@@ -50,7 +50,7 @@ def test_export_pdf(page: Page, base_url: str, tmp_path):
                  "1. 1/4 in end mill (em-0.250)  hole-1", "2. 0.250 in (1/4) drill (dr-0.2500)  hole-2",
                  "3. 3/4 in end mill (em-0.750)  pocket-1", "4. 1/32 in end mill (smallest; nothing fits) (em-0.031)  pocket-1", "Tool changes (tool loads): 4", "Tools (4)",
                  "Cost drivers", "Distinct tools: 4 × 1.0 = 4.0", "Sharp or small inside corners: 4 × 1.0 = 4.0",
-                 "Undersized tools: 1 × 1.0 = 1.0", "estimate"):
+                 "Undersized or sub-1/8 in tools: 1 × 1.0 = 1.0", "Deep pockets: 1 × 1.0 = 1.0", "estimate"):
         assert text in first.replace("\n", " "), f"{text!r} is not on page 1"
 
     def pictures_drawn(n: int) -> int:  # jsPDF lists every image in one shared resource table, so count what a page draws

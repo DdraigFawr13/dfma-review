@@ -185,6 +185,7 @@ byId<HTMLButtonElement>("export-pdf").addEventListener("click", async () => {
   if (!result) return;
   const button = byId<HTMLButtonElement>("export-pdf");
   button.disabled = true;
+  error.hidden = true; // a failed export before this one no longer applies
   status.textContent = "Building the PDF…";
   await new Promise((r) => setTimeout(r, 0)); // let the message show before the build holds the page
   try {

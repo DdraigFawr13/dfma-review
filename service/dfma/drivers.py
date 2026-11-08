@@ -17,8 +17,9 @@ def cost_drivers(findings: list[dict], setups: list[dict], tools: list[dict]) ->
             count = max(len(setups) - 1, 0)
         elif how == "tools":
             count = len(tools)
-        elif how == "undersized":
-            count = sum(1 for t in tools if t["undersized"])
+        elif how == "small":  # spec: undersized or sub-1/8 in tools
+            count = sum(1 for t in tools if t["undersized"]
+                        or (t["diameter_in"] is not None and t["diameter_in"] < d["under_in"] - 1e-9))
         else:  # "findings"
             count = sum(1 for f in findings if f["rule"] in d["rules"])
         if count > 0:
