@@ -55,7 +55,6 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - 2026-11-08 D-022: countersinks recorded on the hole and planned as a tool load; full-round depth for sloped exits; a hole on a pocket floor keeps its own axis.
 - 2026-11-08 D-021: undercut pockets get a finding (needs a T-slot or lollipop cutter); sealed voids get none.
 - 2026-11-07 D-020: cm and m files are metric; a no-unit file is read as mm with a note; walls may have up to 15 deg draft (Morgan chose the recommended options).
-- 2026-11-07 D-018: grading sets are the recognition gold standard; target 10% fewer misses than the best other tool, 0 wrong calls.
 - 2026-11-06 Concept chosen (D-001). Full master setup with web-app layer (D-002).
 - 2026-11-06 S1 build: extra packages and micromamba (D-008); slices shown as status page + demo (D-009); S1 merge approved.
 - 2026-11-06 First-version scope (D-003), stack (D-004), rules and units (D-005), company-move gates (D-006), spec approved (D-007).
