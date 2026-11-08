@@ -20,7 +20,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-08 Screenshot viewer (D-024; Morgan couldn't read the fixed 1280 px frames on a phone): `scripts/zoom_viewer.html` added by `scripts/add_zoom.py`; screenshots fit the screen, tap to open full screen and pinch, double-tap, drag or use − / Fit / + to zoom; shots at 2×. Applied to the S5 status page and both S5 mock-ups (same links). Checked on an emulated iPhone 13: page 390 px wide, double-tap 3× fit, + 4.5×, Close restores. Draft PR on `screenshot-zoom`.
+- 2026-11-08 Screenshot viewer (D-024; Morgan couldn't read the fixed 1280 px frames on a phone): `scripts/zoom_viewer.html` added by `scripts/add_zoom.py`; screenshots fit the screen, tap to open full screen and pinch, double-tap, drag or use − / Fit / + to zoom; shots at 2×. Applied to the S5 status page and both S5 mock-ups (same links). Checked on an emulated iPhone 13: page 390 px wide, double-tap 3× fit, + 4.5×, Close restores. Morgan: "screenshot view works you can merge that"; merged in [#16](https://github.com/DdraigFawr13/dfma-review/pull/16), with the G-code concept (isometric, animated).
 
 - 2026-11-06 Phone pages for Morgan: [S1 status](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu), [view-only demo](https://claude.ai/artifact/KnnLF3YAHp5ZCmNuVWyvP4) (to S4; S5 on: the new demo above, `python scripts/make_demo.py <out.html>` after `npm --prefix web run build`).
 
