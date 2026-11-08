@@ -370,6 +370,30 @@ def shaft_with_groove_and_bore():
     return cut(rod(1.5, 3.0), ring, rod(0.75, 1.5, (0, 0, 2.0)), rod(0.875, 0.125, (0, 0, 2.4)))
 
 
+def round_share_z(shape) -> float:
+    """% of the face area on cylinders whose axis is the Z axis through the origin (D-028's looks_turned),
+    measured here on the built shape, not by the service."""
+    from OCC.Core.BRepAdaptor import BRepAdaptor_Surface
+    from OCC.Core.BRepGProp import brepgprop
+    from OCC.Core.GeomAbs import GeomAbs_Cylinder
+    from OCC.Core.GProp import GProp_GProps
+    faces = TopTools_IndexedMapOfShape()
+    topexp.MapShapes(shape, TopAbs_FACE, faces)
+    on = total = 0.0
+    for i in range(1, faces.Size() + 1):
+        f = topods.Face(faces.FindKey(i))
+        props = GProp_GProps()
+        brepgprop.SurfaceProperties(f, props)
+        total += props.Mass()
+        surf = BRepAdaptor_Surface(f, True)
+        if surf.GetType() == GeomAbs_Cylinder:
+            ax = surf.Cylinder().Axis()
+            d, o = ax.Direction(), ax.Location()
+            if abs(abs(d.Z()) - 1) < 1e-9 and math.hypot(o.X(), o.Y()) < 1e-6:
+                on += props.Mass()
+    return 100 * on / total
+
+
 def flange_bolt_hole():
     """A flange: 2.000 in across and 0.500 in thick, with a 1.000 in hub 1.000 in long on top; a 0.250 in bolt
     hole through the flange, parallel to the axis and 0.750 in off it (Morgan, 2026-11-08: an off-centre hole)."""
@@ -551,7 +575,9 @@ def main() -> int:
         setups=[{"dir": "turn", "probes": [list(od)] + sl}], tools=["turn", "dr-0.1250"], tool_changes=2)
     # The same part for milling (Morgan compares): no frame face square to Z, so +X is the file X axis; the
     # hole opens +X and -X. The outside is not planned (assumptions).
+    # D-028: on Milling it looks turned (the outside is most of its surface)
     add(slender_shaft(), "slender_shaft", "inch", 1, walls=1, material="steel1018", machine="3-axis mill",
+        findings=[finding("looks_turned", "high", round(round_share_z(slender_shaft()), 4), od)],
         setups=[{"dir": "+X", "probes": sl}], tools=["dr-0.1250"], tool_changes=1)
     st = (0.5 * IN, 0.0, 2.0 * IN)
     add(stout_shaft(), "stout_shaft", "inch", 0, walls=1, process="turn", turn={"bore": 0, "groove": 0, "profile": 1},

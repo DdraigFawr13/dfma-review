@@ -43,9 +43,28 @@ def test_slender_shaft():
 def test_slender_shaft_for_milling_has_no_turning_rules():
     """Morgan's comparison: the same part for milling plans the cross hole on a 3-axis mill, with no lathe checks."""
     r = _run("slender_shaft", "mill", "steel1018")
-    assert r["machine"] == "3-axis mill" and r["turn_axis"] is None and r["findings"] == []
+    assert r["machine"] == "3-axis mill" and r["turn_axis"] is None
     assert not {"turn_axis", "turn_slender", "turn_offaxis", "bore_depth"} & set(r["rules_run"])
+    # D-028: but it warns that the part looks turned
+    (f,) = r["findings"]
+    assert (f["rule"], f["severity"], f["title"], f["unit"], f["limit"], f["feature"]) == (
+        "looks_turned", "high", "This part looks turned; review it for Turning", "%", 40.0, None)
+    assert f["measured"] > 90
     assert not [f for f in r["features"] if f["kind"] in ("profile", "bore", "groove")]
+
+
+def test_block_for_milling_does_not_look_turned():
+    """D-028 runs on Milling only, and a block's round faces are well under 40%."""
+    r = _run("box_through_hole", "mill")
+    assert "looks_turned" in r["rules_run"] and not [f for f in r["findings"] if f["rule"] == "looks_turned"]
+
+
+def test_stock_size():
+    """Morgan, 2026-11-08: the plan shows the stock, the part's own size with no allowance."""
+    assert _run("slender_shaft", material="steel1018")["stock"] == {"shape": "bar", "diameter_in": 0.5,
+                                                                    "length_in": 4.5}
+    block = _run("two_sided_block", "mill")["stock"]
+    assert block["shape"] == "block" and sorted(block["size_in"]) == [1.5, 2.0, 3.0]
 
 
 def test_stout_shaft_is_medium():

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toolName } from "./findings";
+import { stockText, toolName } from "./findings";
 
 describe("toolName (S5 plan panel)", () => {
   it("names each tool kind with its size", () => {
@@ -11,5 +11,12 @@ describe("toolName (S5 plan panel)", () => {
     expect(toolName({ id: "turn", kind: "turn", diameter_in: null, undersized: false })).toBe("Turning tool");
     expect(toolName({ id: "bore", kind: "bore", diameter_in: null, undersized: false })).toBe("Boring bar");
     expect(toolName({ id: "groove-0.125", kind: "groove", diameter_in: null, width_in: 0.125, undersized: false })).toBe("1/8 in grooving tool");
+  });
+});
+
+describe("stockText (Morgan, 2026-11-08)", () => {
+  it("gives a bar's diameter and length, or a block's three sizes", () => {
+    expect(stockText({ shape: "bar", diameter_in: 0.5, length_in: 4.5 })).toBe("0.500 in round bar, 4.500 in long (the part's size; no allowance added)");
+    expect(stockText({ shape: "block", size_in: [2, 3, 1.5] })).toBe("2.000 × 3.000 × 1.500 in block (the part's size; no allowance added)");
   });
 });

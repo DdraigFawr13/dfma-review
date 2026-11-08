@@ -27,6 +27,8 @@ def test_slender_shaft_on_the_lathe(page: Page, base_url: str):
     _upload(page, base_url, "slender_shaft.step", "turn")
     expect(page.get_by_test_id("plan-machine")).to_have_text("lathe with live tooling", timeout=30_000)
     expect(page.get_by_test_id("plan-turn-axis")).to_have_text("along −Z of the part")
+    expect(page.get_by_test_id("plan-stock")).to_have_text(
+        "0.500 in round bar, 4.500 in long (the part's size; no allowance added)")
     expect(page.locator("#plan-count")).to_have_text("1 setup")
     expect(page.get_by_test_id("verdict")).to_contain_text("1 turned profile, 1 hole and 1 wall checked")
     expect(page.get_by_test_id("plan-loads")).to_have_text("2 (including the first in each setup)")
@@ -37,7 +39,11 @@ def test_slender_shaft_on_the_lathe(page: Page, base_url: str):
     expect(setup).to_contain_text("Turning tool turn")
     expect(setup).to_contain_text("0.125 in (1/8) drill dr-0.1250")
     setup.click()
-    expect(page.get_by_test_id("plan-setup-why-1")).to_contain_text("hole-1 is off the turning axis: live tooling.")
+    why = page.get_by_test_id("plan-setup-why-1").inner_text()
+    # In the order the operations run (Morgan, 2026-11-08): 1. turn the outside, 2. drill the cross hole
+    assert why.index("1. profile-1 is the turned outside") < why.index("2. hole-1 is off the turning axis: live tooling."), why
+    expect(setup).to_contain_text("1. Turning tool turn")
+    expect(setup).to_contain_text("2. 0.125 in (1/8) drill dr-0.1250")
     expect(page.get_by_test_id("plan-setup-why-1")).to_contain_text(
         "profile-1 is the turned outside. Turning tool: turns the 0.500 in outside and faces the ends.")
     cut = sorted({i for o in r["operations"] for i in o["faces"]})
@@ -78,6 +84,8 @@ def test_slender_shaft_for_milling(page: Page, base_url: str):
     expect(page.get_by_test_id("plan-machine")).to_have_text("3-axis mill", timeout=30_000)
     expect(page.get_by_test_id("plan-turn-axis")).to_have_count(0)
     expect(page.get_by_test_id("plan-setup-1")).to_contain_text("Setup 1 · from +X")
+    expect(page.get_by_test_id("plan-stock")).to_contain_text("in block (the part's size; no allowance added)")
+    expect(page.get_by_test_id("finding-F1")).to_contain_text("This part looks turned; review it for Turning")
 
 
 def test_block_as_turn_shows_no_plan(page: Page, base_url: str):

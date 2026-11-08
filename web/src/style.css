@@ -78,6 +78,7 @@ body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
 .plan .swhy { display: grid; gap: 2px; font-size: 0.875rem; color: var(--ink); border-left: 2px solid var(--accent); padding-left: var(--space-2); margin-top: 2px; }
 .plan .shead { font: 600 0.875rem var(--mono); }
 .plan .op { font-size: 0.875rem; display: flex; justify-content: space-between; gap: var(--space-2); }
+.plan .op .onum { font-family: var(--mono); font-weight: 600; }
 .plan .op .tid, .plan .ofeat { font-family: var(--mono); color: var(--muted); white-space: nowrap; }
 .plan .note { margin: 0; color: var(--muted); font-size: 0.875rem; }
 /* D-023 (proposed): the Passed list, collapsed by default */

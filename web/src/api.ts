@@ -28,7 +28,8 @@ export interface Analysis {
   passed: Passed[]; // D-023 proposed: each check a feature passed, with the math
   assumptions: string[];
   machine: string | null; // S5
-  turn_axis: number[] | null; // S6: the turning axis (file coordinates), for parts reviewed for turning
+  turn_axis: number[] | null;
+  stock?: { shape: "bar" | "block"; diameter_in?: number; length_in?: number; size_in?: number[] }; // the part's own size // S6: the turning axis (file coordinates), for parts reviewed for turning
   setups: { direction: string; features: string[] }[];
   operations: { setup: number; tool: string; features: string[]; faces: number[] }[]; // faces each tool cuts
   tools: Tool[];

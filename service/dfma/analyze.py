@@ -48,9 +48,10 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
     pocket_list, corner_list = pockets(part.solid, part.faces, frame, hole_faces)
     wall_list = walls(part.solid, part.faces) + hole_walls(part.solid, part.faces, hole_list)
     pocket_list, corner_list = number(pocket_list, "pocket"), number(corner_list, "corner")
-    turn = turn_features = None
+    turn_features = None
+    # The turning axis: for Turning (S6) and, on Milling, for looks_turned (D-028)
+    turn = turned_profile(part.faces, [f.area for f in infos], vertices, turning_axis(infos, vertices))
     if process == "turn":  # S6 (spec Features "Turned profile", "Groove", "Bore")
-        turn = turned_profile(part.faces, [f.area for f in infos], vertices, turning_axis(infos, vertices))
         if "diameter" in turn:
             hole_list, bores, renamed = split_bores(hole_list, part.faces, turn)
             for w in wall_list:  # a wall at a hole names it by its new id
@@ -80,11 +81,19 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
     else:  # turned, but no turning axis found (turn_axis): nothing to plan
         milled = {"machine": None, "setups": [], "operations": [], "tools": [], "tool_changes": 0}
 
+    bbox_in = [round(mm_to_in(e), 6) for e in extents_mm(frame, vertices)]
+    # The stock in the machine plan: the part's own size, no allowance added (Morgan, 2026-11-08)
+    if turn_features is not None:
+        stock = {"shape": "bar", "diameter_in": round(mm_to_in(turn["diameter"]), 6),
+                 "length_in": round(mm_to_in(turn["length"]), 6)}
+    else:
+        stock = {"shape": "block", "size_in": bbox_in}
+
     return {
         "part": {
             "name": name,
             "units_in_file": part.units_in_file,
-            "bbox_in": [round(mm_to_in(e), 6) for e in extents_mm(frame, vertices)],
+            "bbox_in": bbox_in,
             "face_count": len(part.faces),
             "volume_mm3": part.volume_mm3,
             "ignored_solids": part.ignored_solids,
@@ -99,6 +108,7 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
         "passed": passed,  # D-023 proposed: the checks each feature passed, with the math
         "machine": milled["machine"],
         "turn_axis": list(turn["axis"]) if turn_features is not None else None,
+        "stock": stock,
         "setups": milled["setups"],
         "operations": milled["operations"],
         "tools": milled["tools"],

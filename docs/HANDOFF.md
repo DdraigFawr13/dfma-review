@@ -16,6 +16,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ✔ Spec the first usable version (D-007, 6 fresh checks, $1.49).
 - ▶ Build slice by slice: ✔ S1 read and view · ✔ S2 holes · ✔ S3 pockets · ✔ S4 thin walls · ✔ grading spike (#8) · ✔ recognition rounds 1-6 and bull-nose/draft (#9) · ✔ tapered holes (#10) · ✔ stress-test gaps (#11) · ✔ pocket edges (#12) · ✔ undercuts set (#13) · ✔ undercut finding (#14) · ✔ S5 machine and setups, set 3 (#15) · ▶ S6 turning · S7 report and PDF.
 - ○ Assemblies and DFA · history and compare · time and $.
+- ○ Inventor parts (Morgan, 2026-11-08): read `.ipt` files and their feature data; learn the conversion from NIST parts that come as both native and STEP, plus other online sources, and test it. CONCEPT allows it once STEP works. Our NIST catalog lists native CATIA V5, Creo and NX files (hole test case), no Inventor files yet: check the NIST site first.
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
@@ -42,7 +43,6 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - Nice to haves after the project is complete (Morgan, 2026-11-06), from the [research page](https://claude.ai/artifact/S2TDMa3VjXmz4AD7kUt1zm): waivers per finding, shop profiles, change review (rev A vs B, thinnest wall and smallest corner re-measured), comments and sign-off per finding, FMEA row export.
 
 - GitLab at work: are there CI runners, and can they download packages? Ask IT before the move (D-006).
-- Which CAD exports the test STEP files (Inventor version): unknown; public models first.
 
 ## Brainstorm trial (master D-048)
 
@@ -50,11 +50,11 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-08 D-028: Milling warns on a part that looks turned; the plan shows stock and numbered operations; demo opens turning parts on Turning.
 - 2026-11-08 D-027: a part-wide pin moves off small findings (amends D-017); `flange_bolt_hole` test part.
 - 2026-11-08 D-026: turning research proposals 2-5 approved together: support named, `bore_depth` (4×/6×), inside-groove note, slender by smallest diameter.
 - 2026-11-08 D-025: turning slender warning over 3.0× for the steels, 4.0× for aluminium and plastic; high over 8.0× (research proposal 1).
 - 2026-11-08 D-023 Machine plan panel, Passed list, selectable setups; D-024 screenshots fit and zoom.
-- 2026-11-08 D-022: countersinks recorded on the hole and planned as a tool load; full-round depth for sloped exits; a hole on a pocket floor keeps its own axis.
 - 2026-11-08 D-021: undercut pockets get a finding (needs a T-slot or lollipop cutter); sealed voids get none.
 - 2026-11-06 Concept (D-001), master setup (D-002), S1 packages (D-008), status page + demo (D-009).
 - 2026-11-06 First-version scope (D-003), stack (D-004), rules and units (D-005), company-move gates (D-006), spec approved (D-007).

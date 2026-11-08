@@ -6,6 +6,7 @@ const RULE_NAMES: Record<string, string> = {
   hole_depth: "hole depth", hole_size: "hole size", corner_radius: "corner radius", pocket_depth: "pocket depth",
   undercut: "undercut", thin_wall: "thin wall", access: "access",
   turn_axis: "turning axis", turn_slender: "length to diameter", turn_offaxis: "off the turning axis",
+  bore_depth: "bore depth", looks_turned: "looks turned",
 };
 const KIND_NAMES: [string, string, string][] = [["profile", "turned profile", "turned profiles"], ["hole", "hole", "holes"], ["bore", "bore", "bores"], ["groove", "groove", "grooves"],
   ["pocket", "pocket", "pockets"], ["corner", "corner", "corners"], ["wall", "wall", "walls"]];
@@ -208,9 +209,9 @@ const dir = (d: string) => d.replace("-", "−");
 const dirs = (ds: string[]) => ds.map(dir).join(" and ");
 
 /** Why each tool in a setup cuts this feature, from the feature's own numbers. */
-function toolWhy(f: Feature, result: Analysis, setup: number): string {
+function toolWhy(f: Feature, result: Analysis, setup: number, only?: string): string {
   const d = f.dims_mm, inch = (mm: number) => `${(mm / 25.4).toFixed(3)} in`;
-  const ops = result.operations.filter((o) => o.setup === setup && o.features.includes(f.id));
+  const ops = result.operations.filter((o) => o.setup === setup && o.features.includes(f.id) && (!only || o.tool === only));
   return ops.map((o) => {
     const t = result.tools.find((x) => x.id === o.tool);
     if (!t) return "";
@@ -241,6 +242,7 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
     dl.append(el("dt", undefined, term), dd);
   };
   row("Machine", result.machine, "plan-machine");
+  if (result.stock) row("Stock", stockText(result.stock), "plan-stock");
   const lathe = result.setups.length === 1 && result.setups[0].direction === "turn";
   if (lathe && result.turn_axis) row("Turning axis", axisText(result.turn_axis, result), "plan-turn-axis");
   row("Tool loads", `${result.tool_changes} (including the first in each setup)`, "plan-loads");
@@ -279,28 +281,34 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
       const line = el("span", "op");
       const t = tools.get(o.tool);
       const name = el("span");
-      name.append(document.createTextNode(t ? toolName(t) : o.tool), document.createTextNode(" "), el("span", "tid", o.tool));
+      // Operations numbered in the order they run, across all setups (Morgan, 2026-11-08)
+      name.append(el("span", "onum", `${result.operations.indexOf(o) + 1}.`), document.createTextNode(" "),
+        document.createTextNode(t ? toolName(t) : o.tool), document.createTextNode(" "), el("span", "tid", o.tool));
       line.append(name, el("span", "ofeat", o.features.join(", ")));
       box.append(line);
     }
     if (selected === id) {
       const why = el("span", "swhy");
       why.dataset.testid = `plan-setup-why-${i + 1}`;
-      for (const fid of s.features) {
-        const f = byId.get(fid);
-        if (!f) continue;
-        if (s.direction === "turn") {
-          const off = result.findings.some((x) => x.rule === "turn_offaxis" && x.feature === fid);
-          const where = f.kind === "profile" ? "is the turned outside" : off ? "is off the turning axis: live tooling"
-            : f.kind === "groove" ? (f.outside === false
-              ? "is an inside groove on the axis; not every shop cuts inside grooves (Protolabs does not, D-026)"
-              : "is a groove on the axis") : "is on the turning axis";
-          why.append(el("span", undefined, `${fid} ${where}. ${toolWhy(f, result, i)}`));
-          continue;
+      // In the order the operations run: each operation's features, each with why that tool cuts it.
+      for (const o of ops) {
+        const num = `${result.operations.indexOf(o) + 1}.`;
+        for (const fid of o.features) {
+          const f = byId.get(fid);
+          if (!f) continue;
+          if (s.direction === "turn") {
+            const off = result.findings.some((x) => x.rule === "turn_offaxis" && x.feature === fid);
+            const where = f.kind === "profile" ? "is the turned outside" : off ? "is off the turning axis: live tooling"
+              : f.kind === "groove" ? (f.outside === false
+                ? "is an inside groove on the axis; not every shop cuts inside grooves (Protolabs does not, D-026)"
+                : "is a groove on the axis") : "is on the turning axis";
+            why.append(el("span", undefined, `${num} ${fid} ${where}. ${toolWhy(f, result, i, o.tool)}`));
+            continue;
+          }
+          const earlier = result.setups.slice(0, i).map((x) => x.direction).filter((d) => f.open_dirs.includes(d));
+          const reach = earlier.length ? "" : f.open_dirs.length > 1 ? `; ${dir(s.direction)} is the first setup that reaches it` : "";
+          why.append(el("span", undefined, `${num} ${fid} opens ${dirs(f.open_dirs)}${reach}. ${toolWhy(f, result, i, o.tool)}`));
         }
-        const earlier = result.setups.slice(0, i).map((x) => x.direction).filter((d) => f.open_dirs.includes(d));
-        const reach = earlier.length ? "" : f.open_dirs.length > 1 ? `; ${dir(s.direction)} is the first setup that reaches it` : "";
-        why.append(el("span", undefined, `${fid} opens ${dirs(f.open_dirs)}${reach}. ${toolWhy(f, result, i)}`));
       }
       box.append(why);
     }
@@ -316,6 +324,14 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
   }
   host.append(el("p", "note", lathe ? "The turning axis is the line carrying the most round faces."
     : "Directions are the part's own axes: +Z is the outward normal of its largest flat face."));
+}
+
+/** "0.500 in round bar, 4.500 in long" or "2.000 × 3.000 × 1.500 in block": the part's own size, no allowance. */
+export function stockText(s: NonNullable<Analysis["stock"]>): string {
+  const f = (v: number) => v.toFixed(3);
+  return s.shape === "bar"
+    ? `${f(s.diameter_in ?? 0)} in round bar, ${f(s.length_in ?? 0)} in long (the part's size; no allowance added)`
+    : `${(s.size_in ?? []).map(f).join(" × ")} in block (the part's size; no allowance added)`;
 }
 
 /** The turning axis in the part's own axes: "+Z" when it lies along one, else its components. */

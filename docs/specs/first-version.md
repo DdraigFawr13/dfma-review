@@ -28,7 +28,7 @@ Design reviews for manufacturability are "not really done at all" today (Morgan)
   - number and letter drill sizes
 - Exterior profiles, steps, open-sided pockets, threads, floor fillets and thin cylindrical shells (tubes, sleeves) are not planned or ruled on in this version. They are listed in `assumptions`.
 - Faces other than planes, cylinders, cones, and the cylinder or torus fillets between pocket walls. The tool lists any other face in `not_analysed_faces` instead of guessing.
-- Choosing milling or turning automatically. The user picks; the tool warns only when turning is picked and no turning axis is found.
+- Choosing milling or turning automatically. The user picks; the tool warns when turning is picked and no turning axis is found, and (D-028) when milling is picked for a part that looks turned.
 - Any AI at runtime (D-001).
 - The drawing check and drawing generation (stages 3 and 4).
 

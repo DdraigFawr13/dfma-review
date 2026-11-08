@@ -203,3 +203,13 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-08). Changes D-017's "overlapping pins fold into the first placed".
 - **Decision:** pins are placed selected first, then the findings whose visible spots spread least on screen (a hole before the whole outside of a shaft), then in finding order. A pin tries its own visible spots, nearest its middle first, and takes the first that covers no placed pin; it folds ("+n") only when every spot is covered. Also added: the test part `flange_bolt_hole` (a bolt hole parallel to the axis, 0.750 in off it).
 - **Why:** Morgan, 2026-11-08, on the S6 example: "I don't see that off center hole". The length finding's pin sat at the shaft's middle, on top of the cross hole, and folded the hole's pin into it. Morgan picked both fixes (move the pin, add an off-centre hole part).
+
+## D-028 Milling warns on a turned part; stock and operation order in the plan
+
+- **Status:** Accepted (2026-11-08).
+- **Decision:**
+  - New rule `looks_turned` (mill only): when round faces on one axis are 40% or more of the part's surface, high: "This part looks turned; review it for Turning". The mirror of `turn_axis`; the mill plan is unchanged. Changes the spec's Non-goal line "the tool warns only when turning is picked and no turning axis is found".
+  - The Machine plan shows the stock: a round bar (largest outside diameter × length) for Turning, a block (the part's three sizes) for Milling. Both are the part's own size; no machining allowance is added.
+  - Operations are numbered in the order they run, across setups, and a selected setup's reasons are listed in that order.
+  - The demo opens a turning test part on Turning.
+- **Why:** Morgan, 2026-11-08, on the S6 demo: a turning part opened on Milling; "when I selected a turning part as milling it only had one setup and operation when the part had like grooves"; "the machine plan should say the stock size and it should list the operation details in order of operations listed". Morgan picked "Warn: looks turned" (recommended).
