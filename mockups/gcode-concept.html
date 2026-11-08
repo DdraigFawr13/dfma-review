@@ -21,7 +21,7 @@ p, ul { margin:0; } ul { padding-left:1.2rem; display:grid; gap:4px; }
 .tabs { display:flex; flex-wrap:wrap; gap:8px; }
 .tabs button, .ctl button { font:600 .9rem var(--sans); min-height:40px; padding:4px 12px; border:1px solid var(--line); background:var(--panel);
   color:var(--ink); cursor:pointer; border-radius:2px; }
-.tabs button[aria-selected="true"] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.ctl button[aria-pressed="true"], .tabs button[aria-selected="true"] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
 .tabs small { display:block; font-weight:400; }
 button:focus-visible, input:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
 .work { display:grid; grid-template-columns:minmax(0, 1.2fr) minmax(0, 1fr); gap:16px; }
@@ -55,9 +55,13 @@ canvas { width:100%; display:block; background:var(--view); border:1px solid var
 
 <section class="work">
   <div class="views">
-    <canvas id="top" width="760" height="560" aria-label="Top view of the face being cut, from the spindle"></canvas>
+    <div class="ctl" role="group" aria-label="View">
+      <button type="button" id="v-iso" aria-pressed="true">Isometric</button>
+      <button type="button" id="v-top" aria-pressed="false">Top</button>
+    </div>
+    <canvas id="top" width="760" height="560" aria-label="Isometric view of the face being cut, with the tool at its depth"></canvas>
     <canvas id="side" width="760" height="200" aria-label="Side view: depth of the tool over the run"></canvas>
-    <div class="legend"><span><i style="background:var(--cut)"></i>cutting move (G1)</span><span><i style="background:var(--rapid)"></i>rapid move (G0)</span><span><i style="background:var(--done)"></i>material removed</span></div>
+    <div class="legend"><span><i style="background:var(--cut)"></i>cutting move (G1)</span><span><i style="background:var(--rapid)"></i>rapid move (G0)</span><span><i style="background:var(--done)"></i>material removed</span><span><i style="background:var(--muted)"></i>dashed: the tool below the face</span></div>
     <div class="ctl">
       <button type="button" id="play">Play</button>
       <button type="button" id="step">Step</button>
@@ -230,7 +234,13 @@ canvas { width:100%; display:block; background:var(--view); border:1px solid var
     return { x: m.from.x + (m.to.x - m.from.x) * t, y: m.from.y + (m.to.y - m.from.y) * t, z: m.from.z + (m.to.z - m.from.z) * t };
   }
 
+  let view = "iso";
   function draw() {
+    if (view === "iso") drawIso(); else drawTop();
+    drawSide();
+  }
+
+  function drawTop() {
     const W = top.width, H = top.height, [fw, fh] = op.face, pad = 40;
     const s = Math.min((W - 2 * pad) / fw, (H - 2 * pad) / fh), ox = (W - fw * s) / 2, oy = (H + fh * s) / 2;
     const X = (x) => ox + x * s, Y = (y) => oy - y * s;
@@ -266,6 +276,88 @@ canvas { width:100%; display:block; background:var(--view); border:1px solid var
     // the tool
     g.strokeStyle = css("--ink"); g.lineWidth = 2; g.fillStyle = css("--panel"); g.globalAlpha = 0.85;
     g.beginPath(); g.arc(X(cur.x), Y(cur.y), op.tool / 2 * s, 0, 7); g.fill(); g.stroke(); g.globalAlpha = 1;
+  }
+
+  // Isometric view: x to the right and down, y to the left and down, z up; the face being cut is z = 0.
+  function drawIso() {
+    const W = top.width, H = top.height, [fw, fh] = op.face, g = top.getContext("2d");
+    const depth = op.kind === "pocket" ? op.pocket.depth : op.hole.depth, T = depth + 0.35, toolLen = 0.6;
+    const c = Math.cos(Math.PI / 6), sn = Math.sin(Math.PI / 6);
+    const P = (x, y, z) => [(x - y) * c, (x + y) * sn - z];
+    const pts = [[0, 0, 0], [fw, 0, 0], [0, fh, 0], [fw, fh, 0], [fw, fh, -T], [fw, 0, -T], [0, fh, -T], [0, 0, SAFE + toolLen]];
+    const xs = pts.map((p) => P(...p)[0]), ys = pts.map((p) => P(...p)[1]);
+    const s = Math.min((W - 60) / (Math.max(...xs) - Math.min(...xs)), (H - 60) / (Math.max(...ys) - Math.min(...ys)));
+    const ox = (W - (Math.max(...xs) + Math.min(...xs)) * s) / 2, oy = (H - (Math.max(...ys) + Math.min(...ys)) * s) / 2;
+    const S = (x, y, z) => { const [a, b] = P(x, y, z); return [ox + a * s, oy + b * s]; };
+    const poly = (ps, fill, stroke) => { g.beginPath(); ps.forEach((p, i) => (i ? g.lineTo : g.moveTo).call(g, ...S(...p))); g.closePath();
+      if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = 1.5; g.stroke(); } };
+    g.fillStyle = css("--view"); g.fillRect(0, 0, W, H);
+    // the stock: top face, and the two faces toward the viewer
+    g.globalAlpha = 0.95;
+    poly([[fw, 0, 0], [fw, fh, 0], [fw, fh, -T], [fw, 0, -T]], css("--stock"), css("--ink"));
+    poly([[0, fh, 0], [fw, fh, 0], [fw, fh, -T], [0, fh, -T]], css("--grid"), css("--ink"));
+    poly([[0, 0, 0], [fw, 0, 0], [fw, fh, 0], [0, fh, 0]], css("--panel"), css("--ink"));
+    g.globalAlpha = 1;
+    g.strokeStyle = css("--grid"); g.lineWidth = 1;
+    for (let x = 0.25; x < fw - 1e-9; x += 0.25) { g.beginPath(); g.moveTo(...S(x, 0, 0)); g.lineTo(...S(x, fh, 0)); g.stroke(); }
+    for (let y = 0.25; y < fh - 1e-9; y += 0.25) { g.beginPath(); g.moveTo(...S(0, y, 0)); g.lineTo(...S(fw, y, 0)); g.stroke(); }
+    // the feature's outline on the face, dashed
+    g.setLineDash([6, 4]); g.strokeStyle = css("--ink"); g.lineWidth = 1.2;
+    if (op.kind === "pocket") { const Q = op.pocket; poly([[Q.x0, Q.y0, 0], [Q.x0 + Q.w, Q.y0, 0], [Q.x0 + Q.w, Q.y0 + Q.h, 0], [Q.x0, Q.y0 + Q.h, 0]], null, css("--ink")); }
+    g.setLineDash([]);
+    const ell = (x, y, z, r, fill, stroke) => { const [cx, cy] = S(x, y, z); g.beginPath(); g.ellipse(cx, cy, r * s * c * Math.SQRT2, r * s * sn * Math.SQRT2, 0, 0, 7);
+      if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = 1.5; g.stroke(); } };
+    const cur = pos(), done = prog.moves.slice(0, idx);
+    // material removed: the cut at the face (light) and at its floor (dark), so the cavity reads as a recess
+    g.lineCap = "round"; g.lineJoin = "round";
+    const cuts = done.filter((m) => !m.rapid && Math.min(m.from.z, m.to.z) < 0);
+    if (op.kind === "pocket") {
+      const floor = Math.min(0, ...cuts.map((m) => Math.min(m.from.z, m.to.z)));
+      for (const [z, col, a] of [[0, "--view", 1], [floor, "--done", 0.85]]) {
+        g.strokeStyle = css(col); g.globalAlpha = a; g.lineWidth = op.tool * s * 1.05;
+        for (const m of cuts) { g.beginPath(); g.moveTo(...S(m.from.x, m.from.y, z)); g.lineTo(...S(m.to.x, m.to.y, z)); g.stroke(); }
+      }
+      g.globalAlpha = 1;
+    } else if (cuts.length) {
+      const H0 = op.hole, low = Math.min(...cuts.map((m) => m.to.z));
+      ell(H0.x, H0.y, 0, H0.d / 2, css("--view"));
+      ell(H0.x, H0.y, low, H0.d / 2, css("--done"));
+    }
+    // the path in 3D: cutting moves solid, rapids dashed
+    g.lineWidth = 1.4;
+    for (const m of prog.moves) {
+      g.strokeStyle = m.rapid ? css("--rapid") : css("--cut"); g.setLineDash(m.rapid ? [4, 4] : []);
+      g.beginPath(); g.moveTo(...S(m.from.x, m.from.y, m.from.z)); g.lineTo(...S(m.to.x, m.to.y, m.to.z)); g.stroke();
+    }
+    g.setLineDash([]);
+    // the tool: a cylinder from its tip up toolLen. Below the face it is drawn faint and dashed, as if seen
+    // through the material, so its depth reads; above the face it is solid.
+    const r = op.tool / 2, rx = r * s * c * Math.SQRT2, zTop = cur.z + toolLen;
+    const body = (z0, z1, faint) => {
+      if (z1 <= z0) return;
+      const [bx, by] = S(cur.x, cur.y, z0), [tx, ty] = S(cur.x, cur.y, z1);
+      g.globalAlpha = faint ? 0.45 : 0.92; g.setLineDash(faint ? [4, 3] : []);
+      g.fillStyle = css("--panel"); g.fillRect(bx - rx, ty, 2 * rx, by - ty);
+      g.strokeStyle = css("--ink"); g.lineWidth = 1.5;
+      g.beginPath(); g.moveTo(bx - rx, by); g.lineTo(tx - rx, ty); g.moveTo(bx + rx, by); g.lineTo(tx + rx, ty); g.stroke();
+      g.setLineDash([]); g.globalAlpha = 1;
+    };
+    if (cur.z < 0) {
+      body(cur.z, Math.min(0, zTop), true);
+      g.globalAlpha = 0.45; ell(cur.x, cur.y, cur.z, r, css("--accent"), css("--ink")); g.globalAlpha = 1;
+      ell(cur.x, cur.y, 0, r, css("--done"), css("--ink")); // where it enters the face
+      body(0, zTop, false);
+    } else {
+      body(cur.z, zTop, false);
+      ell(cur.x, cur.y, cur.z, r, css("--accent"), css("--ink"));
+    }
+    ell(cur.x, cur.y, zTop, r, css("--panel"), css("--ink"));
+    g.fillStyle = css("--muted"); g.font = `500 14px ${css("--mono")}`;
+    g.fillText(`${fw.toFixed(3)} × ${fh.toFixed(3)} in face · tool tip Z${f4(cur.z)}`, 12, H - 12);
+  }
+
+  function drawSide() {
+    const cur = pos();
     // side view: Z over the run
     const sg = side.getContext("2d"), SW = side.width, SH = side.height, z0 = SAFE + 0.05, z1 = -(op.kind === "pocket" ? op.pocket.depth : op.hole.depth) - 0.05;
     const SY = (z) => 14 + (z0 - z) / (z0 - z1) * (SH - 34);
@@ -315,6 +407,13 @@ canvas { width:100%; display:block; background:var(--view); border:1px solid var
   });
   document.getElementById("step").addEventListener("click", () => { playing = false; playBtn.textContent = "Play"; stepMove(); draw(); scrollLine(); });
   document.getElementById("reset").addEventListener("click", () => { playing = false; playBtn.textContent = "Play"; idx = 0; frac = 0; draw(); codeEl.scrollTop = 0; });
+  const setView = (v) => { view = v;
+    document.getElementById("v-iso").setAttribute("aria-pressed", String(v === "iso"));
+    document.getElementById("v-top").setAttribute("aria-pressed", String(v === "top"));
+    top.setAttribute("aria-label", v === "iso" ? "Isometric view of the face being cut, with the tool at its depth" : "Top view of the face being cut, from the spindle");
+    draw(); };
+  document.getElementById("v-iso").addEventListener("click", () => setView("iso"));
+  document.getElementById("v-top").addEventListener("click", () => setView("top"));
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => draw());
   select(0);
   // A still frame part-way through, so the page shows a cut before anyone presses Play.
