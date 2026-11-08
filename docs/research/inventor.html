@@ -1,0 +1,193 @@
+<title>Inventor Parts Research</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one reading column. The answer first, then the NIST check, what an .ipt holds, the ways to read it, how we test, and what is still unknown. */
+:root{--bg:#eef2f6;--panel:#ffffff;--ink:#16263d;--muted:#55657a;--line:#c4cfdc;--accent:#1f5fa8;--good:#3f6b2a;--warn:#a35a00;--bad:#a3302a;
+--sans:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1824;--panel:#172334;--ink:#e3eaf2;--muted:#9fb0c4;--line:#2c3c52;--accent:#7fb0ea;--good:#8cc47a;--warn:#e0a050;--bad:#ee8a80;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1824;--panel:#172334;--ink:#e3eaf2;--muted:#9fb0c4;--line:#2c3c52;--accent:#7fb0ea;--good:#8cc47a;--warn:#e0a050;--bad:#ee8a80;color-scheme:dark}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+<style>
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--sans);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+main{max-width:44rem;margin:0 auto;display:grid;gap:20px}
+h1{font-size:1.5rem;margin:0;text-wrap:balance}h2{font-size:1.125rem;margin:0 0 8px;text-wrap:balance}
+p,ul{margin:0}ul{padding-left:1.2em;display:grid;gap:6px}
+.muted{color:var(--muted);font-size:.875rem}
+a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.85em;overflow-wrap:anywhere}
+.lead{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:2px;padding:14px;display:grid;gap:8px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:12px 14px;display:grid;gap:8px;min-width:0}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font-size:.9rem;font-variant-numeric:tabular-nums;width:100%}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{font-weight:600}
+.num{font-family:var(--mono);font-weight:600}
+.tag{font-family:var(--mono);font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;border:1px solid currentColor;border-radius:2px;padding:0 5px;white-space:nowrap}
+.ok{color:var(--good)}.est{color:var(--warn)}.no{color:var(--bad)}
+.route{border-left:4px solid var(--line)}
+.route.pick{border-left-color:var(--good)}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.92rem}
+.facts dt{color:var(--muted)}.facts dd{margin:0;min-width:0}
+details summary{cursor:pointer;font-weight:600}
+</style>
+<main>
+<header style="display:grid;gap:6px">
+<h1>Inventor parts research</h1>
+<p class="muted">2026-11-08 · for Morgan · can the app read Inventor <code>.ipt</code> parts and their features, and how do we test it</p>
+</header>
+
+<div class="lead">
+<p><strong>Yes, we can test it, and NIST gives us the parts.</strong> NIST publishes 16 Inventor part files (Inventor 2021 and 2024) of the same test parts we already use as STEP, in the public domain.</p>
+<p><strong>No free, open, Linux tool reads Inventor's hole features fully.</strong> Every <code>.ipt</code> holds the full shape (as an ACIS model) and its feature tree (Hole1, Extrusion1, Fillet1 …), but Autodesk doesn't document the format. The open-source reader (InventorLoader, GPL) gets hole sizes but not threads. The paid readers (HOOPS, CAD Exchanger, ODA) read the shape only, not features. Only Autodesk's own software reads everything, and that needs Inventor on Windows or Autodesk's cloud.</p>
+<p><strong>My suggestion, to decide in round 1:</strong> keep STEP for the shape, which already works. Add a small reader of our own that takes the <em>feature data</em> from the <code>.ipt</code>, which STEP loses (hole type, thread callout). Build it by comparing the 16 NIST <code>.ipt</code> files with their STEP twins. A second route is an Inventor add-in on the engineer's PC that exports STEP plus a feature list through Autodesk's API. That one only works if your company has Inventor seats.</p>
+</div>
+
+<section class="route pick">
+<h2>0. Update: threads read and mapped to the part <span class="tag ok">your pick: own reader</span></h2>
+<p>You chose our own reader (D-031). I wrote a small decoder from the NIST files' bytes and ran it on all 16 parts. Every thread in the <code>.ipt</code> sits on a face of its built-in 3D model. I take that face's axis and find the hole our app sees in the STEP on the same axis. The match is by position and axis, with no guessing by size.</p>
+<div class="tbl"><table>
+<tr><th>Part</th><th>Threads in the .ipt</th><th>Mapped to a STEP hole</th><th>NIST's own answer</th></tr>
+<tr><td>CTC 04 (Inventor 2021)</td><td>4 × M12x1.75 6H, 25 mm deep</td><td class="ok num">4 of 4</td><td>"4X M12 x 1.75 - 6H ↧25 ±0.25" <span class="ok">✔</span></td></tr>
+<tr><td>FTC 10 (2021)</td><td>6 × M3x0.5 6H, 6 mm deep</td><td class="ok num">6 of 6</td><td>drawing "2X M3x0.5-6g" three times: count <span class="ok">✔</span>; class 6g vs 6H differs</td></tr>
+<tr><td>STC 10 (2024)</td><td>6 × M3x0.5 6H, 6 mm deep</td><td class="est num">5 of 6</td><td>the hole note in the file: "M3x0.5 x 6.000 mm ThreadDepth" <span class="ok">✔</span>; one thread sits 0.10 mm off the STEP hole's axis</td></tr>
+</table></div>
+<p>The other 13 parts have no threads, in the <code>.ipt</code> or in NIST's tables. Each thread also carries its tap-drill size as stored (10.25 for M12, 2.5 for M3; my reading of the last value) and the diameter Inventor models (10.106 mm for M12, the minor diameter). The STEP from the other CAD systems models the same hole at Ø10.2 (CTC 04) or Ø3.0 (STC 10). That's why the shape alone can't name a thread.</p>
+<p><strong>Not done yet:</strong></p>
+<ul>
+<li><strong>Plain holes and their type</strong> (counterbore and so on): the hole tags only reach some faces. They cover 10 of 10 STEP holes on CTC 01 but only 4 of 22 on FTC 06, so patterned and mirrored copies are probably tagged another way. Hole sizes as designed live in a part of the file I haven't decoded.</li>
+<li><strong>FTC 07</strong> didn't line up with its STEP at all.</li>
+<li><strong>The NIST STEP files come from other CAD systems</strong>, so I had to find the rotation between the two models first. An engineer's own STEP export should share the <code>.ipt</code>'s frame <span class="est">(assumption, not checked)</span>.</li>
+</ul>
+<p class="muted">Scripts: <code>docs/research/inventor-spike/</code>. olefile ran in a scratch folder, not in the app.</p>
+</section>
+
+<section>
+<h2>1. NIST has Inventor files</h2>
+<p>The <a href="https://www.nist.gov/ctl/smart-connected-systems-division/smart-connected-manufacturing-systems-group/mbe-pmi-0">MBE PMI page</a> lists, verbatim: "Autodesk Inventor [STC] Inventor 2024 [FTC/CTC] Inventor 2021". Our catalogue only had the hole test case zip, which has no Inventor file. I downloaded the zips and listed them myself:</p>
+<div class="tbl"><table>
+<tr><th>Download</th><th>Inventor files</th><th>STEP of the same parts</th></tr>
+<tr><td>FTC/CTC CAD models (60,294,624 bytes)</td><td class="num">11</td><td>CTC 01-05, FTC 06-11: AP242 with PMI (our <code>tests/nist/</code> zip, the same file NIST serves now: SHA-256 matches) plus geometry-only STEP in the same zip</td></tr>
+<tr><td>STC v4 (51,125,067 bytes)</td><td class="num">5</td><td>STC 06-10 AP242 in our zip. The files are named <code>INV_nist_ftc_06…</code> but sit in the STC zip</td></tr>
+<tr><td>HTC hole test case, MTC box assembly, D2MI</td><td class="num">0</td><td>none in HTC and MTC</td></tr>
+</table></div>
+<p><strong>Licence:</strong> the README in the zip says the test system "is not subject to copyright protection and is in the public domain" (17 U.S.C. 105). So we can commit them, as D-011 already allows for NIST files.</p>
+<p><strong>Two cautions.</strong> (a) The STC README says, of earlier versions, "the Inventor models were not" updated, then on 29 Aug 2023 "all of the Inventor models have been updated". So an Inventor STC part may differ a little from the CATIA/NX version the STEP came from. (b) NIST removed the authoring system from its STEP files ("Information that shows which CAD software generated the files has been removed"), so the STEP twins are not Inventor exports.</p>
+</section>
+
+<section>
+<h2>2. What's inside an .ipt</h2>
+<p>I opened all 16 NIST files with a 20-line script of my own. It uses olefile, a free BSD-licensed Python package, and ran in a scratch folder, not the app. What it found:</p>
+<ul>
+<li>The file is a Microsoft compound file (the old Office container). Its data streams are zlib-compressed.</li>
+<li><strong>The shape is stored as ACIS binary</strong> (<code>asmheader</code>, version 226.0.3 in the 2021 files and 229.x in the 2024 files). ACIS is the kernel family Inventor's ShapeManager came from.</li>
+<li><strong>The feature tree is there by name.</strong> CTC 01 lists Hole1-7, Extrusion1-5, Fillet1-4, Chamfer1-2 and Rectangular Pattern1, plus "Hole Note" and "Feature Control Frame" annotations. The sizes and thread specs are in undocumented binary records.</li>
+</ul>
+<details><summary>Feature names per file (rough count of names, not of holes)</summary>
+<div class="tbl"><table>
+<tr><th>File</th><th>Hole</th><th>Extrusion</th><th>Fillet</th><th>Chamfer</th><th>Other</th></tr>
+<tr><td>ctc_01 (2021)</td><td>7</td><td>5</td><td>4</td><td>2</td><td>pattern 1</td></tr>
+<tr><td>ctc_02</td><td>28</td><td>17</td><td>13</td><td>0</td><td>mirror 4, shell 1, pattern 6</td></tr>
+<tr><td>ctc_03</td><td>4</td><td>0</td><td>0</td><td>3</td><td>mirror 3</td></tr>
+<tr><td>ctc_04</td><td>9</td><td>8</td><td>8</td><td>2</td><td>mirror 1</td></tr>
+<tr><td>ctc_05</td><td>5</td><td>8</td><td>2</td><td>1</td><td>mirror 3, pattern 2</td></tr>
+<tr><td>ftc_06</td><td>9</td><td>7</td><td>2</td><td>0</td><td>revolve 2, mirror 1, pattern 1</td></tr>
+<tr><td>ftc_07</td><td colspan="5">no feature names found (ACIS 227.0.0): likely a base body without history</td></tr>
+<tr><td>ftc_08</td><td>1</td><td>6</td><td>4</td><td>0</td><td>mirror 2</td></tr>
+<tr><td>ftc_09</td><td>1</td><td>1</td><td>0</td><td>4</td><td>mirror 2</td></tr>
+<tr><td>ftc_10</td><td>11</td><td>11</td><td>4</td><td>0</td><td>mirror 1, pattern 2</td></tr>
+<tr><td>ftc_11</td><td>0</td><td>0</td><td>1</td><td>0</td><td>revolve 1</td></tr>
+<tr><td>stc 06 (2024)</td><td>7</td><td>9</td><td>2</td><td>0</td><td>revolve 2, mirror 1, pattern 2</td></tr>
+<tr><td>stc 07</td><td>3</td><td>8</td><td>3</td><td>0</td><td>mirror 2, sweep 1</td></tr>
+<tr><td>stc 08</td><td>0</td><td>7</td><td>4</td><td>0</td><td>mirror 2</td></tr>
+<tr><td>stc 09</td><td>1</td><td>1</td><td>0</td><td>4</td><td>mirror 2</td></tr>
+<tr><td>stc 10</td><td>11</td><td>13</td><td>4</td><td>0</td><td>mirror 3, pattern 3</td></tr>
+</table></div>
+<p class="muted">One Hole feature can cut several holes (a pattern or several sketch points), so these are feature counts, not hole counts.</p>
+</details>
+</section>
+
+<section>
+<h2>3. Ways to read an .ipt</h2>
+<p class="muted">Prices are what each page said on 2026-11-08. "Features" means hole type, thread and counterbore, not only the shape.</p>
+
+<section class="route pick">
+<h2>A. Our own feature reader, with STEP for the shape <span class="tag ok">suggested</span></h2>
+<dl class="facts">
+<dt>Licence, cost</dt><dd>Ours. One small new dependency: olefile (BSD, free). Needs your OK (SAFE-01).</dd>
+<dt>Inventor, Windows</dt><dd>Neither. Runs on Linux in our service.</dd>
+<dt>Features</dt><dd>What we decode: names first, then hole parameters and the thread callout. The shape still comes from the STEP the engineer exports.</dd>
+<dt>Lock-in</dt><dd>None.</dd>
+<dt>Risks</dt><dd>The format is undocumented and may shift with Inventor releases (we saw ACIS 226 to 229 in 2021 to 2024). Autodesk's licence terms on reverse engineering: <span class="est">not checked</span>. We'd write it ourselves without copying GPL code (see C).</dd>
+</dl>
+</section>
+
+<section class="route">
+<h2>B. Inventor add-in on the engineer's PC</h2>
+<dl class="facts">
+<dt>Licence, cost</dt><dd>Uses the company's Inventor seats. No new spend if they exist.</dd>
+<dt>Inventor, Windows</dt><dd>Both, on the PC only. The app server stays Linux.</dd>
+<dt>Features</dt><dd>All of them, through Autodesk's API (the Hole features and their threads). The add-in writes STEP plus a feature list next to it.</dd>
+<dt>Lock-in</dt><dd>Autodesk on the PC side only. Needs IT to allow an add-in.</dd>
+<dt>Note</dt><dd>Apprentice, the free viewer API, gives "file references, assembly structure, B-Rep, geometry, render styles, and document properties" (<a href="https://help.autodesk.com/cloudhelp/2026/ENU/Inventor-API/files/Apprentice_Overview.htm">Autodesk</a>). Whether it gives hole features: <span class="est">not checked</span>.</dd>
+</dl>
+</section>
+
+<section class="route">
+<h2>C. InventorLoader (open source, FreeCAD add-on)</h2>
+<dl class="facts">
+<dt>Licence, cost</dt><dd>GPL-2.0, free. Linking it into our app would put the app under GPL terms. Running it as a separate converter keeps it at arm's length <span class="est">(inference, not legal advice)</span>.</dd>
+<dt>Inventor, Windows</dt><dd>Neither, but needs FreeCAD (about 3 GB installed here).</dd>
+<dt>Features</dt><dd>Reads hole type, diameter, depth and counterbore/countersink (I read its code: <code>Create_FxHole</code>). Threads not done (<code>hole.Threaded = False</code>; <code>Create_FxThread</code> unfinished).</dd>
+<dt>Versions</dt><dd>"Only files from INVENTOR V2010 or newer are supported". One author, last change 2024-12-17.</dd>
+<dt>Tested?</dt><dd><span class="no">No.</span> Running it on a NIST file here was blocked: the session won't run outside code without your say-so.</dd>
+</dl>
+</section>
+
+<section class="route">
+<h2>D. Autodesk cloud (APS)</h2>
+<dl class="facts">
+<dt>Licence, cost</dt><dd>Design Automation for Inventor: 5 free hours a month, then "1 token or $3 for 12 minutes" ($15/h, my arithmetic). Model Derivative (.ipt to STEP): 60 free a month, then "$3 for 3 simple translations". Source: <a href="https://aps.autodesk.com/blog/aps-business-model-evolution">APS rate chart</a>, 2025-11-12.</dd>
+<dt>Inventor, Windows</dt><dd>Neither on our side. Needs an Autodesk account and API keys.</dd>
+<dt>Features</dt><dd>Design Automation runs Inventor's API, so all of them <span class="est">(inference)</span>. Model Derivative gives STEP only.</dd>
+<dt>Lock-in</dt><dd>Full Autodesk cloud. Company parts leave the building, which hits D-006.</dd>
+</dl>
+</section>
+
+<section class="route">
+<h2>E. Paid SDKs (shape only)</h2>
+<ul>
+<li><strong>HOOPS Exchange</strong>: Inventor "Up to 2027 … B-rep Supported … PMI Unsupported". Feature trees only "With CATIA V5, Creo, NX and SolidWorks" (<a href="https://docs.techsoft3d.com/exchange/latest/start/format/inventor_reader.html">Tech Soft 3D</a>, confirmed). Price: about $33,000/yr from a search snippet, <span class="est">not verified</span>.</li>
+<li><strong>ODA MCAD SDK</strong>: "Inventor support in the SDK is currently read-only", needs "Sustaining membership or above". On the <a href="https://www.opendesign.com/pricing">pricing page</a>, membership starts at "$7,500 First Year Cost $4,500 Recurring Annual Cost", and the MCAD row reads "MCAD Converter for CATIA, Inventor … Under development N/A": no price for the Inventor part yet. No features mentioned.</li>
+<li><strong>CAD Exchanger SDK</strong>: Inventor shape and assemblies, Linux and Python. Price on quote. No features.</li>
+<li>Spatial and Datakit also read Inventor shapes. Prices aren't public and no feature reading was found.</li>
+</ul>
+<p>None of these reads features, and all are a large yearly cost. I don't suggest them.</p>
+</section>
+</section>
+
+<section>
+<h2>4. How we'd test it</h2>
+<ul>
+<li><strong>Pairs:</strong> 16 NIST parts as <code>.ipt</code> and STEP. Outside NIST, few pairs can be committed: AntoniWanot/BRICK has 7 (MIT, 3D-printed gearbox parts) and RatHeadFixation has 1 (CC0). GrabCAD, McMaster, TraceParts and MISUMI terms don't allow committing their files.</li>
+<li><strong>Through our own analysis:</strong> for each pair, run the app on the STEP, then on what the <code>.ipt</code> route gives. Compare holes found, diameters, depths, counterbores and threads. Check both against the NIST answer key (Report 3 Appendix A, the PMI spreadsheets), which says, for example, "F18-21 | Counterbored Holes - Set 1 | 4X Ø.415 ±.008".</li>
+<li><strong>Hole by hole:</strong> match each <code>.ipt</code> hole feature to a hole we find in the STEP by position and axis. The score is matched, missed and wrong, the same way D-018 scores recognition.</li>
+<li><strong>Threads are the real prize.</strong> The modelled diameter of a threaded hole differs between CAD systems (NIST Report 1, p28), so STEP shape alone can't name a thread. Inventor keeps the thread callout in the hole feature <span class="est">(inference from InventorLoader's code: <code>threadDiam</code> and thread fields)</span>.</li>
+<li><strong>Your own parts:</strong> pairs from your company's Inventor (exported STEP) would test the versions you actually use. The free Autodesk education licence can't be used: "'Educational Purposes' does not include commercial, professional or any other for-profit purposes."</li>
+</ul>
+</section>
+
+<section>
+<h2>5. Not checked yet</h2>
+<ul>
+<li>Whether Inventor's STEP AP242 export carries hole and thread data as PMI.</li>
+<li>Whether Apprentice gives hole features.</li>
+<li>Autodesk's licence terms on reading the file format.</li>
+<li>HOOPS, CAD Exchanger, Spatial and Datakit prices. The live APS pricing page refused automated reads (403), so the rate chart above comes from Autodesk's blog image.</li>
+<li>Which Inventor version your company uses, and whether it has seats IT would let an add-in run on.</li>
+<li>InventorLoader on a real file (blocked, see C).</li>
+</ul>
+</section>
+
+<p class="muted">Research by three agents, with each key source opened again by the main session: NIST zips listed and README read, the <code>.ipt</code> scan run, the InventorLoader code read, the APS rate image read, and the HOOPS and ODA pages fetched. Nothing in the app changed.</p>
+</main>
