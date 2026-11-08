@@ -694,13 +694,35 @@ def _edge_neighbour(topo: Topology, face_id: int, edge) -> int | None:
 BREAK_STEP = 0.01  # mm: how far past a floor edge, and below the floor, the enclosure probe starts
 
 
+def _sealed_faces(solid, faces) -> set[int]:
+    """Ids of the faces on a shell other than the solid's outer one: a void sealed inside the part.
+    Set 2's reach test leaves these alone: MFCAD++ labels such a void a pocket (parts 11836, 12204 and
+    12552 of the first 500: 22 faces), where an earlier feature's walls closed it in. Whether to report
+    it as a void that can't be machined is open (HANDOFF)."""
+    from OCC.Core.BRepClass3d import brepclass3d
+    from OCC.Core.TopAbs import TopAbs_SHELL
+    outer = brepclass3d.OuterShell(topods.Solid(solid))
+    out, exp = set(), TopExp_Explorer(solid, TopAbs_SHELL)
+    while exp.More():
+        shell = exp.Current()
+        exp.Next()
+        if shell.IsSame(outer):
+            continue
+        fexp = TopExp_Explorer(shell, TopAbs_FACE)
+        while fexp.More():
+            out.update(i for i, f in enumerate(faces) if f.IsSame(fexp.Current()))
+            fexp.Next()
+    return out
+
+
 class _Enclosure:
     """Is the gap past a floor edge inside the part? Loaded once per analysis, only when needed."""
 
-    def __init__(self, solid):
+    def __init__(self, solid, faces=()):
         self.solid = solid
         self.rays = None
         self.classifier = None
+        self.sealed = _sealed_faces(solid, faces)
 
     def inside(self, floor, n: Vec, edge) -> bool:
         """A floor edge with no wall (D-018 round 1): another feature (a passage, a through hole, a
@@ -814,6 +836,71 @@ def _pocket_walls(topo: Topology, floor: int, n: Vec, edges, enclosure: _Enclosu
     if any(_knife_edge(topo, floor, w, walls) for w in walls):
         return None
     return walls
+
+
+REACH_STEP = 1e-3  # mm: a reach ray starts this far off the floor
+
+
+def _reachable(topo: Topology, pieces: list[int], n: Vec, rays: "_Rays") -> bool:
+    """A cutter can reach the floor along its axis (set 2, undercuts; stress test: a blind T-slot gave
+    5 phantom pockets facing every way): a ray from some point inside a floor piece, along the outward
+    normal, leaves the part. A lip's underside, or the side of a T-slot's head, faces material."""
+    for k in pieces:
+        for p in _inner_points(topo.faces[k], grid=5):
+            start = tuple(p[i] + REACH_STEP * n[i] for i in range(3))
+            if rays.first_hit(start, n)[0] is None:
+                return True
+    return False
+
+
+OVER_TOL = 0.01  # mm
+
+
+def _over_floor(topo: Topology, pieces: list[int], n: Vec):
+    """A test: does a face lie over the floor, within the floor pieces' box in the floor's plane
+    (OVER_TOL)? An undercut's ceiling and the walls above it do; a big step floor that meets a small
+    ceiling at the pocket's mouth does not (MFCAD++ 14308)."""
+    a, b = _ref_frame(n)
+    pts = [p for k in pieces for p in _points(topo.faces[k])]
+    us, vs = [dot(p, a) for p in pts], [dot(p, b) for p in pts]
+    lo_u, hi_u, lo_v, hi_v = min(us) - OVER_TOL, max(us) + OVER_TOL, min(vs) - OVER_TOL, max(vs) + OVER_TOL
+    return lambda face: all(lo_u <= dot(p, a) <= hi_u and lo_v <= dot(p, b) <= hi_v for p in _points(face))
+
+
+def _undercut(topo: Topology, walls: list[int], n: Vec, skip: set[int], over) -> tuple[list[int], list[int]]:
+    """The undercut of a pocket (set 2): ceilings (planes facing the floor, n reversed) that a wall
+    runs into at a concave edge, and the walls that rise from a ceiling's other side at a convex edge
+    (the opening above a lip, or the pocket above a groove round its floor), and, when there is a
+    ceiling, any wall joined to a wall smoothly (one wall in two faces). Each must lie over the floor
+    (`over`, from _over_floor). Returns (ceilings, walls added); both empty for a pocket with no undercut."""
+    ceilings: list[int] = []
+    added: list[int] = []
+    todo = list(walls)
+    while todo:
+        w = todo.pop()
+        for k, edges in topo.neighbours(w).items():
+            if k in skip or k in ceilings or k in walls or k in added:
+                continue
+            m = _plane_normal(topo.faces[k])
+            if m is not None and dot(m, n) <= -math.cos(ANGLE_TOL) and over(topo.faces[k]) \
+                    and any(_concave(topo, w, k, e) for e in edges):
+                ceilings.append(k)
+                for j, es in topo.neighbours(k).items():
+                    if j in skip or j in walls or j in added or j in ceilings:
+                        continue
+                    if _wall_kind(topo.faces[j], n) and over(topo.faces[j]) and not any(_concave(topo, k, j, e) for e in es):
+                        added.append(j)
+                        todo.append(j)
+    if ceilings:  # the same wall in two faces, one each side of the ceiling's height (a closed T-slot's end)
+        todo = walls + added
+        while todo:
+            w = todo.pop()
+            for k, edges in topo.neighbours(w).items():
+                if k not in skip and k not in walls and k not in added and k not in ceilings \
+                        and _wall_kind(topo.faces[k], n) and over(topo.faces[k]) and any(_smooth(topo, w, k, e) for e in edges):
+                    added.append(k)
+                    todo.append(k)
+    return ceilings, added
 
 
 KNIFE_DEG = 1.0  # deg: material angle under this at a wall's edge is no material (D-018 round 6)
@@ -1034,6 +1121,26 @@ def _one_axis(faces, walls: list[int]) -> bool:
     return True
 
 
+def _floor_checks(topo: Topology, cyls: dict[int, Cyl], faces, walls: list[int], pieces: list[int], n: Vec,
+                  enclosure: _Enclosure) -> tuple[list[int] | None, bool | None]:
+    """(walls, reached) for a floor that has walls: walls None when they make no pocket (a flat-bottom
+    hole or counterbore floor, a ring groove, only corner chamfers); reached False when no cutter can
+    reach the floor along n (a ceiling over an undercut, or a side of one; set 2)."""
+    if all(w in cyls for w in walls) and len({round(cyls[w].radius, 3) for w in walls}) == 1:
+        return None, None  # a flat-bottom hole or counterbore floor, not a pocket
+    if _one_axis(faces, walls):
+        return None, None  # a ring groove: walls on one axis, the core's convex (round 5), not a pocket
+    chamfers = _corner_chamfers(topo, walls, n)
+    walls = [w for w in walls if w not in chamfers]
+    if not walls:
+        return None, None
+    if all(k in enclosure.sealed for k in pieces):
+        return walls, True  # a void sealed inside the part: no ray leaves it (see _Enclosure.sealed)
+    if enclosure.rays is None:
+        enclosure.rays = _Rays(topo.solid)
+    return walls, _reachable(topo, pieces, n, enclosure.rays)
+
+
 def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[list[dict], list[dict]]:
     """Closed pockets and their inside corners. Returns (pockets, corners), unnumbered."""
     from OCC.Core.BRepTools import breptools as bt
@@ -1041,7 +1148,7 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
     topo = Topology(solid, faces)
     cyls = {i: c for i, f in enumerate(faces) if (c := _cylinder(i, f))}
     found_p, found_c = [], []
-    enclosure = _Enclosure(solid)
+    enclosure = _Enclosure(solid, faces)
     for fid, face in enumerate(faces):
         if fid in hole_faces:
             continue
@@ -1053,23 +1160,24 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
         blends: set[int] = set()
         pieces = [fid]
         walls = _pocket_walls(topo, fid, n, outer_edges, enclosure, blends)
-        if not walls and (group := _floor_pieces(topo, fid, n, hole_faces)) and min(group) == fid:
+        reached, alone = None, walls
+        if walls:
+            walls, reached = _floor_checks(topo, cyls, faces, walls, pieces, n, enclosure)
+        if (not alone or reached is False) and (group := _floor_pieces(topo, fid, n, hole_faces)) and min(group) == fid:
             # A floor in several flat pieces (a pocket tool fused from a box and round ends): its
             # outline is the pieces' edges that no other piece shares (stress test, HANDOFF 3a).
+            # A piece alone may have walls but lie under a ceiling (the ring under a floor groove, set 2).
             pieces = group
             outer_edges = [(k, e) for k in group for e in _wire_edges(bt.OuterWire(topods.Face(faces[k])))
                            if _edge_neighbour(topo, k, e) not in group]
             walls = _pocket_walls(topo, fid, n, outer_edges, enclosure, blends)
-        if not walls:
+            if walls:
+                walls, reached = _floor_checks(topo, cyls, faces, walls, pieces, n, enclosure)
+        if not walls or not reached:
             continue
-        if all(w in cyls for w in walls) and len({round(cyls[w].radius, 3) for w in walls}) == 1:
-            continue  # a flat-bottom hole or counterbore floor, not a pocket
-        if _one_axis(faces, walls):
-            continue  # a ring groove: walls on one axis, the core's convex (round 5), not a pocket
-        chamfers = _corner_chamfers(topo, walls, n)
-        walls = [w for w in walls if w not in chamfers]
-        if not walls:
-            continue
+        ceilings, upper = ([], []) if all(k in enclosure.sealed for k in pieces) else \
+            _undercut(topo, walls, n, {*pieces, *hole_faces}, _over_floor(topo, pieces, n))
+        walls = walls + upper
         islands: list[int] = []
         rim = [e[1] if isinstance(e, tuple) else e for e in outer_edges]
         for piece in pieces:
@@ -1089,12 +1197,12 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
                     islands.extend(w for w in fill[1] if w not in walls and w not in islands)
         floor_h = dot(_outward_normal(face)[0], n)
         top = max(dot(p, n) for w in walls for p in _points(faces[w]))
-        depth = _rim_top(topo, walls, {*pieces, *walls, *islands, *blends}, n, top, top - floor_h) - floor_h
+        depth = _rim_top(topo, walls, {*pieces, *walls, *islands, *blends, *ceilings}, n, top, top - floor_h) - floor_h
         corners = _corners(topo, walls, cyls)
         min_r = min((r for _, r, _ in corners), default=math.inf)
         width = _narrowest(topo, walls + islands, islands)
         tool, undersized = pick_end_mill(min_r, width)
-        pocket_faces = sorted({*pieces, *walls, *islands, *blends})
+        pocket_faces = sorted({*pieces, *walls, *islands, *blends, *ceilings})
         dirs = [d] if (d := _frame_dir(n, frame)) else []
         found_p.append({"kind": "pocket", "faces": pocket_faces, "axis": list(n), "open_dirs": dirs,
                         "open_vectors": [list(n)],
