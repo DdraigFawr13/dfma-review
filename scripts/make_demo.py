@@ -94,6 +94,16 @@ def main() -> int:
             for material in settings.MATERIALS:
                 results[f"{shown}+{ipt}|{process}|{material}"] = analyze_registered(step, INV / ipt, process, material)
 
+    # Each part's mesh is the same for every process and material: keep one copy and point at it, so the page
+    # stays under the 16 MB artifact limit (the two NIST thread pairs alone added about 10 MB of copies).
+    meshes: dict[str, list] = {}
+    for key, hit in results.items():
+        if isinstance(hit.get("faces"), list):
+            part = key.split("|")[0]
+            meshes.setdefault(part, hit["faces"])
+            if meshes[part] == hit["faces"]:
+                results[key] = {**hit, "faces": part}
+
     def inline_css(m):
         css = (dist / m.group(1).lstrip("/")).read_text(encoding="utf-8")
         css = re.sub(r"url\((/fonts/[^)]+)\)", lambda f: "url(data:font/woff2;base64,"
@@ -108,19 +118,21 @@ def main() -> int:
     shim = """
 <script>
 window.__DEMO = %s;
+window.__MESH = %s;
 const realFetch = window.fetch;
 window.fetch = async (url, init) => {
   if (String(url).endsWith("/api/analyze")) {
     const b = init.body, ipt = b.get("ipt");
     const key = [b.get("file").name + (ipt ? "+" + ipt.name : ""), b.get("process"), b.get("material")].join("|");
     await new Promise((r) => setTimeout(r, 150));
-    const hit = window.__DEMO[key];
+    let hit = window.__DEMO[key];
+    if (hit && typeof hit.faces === "string") hit = {...hit, faces: window.__MESH[hit.faces]};
     const code = !hit ? 422 : (hit.__status || 200);
     return new Response(JSON.stringify(hit || {error: "Not in this demo"}), {status: code});
   }
   return realFetch(url, init);
 };
-</script>""" % json.dumps(results, separators=(",", ":"))
+</script>""" % (json.dumps(results, separators=(",", ":")), json.dumps(meshes, separators=(",", ":")))
     picker = """
 <div class="demo-bar" role="group" aria-label="Demo parts">
   <p class="demo-note"><b>View-only demo</b> of the real app, with these test parts analysed in advance. Tap a part (a turning part opens on Turning); process and material work as in the app. Your files can't be uploaded here; the first two I1 pairs show the app's refusals; the two marked \"lined up\" were lined up by the test harness so their threads show (the app itself refuses them); a matching pair needs your own files in the app. Export PDF builds the file only in the app on a computer: this viewer blocks downloads, so here it saves nothing (the S7 mock-up shows the PDF pages).</p>
