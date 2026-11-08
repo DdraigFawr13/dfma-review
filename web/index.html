@@ -33,6 +33,9 @@
           <option value="plastic">Delrin / nylon</option>
         </select>
       </div>
+      <div class="field">
+        <button id="export-pdf" data-testid="export-pdf" class="action" type="button" disabled>Export PDF</button>
+      </div>
       <dl id="summary" class="meta" hidden>
         <div><dt>Size</dt><dd data-testid="part-size" id="part-size"></dd></div>
         <div><dt class="sr-only">Faces</dt><dd data-testid="face-count" id="face-count"></dd></div>
@@ -72,6 +75,10 @@
           <h2 id="plan-title">Machine plan <span class="count" id="plan-count"></span></h2>
           <div id="plan"></div>
         </section>
+        <details class="panel drivers-panel" data-testid="drivers" id="drivers-panel" hidden>
+          <summary><span id="drivers-title">Cost drivers</span> <span class="count" id="drivers-count"></span></summary>
+          <div id="drivers"></div>
+        </details>
       </div>
     </main>
     <script type="module" src="/src/main.ts"></script>

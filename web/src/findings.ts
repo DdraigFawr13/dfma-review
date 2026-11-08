@@ -1,8 +1,8 @@
 // The verdict line and the findings list in severity groups (spec "Web page", D-012).
 
-import type { Analysis, Feature, Finding, Severity, Tool } from "./api";
+import type { Analysis, CostDriver, Feature, Finding, Severity, Tool } from "./api";
 
-const RULE_NAMES: Record<string, string> = {
+export const RULE_NAMES: Record<string, string> = {
   hole_depth: "hole depth", hole_size: "hole size", corner_radius: "corner radius", pocket_depth: "pocket depth",
   undercut: "undercut", thin_wall: "thin wall", access: "access",
   turn_axis: "turning axis", turn_slender: "length to diameter", turn_offaxis: "off the turning axis",
@@ -57,7 +57,7 @@ export function renderVerdict(host: HTMLElement, result: Analysis | null, waitin
   host.append(el("span", "rules", checkedLine(result)));
 }
 
-function meta(f: Finding, result: Analysis): string {
+export function meta(f: Finding, result: Analysis): string {
   const feature = result.features.find((x) => x.id === f.feature);
   const parts: string[] = f.feature ? [f.feature] : []; // turn_axis judges the whole part: no feature
   if (feature?.kind === "profile") {
@@ -205,7 +205,7 @@ export function toolName(t: Tool): string {
 
 /** The machine plan panel (S5, spec Plan): machine, tool loads, each setup with its tools and features,
  *  and the features in no setup (the access finding). */
-const dir = (d: string) => d.replace("-", "−");
+export const dir = (d: string) => d.replace("-", "−");
 const dirs = (ds: string[]) => ds.map(dir).join(" and ");
 
 /** Why each tool in a setup cuts this feature, from the feature's own numbers. */
@@ -253,19 +253,11 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
   host.append(dl);
   const tools = new Map(result.tools.map((t) => [t.id, t]));
   const byId = new Map(result.features.map((f) => [f.id, f]));
-  const planned = result.setups.flatMap((s) => s.features);
-  if (planned.length && lathe) {
+  const whyText = planWhy(result);
+  if (whyText) {
     const why = el("p", "note");
     why.dataset.testid = "plan-why";
-    const off = planned.filter((id) => result.findings.some((x) => x.rule === "turn_offaxis" && x.feature === id));
-    why.textContent = "Turned in one setup about its axis. "
-      + (off.length ? `Off the axis, cut with live tooling: ${off.join(", ")}.` : "Every feature is on the axis.");
-    host.append(why);
-  } else if (planned.length) {
-    const why = el("p", "note");
-    why.dataset.testid = "plan-why";
-    why.textContent = `Each can be cut from: ${planned.map((id) => `${id} ${dirs(byId.get(id)?.open_dirs ?? [])}`).join(" · ")}. `
-      + `The fewest directions that reach them all: ${result.setups.map((s) => dir(s.direction)).join(", ")}.`;
+    why.textContent = whyText;
     host.append(why);
   }
   result.setups.forEach((s, i) => {
@@ -277,8 +269,7 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
     box.dataset.testid = `plan-setup-${i + 1}`;
     box.setAttribute("aria-pressed", String(selected === id));
     box.addEventListener("click", () => onSelect({ id, faces }));
-    box.append(el("span", "shead", s.direction === "turn" ? `Setup ${i + 1} · on the lathe, about the turning axis`
-      : `Setup ${i + 1} · from ${dir(s.direction)}`));
+    box.append(el("span", "shead", setupHead(s, i)));
     const ops = result.operations.filter((o) => o.setup === i);
     if (ops.length === 0) box.append(el("p", "note", "Nothing to cut from this side."));
     for (const o of ops) {
@@ -318,16 +309,71 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
     }
     host.append(box);
   });
-  const away = result.findings.filter((f) => f.rule === "access");
-  if (away.length) {
-    const note = el("p", "note");
+  const away = notPlanned(result);
+  if (away) {
+    const note = el("p", "note", away);
     note.dataset.testid = "plan-not-planned";
-    note.textContent = `In no setup: ${away.map((f) => `${f.feature} (${f.id})`).join(", ")}. `
-      + "Each needs a 4/5-axis mill or a fixture; its tools are not listed.";
     host.append(note);
   }
-  host.append(el("p", "note", lathe ? "The turning axis is the line carrying the most round faces."
-    : "Directions are the part's own axes: +Z is the outward normal of its largest flat face."));
+  host.append(el("p", "note", planFoot(result)));
+}
+
+const isLathe = (result: Analysis) => result.setups.length === 1 && result.setups[0].direction === "turn";
+
+/** "Setup 2 · from −Z": a setup's heading in the plan, on screen and in the report. */
+export function setupHead(s: { direction: string }, i: number): string {
+  return s.direction === "turn" ? `Setup ${i + 1} · on the lathe, about the turning axis` : `Setup ${i + 1} · from ${dir(s.direction)}`;
+}
+
+/** The sentence under the machine facts: how each feature is reached and why these setups. */
+export function planWhy(result: Analysis): string | null {
+  const planned = result.setups.flatMap((s) => s.features);
+  if (!planned.length) return null;
+  if (isLathe(result)) {
+    const off = planned.filter((id) => result.findings.some((x) => x.rule === "turn_offaxis" && x.feature === id));
+    return "Turned in one setup about its axis. "
+      + (off.length ? `Off the axis, cut with live tooling: ${off.join(", ")}.` : "Every feature is on the axis.");
+  }
+  const byId = new Map(result.features.map((f) => [f.id, f]));
+  return `Each can be cut from: ${planned.map((id) => `${id} ${dirs(byId.get(id)?.open_dirs ?? [])}`).join(" · ")}. `
+    + `The fewest directions that reach them all: ${result.setups.map((s) => dir(s.direction)).join(", ")}.`;
+}
+
+/** The features the access rule left out of every setup, or null. */
+export function notPlanned(result: Analysis): string | null {
+  const away = result.findings.filter((f) => f.rule === "access");
+  return away.length ? `In no setup: ${away.map((f) => `${f.feature} (${f.id})`).join(", ")}. `
+    + "Each needs a 4/5-axis mill or a fixture; its tools are not listed." : null;
+}
+
+/** The last line of the plan: what its directions or axis mean. */
+export function planFoot(result: Analysis): string {
+  return isLathe(result) ? "The turning axis is the line carrying the most round faces."
+    : "Directions are the part's own axes: +Z is the outward normal of its largest flat face.";
+}
+
+/** One cost driver as a line: "Distinct tools: 4 × 1.0 = 4.0". */
+export function driverLine(d: CostDriver): string {
+  return `${d.label}: ${d.count} × ${d.weight.toFixed(1)} = ${d.score.toFixed(1)}`;
+}
+
+/** The cost drivers panel (S7, spec "Cost drivers"): counts and weights, ranked by score. No time or dollars. */
+export function renderDrivers(host: HTMLElement, result: Analysis | null): void {
+  host.replaceChildren();
+  if (!result) return;
+  if (!result.cost_drivers.length) {
+    host.append(el("p", "none", "No cost drivers: one setup and no tools to load."));
+    return;
+  }
+  const list = el("ul", "drivers");
+  for (const d of result.cost_drivers) {
+    const li = el("li");
+    li.dataset.testid = `driver-${d.driver}`;
+    li.append(el("span", "dlabel", d.label), el("span", "dscore", `${d.count} × ${d.weight.toFixed(1)} = ${d.score.toFixed(1)}`));
+    list.append(li);
+  }
+  host.append(list, el("p", "note", `Score is count × weight. Every weight is an ${[...new Set(result.cost_drivers.map((d) => d.weight_source))].join(", ")} `
+    + "(config/drivers.toml). No time or dollars yet."));
 }
 
 /** "0.500 in round bar, 4.500 in long" or "2.000 × 3.000 × 1.500 in block": the part's own size, no allowance. */

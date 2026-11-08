@@ -72,3 +72,8 @@ def thresholds(material: str) -> dict:
 
 def tools_config() -> dict:
     return _toml("tools.toml")
+
+
+def drivers_config() -> dict:
+    """The cost drivers from config/drivers.toml, in file order (S7)."""
+    return _toml("drivers.toml")

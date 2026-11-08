@@ -1,0 +1,89 @@
+# Cost drivers (spec "Cost drivers", S7). A driver's score is its count x its weight. Every starting
+# weight is 1.0 and an estimate: Morgan or a shop manager may change them (spec open question 3).
+# `count` says what is counted: "setups" (setups beyond the first), "tools" (tools loaded; roughing and
+# finishing tools are separate loads, D-029), "small" (tools marked undersized or under `under_in` across), or "findings"
+# (findings of the listed `rules`). A feature can count under more than one driver.
+
+[extra_setups]
+label = "Setups beyond the first"
+count = "setups"
+weight = 1.0
+source = "estimate"
+
+[distinct_tools]
+label = "Distinct tools"
+count = "tools"
+weight = 1.0
+source = "estimate"
+
+[small_tools]
+label = "Undersized or sub-1/8 in tools"
+count = "small"
+under_in = 0.125              # spec: a tool under 1/8 in across counts even when it fits (small tools break and cut slowly)
+weight = 1.0
+source = "estimate"
+
+[deep_holes]
+label = "Deep holes and bores"
+count = "findings"
+rules = ["hole_depth", "bore_depth"]
+weight = 1.0
+source = "estimate"
+
+[odd_holes]
+label = "Non-standard holes"
+count = "findings"
+rules = ["hole_size"]
+weight = 1.0
+source = "estimate"
+
+[thin_walls]
+label = "Thin walls"
+count = "findings"
+rules = ["thin_wall"]
+weight = 1.0
+source = "estimate"
+
+[small_corners]
+label = "Sharp or small inside corners"
+count = "findings"
+rules = ["corner_radius"]
+weight = 1.0
+source = "estimate"
+
+[off_axis]
+label = "Features off the turning axis"
+count = "findings"
+rules = ["turn_offaxis"]
+weight = 1.0
+source = "estimate"
+
+[multi_axis]
+label = "Features needing 4/5-axis"
+count = "findings"
+rules = ["access"]
+weight = 1.0
+source = "estimate"
+
+# D-030 (Morgan approved, 2026-11-08): three findings the spec's list came before.
+
+[deep_pockets]
+label = "Deep pockets"
+count = "findings"
+rules = ["pocket_depth"]
+weight = 1.0
+source = "estimate"
+
+[undercuts]
+label = "Undercuts"
+count = "findings"
+rules = ["undercut"]
+weight = 1.0
+source = "estimate"
+
+[slender_parts]
+label = "Slender turned parts"
+count = "findings"
+rules = ["turn_slender"]
+weight = 1.0
+source = "estimate"

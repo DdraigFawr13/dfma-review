@@ -223,3 +223,14 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - Each tool is its own tool load (spec Plan "Tool changes" unchanged), so plans gain loads: two_sided_block 3 → 5.
   - Every finding pin stands 22 px above its spot on a stem to a dot, in its severity colour, so the feature under it stays visible (the selected pin stays at 26 px). Changes D-017, where only the selected pin had a stem.
 - **Why:** Morgan, 2026-11-08: "the tags are covering the features and making them hard to see"; "standard practice would be to mill out as much as possible with a larger tool and then do finishing passes with a second tool … look at logic across milling and turning for finishing passes". The 75% share is an assumption, not sourced; a shop can change it.
+
+## D-030 Cost drivers after turning: which findings feed which driver
+
+- **Status:** Accepted (2026-11-08; Morgan: "Ok I approve of all of this as recommended", and on the merge review: "go ahead and make whatever recommended changes"). Built in S7.
+- **Decision:**
+  - Added to the spec's driver list: `bore_depth` findings count as `deep_holes`.
+  - `turn_offaxis` feeds `off_axis` and `access` feeds `multi_axis`, as the spec says.
+  - Three more drivers: `deep_pockets` (pocket_depth), `undercuts` (undercut) and `slender_parts` (turn_slender). `looks_turned` and `turn_axis` feed none: they warn about the process picked, not a cost of the part.
+  - `small_tools` counts tools marked undersized or under 1/8 in across (`under_in` in drivers.toml). The spec disagreed with itself: its driver list says "undersized or sub-1/8 in tools", its Counts line "`undersized` tools". The first build followed the Counts line; the merge review (2026-11-08) took the driver list, because a small tool costs even when it fits: `pocket_small_radius`'s 1/32 in end mill is not undersized but now counts. The Counts line is updated to match.
+  - Drivers live in `config/drivers.toml`, so adding one is a config edit.
+- **Why:** the spec's nine drivers were written before S3 to S6; a slender shaft needing a steady rest, or a deep pocket needing a long end mill, is a cost with no driver. Weights stay 1.0 and are estimates (REP-01).
