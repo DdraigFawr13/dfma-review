@@ -50,10 +50,10 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-08 D-027: a part-wide pin moves off small findings (amends D-017); `flange_bolt_hole` test part.
 - 2026-11-08 D-026: turning research proposals 2-5 approved together: support named, `bore_depth` (4×/6×), inside-groove note, slender by smallest diameter.
 - 2026-11-08 D-025: turning slender warning over 3.0× for the steels, 4.0× for aluminium and plastic; high over 8.0× (research proposal 1).
-- 2026-11-08 D-024: screenshots on Morgan's pages fit the screen and zoom on tap, taken at 2×.
-- 2026-11-08 D-023: Machine plan panel, a Passed list with the math (collapsed by default) and selectable setups with a why; all approved and merged in #15.
+- 2026-11-08 D-023 Machine plan panel, Passed list, selectable setups; D-024 screenshots fit and zoom.
 - 2026-11-08 D-022: countersinks recorded on the hole and planned as a tool load; full-round depth for sloped exits; a hole on a pocket floor keeps its own axis.
 - 2026-11-08 D-021: undercut pockets get a finding (needs a T-slot or lollipop cutter); sealed voids get none.
 - 2026-11-06 Concept (D-001), master setup (D-002), S1 packages (D-008), status page + demo (D-009).

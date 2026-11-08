@@ -370,6 +370,12 @@ def shaft_with_groove_and_bore():
     return cut(rod(1.5, 3.0), ring, rod(0.75, 1.5, (0, 0, 2.0)), rod(0.875, 0.125, (0, 0, 2.4)))
 
 
+def flange_bolt_hole():
+    """A flange: 2.000 in across and 0.500 in thick, with a 1.000 in hub 1.000 in long on top; a 0.250 in bolt
+    hole through the flange, parallel to the axis and 0.750 in off it (Morgan, 2026-11-08: an off-centre hole)."""
+    return cut(fuse(rod(2.0, 0.5), rod(1.0, 1.0, (0, 0, 0.5))), rod(0.25, 1.0, (0.75, 0.0, -0.25)))
+
+
 def clean_shaft():
     """1.000 in diameter for 2.000 in, then 0.750 in to 3.000 in long; a 0.1875 in (3/16) hole 0.5625 in deep on
     the axis from the small end (3.0x diameter)."""
@@ -565,6 +571,13 @@ def main() -> int:
     add(box_through_hole(), "block_as_turn", "inch", 1, process="turn", turn={"bore": 0, "groove": 0, "profile": 0},
         findings=[finding("turn_axis", "high", round(share, 4), (1.125 * IN, 0.5 * IN, 0.25 * IN))],
         setups=[], tools=[], tool_changes=0)  # no machine (test_turning)
+    # Walls: the flange's bottom to its top ring (0.500) and to the hub's end (1.500); the bolt hole's side to the
+    # rim (0.125 in of material). Length 1.500 in over the 1.000 in hub: 1.5x, clean.
+    fb = [0.875 * IN, 0.0, 0.25 * IN]  # on the bolt hole's wall, away from the axis
+    add(flange_bolt_hole(), "flange_bolt_hole", "inch", 1, walls=3, process="turn", material="steel1018",
+        turn={"bore": 0, "groove": 0, "profile": 1}, machine="lathe with live tooling",
+        findings=[finding("turn_offaxis", "medium", 0.75, fb)],
+        setups=[{"dir": "turn", "probes": [[1.0 * IN, 0.0, 0.25 * IN], fb]}], tools=["turn", "dr-0.2500"], tool_changes=2)
     # Walls: bottom to the shoulder (2.000), to the top ring (3.000) and to the hole's floor (2.4375); the hole is
     # 0.281 in from the 0.750 in diameter, over the 0.250 in wall cap.
     cs = [[0.5 * IN, 0.0, 1.0 * IN], [0.09375 * IN, 0.0, 2.7 * IN]]

@@ -552,7 +552,7 @@ Limits come from `thresholds.toml` for the chosen material. All starting values 
   - `profile-1`: the outside cylinders and cones on the axis and the faces square to it, other than holes, bores, grooves and pockets.
   - Holes, bores and pockets carry `off_axis_deg` and `off_axis_mm` for turned parts (a pocket: its opening direction through its faces' area centroid). `turn_offaxis` measures the angle when tilted (unit deg, limit 0.5), else the offset (unit in, limit 0.001).
   - Lathe plan: one setup `turn`; one operation per tool (turn, on-axis drills, bore, groove, then off-axis tools ranked as the mill plan); tool loads = operations. The panel shows "Turning axis" in the part's axes, "Setup 1 · on the lathe, about the turning axis", and why each feature is in it.
-  - Test parts: `slender_shaft` (also for milling), `stout_shaft`, `shaft_with_groove_and_bore`, `block_as_turn`, `clean_shaft`; `expected.toml` gains `process` and a `turn` count of bores, grooves and profiles.
+  - Test parts: `slender_shaft` (also for milling), `stout_shaft`, `shaft_with_groove_and_bore`, `block_as_turn`, `clean_shaft`, `flange_bolt_hole` (D-027); `expected.toml` gains `process` and a `turn` count of bores, grooves and profiles.
 
 ### S7 Cost drivers, report and PDF
 

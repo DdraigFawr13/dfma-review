@@ -86,3 +86,28 @@ def test_block_as_turn_shows_no_plan(page: Page, base_url: str):
                                                               timeout=30_000)
     expect(page.get_by_test_id("finding-F1")).to_contain_text("limit: assumption")
     expect(page.get_by_test_id("plan-machine")).to_have_count(0)
+
+
+def test_part_wide_pin_does_not_hide_the_cross_hole(page: Page, base_url: str):
+    """D-027 (Morgan, 2026-11-08: "I don't see that off center hole"): the length finding's pin covers the
+    whole outside, so it moves to a free spot of its faces instead of sitting on the cross hole."""
+    _upload(page, base_url, "slender_shaft.step", "turn")
+    expect(page.get_by_test_id("finding-F2")).to_be_visible(timeout=30_000)
+    page.wait_for_timeout(300)
+    state = {s["id"]: s for s in page.evaluate("window.__dfma.flagState()")}
+    assert state["F1"]["shown"] and state["F2"]["shown"], state
+    assert state["F1"]["mergedInto"] == "" and state["F2"]["mergedInto"] == "", state
+    one = page.locator('.viewer .flag[data-id="F1"]').bounding_box()
+    two = page.locator('.viewer .flag[data-id="F2"]').bounding_box()
+    apart = (one["x"] + one["width"] <= two["x"] or two["x"] + two["width"] <= one["x"]
+             or one["y"] + one["height"] <= two["y"] or two["y"] + two["height"] <= one["y"])
+    assert apart, (one, two)
+
+
+def test_flange_bolt_hole(page: Page, base_url: str):
+    """Morgan, 2026-11-08: an off-centre hole parallel to the axis needs live tooling too."""
+    _upload(page, base_url, "flange_bolt_hole.step", "turn")
+    expect(page.get_by_test_id("plan-machine")).to_have_text("lathe with live tooling", timeout=30_000)
+    expect(page.get_by_test_id("finding-F1")).to_contain_text(
+        "Hole not on the turning axis: needs a milling operation or live tooling")
+    expect(page.get_by_test_id("finding-F1")).to_contain_text("0.7500 in off the turning axis")

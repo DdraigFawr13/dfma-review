@@ -469,6 +469,24 @@ measured = 5.3835
 probe_mm = [28.575, 12.7, 6.35]
 
 [[part]]
+name = "flange_bolt_hole"
+units = "inch"
+face_count = 6
+features = { hole = 1, pocket = 0, corner = 0, wall = 3 }
+process = "turn"
+material = "steel1018"
+turn = { bore = 0, groove = 0, profile = 1 }
+machine = "lathe with live tooling"
+setups = [{ dir = "turn", probes = [[25.4, 0.0, 6.35], [22.224999999999998, 0.0, 6.35]] }]
+tools = ["turn", "dr-0.2500"]
+tool_changes = 2
+[[part.finding]]
+rule = "turn_offaxis"
+severity = "medium"
+measured = 0.75
+probe_mm = [22.225, 0.0, 6.35]
+
+[[part]]
 name = "clean_shaft"
 units = "inch"
 face_count = 7

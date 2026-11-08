@@ -25,6 +25,7 @@ PARTS = ROOT / "tests" / "parts"
 SET3 = ROOT / "tests" / "grading" / "sets" / "hole_ends_walls"
 DEMO = [  # (file, what Morgan looks for)
     (PARTS / "slender_shaft.step", "S6: pick Turning, then Milling to compare"),
+    (PARTS / "flange_bolt_hole.step", "S6 (Turning): off-centre bolt hole"),
     (PARTS / "stout_shaft.step", "S6 (Turning): length 5× diameter"),
     (PARTS / "shaft_with_groove_and_bore.step", "S6 (Turning): grooves and a bore"),
     (PARTS / "clean_shaft.step", "S6 (Turning): clean"),
