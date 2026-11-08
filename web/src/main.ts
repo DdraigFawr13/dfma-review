@@ -95,7 +95,8 @@ function stillThere(result: Analysis, id: string | null): Pick | null {
   }
   if (id.startsWith("setup:")) {
     const s = result.setups[Number(id.slice(6))];
-    return s ? { id, faces: s.features.flatMap((fid) => result.features.find((x) => x.id === fid)?.faces ?? []) } : null;
+    const i = Number(id.slice(6));
+    return s ? { id, faces: [...new Set(result.operations.filter((o) => o.setup === i).flatMap((o) => o.faces))] } : null;
   }
   return result.findings.find((f) => f.id === id) ?? null;
 }

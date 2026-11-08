@@ -71,3 +71,14 @@ def test_setup_select_shows_why(page: Page, base_url: str):
     assert page.evaluate("window.__dfma.highlightedFaces()") == sorted(hole["faces"])
     page.get_by_test_id("plan-setup-3").click()  # again: clears it
     assert page.evaluate("window.__dfma.highlightedFaces()") == []
+
+
+def test_setup_select_lights_the_countersink(page: Page, base_url: str):
+    """Morgan, 2026-11-08: the setup also selects the countersink surface it cuts."""
+    r = analyze(PARTS / "countersunk_hole.step", "countersunk_hole.step")
+    hole = next(f for f in r["features"] if f["kind"] == "hole")
+    page.goto(base_url)
+    page.get_by_test_id("upload-file").set_input_files(PARTS / "countersunk_hole.step")
+    expect(page.get_by_test_id("plan-setup-1")).to_be_visible(timeout=30_000)
+    page.get_by_test_id("plan-setup-1").click()
+    assert page.evaluate("window.__dfma.highlightedFaces()") == sorted(hole["faces"] + hole["countersink_faces"])

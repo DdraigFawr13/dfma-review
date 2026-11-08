@@ -109,3 +109,28 @@ def test_cover_is_smallest_then_first_in_order():
 
 def test_tool_load_assumption_listed():
     assert any("Tool loads count every tool loaded" in a for a in _run("box_through_hole")["assumptions"])
+
+
+def test_each_operation_lists_the_faces_it_cuts():
+    """Morgan, 2026-11-08: selecting a setup should show the countersink surface too. The countersink tool's
+    operation holds its own cone (kept out of the hole's faces by D-018); the drill holds the bore."""
+    r = _run("countersunk_hole")
+    (hole,) = [f for f in r["features"] if f["kind"] == "hole"]
+    ops = {o["tool"]: o for o in r["operations"]}
+    assert ops["dr-0.2500"]["faces"] == sorted(hole["faces"])
+    assert ops["cs-82"]["faces"] == sorted(hole["countersink_faces"])
+
+
+def test_countersink_at_each_end_lights_only_its_cone():
+    """cs_both: drilled from one side; the other setup only countersinks, and its operation holds only the
+    cone at its own end, not the bore or the far cone."""
+    from helpers import ROOT
+    path = ROOT / "tests" / "grading" / "sets" / "hole_ends_walls" / "cs_both.step"
+    r = analyze(path, path.name)
+    (hole,) = [f for f in r["features"] if f["kind"] == "hole"]
+    assert len(r["setups"]) == 2
+    only_cs = [s for s, _ in enumerate(r["setups"]) if {o["tool"] for o in r["operations"] if o["setup"] == s} == {"cs-90"}]
+    (k,) = only_cs
+    (op,) = [o for o in r["operations"] if o["setup"] == k]
+    assert op["faces"] in [sorted(e) for e in hole["countersink_end_faces"]]
+    assert set(op["faces"]).isdisjoint(hole["faces"]) and len(hole["countersink_end_faces"]) == 2

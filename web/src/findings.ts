@@ -240,7 +240,8 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
   }
   result.setups.forEach((s, i) => {
     const id = `setup:${i}`;
-    const faces = s.features.flatMap((fid) => byId.get(fid)?.faces ?? []);
+    // The faces this setup's tools cut: a countersink lights its own cone, not the bore it was drilled through.
+    const faces = [...new Set(result.operations.filter((o) => o.setup === i).flatMap((o) => o.faces))];
     const box = el("button", "setup");
     box.type = "button";
     box.dataset.testid = `plan-setup-${i + 1}`;

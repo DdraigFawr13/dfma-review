@@ -29,7 +29,7 @@ export interface Analysis {
   assumptions: string[];
   machine: string | null; // S5
   setups: { direction: string; features: string[] }[];
-  operations: { setup: number; tool: string; features: string[] }[];
+  operations: { setup: number; tool: string; features: string[]; faces: number[] }[]; // faces each tool cuts
   tools: Tool[];
   tool_changes: number;
 }

@@ -628,7 +628,8 @@ def holes(solid, faces, frame: dict[str, Vec]) -> list[dict]:
                 csk = {"countersink_faces": sorted({f for c in s.countersinks for f in c[1]}),
                        "countersink_vectors": [list(s.axis if c[0] == "hi" else tuple(-a for a in s.axis))
                                                for c in s.countersinks],
-                       "countersink_degs": [c[3] for c in s.countersinks]}  # per end, as the vectors
+                       "countersink_degs": [c[3] for c in s.countersinks],  # per end, as the vectors
+                       "countersink_end_faces": [list(c[1]) for c in s.countersinks]}  # each end's cone faces
             features.append({
                 "kind": "hole",
                 "faces": sorted(s.faces + s.bottom + s.shoulders),

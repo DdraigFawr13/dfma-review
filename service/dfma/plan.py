@@ -81,28 +81,30 @@ def _rank(tool: dict) -> tuple:
 def plan(features: list[dict], findings: list[dict], frame: dict, units_in_file: str) -> dict:
     """machine, setups, operations, tools and tool_changes for a mill part."""
     flagged = {f["feature"] for f in findings if f["rule"] == "access"}
-    jobs = []  # (feature id, the directions it can be cut from, tool)
+    jobs = []  # (feature id, the directions it can be cut from, tool, the faces it cuts)
     for f in features:
         if f["kind"] not in ("hole", "pocket") or f["id"] in flagged or not f["open_dirs"]:
             continue  # flagged, or a void sealed inside the part (no open end): not planned (assumptions)
         tool = _hole_tool(f, units_in_file) if f["kind"] == "hole" else _pocket_tool(f)
-        jobs.append((f["id"], set(f["open_dirs"]), tool))
-        for v, deg in zip(f.get("countersink_vectors", []), f.get("countersink_degs", [])):
+        jobs.append((f["id"], set(f["open_dirs"]), tool, f["faces"]))
+        for v, deg, cone in zip(f.get("countersink_vectors", []), f.get("countersink_degs", []),
+                                f.get("countersink_end_faces", [])):
             if d := _frame_dir(v, frame):  # always: a hole with no end along an axis is flagged above
-                jobs.append((f["id"], {d}, _countersink_tool(deg)))  # each end its own angle
+                jobs.append((f["id"], {d}, _countersink_tool(deg), cone))  # each end its own angle and cone
 
-    setups = _cover([dirs for _, dirs, _ in jobs])
+    setups = _cover([dirs for _, dirs, _, _ in jobs])
     members: list[list[str]] = [[] for _ in setups]
     ops: dict[tuple[int, str], dict] = {}
     tool_list: dict[str, dict] = {}
-    for fid, dirs, tool in jobs:
+    for fid, dirs, tool, faces in jobs:
         k = next(i for i, d in enumerate(setups) if d in dirs)
         if fid not in members[k]:
             members[k].append(fid)
         tool_list.setdefault(tool["id"], tool)
-        op = ops.setdefault((k, tool["id"]), {"setup": k, "tool": tool["id"], "features": []})
+        op = ops.setdefault((k, tool["id"]), {"setup": k, "tool": tool["id"], "features": [], "faces": []})
         if fid not in op["features"]:
             op["features"].append(fid)
+        op["faces"] = sorted({*op["faces"], *faces})  # what this tool cuts: a countersink, only its own cone
     operations = sorted(ops.values(), key=lambda o: (o["setup"], _rank(tool_list[o["tool"]])))
     used = list(dict.fromkeys(o["tool"] for o in operations))
     return {
