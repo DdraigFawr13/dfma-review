@@ -95,3 +95,17 @@ def test_undercut_thresholds_per_material():
     from dfma import settings
     for m in settings.MATERIALS:
         assert settings.thresholds(m)["undercut"] == {"max_in": 0.0, "source": "D-021"}
+
+
+@pytest.mark.parametrize("name", ["daratech", "unterlaf"])
+def test_no_undercut_finding_without_evidence(name):
+    """No undercut finding (D-021) where the evidence doesn't show one. EDMR unterlaf (10 pockets) and
+    daratech (2) have a ledge facing a pocket floor between two ribs, but the floor is open on 2 of its
+    4 sides, so a cutter may reach in from the side; the ledge stays one of the pocket's faces (set 2).
+    daratech's walled pocket (floor at z = 8) took the plate's underside (z = 0 and 2, below the floor)
+    as ceilings, 0.202 in; a ceiling must lie above the floor."""
+    from dfma.analyze import analyze
+    path = ROOT / "tests" / "edmr" / "models" / "STEP" / "STI" / name / f"{name}.stp"
+    result = analyze(path, path.name, "mill", "al6061")
+    assert not [f for f in result["findings"] if f["rule"] == "undercut"]
+    assert not [f for f in result["features"] if f["kind"] == "pocket" and "undercut_mm" in f["dims_mm"]]

@@ -807,12 +807,12 @@ def _blend_walls(topo: Topology, floor: int, nb: int, n: Vec, edge) -> tuple[set
 
 
 def _pocket_walls(topo: Topology, floor: int, n: Vec, edges, enclosure: _Enclosure,
-                  blends: set[int] | None = None) -> list[int] | None:
+                  blends: set[int] | None = None, cuts: list | None = None) -> list[int] | None:
     """The walls of a pocket on this floor, or None. Each outer edge of the floor meets a concave
     wall perpendicular to it, or (D-018 round 1) is cut by another feature inside the part; a cut
     pocket needs at least two walls left. A chamfer between floor and wall (D-018 round 3) leads to
     its wall and is not one. A fillet between floor and wall leads to its wall too; its faces are
-    added to `blends` (D-018 bull-nose round)."""
+    added to `blends` (D-018 bull-nose round). Edges cut by another feature are added to `cuts`."""
     blends = set() if blends is None else blends
     walls: list[int] = []
     cut = False
@@ -829,6 +829,8 @@ def _pocket_walls(topo: Topology, floor: int, n: Vec, edges, enclosure: _Enclosu
             walls.extend(w for w in fill[1] if w not in walls)
         elif nb is not None and enclosure.inside(topo.faces[piece], n, edge):
             cut = True
+            if cuts is not None:
+                cuts.append(edge)
         else:
             return None
     if cut and len(walls) < 2:
@@ -857,14 +859,18 @@ OVER_TOL = 0.01  # mm
 
 
 def _over_floor(topo: Topology, pieces: list[int], n: Vec):
-    """A test: does a face lie over the floor, within the floor pieces' box in the floor's plane
-    (OVER_TOL)? An undercut's ceiling and the walls above it do; a big step floor that meets a small
-    ceiling at the pocket's mouth does not (MFCAD++ 14308)."""
+    """A test: does a face lie over the floor: wholly above its plane, and within the floor pieces' box
+    in that plane (OVER_TOL)? An undercut's ceiling and the walls above it do; a big step floor that
+    meets a small ceiling at the pocket's mouth does not (MFCAD++ 14308), nor the underside of a plate
+    reached down a wall that runs below the floor (EDMR daratech: "ceilings" at z = 0 and 2 under a
+    floor at z = 8)."""
     a, b = _ref_frame(n)
     pts = [p for k in pieces for p in _points(topo.faces[k])]
     us, vs = [dot(p, a) for p in pts], [dot(p, b) for p in pts]
     lo_u, hi_u, lo_v, hi_v = min(us) - OVER_TOL, max(us) + OVER_TOL, min(vs) - OVER_TOL, max(vs) + OVER_TOL
-    return lambda face: all(lo_u <= dot(p, a) <= hi_u and lo_v <= dot(p, b) <= hi_v for p in _points(face))
+    floor_h = max(dot(p, n) for p in pts)
+    return lambda face: all(lo_u <= dot(p, a) <= hi_u and lo_v <= dot(p, b) <= hi_v and dot(p, n) > floor_h + OVER_TOL
+                            for p in _points(face))
 
 
 def _undercut(topo: Topology, walls: list[int], n: Vec, skip: set[int], over) -> tuple[list[int], list[int]]:
@@ -1178,7 +1184,8 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
         outer_edges = _wire_edges(outer)
         blends: set[int] = set()
         pieces = [fid]
-        walls = _pocket_walls(topo, fid, n, outer_edges, enclosure, blends)
+        cuts: list = []
+        walls = _pocket_walls(topo, fid, n, outer_edges, enclosure, blends, cuts)
         reached, alone = None, walls
         if walls:
             walls, reached = _floor_checks(topo, cyls, faces, walls, pieces, n, enclosure)
@@ -1189,7 +1196,8 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
             pieces = group
             outer_edges = [(k, e) for k in group for e in _wire_edges(bt.OuterWire(topods.Face(faces[k])))
                            if _edge_neighbour(topo, k, e) not in group]
-            walls = _pocket_walls(topo, fid, n, outer_edges, enclosure, blends)
+            cuts = []
+            walls = _pocket_walls(topo, fid, n, outer_edges, enclosure, blends, cuts)
             if walls:
                 walls, reached = _floor_checks(topo, cyls, faces, walls, pieces, n, enclosure)
         if not walls or not reached:
@@ -1229,7 +1237,9 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
                                     "end_mill_mm": tool, "undersized": int(undersized)}})
         if width != math.inf:  # no two walls face each other: no width limit, and no key
             found_p[-1]["dims_mm"]["narrowest_width"] = width
-        if ceilings:  # an undercut (set 2, D-021): how far it reaches under the lip
+        if ceilings and not cuts:  # an undercut (set 2, D-021): how far it reaches under the lip. Only with
+            # walls all round: through a side opened by another feature, a cutter may reach in from the side
+            # (EDMR daratech, unterlaf: ledges between ribs, open on 2 of 4 sides)
             found_p[-1]["dims_mm"]["undercut_mm"] = _overhang(topo, ceilings, walls, upper)
         for cfaces, r, edge in corners:
             ctool, _ = pick_end_mill(r, width)
