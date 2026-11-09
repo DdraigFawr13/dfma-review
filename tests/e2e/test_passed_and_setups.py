@@ -7,6 +7,7 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from helpers import PARTS
+from steps import open_step, shown
 
 from dfma.analyze import analyze
 
@@ -18,8 +19,9 @@ def test_passed_list(page: Page, base_url: str):
     hole = next(f for f in r["features"] if f["id"] == "hole-2")
     page.goto(base_url)
     page.get_by_test_id("upload-file").set_input_files(PARTS / "clean_one_setup.step")
+    shown(page, "clean_one_setup.step")
     passed = page.get_by_test_id("passed")
-    expect(passed).to_contain_text("16 features · 22 checks", timeout=30_000)
+    expect(passed).to_contain_text("16 features · 22 checks")
     expect(passed).not_to_have_attribute("open", "")  # collapsed by default
     expect(page.get_by_test_id("passed-hole-2")).to_be_hidden()
     passed.locator("summary").click()
@@ -29,12 +31,16 @@ def test_passed_list(page: Page, base_url: str):
     row.click()
     expect(page.get_by_test_id("passed-hole-2")).to_have_attribute("aria-pressed", "true")
     expect(page.get_by_test_id("passed-hole-2").locator(".pmath").first).to_contain_text(
-        "0.5000 in deep ÷ 0.2500 in diameter = 2.00× ≤ 6.0× · limit: estimate")
+        "0.5000 in deep ÷ 0.2500 in diameter = 2.00× ≤ 6.0× · limit is an estimate")
     assert page.evaluate("window.__dfma.highlightedFaces()") == sorted(hole["faces"])
     expect(page.get_by_test_id("passed")).to_have_attribute("open", "")  # stays open while selecting
     # A material change re-analyses the same file: the list stays open and the selection is kept.
+    open_step(page, "part")  # process and material sit in the overview once a part is read
     with page.expect_response(lambda r: r.url.endswith("/api/analyze"), timeout=30_000):
         page.select_option("#material", "plastic")
+    expect(page.locator("#status")).to_have_text("Showing clean_one_setup.step.", timeout=30_000)
+    open_step(page, "features")
+    expect(page.get_by_test_id("passed")).to_have_attribute("open", "")
     expect(page.get_by_test_id("passed-hole-2")).to_have_attribute("aria-pressed", "true")
     assert page.evaluate("window.__dfma.highlightedFaces()") == sorted(hole["faces"])
     page.get_by_test_id("passed-hole-2").click()  # again: clears it
@@ -51,9 +57,12 @@ def test_passed_open_at_200_percent_text_has_no_sideways_scroll(page: Page, base
     page.goto(base_url)
     page.add_style_tag(content="html { font-size: 200% !important; }")
     page.get_by_test_id("upload-file").set_input_files(PARTS / "clean_one_setup.step")
-    expect(page.get_by_test_id("passed")).to_be_visible(timeout=30_000)
+    shown(page, "clean_one_setup.step")
+    expect(page.get_by_test_id("passed")).to_be_visible()
     page.get_by_test_id("passed").locator("summary").click()
     page.get_by_test_id("passed-hole-2").click()
+    assert page.evaluate("document.documentElement.scrollWidth") <= 1280
+    open_step(page, "machining")
     page.get_by_test_id("plan-setup-1").click()
     assert page.evaluate("document.documentElement.scrollWidth") <= 1280
 
@@ -63,8 +72,8 @@ def test_setup_select_shows_why(page: Page, base_url: str):
     hole = next(f for f in r["features"] if f["kind"] == "hole")
     page.goto(base_url)
     page.get_by_test_id("upload-file").set_input_files(PARTS / "two_sided_block.step")
-    expect(page.get_by_test_id("plan-why")).to_contain_text("The fewest directions that reach them all: +Z, −Z, −X.",
-                                                         timeout=30_000)
+    shown(page, "two_sided_block.step", "machining")
+    expect(page.get_by_test_id("plan-why")).to_contain_text("The fewest directions that reach them all: +Z, −Z, −X.")
     page.get_by_test_id("plan-setup-3").click()
     expect(page.get_by_test_id("plan-setup-why-3")).to_contain_text(
         "hole-1 opens −X. 0.250 in (1/4) drill: matches its 0.250 in diameter.")
@@ -79,6 +88,7 @@ def test_setup_select_lights_the_countersink(page: Page, base_url: str):
     hole = next(f for f in r["features"] if f["kind"] == "hole")
     page.goto(base_url)
     page.get_by_test_id("upload-file").set_input_files(PARTS / "countersunk_hole.step")
-    expect(page.get_by_test_id("plan-setup-1")).to_be_visible(timeout=30_000)
+    shown(page, "countersunk_hole.step", "machining")
+    expect(page.get_by_test_id("plan-setup-1")).to_be_visible()
     page.get_by_test_id("plan-setup-1").click()
     assert page.evaluate("window.__dfma.highlightedFaces()") == sorted(hole["faces"] + hole["countersink_faces"])

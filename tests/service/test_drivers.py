@@ -26,7 +26,7 @@ def test_report_sample_drivers():
                          ("deep_pockets", 1, 1.0), ("extra_setups", 1, 1.0), ("odd_holes", 1, 1.0), ("small_tools", 1, 1.0)]
     first = r["cost_drivers"][0]
     assert first == {"driver": "distinct_tools", "label": "Distinct tools", "count": 4, "weight": 1.0,
-                     "score": 4.0, "weight_source": "estimate"}
+                     "score": 4.0, "weight_source": "estimate", "findings": []}
     assert len(r["setups"]) == 2 and len(r["tools"]) == 4
 
 
@@ -52,8 +52,9 @@ def test_off_axis_and_multi_axis():
 def test_rules_to_drivers():
     """A deep bore (bore_depth, D-026) is a deep hole for cost; deep pockets, undercuts and slender turned parts have
     their own drivers (D-030); the two process warnings feed none."""
-    findings = [{"rule": "bore_depth"}, {"rule": "hole_depth"}, {"rule": "turn_slender"}, {"rule": "pocket_depth"},
-                {"rule": "undercut"}, {"rule": "looks_turned"}, {"rule": "turn_axis"}]
+    findings = [{"id": f"F{n}", **f} for n, f in enumerate([
+        {"rule": "bore_depth"}, {"rule": "hole_depth"}, {"rule": "turn_slender"}, {"rule": "pocket_depth"},
+        {"rule": "undercut"}, {"rule": "looks_turned"}, {"rule": "turn_axis"}], 1)]
     got = drivers.cost_drivers(findings, [{}], [])
     assert [(d["driver"], d["count"]) for d in got] == [("deep_holes", 2), ("deep_pockets", 1), ("slender_parts", 1),
                                                         ("undercuts", 1)]
@@ -76,9 +77,9 @@ def test_weight_scales_the_score_and_the_order(monkeypatch):
     config = {k: dict(v) for k, v in settings.drivers_config().items()}
     config["odd_holes"]["weight"] = 3.0
     monkeypatch.setattr(settings, "drivers_config", lambda: config)
-    got = drivers.cost_drivers([{"rule": "hole_size"}, {"rule": "hole_size"}], [{}], [])
+    got = drivers.cost_drivers([{"id": "F1", "rule": "hole_size"}, {"id": "F2", "rule": "hole_size"}], [{}], [])
     assert got == [{"driver": "odd_holes", "label": "Non-standard holes", "count": 2, "weight": 3.0, "score": 6.0,
-                    "weight_source": "estimate"}]
+                    "weight_source": "estimate", "findings": ["F1", "F2"]}]
 
 
 def test_config_lists_the_drivers_each_labelled():

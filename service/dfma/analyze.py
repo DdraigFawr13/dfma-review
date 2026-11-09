@@ -6,6 +6,7 @@ from pathlib import Path
 
 from . import settings
 from .drivers import cost_drivers
+from . import rows
 from .frame import extents_mm, face_info, part_frame, turning_axis
 from .mesh import mesh_faces
 from .plan import plan
@@ -94,8 +95,10 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
              and not (rule.ID in TURN_NEEDS_AXIS and turn_features is None)
              and not (rule.ID in NEEDS_IPT and inventor is None)]  # no axis: only the shared rules
     findings = [f for rule in rules for f in rule.check(features, summary, limits)]
-    findings = [{"id": f"F{n}", **f} for n, f in enumerate(findings, 1)]
-    passed = [p for rule in rules if hasattr(rule, "passes") for p in rule.passes(features, summary, limits)]
+    findings = [{"id": f"F{n}", **f, "check": rows.check_name(f["rule"]), "limit_text": rows.limit_text(f["threshold_source"])}
+                for n, f in enumerate(findings, 1)]
+    passed = [{**p, "limit_text": rows.limit_text(p["threshold_source"])}
+              for rule in rules if hasattr(rule, "passes") for p in rule.passes(features, summary, limits)]
     if process == "mill":
         milled = plan(features, findings, frame, part.units_in_file)
     elif turn_features is not None:
@@ -111,6 +114,7 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
     else:
         stock = {"shape": "block", "size_in": bbox_in}
 
+    driver_list = cost_drivers(findings, milled["setups"], milled["tools"])
     result = {
         "part": {
             "name": name,
@@ -127,6 +131,7 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
         "features": features,
         "findings": findings,
         "rules_run": [rule.ID for rule in rules],
+        "checks_run": rows.checks_run([rule.ID for rule in rules]),  # review-steps S1: the Report step's "Rules run"
         "passed": passed,  # D-023 proposed: the checks each feature passed, with the math
         "machine": milled["machine"],
         "turn_axis": list(turn["axis"]) if turn_features is not None else None,
@@ -135,7 +140,8 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
         "operations": milled["operations"],
         "tools": milled["tools"],
         "tool_changes": milled["tool_changes"],
-        "cost_drivers": cost_drivers(findings, milled["setups"], milled["tools"]),
+        "cost_drivers": driver_list,
+        "cost_total": rows.cost_total(driver_list),  # review-steps S1: the sum of the scores, or None
         "assumptions": list(settings.ASSUMPTIONS) + (settings.TURN_ASSUMPTIONS if process == "turn" else []) + ([settings.MSG_OPEN_SHELL.format(n=part.free_edges)]
                                                      if part.free_edges else [])
                        + ([settings.MSG_NO_UNIT] if part.units_in_file == "none" else []),

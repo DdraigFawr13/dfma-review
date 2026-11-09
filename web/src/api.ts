@@ -90,6 +90,7 @@ export interface Analysis {
   features: Feature[];
   findings: Finding[];
   rules_run: string[];
+  checks_run: string[]; // review-steps S1: the check names of rules_run, in run order, each once
   passed: Passed[]; // D-023 proposed: each check a feature passed, with the math
   assumptions: string[];
   machine: string | null; // S5
@@ -100,6 +101,7 @@ export interface Analysis {
   tools: Tool[];
   tool_changes: number;
   cost_drivers: CostDriver[]; // S7: counts above 0, ranked by score
+  cost_total: number | null; // review-steps S1: the sum of the scores to 0.1; null with no drivers
 }
 
 export interface CostDriver {
@@ -109,6 +111,7 @@ export interface CostDriver {
   weight: number;
   score: number; // count x weight
   weight_source: string; // "estimate" for every starting weight
+  findings: string[]; // review-steps S1: the F ids it counts; [] for setups, tools and small tools
 }
 
 export interface Passed {
@@ -118,6 +121,7 @@ export interface Passed {
   title: string;
   math: string;
   threshold_source: string;
+  limit_text: string; // review-steps S1: the source in plain words ("limit is an estimate")
 }
 
 export interface Tool {
@@ -156,6 +160,8 @@ export interface Finding {
   faces: number[];
   feature: string;
   threshold_source: string;
+  limit_text: string; // review-steps S1: the source in plain words
+  check: string; // review-steps S1: "Hole depth check"
   suggestion: string;
   thread?: string; // thread_mismatch (I1 S2): the thread's id
   hole_feature?: string; // hole_mismatch (I2 S1): the Hole feature's id

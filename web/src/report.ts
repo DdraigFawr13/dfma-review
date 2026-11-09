@@ -7,6 +7,7 @@ import { jsPDF } from "jspdf";
 import type { Analysis, Finding } from "./api";
 import { RULE_NAMES, axisText, holeCounts, holeFeatureSize, holeFeatureTitle, checkedLine, driverLine, inMm, meta, notPlanned, planFoot, planWhy, setupHead, stockText, threadCallout, threadCounts, threadSize, toolName } from "./findings";
 import { formatIn, formatRatio, formatSize } from "./format";
+import { sevWord } from "./words";
 
 /** What the report needs besides the analysis: the labels the reader chose, today's date, and a picture per finding. */
 export interface ReportInput {
@@ -28,12 +29,12 @@ export function ascii(text: string): string {
   return [...text].map((c) => SWAPS[c] ?? (c.charCodeAt(0) > 255 ? "?" : c)).join("");
 }
 
-/** "No findings", or "6 findings: 5 high, 1 medium": the answer, in plain words. */
+/** "No findings", or "6 findings: 5 Fix, 1 Review.": the answer, in plain words (D-042 words). */
 export function verdictText(result: Analysis): string {
   const n = result.findings.length;
   if (n === 0) return "No findings. Every feature checked passed its rules.";
   const by = (s: string) => result.findings.filter((f) => f.severity === s).length;
-  const parts = [`${by("high")} high`, `${by("medium")} medium`].filter((p) => !p.startsWith("0 "));
+  const parts = [`${by("high")} Fix`, `${by("medium")} Review`].filter((p) => !p.startsWith("0 "));
   return `${n} ${n === 1 ? "finding" : "findings"}: ${parts.join(", ")}.`;
 }
 
@@ -198,7 +199,7 @@ function threadsSection(p: Page, input: ReportInput): void {
 function findingPage(p: Page, f: Finding, input: ReportInput): void {
   const { result } = input;
   p.newPage();
-  p.text(`${f.id} · ${f.severity.toUpperCase()} · ${RULE_NAMES[f.rule] ?? f.rule}`, { size: 11, bold: true, colour: f.severity === "high" ? [179, 38, 30] : [163, 90, 0], gap: 2 });
+  p.text(`${f.id} · ${sevWord(f.severity).toUpperCase()} · ${RULE_NAMES[f.rule] ?? f.rule}`, { size: 11, bold: true, colour: f.severity === "high" ? [179, 38, 30] : [163, 90, 0], gap: 2 });
   p.text(f.title, { size: 14, bold: true, gap: 6 });
   const pic = input.picture(f);
   const h = Math.min(330, WIDTH * pic.height / pic.width), w = h * pic.width / pic.height;
@@ -221,7 +222,7 @@ function findingPage(p: Page, f: Finding, input: ReportInput): void {
   p.y += h + 8;
   p.text(`The faces in blue are the ones this finding is about${ringed ? ", ringed" : ""}; the rest of the part is faded.`,
     { size: 9, colour: [85, 101, 122], gap: 8 });
-  p.text(`Measured ${valueText(f.measured, f.unit, f.limit)}; limit ${valueText(f.limit, f.unit, f.measured)}; limit source: ${f.threshold_source}.`);
+  p.text(`Measured ${valueText(f.measured, f.unit, f.limit)}; limit ${valueText(f.limit, f.unit, f.measured)}; ${f.limit_text}.`);
   p.text(`Where: ${meta(f, result)}`);
   const feature = result.features.find((x) => x.id === f.feature);
   p.text(f.feature ? `Feature ${f.feature}; face ids ${f.faces.join(", ")}${feature ? ` (${feature.kind})` : ""}.` : `Whole part; face ids ${f.faces.join(", ")}.`);

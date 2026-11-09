@@ -9,17 +9,19 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from helpers import PARTS
+from steps import open_step, shown
 
 from dfma.analyze import analyze
 
 pytestmark = pytest.mark.e2e
 
 
-def _upload(page: Page, base_url: str, name: str, process: str, material: str = "steel1018") -> None:
+def _upload(page: Page, base_url: str, name: str, process: str, material: str = "steel1018", step: str = "machining") -> None:
     page.goto(base_url)
     page.get_by_test_id("upload-process").select_option(process)
     page.get_by_test_id("upload-material").select_option(material)
     page.get_by_test_id("upload-file").set_input_files(PARTS / name)
+    shown(page, name, step)
 
 
 def test_slender_shaft_on_the_lathe(page: Page, base_url: str):
@@ -30,7 +32,7 @@ def test_slender_shaft_on_the_lathe(page: Page, base_url: str):
     expect(page.get_by_test_id("plan-stock")).to_have_text(
         "0.500 in round bar, 4.500 in long (the part's size; no allowance added)")
     expect(page.locator("#plan-count")).to_have_text("1 setup")
-    expect(page.get_by_test_id("verdict")).to_contain_text("1 turned profile, 1 hole and 1 wall checked")
+    expect(page.get_by_test_id("overview-features")).to_contain_text("1 turned profile, 1 hole and 1 wall checked")
     expect(page.get_by_test_id("plan-loads")).to_have_text("3 (including the first in each setup)")
     expect(page.get_by_test_id("plan-why")).to_have_text(
         "Turned in one setup about its axis. Off the axis, cut with live tooling: hole-1.")
@@ -56,12 +58,13 @@ def test_slender_shaft_on_the_lathe(page: Page, base_url: str):
         "Hole not on the turning axis: needs a milling operation or live tooling")
     expect(page.get_by_test_id("finding-F2")).to_contain_text("90.0° to the turning axis. Cut it with live tooling")
     expect(page.get_by_test_id("passed")).to_contain_text("1 feature · 1 check")  # the wall
+    open_step(page, "features")
     page.get_by_test_id("passed").locator("summary").click()
     expect(page.get_by_test_id("passed-profile-1")).to_have_count(0)  # flagged: in a finding, never in Passed
 
 
 def test_clean_shaft_passed_list(page: Page, base_url: str):
-    _upload(page, base_url, "clean_shaft.step", "turn", "al6061")
+    _upload(page, base_url, "clean_shaft.step", "turn", "al6061", "features")
     expect(page.get_by_test_id("plan-machine")).to_have_text("lathe", timeout=30_000)
     page.get_by_test_id("passed").locator("summary").click()
     row = page.get_by_test_id("passed-profile-1")
@@ -94,15 +97,15 @@ def test_block_as_turn_shows_no_plan(page: Page, base_url: str):
     _upload(page, base_url, "block_as_turn.step", "turn", "al6061")
     expect(page.get_by_test_id("finding-F1")).to_contain_text("No turning axis found; check the process",
                                                               timeout=30_000)
-    expect(page.get_by_test_id("finding-F1")).to_contain_text("limit: assumption")
+    expect(page.get_by_test_id("finding-F1")).to_contain_text("limit is an assumption")
     expect(page.get_by_test_id("plan-machine")).to_have_count(0)
 
 
 def test_part_wide_pin_does_not_hide_the_cross_hole(page: Page, base_url: str):
     """D-027 (Morgan, 2026-11-08: "I don't see that off center hole"): the length finding's pin covers the
     whole outside, so it moves to a free spot of its faces instead of sitting on the cross hole."""
-    _upload(page, base_url, "slender_shaft.step", "turn")
-    expect(page.get_by_test_id("finding-F2")).to_be_visible(timeout=30_000)
+    _upload(page, base_url, "slender_shaft.step", "turn", step="features")
+    expect(page.get_by_test_id("finding-F2")).to_be_visible()
     page.wait_for_timeout(300)
     state = {s["id"]: s for s in page.evaluate("window.__dfma.flagState()")}
     assert state["F1"]["shown"] and state["F2"]["shown"], state

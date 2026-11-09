@@ -2,6 +2,7 @@
 // severity colour with a pin ("F1"; D-017: on the feature, merged when pins overlap); selecting a finding turns its faces the accent colour,
 // fades the rest (opacity 0.35) and frames the camera on them (spec "Web page", D-012).
 
+import { sevWord } from "./words";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { Face, Finding } from "./api";
@@ -139,7 +140,7 @@ export class Viewer {
       id.textContent = finding.id;
       const sev = document.createElement("span");
       sev.className = `sev ${finding.severity}`;
-      sev.textContent = finding.severity;
+      sev.textContent = sevWord(finding.severity); // "F4 FIX" on the selected pin (D-042)
       el.append(id, sev);
       host.append(el);
       this.flags.push({ el, points, finding });

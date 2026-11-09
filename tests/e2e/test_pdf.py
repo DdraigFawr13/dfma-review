@@ -10,6 +10,7 @@ from playwright.sync_api import Page, expect
 from pypdf import PdfReader
 
 from helpers import PARTS
+from steps import open_step, shown
 
 from dfma.analyze import analyze
 
@@ -23,13 +24,14 @@ def test_export_pdf(page: Page, base_url: str, tmp_path):
     page.goto(base_url)
     button = page.get_by_test_id("export-pdf")
     expect(button).to_be_disabled()  # nothing to export before a part is loaded
+    expect(button).to_be_hidden()  # in the top bar once a part is read (review-steps)
     page.get_by_test_id("upload-file").set_input_files(PARTS / "report_sample.step")
-    expect(page.get_by_test_id("finding-F1")).to_be_visible(timeout=30_000)
-    expect(page.get_by_test_id("drivers")).not_to_have_attribute("open", "")  # collapsed until opened, like Passed
-    page.get_by_test_id("drivers").locator("summary").click()
+    shown(page, "report_sample.step", "cost")
     expect(page.get_by_test_id("driver-distinct_tools")).to_be_visible()
-    expect(page.get_by_test_id("driver-distinct_tools")).to_contain_text("4 × 1.0 = 4.0")
+    expect(page.get_by_test_id("driver-distinct_tools")).to_contain_text("4 × 1.0")
+    expect(page.get_by_test_id("driver-distinct_tools")).to_contain_text("4.0")
     expect(button).to_be_enabled()
+    open_step(page, "features")
 
     page.get_by_test_id("finding-F2").click()  # the reader's own selection must survive the export
     camera = page.evaluate("window.__dfma.cameraTarget()")
@@ -45,7 +47,7 @@ def test_export_pdf(page: Page, base_url: str, tmp_path):
     pdf = PdfReader(path)
     first = pdf.pages[0].extract_text()
     stock = " × ".join(f"{v:.3f}" for v in result["stock"]["size_in"])  # the part's own axes, as the screen shows it
-    for text in ("DFMA Review report", "report_sample.step", f"{len(result['findings'])} findings: 4 high, 4 medium.",
+    for text in ("DFMA Review report", "report_sample.step", f"{len(result['findings'])} findings: 4 Fix, 4 Review.",
                  "Machine: 3-axis mill", f"Stock: {stock} in block", "Setup 1 · from +X", "Setup 2 · from -X",
                  "1. 1/4 in end mill (em-0.250)  hole-1", "2. 0.250 in (1/4) drill (dr-0.2500)  hole-2",
                  "3. 3/4 in end mill (em-0.750)  pocket-1", "4. 1/32 in end mill (smallest; nothing fits) (em-0.031)  pocket-1", "Tool changes (tool loads): 4", "Tools (4)",
@@ -62,6 +64,9 @@ def test_export_pdf(page: Page, base_url: str, tmp_path):
     for n, finding in enumerate(result["findings"], 1):
         section = pdf.pages[n]
         assert section.extract_text().startswith(f"{finding['id']} "), section.extract_text()[:40]
+        word = {"high": "FIX", "medium": "REVIEW"}[finding["severity"]]  # D-042: words, not high / medium
+        assert section.extract_text().startswith(f"{finding['id']} · {word} · "), section.extract_text()[:40]
+        assert "D-0" not in section.extract_text()  # limits in words, no decision ids (review-steps S1)
         assert finding["title"].replace("×", "×") in section.extract_text().replace("\n", " ")
         assert pictures_drawn(n) == 1
     assert "Assumptions" in pdf.pages[-1].extract_text() and pictures_drawn(len(pdf.pages) - 1) == 0
@@ -81,7 +86,8 @@ def test_pdf_threads(page: Page, base_url: str, tmp_path):
     ipt.write_bytes(b"placeholder")
     page.get_by_test_id("upload-ipt").set_input_files(ipt)
     page.get_by_test_id("upload-file").set_input_files(step)
-    expect(page.get_by_test_id("threads-panel")).to_be_visible(timeout=30_000)
+    shown(page, step.name)
+    expect(page.get_by_test_id("threads-panel")).to_be_visible()
     with page.expect_download() as download:
         page.get_by_test_id("export-pdf").click()
     path = tmp_path / "report.pdf"
@@ -95,7 +101,7 @@ def test_pdf_threads(page: Page, base_url: str, tmp_path):
                  "hole-36 M3x0.5 - 6H 0.236 in [6 mm] deep tap drill 0.098 in [2.5 mm] matched"):
         assert line in text, f"{line!r} is not in the PDF"
     pages = [p.extract_text().replace("\n", " ") for p in pdf.pages]
-    assert any(p.startswith("F26") or "F26 · MEDIUM" in p for p in pages)  # its finding page
+    assert any("F26 · REVIEW" in p for p in pages)  # its finding page, headed with the word (D-042)
 
 
 def test_pdf_hole_features(page: Page, base_url: str, tmp_path):
@@ -110,7 +116,8 @@ def test_pdf_hole_features(page: Page, base_url: str, tmp_path):
     ipt.write_bytes(b"placeholder")
     page.get_by_test_id("upload-ipt").set_input_files(ipt)
     page.get_by_test_id("upload-file").set_input_files(step)
-    expect(page.get_by_test_id("hole-features-panel")).to_be_visible(timeout=30_000)
+    shown(page, step.name)
+    expect(page.get_by_test_id("hole-features-panel")).to_be_visible()
     with page.expect_download() as download:
         page.get_by_test_id("export-pdf").click()
     path = tmp_path / "report.pdf"
@@ -127,4 +134,4 @@ def test_pdf_hole_features(page: Page, base_url: str, tmp_path):
         assert line in text, f"{line!r} is not in the PDF"
     assert text.index("Threads (from") < text.index("Hole features (from")
     pages = [p.extract_text().replace("\n", " ") for p in pdf.pages]
-    assert any("F39 · MEDIUM" in p for p in pages)  # its finding page
+    assert any("F39 · REVIEW" in p for p in pages)  # its finding page
