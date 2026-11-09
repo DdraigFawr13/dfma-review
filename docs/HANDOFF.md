@@ -18,6 +18,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ○ Assemblies and DFA · history and compare · time and $.
 - ▶ Inventor parts (Morgan, 2026-11-08): ✔ research · ✔ own reader (D-031) · ✔ plan (D-032) · ✔ spec I1 (D-033) · ✔ I1 S1 #21, S2 #22, S3 #23 · ✔ spec I2+I3 (D-039) · ✔ I2 S1 hole features #24 (D-041) · ▶ S2 names and copies (new branch) · ○ S3 fillets and chamfers (merge after Morgan's work-pair check).
 - ○ Inventor shape from the `.ipt` alone (D-035; after I1).
+- ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ○ build the step-by-step review screen: `write-spec` after I2+I3 merges ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
@@ -41,6 +42,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-09 D-042: review screen redesign approved (steps Part · Features · Machining · Cost · Report, overview after reading, Fix / Review, plain-sentence rows, Show OK per kind, cost total); not built. Found on that branch: `test_nist` ctc_02 took 10.5 s and 11.1 s (limit 10 s) in 2 of 3 full runs in a cloud container under load, 9.19 s alone; limit unchanged (VER-04).
 - 2026-11-09 D-041: merge I2 S1 now (#24); S2 and S3 on a new branch, merged after the work-pair check.
 - 2026-11-09 D-040: Hole features panel and PDF section approved (mock-up).
 - 2026-11-09 D-039: I2+I3 spec approved; default names only; no fillet or chamfer names; blend disagreements are findings; one PR merged after the work-pair check; copies as "pattern or mirror".

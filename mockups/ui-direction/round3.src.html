@@ -1,0 +1,176 @@
+<title>DFMA Look Round 3</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+<style>
+/* Layout: one reading column of cards; each screen is a full-width picture with its vote under it. Drawing office tokens (docs/UI_STYLE.md). */
+:root {
+  --bg: #eef2f6; --panel: #ffffff; --ink: #16263d; --muted: #55657a; --line: #c4cfdc;
+  --accent: #1f5fa8; --accent-ink: #ffffff; --soft: #e6eef7;
+  --high: #b3261e; --medium: #a35a00; --low: #3f6b2a;
+  --sans: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111a26; --panel: #1a2533; --ink: #e3eaf2; --muted: #9fb0c4; --line: #33435a;
+  --accent: #79aef0; --accent-ink: #0d1520; --soft: #20324a; --high: #f0857d; --medium: #e3a256; --low: #8cc274; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111a26; --panel: #1a2533; --ink: #e3eaf2; --muted: #9fb0c4; --line: #33435a;
+  --accent: #79aef0; --accent-ink: #0d1520; --soft: #20324a; --high: #f0857d; --medium: #e3a256; --low: #8cc274; color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 16px/1.5 var(--sans); margin: 0; }
+main { max-width: 860px; margin: 0 auto; padding-block: 20px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 14px; }
+h1 { font-size: 1.5rem; margin: 0; text-wrap: balance; }
+h2 { font-size: 1.125rem; margin: 22px 0 0; text-wrap: balance; }
+h3 { font-size: 1rem; margin: 0; }
+p { margin: 0; }
+.lead { color: var(--muted); max-width: 62ch; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0; }
+.card.done { border-left: 4px solid var(--accent); }
+.mono, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: .875rem; }
+figure { margin: 0; display: grid; gap: 6px; }
+figure img { width: 100%; height: auto; border: 1px solid var(--line); display: block; }
+figcaption { font-size: .875rem; color: var(--muted); }
+.eyebrow { font: 700 .875rem var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.pros { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: .9375rem; }
+.pros dt { font-weight: 600; } .pros dd { margin: 0; }
+.seg { display: grid; gap: 6px; grid-template-columns: repeat(var(--n, 3), 1fr); }
+.seg button { min-height: 40px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 2px; font: 600 .9375rem var(--sans); cursor: pointer; padding: 6px 8px; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.seg button:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+textarea { width: 100%; min-height: 44px; font: 400 .9375rem var(--sans); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 2px; padding: 8px 10px; resize: vertical; }
+.item { display: grid; gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); }
+.item:first-of-type { border-top: 0; padding-top: 0; }
+.item .name { font-weight: 600; }
+.item .desc { font-size: .9375rem; color: var(--muted); }
+.problem { display: grid; grid-template-columns: 2.4rem 1fr; gap: 0 10px; }
+.problem .big { font: 700 1.25rem var(--mono); color: var(--high); text-align: right; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
+.bar div { max-width: 860px; margin: 0 auto; padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; gap: 12px; align-items: center; font-size: .875rem; }
+.meter { flex: 1; height: 6px; background: var(--soft); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+@media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
+.specimen { display: grid; gap: 6px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 2px; font-size: .9375rem; }
+.specimen .r { display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.sev { font: 700 .875rem var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.sev.h { color: var(--high); } .sev.m { color: var(--medium); }
+a { color: var(--accent); }
+.legend { font-size: .875rem; color: var(--muted); }
+.bad { text-decoration: line-through; color: var(--muted); }
+</style>
+<div class="bar" aria-live="polite"><div><b>Round 3</b><span class="meter" aria-hidden="true"><i id="meter"></i></span><span id="count" class="num">0 answered</span><span id="save" class="muted">Saved on this device</span></div></div>
+<main>
+  <header style="display:grid;gap:8px">
+    <span class="eyebrow">DFMA Review · look and layout</span>
+    <h1>Round 3: the whole review, step by step</h1>
+    <p class="lead">Your picks from rounds 1 and 2, made into every screen of one review on report_sample.step: start, reading, refused file, overview, the four steps, and 900 px. Approve it, change it, or say not yet at the bottom. Say <b>"round 3 done"</b> in chat.</p>
+    <p class="small muted">Mock-ups at 1280 px and 900 px. Nothing in the app changes until you approve; then the changes go into DECISIONS and the style guide, and the build is planned as its own slice.</p>
+  </header>
+
+  <h2>Settled in rounds 1 and 2</h2>
+  <section class="card small"><div class="pros">
+    <dt>Steps</dt><dd>Part · Features · Machining · Cost · Report, across the top, with Back / Next at the bottom of each.</dd>
+    <dt>Overview</dt><dd>Opens on the Part step as soon as the part is read: counts per step, biggest cost drivers, what to fix first.</dd>
+    <dt>Rows</dt><dd><span class="sev h">▲ Fix</span> / <span class="sev m">◆ Review</span>, short title, one plain sentence, the check's name. Repeats grouped (×4). Ids only in the detail.</dd>
+    <dt>Look</dt><dd>Drawing office, unchanged.</dd>
+  </div></section>
+
+  <h2>The four calls you left to me</h2>
+  <section class="card small"><div class="pros">
+    <dt>Rows</dt><dd>Rows, not a table: the sentence you approved reads badly squeezed into cells.</dd>
+    <dt>OK tints</dt><dd>A "Show OK" switch per kind (holes, pockets, corners, walls) at the foot of the model, on the Features step only. Keeps your per-kind debugging (D-014); the 7-entry legend goes. Defaults as today: walls off.</dd>
+    <dt>Counts</dt><dd>Step tabs show shape + number (▲ 4 ◆ 4); every list, card and pin label carries the word. Needs one line of the style guide changed.</dd>
+    <dt>Verdict</dt><dd>The verdict line goes. Its counts move to the overview, "2 holes, 1 pocket, 4 corners and 9 walls checked" too; the rule list moves to the Report step.</dd>
+  </div><p class="muted">Each has a question below if you want it the other way.</p></section>
+
+  <div id="sections" style="display:grid;gap:14px"></div>
+
+  <h2>Anything else</h2>
+  <section class="card"><h3>Anything missing, wrong, or still too wordy?</h3><textarea id="t_else" data-id="else" rows="4" aria-label="Anything else"></textarea></section>
+  <p class="small muted">When done, say <b>"round 3 done"</b> in chat.</p>
+  <details class="card" id="check-record"><summary><b>Check record</b></summary>
+    <div class="small" style="display:grid;gap:6px">
+      <p>Files checked: the app's output for report_sample.step, web/index.html, web/src/main.ts, web/src/report.ts, service/dfma/settings.py, docs/UI_STYLE.md, docs/DECISIONS.md.</p>
+      <p>Facts: counts, sizes, setups, tools and drivers match the app; status and error lines are the app's own; "Assumptions (8)" is the count the app shows for this part. Which issue sits in which setup is an inference, labelled.</p>
+      <p>Fixes after the fresh check: every row keeps its limit source (estimate, or the drill list within 0.0005 in); sharp corners keep the EDM option; the PDF list adds the threads section and the assumptions page; Passed drawn closed (D-023); Machining gets the brief why (D-023) and the tool-load note; no colour-only pins on Cost and Report; ticks on the Show OK switches; one status line while reading. Newly named as proposals: the spinner, the error inside the form, the 460 px panel and stacking at 900 px, Fix / Review in the PDF.</p>
+      <p>Left as is: this approval page loads IBM Plex from Google Fonts (a review page, not the app; the frames use the app's own font files).</p>
+      <p>Lint: 0 warnings (frames and page, minimum 14 px). Frames at 1280 and 900 px. Fresh check: 1 reviewer, 66,215 tokens. After approval: total score 14.0 added to Cost (sum of the 7 driver scores; the app has no total yet).</p>
+    </div>
+  </details>
+</main>
+
+<script>
+const IMG = {{imgs}};
+const _unused = `<div class="specimen"><div><span class="sev h">▲ Fix</span> <b>Sharp corner ×4</b> <span class="muted mono">F4–F7</span><br>Inside corners have no radius. Needs 0.031 in (1/32) or more.<br><span class="small muted">Corner radius check · limit is an estimate</span></div></div>`;
+const SECTIONS = [
+  { h: "1 · Part", items: [
+    { pic: "r3-start", cap: "Start: file, .ipt, process, material, and the privacy line in full." },
+    { pic: "r3-loading", cap: "Reading: the app's own status line, \"Analysing report_sample.step…\", over the model, with a spinner (new)." },
+    { pic: "r3-error", cap: "Refused: the app's own message with \"Error:\" and the red stripe, and what to do next. (Example: a file that isn't STEP.) New: the message sits in the form, where the file was chosen, instead of the fixed status row under the top bar." },
+    { pic: "r3-overview", cap: "Overview, straight after reading. \"Change file\" goes back to the start form. F2 is on the far side in this view; \"+1\" pins fold F3 into F1 and F8 into F7, as the app does." } ] },
+  { h: "2 · Features", items: [
+    { pic: "r3-features", cap: "Issues, F4 selected: its faces light, its pin stands up, its row opens one level. Show OK switches at the foot of the model." },
+    { pic: "r3-passed", cap: "Passed: the same row style with OK, closed until you open it (D-023). Every row keeps its check, its limit and whether the limit is an estimate. (The picture is the plain render; in the app the walls switch tints the walls brown.)" } ] },
+  { h: "3 · Machining", items: [
+    { pic: "r3-mach", cap: "Setups with their operations and, under each, the issues it holds. Setup chips on the model pick one and show its features; \"Why 2\" gives the brief why (D-023). Which issue sits in which setup is my reading; the app doesn't link them yet." } ] },
+  { h: "4 · Cost and 5 · Report", items: [
+    { pic: "r3-cost", cap: "Cost drivers, count × weight, with the findings that feed each one, and the total score (added after your round 3 note). Weights are estimates; no time or dollars yet." },
+    { pic: "r3-report", cap: "Report: what the PDF holds, the rules run (moved off the verdict line), the assumptions, and Export PDF." } ] },
+  { h: "900 px", items: [
+    { pic: "r3-overview-900", cap: "At 900 px the panel moves under the model. Today it stacks only below 900 px; the side panel also grows from 400 to 460 px at 1280 for the sentences. Both are proposals." },
+    { pic: "r3-features-900", cap: "Features at 900 px." } ] },
+  { h: "Overrule any call", items: [
+    { id: "o_rows", q: "Rows, not a table", opts: ["Agree", "Table instead"] },
+    { id: "o_ok", q: "Show OK switch per kind, Features step only", opts: ["Agree", "One switch for all", "Keep today's legend"] },
+    { id: "o_marks", q: "Step tabs: shape + number, words everywhere else", opts: ["Agree", "Words in the tabs too"] },
+    { id: "o_verdict", q: "Verdict line goes; counts to the overview, rules to Report", opts: ["Agree", "Keep a verdict line"] },
+    { id: "o_pdf", q: "The PDF says Fix / Review too (today: high / medium)", opts: ["Agree", "Keep high / medium in the PDF"] } ] },
+  { h: "Not drawn yet (my proposal)", items: [
+    { id: "o_more", q: "Turning parts, and threads from an .ipt", why: "Turning uses the same steps; Machining shows the lathe plan (turning axis, support) instead of setups. Threads become a group in the Features step, next to the holes they belong to.", opts: ["Agree", "Show me first"] } ] },
+  { h: "Approval", items: [
+    { id: "approve", q: "This design for the review screen", why: "Approve: I write the decisions and style-guide changes, then plan the build as its own slice on its own branch, after the Inventor work you have running.", opts: ["Approved", "Approved with the changes I wrote", "Not yet"] } ] },
+];
+const state = {}; let db = null; const KEY = "dfma-ui-round3"; const voteIds = []; const paints = []; const notes = [];
+const $ = s => document.querySelector(s);
+function el(tag, attrs = {}, ...kids) { const e = document.createElement(tag); for (const k in attrs) { if (k.startsWith("on")) e.addEventListener(k.slice(2), attrs[k]); else if (k === "class") e.className = attrs[k]; else if (k === "html") e.innerHTML = attrs[k]; else e.setAttribute(k, attrs[k]); } kids.flat().forEach(k => k != null && e.append(k)); return e; }
+const answered = v => Array.isArray(v) ? v.length > 0 : !!v;
+async function put(id, v) {
+  state[id] = v; try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  progress(); if (!db) return;
+  $("#save").textContent = "Saving…";
+  try { await db.collection("ui3").doc(id).set({ v, at: Date.now() }); $("#save").textContent = "Saved"; }
+  catch (e) { $("#save").textContent = "Saved on this device only"; }
+}
+function progress() { const n = voteIds.filter(id => answered(state[id])).length; $("#count").textContent = n + " of " + voteIds.length; $("#meter").style.width = (100 * n / voteIds.length) + "%"; }
+function seg(id, opts) {
+  voteIds.push(id);
+  const box = el("div", { class: "seg", style: "--n:" + Math.min(opts.length, 3), role: "group" });
+  const paint = () => { box.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(state[id] === b.dataset.v))); box.closest(".card")?.classList.toggle("done", answered(state[id])); };
+  for (const o of opts) box.append(el("button", { type: "button", "data-v": o, onclick: () => { put(id, state[id] === o ? "" : o); paint(); } }, o));
+  paints.push(paint); return box;
+}
+function note(id, label) { const t = el("textarea", { id: "t_" + id, "data-id": "note_" + id, rows: 2, "aria-label": "Note on " + label, placeholder: "Note (optional)" }); notes.push(t); return t; }
+for (const sec of SECTIONS) {
+  $("#sections").append(el("h2", {}, sec.h));
+  for (const it of sec.items) {
+    if (it.pic) { $("#sections").append(el("figure", {}, el("img", { src: IMG[it.pic], alt: "Mock-up: " + sec.h }), el("figcaption", {}, it.cap))); continue; }
+    $("#sections").append(el("section", { class: "card" }, el("h3", {}, it.q), it.why ? el("p", { class: "small muted" }, it.why) : null, it.html ? el("div", { html: it.html }) : null, seg(it.id, it.opts), note(it.id, it.q)));
+  }
+}
+const timers = {};
+for (const t of [...notes, $("#t_else")]) t.addEventListener("input", () => { clearTimeout(timers[t.id]); timers[t.id] = setTimeout(() => put(t.dataset.id, t.value), 700); });
+function restore() { paints.forEach(p => p()); for (const t of [...notes, $("#t_else")]) if (state[t.dataset.id] != null && document.activeElement !== t) t.value = state[t.dataset.id]; progress(); }
+try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
+restore();
+(async () => {
+  try {
+    db = await window.claude?.use?.("db");
+    if (!db) { $("#save").textContent = "Saved on this device only"; return; }
+    const snap = await db.collection("ui3").get(); const local = { ...state };
+    snap.docs.forEach(d => { const v = d.data(); if (v && "v" in v) state[d.id] = v.v; });
+    const push = Object.keys(local).filter(k => answered(local[k]) && !answered(state[k]));
+    restore(); for (const k of push) await put(k, local[k]); restore(); $("#save").textContent = "Saved";
+  } catch (e) { $("#save").textContent = "Saved on this device only"; }
+})();
+</script>
