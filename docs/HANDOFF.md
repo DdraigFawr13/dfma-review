@@ -22,7 +22,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-09 Harness upgraded to AI-Master-Instructions `v4.12.0` (master D-066, from the master's review of this project): new REP-05; session start lists unmerged branches and an over-cap HANDOFF; `ui-mockups` now does D-024's fit-width tap-to-zoom (`add-zoom.mjs`); `docs/harness/drift/` keeps guard counts. This HANDOFF cut to the cap.
+- 2026-11-09 Harness upgraded to AI-Master-Instructions `v4.12.0`, merged as #26 (Morgan approved: "Approved"; master D-066, from the master's review of this project): new REP-05; session start lists unmerged branches and an over-cap HANDOFF; `ui-mockups` now does D-024's fit-width tap-to-zoom (`add-zoom.mjs`); `docs/harness/drift/` keeps guard counts. This HANDOFF cut to the cap.
 - 2026-11-09 S3 merged in #23 (D-038); I2+I3 spec started on `inventor-i2-i3`. Names: start from `docs/research/inventor-names-probe/README.md`; per-face `NMx_Hole_Brep_tag` and `NMx_blend_tag` carry a feature id (archive, "Moved 2026-11-09").
 
 ## Next
