@@ -285,3 +285,15 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-08; Morgan, in chat after the [mock-up](https://claude.ai/artifact/7H6qTtj2BYgQATskcXVMZG): "Approved with your recommendation").
 - **Decision:** a fold-away "Threads" panel under Findings, open when the `.ipt` has threads, hidden without an `.ipt` (`mockups/threads-panel.html`). One row per thread in record order: state (matched / disagrees / not mapped, in text and colour), callout `<designation> - <class>`, its hole, depth and tap drill in inches with the stored mm in brackets; a disagreeing row adds its gaps and its finding; a not-mapped row is plain text with its reason ("our limit, not a finding"). Tapping a row selects its hole. The hole's Passed row and any finding on it add `Thread: <callout> (from the .ipt)`. The PDF's summary page gets a Threads section after Cost drivers with one line per thread. The wording in the mock-up's check record is approved with it.
 - **Why:** a fixed fourth panel squeezed the findings list; a disagreeing thread is also a finding, so a folded panel can't hide it.
+
+## D-037 I1 S3, I2 and I3 on one branch, merged together
+
+- **Status:** Accepted (2026-11-09; Morgan, in chat: "Can we also combine i2 and i3 into this session and merge then all together?", then picked "One branch, one merge" on the follow-up question). Amends D-032's build order (each phase its own PR).
+- **Decision:** I1 S3 (feature names), I2 (hole features) and I3 (fillets and chamfers) are built on branch `inventor-i1-s3` and its one PR, and merged together after Morgan approves. Order: finish S3; write one combined I2+I3 spec (write-spec, fresh checks) for Morgan's approval; build it slice by slice on the same branch. If a session's context runs out, the next session continues from HANDOFF on the same branch. Morgan also allowed running InventorLoader in a scratch folder for the answer key (output only, its source not read, D-031).
+- **Why:** Morgan wants one review and one merge for the rest of the Inventor feature work; the cost is one larger review and S3 waiting for I2 and I3.
+
+## D-038 Merge S3 now; I2+I3 on a new branch
+
+- **Status:** Accepted (2026-11-09; Morgan, in chat while the I2+I3 spec was starting: "You can actually create or and merge what's there before the spec"). Amends D-037 (one branch, one merge).
+- **Decision:** PR #23 (I1 S3: the names answer key, the decode probe, `test_inventor_names.py`; no app change) merges now. The combined I2+I3 spec and its build go on a new branch cut from the merged main (GIT-01), with their own PR, merged after Morgan's approval.
+- **Why:** S3 changes no app code and its checks are green, so it need not wait for I2 and I3; a merged branch is never reused.
