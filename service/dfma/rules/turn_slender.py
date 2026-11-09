@@ -20,7 +20,7 @@ def support(ratio: float) -> str:
     if ratio <= 3.0:
         return "A chuck alone holds it."
     if ratio <= 6.0:
-        return "Support the free end with a tailstock centre; the part then needs a centre hole."
+        return "Support the free end with a tailstock center; the part then needs a center hole."
     if ratio <= 12.0:
         return "Needs a tailstock and a steady rest, or a Swiss-type lathe."
     return (f"Needs a tailstock and {math.ceil(ratio / 3) - 2} steady rests ({math.ceil(ratio / 3)} holding points), "
@@ -72,6 +72,6 @@ def passes(features: list[dict], part: dict, limits: dict) -> list[dict]:
         length = f["dims_mm"]["length"]
         out.append({"rule": ID, "feature": f["id"], "faces": f["faces"], "threshold_source": table["source"],
                     "title": f"Length {ratio:.1f}× {_what(stepped, d)}, at most {table['medium']:.1f}×",
-                    "math": f"{length / MM_PER_IN:.4f} in long ÷ {d / MM_PER_IN:.4f} in "
+                    "math": f"{length / MM_PER_IN:.3f} in long ÷ {d / MM_PER_IN:.3f} in "
                             f"{'smallest ' if stepped else ''}diameter = {ratio:.2f}× ≤ {table['medium']:.1f}×"})
     return out

@@ -7,7 +7,7 @@ import { blendKinds, renderBlends, renderHoleFeatures, renderPlan, renderThreads
 import { formatSize } from "./format";
 import { buildReport, reportName } from "./report";
 import { STEPS, STEP_NAMES, groupTally, placeRows, placedLine, renderChips, renderCost, renderOverview, renderReport,
-  renderRows, renderSetupChips, rowFaces, stepCounts, type RowFilter, type Step } from "./steps";
+  renderRows, renderSetupChips, rowFaces, stepCounts, type Placed, type RowFilter, type Step } from "./steps";
 import { Viewer, type CheckedKind } from "./viewer";
 
 function byId<T extends HTMLElement>(id: string): T {
@@ -64,6 +64,7 @@ declare global {
       checkedFaces(kind?: CheckedKind): number[];
       flagBoxes(): { id: string; x: number; y: number; w: number; h: number }[];
       flagState(): { id: string; shown: boolean; mergedInto: string }[];
+      pinFootprints(): { id: string; x: number; y: number; w: number; h: number }[];
     };
   }
 }
@@ -74,6 +75,7 @@ window.__dfma = {
   opacities: () => viewer.opacities(),
   flagBoxes: () => viewer.flagBoxes(), // test hook: where each visible finding label sits
   flagState: () => viewer.flagState(), // test hook: each pin shown, folded into another, or hidden
+  pinFootprints: () => viewer.pinFootprints(), // test hook: each pin shown with its stem and dot (audit F27)
   checkedFaces: (kind?: CheckedKind) => viewer.checkedFaces(kind), // test hook: drawn in a kind's "checked" colour
 };
 
@@ -188,6 +190,18 @@ const rowHandlers = {
   },
 };
 
+/** An issue line on Machining: open its row on Features at its first finding there, with keyboard focus on it (audit F27). */
+function openPlaced(p: Placed): void {
+  rowFilter = "issues";
+  openRow = p.row.id;
+  sel = { kind: "row", row: p.row.id, at: Math.max(0, p.row.findings.indexOf(p.ids[0])) };
+  apply();
+  showStep("features", false);
+  const row = rowsHost.querySelector<HTMLElement>('.srow[aria-expanded="true"]');
+  row?.scrollIntoView({ block: "nearest" });
+  row?.focus();
+}
+
 function showFindings(result: Analysis | null, message: string): void {
   const side = document.querySelector<HTMLElement>(".side")!, keepScroll = side.scrollTop; // keep the reader's place
   const active = document.activeElement as HTMLElement | null; // redrawn lists keep keyboard focus (APP-02)
@@ -215,7 +229,7 @@ function showFindings(result: Analysis | null, message: string): void {
   // S3 (frame r3-mach, D-049): each row's findings placed in a setup, the whole part or no setup
   const placed = result ? placeRows(result) : new Map();
   renderPlan(byId("plan"), byId("plan-count"), result, select, selected,
-    (where) => (placed.get(where) ?? []).map(placedLine));
+    (where) => (placed.get(where) ?? []).map((p: Placed) => placedLine(p, openPlaced)));
   byId("plan-panel").hidden = !result?.machine;
   byId("plan-none").hidden = !result || !!result.machine;
   if (result) renderSetupChips(byId("setup-chips"), result, result.setups.map((s, i) => setupHead(s, i).replace(", about the turning axis", "")),
@@ -248,12 +262,16 @@ function showFindings(result: Analysis | null, message: string): void {
   byId("export-pdf").hidden = !result;
   byId("top-file").hidden = !result;
   byId("top-file").textContent = result?.part.name ?? "";
-  for (const s of STEPS) if (s !== "part") tabs.get(s)!.disabled = !result;
+  for (const s of STEPS) if (s !== "part") { // focusable while closed, with the reason (audit F19)
+    const tab = tabs.get(s)!;
+    if (result) { tab.removeAttribute("aria-disabled"); tab.removeAttribute("aria-describedby"); tab.removeAttribute("title"); }
+    else { tab.setAttribute("aria-disabled", "true"); tab.setAttribute("aria-describedby", "steps-why"); tab.title = "Read a STEP file to open steps 2 to 5"; }
+  }
   overview.hidden = !result;
   startForm.hidden = !!result;
   // Process and material: in the form, then in the overview. Moved only when that changes, so a select keeps focus.
   if (settings.parentElement !== (result ? byId("settings-slot") : startForm)) {
-    (result ? byId("settings-slot") : error).insertAdjacentElement(result ? "beforeend" : "beforebegin", settings);
+    (result ? byId("settings-slot") : byId("ipt-field")).insertAdjacentElement(result ? "beforeend" : "afterend", settings);
   }
   if (!result) return;
   renderOverview(byId("overview-cards"), byId("fix-first"), result, (s) => showStep(s));
@@ -282,7 +300,7 @@ function showStep(name: Step, focus = true): void {
   for (const s of STEPS) {
     byId(`page-${s}`).hidden = s !== name;
     const tab = tabs.get(s)!;
-    if (s === name) tab.setAttribute("aria-current", "step");
+    if (s === name) { tab.setAttribute("aria-current", "step"); tab.scrollIntoView?.({ block: "nearest", inline: "nearest" }); } // in view when the bar scrolls (F20)
     else tab.removeAttribute("aria-current");
   }
   const i = STEPS.indexOf(name);
@@ -297,7 +315,17 @@ function showStep(name: Step, focus = true): void {
   if (focus) [...byId(`page-${name}`).querySelectorAll<HTMLElement>("h2")].find((h) => h.offsetParent !== null)?.focus();
 }
 
-for (const [s, tab] of tabs) tab.addEventListener("click", () => showStep(s));
+for (const [s, tab] of tabs) tab.addEventListener("click", () => { if (tab.getAttribute("aria-disabled") !== "true") showStep(s); });
+
+// audit F18: below 900 px the model sits above the list, so Show OK moves under the chips; back at the model's foot when wide
+const narrow = window.matchMedia("(max-width: 900px)");
+function placeShowOk(): void {
+  const showOk = byId("show-ok");
+  if (narrow.matches) byId("row-chips").insertAdjacentElement("afterend", showOk);
+  else document.querySelector(".viewfoot")!.append(showOk);
+}
+narrow.addEventListener("change", placeShowOk);
+placeShowOk();
 back.addEventListener("click", () => showStep(STEPS[STEPS.indexOf(step) - 1]));
 next.addEventListener("click", () => showStep(STEPS[STEPS.indexOf(step) + 1]));
 window.addEventListener("hashchange", () => {
@@ -305,7 +333,7 @@ window.addEventListener("hashchange", () => {
 });
 showStep(fromHash(), false);
 
-/** The words over the model: what to do, "Analysing …", or "No part loaded." after a refused file. */
+/** The words over the model: what to do, "Analyzing …", or "No part loaded." after a refused file. */
 function viewerNote(text: string | null, busy = false): void {
   note.hidden = text === null;
   byId("viewer-note-text").textContent = text ?? "";
@@ -326,10 +354,11 @@ async function analyse(): Promise<void> {
     return;
   }
   const both = ipt ? ` with ${ipt.name}` : "";
-  status.textContent = `Analysing ${file.name}${both}…`;
+  status.textContent = `Analyzing ${file.name}${both}…`;
   error.hidden = true;
   errorNext.hidden = true;
-  if (!shown) viewerNote(`Analysing ${file.name}${both}…`, true);
+  fileInput.removeAttribute("aria-describedby");
+  if (!shown) viewerNote(`Analyzing ${file.name}${both}…`, true);
   try {
     const result = await analyze(file, ipt, processSelect.value as Process, materialSelect.value as Material);
     if (mine !== run) return; // a newer upload replaced this one
@@ -368,17 +397,18 @@ async function analyse(): Promise<void> {
     status.textContent = `Showing ${result.part.name}${result.inventor ? ` with ${result.inventor.name}` : ""}.`;
   } catch (e) {
     if (mine !== run) return;
-    showError(e instanceof ApiError ? e.message : "Something went wrong showing this part.");
+    showError(e instanceof ApiError ? e.message : "Something went wrong showing this part.", e instanceof ApiError ? e.retry : true);
     if (!(e instanceof ApiError)) console.error(e);
   }
 }
 
 /** A refused or failed part: the reason, and nothing left of the previous part on screen. */
-function showError(message: string): void {
+function showError(message: string, retry = false): void {
   clearPart();
   error.textContent = message;
   error.hidden = false;
-  errorNext.hidden = false;
+  errorNext.hidden = !retry; // "try again" only when it can help (audit F3)
+  fileInput.setAttribute("aria-describedby", "error");
   viewerNote("No part loaded.");
   status.textContent = "";
 }
@@ -402,6 +432,7 @@ byId("change-file").addEventListener("click", () => {
   iptInput.value = "";
   error.hidden = true;
   errorNext.hidden = true;
+  fileInput.removeAttribute("aria-describedby");
   clearPart();
   viewerNote("The part shows here once it's read.");
   status.textContent = "Choose a STEP file to start. Add its .ipt too, if you have one.";

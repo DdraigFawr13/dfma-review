@@ -82,7 +82,7 @@ def test_sheet_metal_refused(name):
     with pytest.raises(ReadError) as e:
         check_part_type(read_ipt(FILES / name), PLAIN_STEP)
     assert str(e.value) == ("This Inventor part is a sheet-metal part. Only plain single-body parts can be read "
-                            "for now.")
+                            "for now. Upload the STEP on its own, without the .ipt.")
 
 
 @pytest.mark.parametrize("name", ["INV_nist_ftc_06_asme1_2021.ipt", "INV_nist_ftc_10_asme1_2021.ipt"])

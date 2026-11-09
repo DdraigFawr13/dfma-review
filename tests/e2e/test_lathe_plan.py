@@ -30,12 +30,12 @@ def test_slender_shaft_on_the_lathe(page: Page, base_url: str):
     expect(page.get_by_test_id("plan-machine")).to_have_text("lathe with live tooling", timeout=30_000)
     expect(page.get_by_test_id("plan-turn-axis")).to_have_text("along −Z of the part")
     expect(page.get_by_test_id("plan-stock")).to_have_text(
-        "0.500 in round bar, 4.500 in long (the part's size; no allowance added)")
+        "0.500 in round bar, 4.500 in long (part size, no allowance)")
     expect(page.locator("#plan-count")).to_have_text("1 setup")
     expect(page.get_by_test_id("overview-features")).to_contain_text("1 turned profile, 1 hole and 1 wall checked")
     expect(page.get_by_test_id("plan-loads")).to_have_text("3 (the first in each setup counts)")  # frame r3-mach words
     expect(page.get_by_test_id("plan-why")).to_have_text(
-        "Why 1 Turned in one setup about its axis. Off the axis, cut with live tooling: hole-1.")
+        "Why 1 setup:Turned in one setup about its axis. Off the axis, cut with live tooling (driven tools on the lathe): hole-1.")
     # S3: the setup chip over the model reads setupHead's words (spec Builder defaults)
     expect(page.get_by_test_id("setup-chip-1")).to_have_text("Setup 1 · on the lathe")
     issues = page.get_by_test_id("issues-setup-1")  # the slender part and the cross hole sit in the lathe setup
@@ -104,7 +104,7 @@ def test_slender_shaft_for_milling(page: Page, base_url: str):
     expect(page.get_by_test_id("plan-machine")).to_have_text("3-axis mill", timeout=30_000)
     expect(page.get_by_test_id("plan-turn-axis")).to_have_count(0)
     expect(page.get_by_test_id("plan-setup-1")).to_contain_text("Setup 1 · from +X")
-    expect(page.get_by_test_id("plan-stock")).to_contain_text("in block (the part's size; no allowance added)")
+    expect(page.get_by_test_id("plan-stock")).to_contain_text("in block (part size, no allowance)")
     expect(page.get_by_test_id("row-F1")).to_contain_text("This part looks turned; review it for Turning")
     expect(page.get_by_test_id("issues-whole-part")).to_contain_text("Looks turned F1")  # no feature: the whole part
 

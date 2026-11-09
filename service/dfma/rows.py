@@ -85,10 +85,10 @@ SHORTS = {
 # Sentences for the four rule cases that have their own (spec "Sentences"): one finding, several findings.
 # Every other case reads as its finding's title (D-045).
 SENTENCES = {
-    ("corner_radius", "high"): ("Inside corner has no radius. Needs {limit} or more, or EDM.",
-                                "Inside corners have no radius. Needs {limit} or more, or EDM."),
-    "hole_depth": ("{measured} the diameter deep. Over {limit} needs peck drilling.",
-                   "{values} the diameter deep. Over {limit} needs peck drilling."),
+    ("corner_radius", "high"): ("Inside corner has no radius. Needs {limit} or more, or EDM (spark erosion).",
+                                "Inside corners have no radius. Needs {limit} or more, or EDM (spark erosion)."),
+    "hole_depth": ("{measured} the diameter deep. Over {limit} needs peck drilling (drilling in short steps to clear chips).",
+                   "{values} the diameter deep. Over {limit} needs peck drilling (drilling in short steps to clear chips)."),
     "hole_size": ("{measured} isn't a standard drill. Nearest is {limit}.",
                   "{values} aren't standard drills. Nearest is {limit}."),
     "pocket_depth": ("Depth is {measured} the end mill that fits. Over {limit} needs a long tool.",

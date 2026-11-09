@@ -33,7 +33,7 @@ def test_click_highlights_face(page: Page, base_url: str):
     open_step(page, "features")
     row = page.get_by_test_id("row-F1")
     expect(row).to_contain_text("Deep hole")
-    expect(row).to_contain_text("8.0× the diameter deep. Over 6.0× needs peck drilling.")
+    expect(row).to_contain_text("8.0× the diameter deep. Over 6.0× needs peck drilling (drilling in short steps to clear chips).")
     expect(row).to_contain_text("Review")
     assert page.evaluate("window.__dfma.highlightedFaces()") == []
 
@@ -42,13 +42,13 @@ def test_click_highlights_face(page: Page, base_url: str):
     target = page.evaluate("window.__dfma.cameraTarget()")
     centre = bbox_centre(result, finding["faces"])
     assert sum((a - b) ** 2 for a, b in zip(target, centre)) ** 0.5 <= 1.0
-    expect(row).to_have_attribute("aria-pressed", "true")
+    expect(row).to_have_attribute("aria-expanded", "true")
     # What is drawn: the finding's faces in the accent colour, every other face faded to 0.35.
     assert page.evaluate("window.__dfma.paintedFaces()") == sorted(finding["faces"])
     opacity = page.evaluate("window.__dfma.opacities()")
     assert all(opacity[str(i)] == (1 if i in finding["faces"] else 0.35) for i in range(len(result["faces"])))
     # A flag on the view names the finding and its severity, so colour is not the only sign.
-    expect(page.locator(".viewer .flag")).to_have_text("F1Review")
+    expect(page.locator(".viewer .flag")).to_have_text("◆F1Review")  # its mark too (D-053)
 
     # Changing the material re-analyses the same part and keeps the view and the selection,
     # including a view the user has moved: pan first (right-drag), which moves the camera target.

@@ -135,7 +135,7 @@ window.fetch = async (url, init) => {
 </script>""" % (json.dumps(results, separators=(",", ":")), json.dumps(meshes, separators=(",", ":")))
     picker = """
 <div class="demo-bar" role="group" aria-label="Demo parts">
-  <p class="demo-note"><b>View-only demo</b> of the real app, with these test parts analysed in advance. Tap a part (a turning part opens on Turning): it opens on its overview; walk the five steps with the tabs, Open ›, Next and Back, or the phone's Back. Process and material sit under the file name and work as in the app. Your files can't be uploaded here; the first two I1 pairs show the app's refusals; the two marked \"lined up\" were lined up by the test harness so their threads show (the app itself refuses them); a matching pair needs your own files in the app. Export PDF builds the file only in the app on a computer: this viewer blocks downloads, so here it saves nothing (the S7 mock-up shows the PDF pages).</p>
+  <p class="demo-note"><b>View-only demo</b> of the real app, with these test parts analyzed in advance. Tap a part (a turning part opens on Turning): it opens on its overview; walk the five steps with the tabs, the card headings, Next and Back, or the phone's Back. Process and material sit under the file name and work as in the app. Your files can't be uploaded here; the first two I1 pairs show the app's refusals; the two marked \"lined up\" were lined up by the test harness so their threads show (the app itself refuses them); a matching pair needs your own files in the app. Export PDF builds the file only in the app on a computer: this viewer blocks downloads, so here it saves nothing (the S7 mock-up shows the PDF pages).</p>
   <div class="demo-parts">%s</div>
 </div>
 <style>

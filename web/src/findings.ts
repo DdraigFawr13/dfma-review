@@ -3,14 +3,6 @@
 
 import type { Analysis, Blend, CostDriver, Feature, Finding, HoleFeature, IptHole, Thread, Tool } from "./api";
 
-export const RULE_NAMES: Record<string, string> = {
-  hole_depth: "hole depth", hole_size: "hole size", corner_radius: "corner radius", pocket_depth: "pocket depth",
-  undercut: "undercut", thin_wall: "thin wall", access: "access",
-  turn_axis: "turning axis", turn_slender: "length to diameter", turn_offaxis: "off the turning axis",
-  bore_depth: "bore depth", looks_turned: "looks turned", thread_mismatch: "thread vs hole", // I1 S2
-  hole_mismatch: "Hole feature vs hole", // I2 S1 (D-040)
-  blend_mismatch: "fillet vs face", // I3 S3
-};
 const KIND_NAMES: [string, string, string][] = [["profile", "turned profile", "turned profiles"], ["hole", "hole", "holes"], ["bore", "bore", "bores"], ["groove", "groove", "grooves"],
   ["pocket", "pocket", "pockets"], ["corner", "corner", "corners"], ["wall", "wall", "walls"]];
 
@@ -33,9 +25,9 @@ export function checkedCount(result: Analysis): string {
   return `${counted} checked`;
 }
 
-/** The PDF summary's line: "2 holes checked · Rules run: Hole depth check, …." (check names, review-steps S1). */
+/** The PDF summary's line: "2 holes checked · Checks run: Hole depth check, …." (check names; audit F7). */
 export function checkedLine(result: Analysis): string {
-  return `${checkedCount(result)} · Rules run: ${result.checks_run.join(", ")}.`;
+  return `${checkedCount(result)} · Checks run: ${result.checks_run.join(", ")}.`;
 }
 
 /** Features with no finding that passed a check: the OK count and the Passed list (D-023). */
@@ -183,10 +175,10 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
   const tools = new Map(result.tools.map((t) => [t.id, t]));
   const byId = new Map(result.features.map((f) => [f.id, f]));
   const whyText = planWhy(result);
-  if (whyText) { // frame r3-mach: "Why 2" (the number of setups) and the plan's reason
+  if (whyText) { // frame r3-mach, amended by D-053 (audit F31): "Why 2 setups:" on its own line, then the reason
     const why = el("p", "why");
     why.dataset.testid = "plan-why";
-    why.append(el("b", undefined, `Why ${n}`), document.createTextNode(` ${whyText}`));
+    why.append(el("b", undefined, `Why ${n} ${n === 1 ? "setup" : "setups"}:`), el("span", "wtext", whyText));
     host.append(why);
   }
   const whole = issuesBlock(placed("whole"), "Whole part:", "issues-whole-part");
@@ -227,7 +219,7 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
             const off = result.findings.some((x) => x.rule === "turn_offaxis" && x.feature === fid);
             const where = f.kind === "profile" ? "is the turned outside" : off ? "is off the turning axis: live tooling"
               : f.kind === "groove" ? (f.outside === false
-                ? "is an inside groove on the axis; not every shop cuts inside grooves (Protolabs does not, D-026)"
+                ? "is an inside groove on the axis; not every shop cuts inside grooves (Protolabs does not)" // D-026
                 : "is a groove on the axis") : "is on the turning axis";
             why.append(el("span", undefined, `${num} ${fid} ${where}. ${toolWhy(f, result, i, o.tool)}`));
             continue;
@@ -240,8 +232,11 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
       box.append(why);
     }
     const issues = issuesBlock(placed(i), "Issues here:", `issues-setup-${i + 1}`);
-    if (issues) box.append(issues);
-    host.append(box);
+    // the issues sit beside the setup's button, not in it: each is a button of its own (audit F27)
+    const wrap = el("div", "setupbox");
+    wrap.append(box);
+    if (issues) wrap.append(issues);
+    host.append(wrap);
   });
   const away = notPlanned(result);
   const noSetup = placed("none");
@@ -275,7 +270,7 @@ export function planWhy(result: Analysis): string | null {
   if (isLathe(result)) {
     const off = planned.filter((id) => result.findings.some((x) => x.rule === "turn_offaxis" && x.feature === id));
     return "Turned in one setup about its axis. "
-      + (off.length ? `Off the axis, cut with live tooling: ${off.join(", ")}.` : "Every feature is on the axis.");
+      + (off.length ? `Off the axis, cut with live tooling (driven tools on the lathe): ${off.join(", ")}.` : "Every feature is on the axis."); // gloss: audit F13
   }
   const byId = new Map(result.features.map((f) => [f.id, f]));
   return `Each can be cut from: ${planned.map((id) => `${id} ${dirs(byId.get(id)?.open_dirs ?? [])}`).join(" · ")}. `
@@ -304,8 +299,8 @@ export function driverLine(d: CostDriver): string {
 export function stockText(s: NonNullable<Analysis["stock"]>): string {
   const f = (v: number) => v.toFixed(3);
   return s.shape === "bar"
-    ? `${f(s.diameter_in ?? 0)} in round bar, ${f(s.length_in ?? 0)} in long (the part's size; no allowance added)`
-    : `${(s.size_in ?? []).map(f).join(" × ")} in block (the part's size; no allowance added)`;
+    ? `${f(s.diameter_in ?? 0)} in round bar, ${f(s.length_in ?? 0)} in long (part size, no allowance)` // audit F32, frame r3-mach
+    : `${(s.size_in ?? []).map(f).join(" × ")} in block (part size, no allowance)`;
 }
 
 /** The turning axis in the part's own axes: "+Z" when it lies along one, else its components. */
@@ -320,6 +315,11 @@ export function axisText(v: number[], result: Analysis): string {
 // --- I1 S2: threads from the .ipt (D-036, mockups/threads-panel.html) ---
 
 const STATE_WORD: Record<Thread["state"], string> = { matched: "matched", disagrees: "disagrees", not_mapped: "not mapped" };
+
+/** "1 disagrees", "7 disagree": a state's count in words that agree with it (audit F10; groupTally's rule). */
+function stateCount(n: number, state: Thread["state"]): string {
+  return `${n} ${state === "disagrees" && n !== 1 ? "disagree" : STATE_WORD[state]}`;
+}
 
 /** A stored mm value as written: "25", "10.25" (as the .ipt holds it, no padding). */
 function mmText(mm: number): string {
@@ -357,10 +357,9 @@ export function threadNote(t: Thread, result: Analysis): string {
   return t.gaps.map(gapText).join("; ") + (f ? ` · finding ${f.id}` : "");
 }
 
-/** "N matched, N disagrees, N not mapped". */
+/** "N matched, N disagree, N not mapped" ("1 disagrees"). */
 export function threadCounts(threads: Thread[]): string {
-  return (["matched", "disagrees", "not_mapped"] as const)
-    .map((s) => `${threads.filter((t) => t.state === s).length} ${STATE_WORD[s]}`).join(", ");
+  return (["matched", "disagrees", "not_mapped"] as const).map((s) => stateCount(threads.filter((t) => t.state === s).length, s)).join(", ");
 }
 
 /** "Thread: M12x1.75 - 6H (from the .ipt)" for a hole a thread is mapped to, or "" (D-036). */
@@ -443,8 +442,7 @@ export function holeNamesSeen(seen: number | undefined, read: number): string {
 
 /** "N matched, N disagree, N not mapped" over holes. */
 export function holeCounts(holes: IptHole[]): string {
-  const n = (s: IptHole["state"]) => holes.filter((h) => h.state === s).length;
-  return `${n("matched")} matched, ${n("disagrees")} disagree, ${n("not_mapped")} not mapped`;
+  return (["matched", "disagrees", "not_mapped"] as const).map((s) => stateCount(holes.filter((h) => h.state === s).length, s)).join(", ");
 }
 
 function holeNum(id: string): number {
@@ -543,8 +541,7 @@ export function blendKinds(blends: Blend[]): string {
 
 /** "N matched, N disagree, N not mapped" over blends. */
 export function blendCounts(blends: Blend[]): string {
-  const n = (s: Blend["state"]) => blends.filter((b) => b.state === s).length;
-  return `${n("matched")} matched, ${n("disagrees")} disagree, ${n("not_mapped")} not mapped`;
+  return (["matched", "disagrees", "not_mapped"] as const).map((s) => stateCount(blends.filter((b) => b.state === s).length, s)).join(", ");
 }
 
 /** "22 of 42 faces found in the STEP", plus "copied by 1 pattern or mirror feature" (D-039's words). */

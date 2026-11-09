@@ -1,5 +1,5 @@
 """FastAPI routes (spec Flow). The app calls only run_analysis; ReadError and
-AnalysisTimeout become 422 {"error": message}; a file over 50 MB gets 413. An optional `ipt` (I1)
+AnalysisTimeout become 422 {"error": message} (a timeout adds "retry": true); a file over 50 MB gets 413. An optional `ipt` (I1)
 rides beside the STEP `file`."""
 
 from __future__ import annotations
@@ -116,8 +116,10 @@ def create_app(dist_dir: Path | None = settings.DIST_DIR) -> FastAPI:
             name = Path(file.filename or "upload.step").name
             ipt_name = Path(ipt.filename or "part.ipt").name if ipt is not None else None
             return run_analysis(step_tmp, name, process, material, ipt_tmp, ipt_name)
-        except (ReadError, AnalysisTimeout) as exc:
+        except ReadError as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
+        except AnalysisTimeout as exc:  # audit F3: trying again can help here, so the page offers it
+            return JSONResponse({"error": str(exc), "retry": True}, status_code=422)
         except RuntimeError:  # the worker crashed or the analysis hit a bug; the worker restarts itself
             return JSONResponse({"error": settings.MSG_FAILED}, status_code=500)
         finally:

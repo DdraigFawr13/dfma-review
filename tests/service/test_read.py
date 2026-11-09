@@ -13,10 +13,10 @@ from dfma.analyze import ReadError, analyze
 from dfma.app import create_app
 from dfma.worker import AnalysisTimeout, Worker, run_analysis
 
-NOT_STEP = "This is not a STEP file this tool can read"
-NO_SOLID = "No solid found in this file"
-TOO_LARGE = "File is larger than 50 MB"
-TOO_LONG = "This file took too long to analyse"
+NOT_STEP = "This is not a STEP file this tool can read. Export it again as .step or .stp from your CAD."
+NO_SOLID = "No solid found in this file. Export the part as a solid body, not surfaces or a drawing."
+TOO_LARGE = "File is larger than 50 MB. Export a single body or a smaller part."
+TOO_LONG = "This file took too long to analyze. Try again; if it stops again, export a single body or a smaller part."
 
 
 def check_box(result: dict, name: str, units: str) -> None:

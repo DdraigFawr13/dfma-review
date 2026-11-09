@@ -5,7 +5,7 @@
 // Imported up front, not on demand: the view-only demo page inlines one script and has no chunks to load (D-009).
 import { jsPDF } from "jspdf";
 import type { Analysis, Finding } from "./api";
-import { RULE_NAMES, axisText, blendCounts, blendFaces, blendKinds, blendTitle, holeCopies, holeCounts, holeFeatureSize, holeNamesSeen, holeFeatureTitle, checkedLine, driverLine, inMm, meta, notPlanned, planFoot, planWhy, setupHead, stockText, threadCallout, threadCounts, threadSize, toolName } from "./findings";
+import { axisText, blendCounts, blendFaces, blendKinds, blendTitle, holeCopies, holeCounts, holeFeatureSize, holeNamesSeen, holeFeatureTitle, checkedLine, driverLine, inMm, meta, notPlanned, planFoot, planWhy, setupHead, stockText, threadCallout, threadCounts, threadSize, toolName } from "./findings";
 import { formatIn, formatRatio, formatSize } from "./format";
 import { sevWord } from "./words";
 
@@ -114,7 +114,7 @@ function summaryPage(p: Page, input: ReportInput): void {
     p.text(`Machine: ${result.machine}`, { bold: true });
     const lathe = result.setups.length === 1 && result.setups[0].direction === "turn";
     if (lathe && result.turn_axis) p.text(`Turning axis: ${axisText(result.turn_axis, result)}`);
-    p.text(`Tool changes (tool loads): ${result.tool_changes} (including the first in each setup)`);
+    p.text(`Tool loads: ${result.tool_changes} (the first in each setup counts)`); // as on screen (audit F6)
     const why = planWhy(result);
     if (why) p.text(why, { colour: [85, 101, 122] });
     const tools = new Map(result.tools.map((t) => [t.id, t]));
@@ -142,7 +142,7 @@ function summaryPage(p: Page, input: ReportInput): void {
   for (const d of result.cost_drivers) p.text(driverLine(d), { indent: 12, gap: 1 });
   if (result.cost_drivers.length) {
     const sources = [...new Set(result.cost_drivers.map((d) => d.weight_source))].join(", ");
-    p.text(`Score is count x weight, highest first. Every weight is an ${sources} (config/drivers.toml). No time or dollars yet.`, { colour: [85, 101, 122] });
+    p.text(`Score is count x weight, highest first. Every weight is an ${sources}. No time or dollars yet.`, { colour: [85, 101, 122] }); // weights: config/drivers.toml
   }
   if (result.inventor) threadsSection(p, input);
   if (result.inventor) holeFeaturesSection(p, input);
@@ -227,7 +227,8 @@ function threadsSection(p: Page, input: ReportInput): void {
 function findingPage(p: Page, f: Finding, input: ReportInput): void {
   const { result } = input;
   p.newPage();
-  p.text(`${f.id} · ${sevWord(f.severity).toUpperCase()} · ${RULE_NAMES[f.rule] ?? f.rule}`, { size: 11, bold: true, colour: f.severity === "high" ? [179, 38, 30] : [163, 90, 0], gap: 2 });
+  const row = result.rows.find((r) => r.findings.includes(f.id)); // the row's own names, as on screen (audit F2)
+  p.text(`${f.id} · ${sevWord(f.severity).toUpperCase()} · ${row?.short ?? f.title} · ${f.check}`, { size: 11, bold: true, colour: f.severity === "high" ? [179, 38, 30] : [163, 90, 0], gap: 2 });
   p.text(f.title, { size: 14, bold: true, gap: 6 });
   const pic = input.picture(f);
   const h = Math.min(330, WIDTH * pic.height / pic.width), w = h * pic.width / pic.height;

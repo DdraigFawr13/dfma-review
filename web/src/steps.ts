@@ -47,13 +47,18 @@ function firstSentence(text: string): string {
   return i < 0 ? text : text.slice(0, i + 1);
 }
 
-/** "distinct tools 4.0, sharp or small inside corners 4.0 (weights are estimates)": the first two drivers as the
- *  service orders them. */
+/** "distinct tools 4.0 points, deep pockets 1.0 points (weights are estimates)", or "distinct tools and sharp or
+ *  small inside corners, tied at 4.0 points (…)": the first two drivers as the service orders them (audit F22). */
 export function biggestDrivers(result: Analysis): string {
-  const top = result.cost_drivers.slice(0, 2).map((d) => `${d.label.charAt(0).toLowerCase()}${d.label.slice(1)} ${d.score.toFixed(1)}`);
+  const top = result.cost_drivers.slice(0, 2);
+  const name = (label: string) => `${label.charAt(0).toLowerCase()}${label.slice(1)}`;
+  const pts = (score: number) => `${score.toFixed(1)} points`;
+  const words = top.length === 2 && top[0].score.toFixed(1) === top[1].score.toFixed(1)
+    ? `${name(top[0].label)} and ${name(top[1].label)}, tied at ${pts(top[0].score)}`
+    : top.map((d) => `${name(d.label)} ${pts(d.score)}`).join(", ");
   const sources = [...new Set(result.cost_drivers.map((d) => d.weight_source))];
   const note = sources.length === 1 ? `weights are ${sources[0]}s` : `weights: ${sources.join(", ")}`;
-  return `${top.join(", ")} (${note})`;
+  return `${words} (${note})`;
 }
 
 /** "3-axis mill", "Lathe with live tooling": the plan's machine with a capital. */
@@ -64,12 +69,16 @@ function machineName(machine: string): string {
 function card(step: Step, n: number, onOpen: (s: Step) => void): HTMLElement {
   const box = el("div", "card");
   box.dataset.testid = `overview-${step}`;
-  const open = el("button", "open", "Open ›");
+  const open = el("button", "open", `${n} · ${STEP_NAMES[step]} `); // the heading is the link (audit F24)
   open.type = "button";
   open.dataset.testid = `open-${step}`;
-  open.setAttribute("aria-label", `Open ${STEP_NAMES[step]}`);
+  const arrow = el("span", undefined, "›");
+  arrow.setAttribute("aria-hidden", "true");
+  open.append(arrow);
   open.addEventListener("click", () => onOpen(step));
-  box.append(el("h3", undefined, `${n} · ${STEP_NAMES[step]}`), open);
+  const head = el("h3");
+  head.append(open);
+  box.append(head);
   return box;
 }
 
@@ -108,7 +117,7 @@ export function renderOverview(cards: HTMLElement, first: HTMLElement, result: A
   if (!result.cost_drivers.length) {
     cost.append(sub("None: one setup and no tools to load."));
   } else {
-    cost.append(sub(el("span", "num", plural(result.cost_drivers.length, "driver")), el("span", undefined, `Biggest: ${biggestDrivers(result)}`)));
+    cost.append(sub(el("span", "num", plural(result.cost_drivers.length, "cost driver")), el("span", undefined, `Biggest: ${biggestDrivers(result)}`)));
   }
 
   const report = card("report", 5, onOpen);
@@ -151,9 +160,12 @@ export function renderCost(host: HTMLElement, result: Analysis): void {
   host.append(el("p", "note pad", `Score is count × weight. ${weights} No time or dollars yet.`));
 }
 
-/** The Report step (frame r3-report): the checks run by name and the assumptions, folded. */
+/** The Report step (frame r3-report): each check run with its finding count (audit F23), and the assumptions, folded. */
 export function renderReport(rules: HTMLElement, assumptions: HTMLDetailsElement, result: Analysis): void {
-  rules.textContent = `${result.checks_run.join(", ")}.`;
+  rules.replaceChildren(...result.checks_run.map((check) => {
+    const n = result.rows.filter((r) => r.check === check).reduce((sum, r) => sum + r.findings.length, 0);
+    return el("li", undefined, `${check}: ${n ? plural(n, "finding") : "none"}`);
+  }));
   assumptions.querySelector("summary")!.textContent = `Assumptions (${result.assumptions.length})`;
   assumptions.querySelector("ul")!.replaceChildren(...result.assumptions.map((a) => el("li", undefined, a)));
 }
@@ -193,8 +205,8 @@ function rowButton(r: Row, open: boolean, onRow: (r: Row) => void): HTMLButtonEl
   const b = el("button", `srow ${r.severity}`);
   b.type = "button";
   b.dataset.testid = `row-${r.id.replace(/^row:/, "")}`;
-  b.setAttribute("aria-pressed", String(open));
-  b.setAttribute("aria-expanded", String(open));
+  b.setAttribute("aria-expanded", String(open)); // one state: open or closed (audit F15)
+  if (open) b.setAttribute("aria-controls", detailId(r));
   const t = el("span", "t");
   t.append(el("b", `sev ${r.severity}`, sevWord(r.severity)), document.createTextNode(` ${rowTitle(r)}`));
   const mark = el("span", `mk ${r.severity}`, sevMark(r.severity));
@@ -204,10 +216,14 @@ function rowButton(r: Row, open: boolean, onRow: (r: Row) => void): HTMLButtonEl
   return b;
 }
 
+/** The id of a row's detail, for its button's aria-controls ("detail-F4"). */
+const detailId = (r: Row) => `detail-${r.id.replace(/^row:/, "").replace(/[^\w-]/g, "_")}`;
+
 /** The open finding row's detail: "‹ F4 · corner-1 · 1 of 4 ›", what was measured and the advice. */
 function findingDetail(r: Row, at: number, result: Analysis, h: RowHandlers): HTMLElement {
   const f = result.findings.find((x) => x.id === r.findings[at]) as Finding;
   const dl = el("dl", "more");
+  dl.id = detailId(r);
   dl.dataset.testid = "row-detail";
   const showing = el("dd", "num showing");
   const step = (text: string, label: string, testid: string, delta: number, off: boolean) => {
@@ -220,17 +236,21 @@ function findingDetail(r: Row, at: number, result: Analysis, h: RowHandlers): HT
     return b;
   };
   const where = [f.id, f.feature, `${at + 1} of ${r.findings.length}`].filter(Boolean).join(" · ");
-  if (r.findings.length > 1) showing.append(step("‹", "Previous finding", "row-prev", -1, at === 0));
   showing.append(el("span", undefined, where));
-  if (r.findings.length > 1) showing.append(step("›", "Next finding", "row-next", 1, at === r.findings.length - 1));
+  if (r.findings.length > 1) { // ‹ › together on one line, never split by a wrap (audit F4)
+    const nav = el("span", "nav");
+    nav.append(step("‹", "Previous finding", "row-prev", -1, at === 0), step("›", "Next finding", "row-next", 1, at === r.findings.length - 1));
+    showing.append(nav);
+  }
   dl.append(el("dt", undefined, "Showing"), showing, el("dt", undefined, "Measured"), el("dd", "num", measured(f, result)),
-    el("dt", undefined, r.severity === "high" ? "Fix" : "Suggestion"), el("dd", undefined, f.suggestion));
+    el("dt", undefined, "What to do"), el("dd", undefined, f.suggestion)); // one label for both severities, as the PDF (D-053)
   return dl;
 }
 
 /** The open passed row's detail (D-023): each feature with the check it passed and the math; a feature selects alone. */
 function passedDetail(r: Row, state: RowState, result: Analysis, h: RowHandlers): HTMLElement {
   const box = el("div", "more passes");
+  box.id = detailId(r);
   box.dataset.testid = "row-detail";
   for (const fid of r.features) {
     const p = result.passed.find((x) => x.feature === fid && x.rule === r.rule);
@@ -240,8 +260,12 @@ function passedDetail(r: Row, state: RowState, result: Analysis, h: RowHandlers)
     b.dataset.testid = `passed-${fid}`;
     b.setAttribute("aria-pressed", String(state.pass === fid));
     const feature = result.features.find((x) => x.id === fid);
+    // the size line only when the check's title doesn't already state it (audit F14: a wall said its thickness 3 times)
     const size = feature ? featureLine(feature) : "";
-    b.append(el("span", "pt", size ? `${fid} · ${size}` : fid), el("span", "pt", `✓ ${p.title}`));
+    const lead = /^[^\d]*([\d.]+)/.exec(size)?.[1];
+    const said = !size || (lead !== undefined && new RegExp(`(^|[^\\d.])${lead.replace(".", "\\.")} in`).test(p.title));
+    b.append(el("span", "pt", said ? `${fid} · ✓ ${p.title}` : `${fid} · ${size}`));
+    if (!said) b.append(el("span", "pt", `✓ ${p.title}`));
     const thread = holeThreads(feature, result); // I1 S2 (D-036): its callout
     if (thread) b.append(el("span", "pt", thread));
     b.append(el("span", "pmath", `${p.math} · ${p.limit_text}`));
@@ -338,9 +362,11 @@ export function placeRows(result: Analysis): Map<string | number, Placed[]> {
   return out;
 }
 
-/** "▲ Fix Sharp corner ×2 F4 F5": one placed row as a line. */
-export function placedLine(p: Placed): HTMLElement {
-  const line = el("span", "placed");
+/** "▲ Fix Sharp corner ×2 F4 F5": one placed row as a button that opens its row on Features (audit F27). */
+export function placedLine(p: Placed, onOpen: (p: Placed) => void = () => {}): HTMLElement {
+  const line = el("button", "placed");
+  line.type = "button";
+  line.addEventListener("click", () => onOpen(p));
   const mark = el("span", `mk ${p.row.severity}`, sevMark(p.row.severity));
   mark.setAttribute("aria-hidden", "true");
   const title = p.ids.length > 1 ? `${p.row.short} ×${p.ids.length}` : p.row.short;

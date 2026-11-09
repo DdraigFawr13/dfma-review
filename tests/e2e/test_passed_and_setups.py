@@ -33,7 +33,7 @@ def test_passed_list(page: Page, base_url: str):
     expect(row).to_contain_text("hole-2 · 0.250 in (1/4) diameter, 0.500 in deep")  # what the feature is (D-023)
     expect(row).to_contain_text("✓ Depth 2.0× diameter, at most 6.0×")
     expect(row.locator(".pmath")).to_contain_text(
-        "0.5000 in deep ÷ 0.2500 in diameter = 2.00× ≤ 6.0× · limit is an estimate")
+        "0.500 in deep ÷ 0.250 in diameter = 2.00× ≤ 6.0× · limit is an estimate")
     row.click()
     expect(page.get_by_test_id("passed-hole-2")).to_have_attribute("aria-pressed", "true")
     assert page.evaluate("window.__dfma.highlightedFaces()") == sorted(hole["faces"])

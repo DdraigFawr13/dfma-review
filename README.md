@@ -2,7 +2,7 @@
 
 Reviews a mechanical part (a STEP file) for manufacturability, in your browser, on your own computer. Concept: [docs/CONCEPT.md](docs/CONCEPT.md). Current state: [docs/HANDOFF.md](docs/HANDOFF.md).
 
-Your file is analysed on this computer and deleted straight after the analysis. Nothing is kept or sent anywhere.
+Your file is analyzed on this computer and deleted straight after the analysis. Nothing is kept or sent anywhere.
 
 ## Set up (once)
 

@@ -2,7 +2,7 @@
 // severity colour with a pin ("F1"; D-017: on the feature, merged when pins overlap); selecting a finding turns its faces the accent colour,
 // fades the rest (opacity 0.35) and frames the camera on them (spec "Web page", D-012).
 
-import { sevWord } from "./words";
+import { sevMark, sevWord } from "./words";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { Face, Finding } from "./api";
@@ -28,6 +28,13 @@ function spread(spots: { x: number; y: number }[]): number {
   return Math.hypot(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
 }
 
+/** A pin's box grown down to the dot on its spot (`dotX`, `dotY` in page coordinates): what it covers on screen,
+ *  stem included (audit F27: a stem and dot drawn over another pin hid it). */
+function footprint(r: DOMRect, dotX: number, dotY: number): DOMRect {
+  const left = Math.min(r.left, dotX - 6), right = Math.max(r.right, dotX + 6);
+  return new DOMRect(left, r.top, right - left, Math.max(r.bottom, dotY + 6) - r.top);
+}
+
 function overlaps(a: DOMRect, b: DOMRect): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
@@ -43,6 +50,7 @@ export class Viewer {
   private readonly part = new THREE.Group();
   private readonly meshes = new Map<number, THREE.Mesh>();
   private readonly flags: { el: HTMLElement; points: THREE.Vector3[]; finding: Finding }[] = [];
+  private pinned: { el: HTMLElement; at: { x: number; y: number } }[] = []; // the pins shown and their spots (host coordinates)
   private findings: Finding[] = [];
   private readonly edges = new Map<string, THREE.Mesh>(); // finding id -> its sharp-corner edge, drawn as a bar
   private readonly edgeMaterial = new THREE.LineBasicMaterial({ color: token("--ink") }); // one for every part
@@ -56,6 +64,9 @@ export class Viewer {
     // preserveDrawingBuffer: the canvas can be read back (tests now, the PDF in S7).
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Pins are measured to place them: when the pins' font arrives after the first placement their boxes change size,
+    // so place them again (audit F27: a stem and dot ended up over a neighbour's pin).
+    document.fonts?.addEventListener?.("loadingdone", () => this.render());
     this.scene.background = token("--view");
     this.scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8f99, 1.6));
     const key = new THREE.DirectionalLight(0xffffff, 1.8);
@@ -137,12 +148,16 @@ export class Viewer {
       el.dataset.id = finding.id;
       el.style.setProperty("--sev", `var(--${finding.severity})`);
       el.setAttribute("aria-hidden", "true"); // the findings list carries the same text
+      el.dataset.sev = finding.severity;
+      const mark = document.createElement("span"); // ▲ or ◆ on every pin, not only the ring's colour (D-053, audit F26)
+      mark.className = "mk";
+      mark.textContent = sevMark(finding.severity);
       const id = document.createElement("span");
       id.textContent = finding.id;
       const sev = document.createElement("span");
       sev.className = `sev ${finding.severity}`;
       sev.textContent = sevWord(finding.severity); // "F4 FIX" on the selected pin (D-042)
-      el.append(id, sev);
+      el.append(mark, id, sev);
       host.append(el);
       this.flags.push({ el, points, finding });
     }
@@ -433,6 +448,9 @@ export class Viewer {
       || spread(spots.get(a.f)!) - spread(spots.get(b.f)!) || a.i - b.i).map((x) => x.f);
     const placed: { r: DOMRect; el: HTMLElement; more: number; at: { x: number; y: number }; sev: string }[] = [];
     const host = this.canvas.parentElement?.getBoundingClientRect();
+    const foot = (r: DOMRect, at: { x: number; y: number }) => footprint(r, (host?.left ?? 0) + at.x, (host?.top ?? 0) + at.y);
+    const clash = (o: { r: DOMRect; at: { x: number; y: number } }, r: DOMRect, at: { x: number; y: number }) =>
+      overlaps(foot(o.r, o.at), foot(r, at));
     for (const flag of order) {
       const { el, finding } = flag;
       el.dataset.more = "";
@@ -450,12 +468,12 @@ export class Viewer {
       };
       let at = mine[0];
       let r = put(at);
-      for (const p of mine) { // the first spot that covers no placed pin (D-027)
+      for (const p of mine) { // the first spot that covers no placed pin or stem (D-027, audit F27)
         const tried = put(p);
-        if (!placed.some((o) => overlaps(o.r, tried))) { at = p; r = tried; break; }
+        if (!placed.some((o) => clash(o, tried, p))) { at = p; r = tried; break; }
       }
-      if (placed.some((o) => overlaps(o.r, r))) r = put(at); // none free: back to its middle, and fold
-      const near = placed.find((o) => overlaps(o.r, r));
+      if (placed.some((o) => clash(o, r, at))) r = put(at); // none free: back to its middle, and fold
+      const near = placed.find((o) => clash(o, r, at));
       if (near) { // fold into the pin already there
         el.hidden = true;
         el.dataset.mergedInto = near.el.dataset.id ?? "";
@@ -473,7 +491,7 @@ export class Viewer {
         for (let j = i + 1; j < placed.length; j++) {
           const later = placed[j];
           later.r = later.el.getBoundingClientRect();
-          if (!overlaps(placed[i].r, later.r) || later.el.classList.contains("chosen")) continue;
+          if (!clash(placed[i], later.r, later.at) || later.el.classList.contains("chosen")) continue;
           later.el.hidden = true;
           later.el.dataset.mergedInto = placed[i].el.dataset.id ?? "";
           for (const f of this.flags) if (f.el.dataset.mergedInto === later.el.dataset.id) f.el.dataset.mergedInto = placed[i].el.dataset.id ?? "";
@@ -485,6 +503,7 @@ export class Viewer {
         }
       }
     }
+    this.pinned = placed.map(({ el, at }) => ({ el, at }));
     // A stem from each pin shown down to a dot on its spot, in its severity colour (D-029).
     if (host) for (const p of placed) {
       const r = p.el.getBoundingClientRect();
@@ -495,6 +514,15 @@ export class Viewer {
   /** Where each finding's pin went: shown, folded into another pin, or hidden behind the part. */
   flagState(): { id: string; shown: boolean; mergedInto: string }[] {
     return this.flags.map(({ el, finding }) => ({ id: finding.id, shown: !el.hidden, mergedInto: el.dataset.mergedInto ?? "" }));
+  }
+
+  /** Each visible pin's box with its stem and dot, for the overlap test (audit F27). */
+  pinFootprints(): { id: string; x: number; y: number; w: number; h: number }[] {
+    const host = this.canvas.parentElement?.getBoundingClientRect();
+    return this.pinned.filter((p) => !p.el.hidden).map(({ el, at }) => {
+      const f = footprint(el.getBoundingClientRect(), (host?.left ?? 0) + at.x, (host?.top ?? 0) + at.y);
+      return { id: el.dataset.id ?? "", x: f.x, y: f.y, w: f.width, h: f.height };
+    });
   }
 
   /** Screen boxes of the visible flags, for the overlap test. */

@@ -50,5 +50,5 @@ def passes(features: list[dict], part: dict, limits: dict) -> list[dict]:
         reach_in = f["dims_mm"]["undercut_mm"] / MM_PER_IN
         if reach_in <= limit + EPS:
             out.append({**row, "title": f"Undercut {reach_in:.3f} in, within {limit:.3f} in",
-                        "math": f"{reach_in:.4f} in ≤ {limit:.3f} in"})
+                        "math": f"{reach_in:.3f} in ≤ {limit:.3f} in"})
     return out

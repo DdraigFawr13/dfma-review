@@ -123,9 +123,9 @@ def test_rows_report_sample():
     r = _run("report_sample")
     got = [(x["short"], x["count"], x["range"], x["sentence"], x["check"], x["limit"]) for x in r["rows"]]
     assert got == [
-        ("Sharp corner", 4, "F4–F7", "Inside corners have no radius. Needs 0.031 in (1/32) or more, or EDM.",
+        ("Sharp corner", 4, "F4–F7", "Inside corners have no radius. Needs 0.031 in (1/32) or more, or EDM (spark erosion).",
          "Corner radius check", "limit is an estimate"),
-        ("Deep hole", 2, "F1 F2", "9.6× and 7.2× the diameter deep. Over 6.0× needs peck drilling.",
+        ("Deep hole", 2, "F1 F2", "9.6× and 7.2× the diameter deep. Over 6.0× needs peck drilling (drilling in short steps to clear chips).",
          "Hole depth check", "limit is an estimate"),
         ("Drill size", 1, "F3", "0.260 in isn't a standard drill. Nearest is 0.266 in (17/64).",
          "Hole size check", "drill list, within 0.0005 in"),
@@ -211,16 +211,16 @@ def test_many_sentences_exact():
     """The `many` template with 2, 3 and 4 distinct values, high to low; ratios a hair past the limit get 2 decimals."""
     def row(vals, rule="hole_depth", limit=6.0, unit="ratio"):
         return rows.finding_rows([_finding(k + 1, rule, "medium", v, limit, unit) for k, v in enumerate(vals)])[0]["sentence"]
-    assert row([7.2, 9.6]) == "9.6× and 7.2× the diameter deep. Over 6.0× needs peck drilling."
-    assert row([7.2, 9.6, 6.03]) == "9.6×, 7.2× and 6.03× the diameter deep. Over 6.0× needs peck drilling."
-    assert row([7.2, 9.6, 6.4, 8.0]) == "from 9.6× to 6.4× the diameter deep. Over 6.0× needs peck drilling."
-    assert row([7.2, 7.2]) == "7.2× the diameter deep. Over 6.0× needs peck drilling."
+    assert row([7.2, 9.6]) == "9.6× and 7.2× the diameter deep. Over 6.0× needs peck drilling (drilling in short steps to clear chips)."
+    assert row([7.2, 9.6, 6.03]) == "9.6×, 7.2× and 6.03× the diameter deep. Over 6.0× needs peck drilling (drilling in short steps to clear chips)."
+    assert row([7.2, 9.6, 6.4, 8.0]) == "from 9.6× to 6.4× the diameter deep. Over 6.0× needs peck drilling (drilling in short steps to clear chips)."
+    assert row([7.2, 7.2]) == "7.2× the diameter deep. Over 6.0× needs peck drilling (drilling in short steps to clear chips)."
     assert row([0.26, 0.262], "hole_size", 0.265625, "in") == ("0.262 in and 0.260 in aren't standard drills. "
                                                                "Nearest is 0.266 in (17/64).")
     assert row([8.0, 4.0], "pocket_depth", 3.0) == ("Depths are 8.0× and 4.0× the end mill that fits. "
                                                     "Over 3.0× needs a long tool.")
     one = rows.finding_rows([_finding(1, "corner_radius", "high", 0.0, 0.03125, "in")])[0]["sentence"]
-    assert one == "Inside corner has no radius. Needs 0.031 in (1/32) or more, or EDM."
+    assert one == "Inside corner has no radius. Needs 0.031 in (1/32) or more, or EDM (spark erosion)."
     worst = rows.finding_rows([_finding(1, "undercut", "medium", 0.1, 0.0, "in", "Small undercut"),
                                _finding(2, "undercut", "medium", 0.4, 0.0, "in", "Big undercut")])[0]["sentence"]
     assert worst == "Big undercut. Worst of 2."

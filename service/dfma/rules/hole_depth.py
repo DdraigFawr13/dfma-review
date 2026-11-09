@@ -9,8 +9,8 @@ ID = "hole_depth"
 PROCESSES = ('mill', 'turn')  # spec Flow: which process runs this rule
 KINDS = ("hole",)
 SUGGESTION = {
-    "medium": "Needs peck drilling. Make it shallower or larger if the design allows.",
-    "high": "Needs a long drill and peck drilling. Make it shallower or larger if the design allows.",
+    "medium": "Needs peck drilling (drilling in short steps to clear chips). Make it shallower or larger if the design allows.",
+    "high": "Needs a long drill and peck drilling (drilling in short steps to clear chips). Make it shallower or larger if the design allows.",
 }
 
 
@@ -61,6 +61,6 @@ def passes(features: list[dict], part: dict, limits: dict) -> list[dict]:
             continue
         out.append({"rule": ID, "feature": f["id"], "faces": f["faces"], "threshold_source": table["source"],
                     "title": f"Depth {ratio:.1f}× diameter, at most {table['medium']:.1f}×",
-                    "math": f"{depth / MM_PER_IN:.4f} in deep ÷ {d / MM_PER_IN:.4f} in diameter = {ratio:.2f}× "
+                    "math": f"{depth / MM_PER_IN:.3f} in deep ÷ {d / MM_PER_IN:.3f} in diameter = {ratio:.2f}× "
                             f"≤ {table['medium']:.1f}×"})
     return out

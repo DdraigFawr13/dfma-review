@@ -50,5 +50,5 @@ def passes(features: list[dict], part: dict, limits: dict) -> list[dict]:
             continue
         out.append({"rule": ID, "feature": f["id"], "faces": f["faces"], "threshold_source": table["source"],
                     "title": f"{t_in:.3f} in thick, at least {limit:.3f} in",
-                    "math": f"{t_in:.4f} in ≥ {limit:.3f} in"})
+                    "math": f"{t_in:.3f} in ≥ {limit:.3f} in"})
     return out

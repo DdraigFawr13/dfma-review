@@ -35,11 +35,11 @@ def test_every_judged_feature_is_flagged_or_passed(entry):
 def test_passed_math_uses_the_rule_numbers():
     r = analyze(PARTS / "clean_one_setup.step", "clean_one_setup.step")
     rows = {(p["feature"], p["rule"]): p for p in r["passed"]}
-    assert rows[("hole-2", "hole_depth")]["math"] == "0.5000 in deep ÷ 0.2500 in diameter = 2.00× ≤ 6.0×"
+    assert rows[("hole-2", "hole_depth")]["math"] == "0.500 in deep ÷ 0.250 in diameter = 2.00× ≤ 6.0×"
     assert rows[("hole-1", "hole_size")]["math"] == "|0.2500 − 0.2500| = 0.0000 in ≤ 0.0005 in"
     assert rows[("pocket-1", "pocket_depth")]["math"] == (
         "end mill radius 0.125 in ≤ corner 0.125 in, 0.250 in ≤ narrowest gap 1.000 in; "
-        "0.2500 in deep ÷ 0.2500 in = 1.00× ≤ 3.0×")
+        "0.250 in deep ÷ 0.250 in = 1.00× ≤ 3.0×")
     assert rows[("hole-1", "access")]["title"] == "Opens along −Z and +Z: a 3-axis mill reaches it"
 
 
@@ -55,5 +55,5 @@ def test_undercut_within_its_limit_is_passed():
     table = {"undercut": {"max_in": 0.1, "source": "test"}}
     assert undercut.check([f], {}, table) == []
     (p,) = undercut.passes([f], {}, table)
-    assert p["math"] == "0.0787 in ≤ 0.100 in"
+    assert p["math"] == "0.079 in ≤ 0.100 in"
     assert undercut.passes([f], {}, {"undercut": {"max_in": 0.0, "source": "D-021"}}) == []
