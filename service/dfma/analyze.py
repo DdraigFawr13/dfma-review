@@ -20,7 +20,7 @@ from .units import mm_to_in
 __all__ = ["ReadError", "analyze"]
 
 TURN_NEEDS_AXIS = ("turn_slender", "turn_offaxis", "bore_depth")
-NEEDS_IPT = ("thread_mismatch",)  # runs only when an .ipt was read, so rules_run is unchanged without one
+NEEDS_IPT = ("thread_mismatch", "hole_mismatch")  # runs only when an .ipt was read, so rules_run is unchanged without one
 
 
 def _off_axis(f: dict, faces, turn: dict) -> tuple[float, float]:
@@ -79,14 +79,16 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
                 f["off_axis_deg"], f["off_axis_mm"] = _off_axis(f, part.faces, turn)
             turn_features = bores + groove_list + [profile]
     if inventor is not None:  # S2: threads onto the final holes and bores, before the rules (thread_mismatch)
-        inventor["threads"] = inv.map_threads(ipt.threads, hole_list + [f for f in turn_features or []
-                                                                         if f["kind"] == "bore"],
-                                              part.faces, ipt_transform)
+        step_holes = hole_list + [f for f in turn_features or [] if f["kind"] == "bore"]
+        inventor["threads"] = inv.map_threads(ipt.threads, step_holes, part.faces, ipt_transform)
+        # I2 S1: Hole features onto the same holes and bores, after the threads
+        inventor["hole_features"] = inv.map_holes(ipt.hole_features, step_holes, part.faces, ipt_transform)
     features = (hole_list + (turn_features or []) + pocket_list + corner_list + number(wall_list, "wall"))
     pocket_faces = {i for f in pocket_list for i in f["faces"]}
     summary = {"units_in_file": part.units_in_file, "frame": frame, "turn": turn, "face_count": len(part.faces)}
     if inventor is not None:
         summary["inventor_threads"] = inventor["threads"]
+        summary["inventor_holes"] = inventor["hole_features"]
     limits = settings.thresholds(material)
     rules = [rule for rule in RULES if process in rule.PROCESSES
              and not (rule.ID in TURN_NEEDS_AXIS and turn_features is None)

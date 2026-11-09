@@ -3,7 +3,7 @@
     python tests/inventor/local_pairs.py
 
 Each folder in tests/inventor/.local/ holds one .ipt and one .stp or .step. Prints, per pair, the counts and
-`pair check: pass` or `pair check: FAIL - <reason>`, then (S2) the thread counts per state, and compares with local_pairs.toml when it has the pair.
+`pair check: pass` or `pair check: FAIL - <reason>`, then (S2) the thread counts per state, (I2 S1) the Hole features and their holes per state, and compares with local_pairs.toml when it has the pair.
 """
 
 from __future__ import annotations
@@ -54,6 +54,16 @@ def main() -> int:
             print(f"  threads: {n['matched']} matched, {n['disagrees']} disagree, {n['not_mapped']} not mapped")
             for t in result["inventor"]["threads"]:
                 print(f"    {t['id']} {t['designation']} {t['class']} {t['state']} {t['hole'] or t['reason']}")
+            # I2 S1: Hole features and their holes per state; D-032's 95% is read per hole
+            feats = result["inventor"]["hole_features"]
+            rows = [h for f in feats for h in f["holes"]]
+            h = {s: sum(r["state"] == s for r in rows) for s in ("matched", "disagrees", "not_mapped")}
+            share = f"{100 * h['matched'] / len(rows):.1f}%" if rows else "n/a"
+            print(f"  hole features: {len(feats)}, holes: {h['matched']} matched, {h['disagrees']} disagree, "
+                  f"{h['not_mapped']} not mapped ({share} matched; D-032 asks 95%)")
+            for f in feats:
+                print(f"    {f['id']} {f['type']} {f['diameter_mm']} mm {f['state']}: "
+                      + ", ".join(f"{r['id']} {r['state']} {r['hole'] or r['reason']}" for r in f["holes"]))
         except ReadError as e:
             print(f"  pair check: FAIL - {e}")
             bad += 1
@@ -63,7 +73,8 @@ def main() -> int:
             got = {"ipt_sha256": sha(ipts[0]), "step_sha256": sha(steps[0]),
                    "faces": checks["faces"][0], "corners": checks["corners"][0],
                    "threads_matched": n["matched"], "threads_disagrees": n["disagrees"],
-                   "threads_not_mapped": n["not_mapped"]}
+                   "threads_not_mapped": n["not_mapped"], "hole_features": len(feats),
+                   "holes_matched": h["matched"], "holes_disagrees": h["disagrees"], "holes_not_mapped": h["not_mapped"]}
             for k, v in got.items():
                 if want.get(k) != v:
                     print(f"  {k}: expected {want.get(k)}, got {v}")

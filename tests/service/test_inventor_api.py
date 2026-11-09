@@ -93,6 +93,7 @@ def test_attach_in_process(monkeypatch, tmp_path):
     monkeypatch.setattr(dfma.inventor, "read_ipt", lambda path: part)
     result = analyze(BOX, BOX.name, ipt_path=tmp_path / "box.ipt", ipt_name="box.ipt")
     threads = result["inventor"].pop("threads")
+    assert result["inventor"].pop("hole_features") == []  # I2 S1: always a list when an .ipt is read
     assert result["inventor"] == {"name": "box.ipt", "saved_with": "2024.1 (Build 281209000, 209)",
                                   "acis_version": "229.6.0.65535",
                                   "checks": {"faces": [len(step.faces)] * 2, "corners": [10, 10],
@@ -107,3 +108,30 @@ def test_attach_in_process(monkeypatch, tmp_path):
     hole = next(f for f in result["features"] if f["id"] == "hole-1")
     assert hole.pop("thread") == ["thread-1"]
     assert result["findings"] == plain["findings"] and result["features"] == plain["features"]
+
+
+@pytest.mark.parametrize("step, start, length, through", [
+    ("box_through_hole", (25.4, 12.7, 12.7), 12.7, True),
+    ("drill_point_hole", (12.7, 12.7, 50.8), 25.4, False),
+])
+def test_hole_features_in_process(monkeypatch, tmp_path, step, start, length, through):
+    """I2 S1 J1: a built pair (the STEP's own IptPart plus a Hole feature on its hole) through the app path: the
+    response lists the feature with its hole matched to hole-1, and hole-1 names its feature."""
+    import dfma.inventor
+    from inventor.built import hole_feature, ipt_from_step
+    feat = hole_feature(start, (0.0, 0.0, -1.0), 6.35, length, through=through,
+                        point_deg=None if through else 118.0)
+    part = ipt_from_step(PARTS / f"{step}.step", [], [feat])
+    monkeypatch.setattr(dfma.inventor, "read_ipt", lambda path: part)
+    r = analyze(PARTS / f"{step}.step", f"{step}.step", ipt_path=tmp_path / "p.ipt", ipt_name="p.ipt")
+    [hf] = r["inventor"]["hole_features"]
+    assert (hf["id"], hf["feature_id"], hf["name"], hf["type"], hf["diameter_mm"], hf["through"]) == (
+        "hf-1", 100, None, "simple", 6.35, through)
+    assert hf["depth_mm"] == (None if through else 25.4)
+    [h] = hf["holes"]
+    assert (h["id"], h["state"], h["hole"], h["gaps"], h["reason"], h["copied_by"]) == (
+        "hf-1.1", "matched", "hole-1", [], None, [])
+    assert h["start"] == list(start) and h["axis"] == [0.0, 0.0, -1.0]
+    assert hf["state"] == "matched"
+    assert next(f for f in r["features"] if f["id"] == "hole-1")["hole_feature"] == "hf-1"
+    assert "hole_mismatch" in r["rules_run"] and not [f for f in r["findings"] if f["rule"] == "hole_mismatch"]

@@ -636,6 +636,7 @@ def holes(solid, faces, frame: dict[str, Vec]) -> list[dict]:
                 "axis": list(vectors[0] if vectors else s.axis),
                 "open_dirs": list(dict.fromkeys(dirs)),
                 "open_vectors": [list(v) for v in vectors],
+                "blind": bool(s.bottom),  # a bottom closes this segment (I2; open_vectors are the whole chain's)
                 "dims_mm": dims,
                 "chain": n_chain,  # the same for every segment of one stepped hole (renumbered below)
                 **csk,

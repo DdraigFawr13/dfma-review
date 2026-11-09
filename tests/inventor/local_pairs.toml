@@ -10,3 +10,7 @@
 # threads_matched = 0     # S2: thread counts per state from the app path
 # threads_disagrees = 0
 # threads_not_mapped = 0
+# hole_features = 0      # I2 S1: Hole features, and their holes per state
+# holes_matched = 0
+# holes_disagrees = 0
+# holes_not_mapped = 0

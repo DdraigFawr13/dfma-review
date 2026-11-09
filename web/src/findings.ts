@@ -1,12 +1,13 @@
 // The verdict line and the findings list in severity groups (spec "Web page", D-012).
 
-import type { Analysis, CostDriver, Feature, Finding, Severity, Thread, Tool } from "./api";
+import type { Analysis, CostDriver, Feature, Finding, HoleFeature, IptHole, Severity, Thread, Tool } from "./api";
 
 export const RULE_NAMES: Record<string, string> = {
   hole_depth: "hole depth", hole_size: "hole size", corner_radius: "corner radius", pocket_depth: "pocket depth",
   undercut: "undercut", thin_wall: "thin wall", access: "access",
   turn_axis: "turning axis", turn_slender: "length to diameter", turn_offaxis: "off the turning axis",
   bore_depth: "bore depth", looks_turned: "looks turned", thread_mismatch: "thread vs hole", // I1 S2
+  hole_mismatch: "Hole feature vs hole", // I2 S1 (D-040)
 };
 const KIND_NAMES: [string, string, string][] = [["profile", "turned profile", "turned profiles"], ["hole", "hole", "holes"], ["bore", "bore", "bores"], ["groove", "groove", "grooves"],
   ["pocket", "pocket", "pockets"], ["corner", "corner", "corners"], ["wall", "wall", "walls"]];
@@ -481,5 +482,103 @@ export function renderThreads(host: HTMLElement, result: Analysis | null, onSele
       row.addEventListener("click", () => onSelect({ id, faces: hole.faces }));
     }
     host.append(row);
+  }
+}
+
+// --- I2 S1: Hole features from the .ipt (D-040, mockups/hole-features-panel.html) ---
+
+const HOLE_TYPE: Record<HoleFeature["type"], string> = { simple: "Simple hole", counterbore: "Counterbore", countersink: "Countersink" };
+
+function holeCount(n: number): string {
+  return `${n} ${n === 1 ? "hole" : "holes"}`;
+}
+
+/** "Countersink · 30 holes". */
+export function holeFeatureTitle(f: HoleFeature): string {
+  return `${HOLE_TYPE[f.type]} · ${holeCount(f.holes.length)}`;
+}
+
+/** "Ø0.551 in [14 mm] through, countersink Ø0.787 in [20 mm] × 90°": the sizes as designed, inches first (D-005). */
+export function holeFeatureSize(f: HoleFeature, sep = " · "): string {
+  if (f.diameter_mm === null) return "";
+  const out = [f.through || f.depth_mm === null ? `Ø${inMm(f.diameter_mm)} through` : `Ø${inMm(f.diameter_mm)} × ${inMm(f.depth_mm)} deep`];
+  if (f.cbore_diameter_mm !== null && f.cbore_depth_mm !== null) out.push(`counterbore Ø${inMm(f.cbore_diameter_mm)} × ${inMm(f.cbore_depth_mm)}`);
+  if (f.csink_diameter_mm !== null && f.csink_deg !== null) out.push(`countersink Ø${inMm(f.csink_diameter_mm)} × ${mmText(f.csink_deg)}°`);
+  if (f.point_deg !== null && !f.through) out.push(`${mmText(f.point_deg)}° drill point`);
+  return out.join(sep);
+}
+
+/** "N matched, N disagree, N not mapped" over holes. */
+export function holeCounts(holes: IptHole[]): string {
+  const n = (s: IptHole["state"]) => holes.filter((h) => h.state === s).length;
+  return `${n("matched")} matched, ${n("disagrees")} disagree, ${n("not_mapped")} not mapped`;
+}
+
+function holeNum(id: string): number {
+  return parseInt(id.replace(/^\D+/, ""), 10);
+}
+
+/** The Hole features panel (D-040): one row per feature; a tapped feature unfolds its holes. Selection ids:
+ *  `hf:<feature id>` (all its mapped holes) and `hfh:<hole id>` (one hole). */
+export function renderHoleFeatures(host: HTMLElement, result: Analysis | null, onSelect: (f: Pick) => void, selected: string | null): void {
+  host.replaceChildren();
+  const inv = result?.inventor;
+  if (!result || !inv) return;
+  const feats = inv.hole_features ?? [];
+  if (!feats.length) {
+    host.append(el("p", "none", "No Hole features in this .ipt."));
+    return;
+  }
+  const all = feats.flatMap((f) => f.holes);
+  host.append(el("p", "none", `From ${inv.name}: ${feats.length} Hole features, ${holeCount(all.length)}: ${holeCounts(all)}. Tap a feature to show its holes; tap a hole to show it alone.`));
+  const steps = new Map(result.features.map((f) => [f.id, f]));
+  for (const f of feats) {
+    const cls = f.state === "matched" ? "ok" : f.state === "disagrees" ? "medium" : "nm";
+    const mapped = [...new Set(f.holes.map((h) => h.hole).filter((x): x is string => !!x))];
+    const faces = [...new Set(mapped.flatMap((id) => steps.get(id)?.faces ?? []))];
+    const id = `hf:${f.id}`;
+    const open = selected === id || f.holes.some((h) => selected === `hfh:${h.id}`);
+    const unfolds = f.holes.some((h) => h.state !== "matched");
+    const row = el(faces.length || unfolds ? "button" : "div", `pass-row thread-row hf-row ${cls}`);
+    row.dataset.testid = "hole-feature-row";
+    const line = el("span", "row1");
+    line.append(el("span", `sev ${cls}`, STATE_WORD[f.state]), el("span", "ftitle", holeFeatureTitle(f)), el("span", "fid", f.id));
+    row.append(line);
+    const size = holeFeatureSize(f);
+    if (size) row.append(el("span", "fmeta", `${size} (as designed in the .ipt)`));
+    if (f.reason) row.append(el("span", "fmeta", `Not mapped: ${f.reason}. Our limit, not a finding.`));
+    const copied = f.holes.filter((h) => h.copied_by.length).length;
+    row.append(el("span", "fmeta", holeCounts(f.holes) + (copied ? ` · ${copied} copied` : "") + (open || !(faces.length || unfolds) ? "" : " · tap to show its holes")));
+    if (row instanceof HTMLButtonElement) {
+      row.type = "button";
+      row.setAttribute("aria-pressed", String(selected === id));
+      row.setAttribute("aria-expanded", String(open));
+      row.addEventListener("click", () => onSelect({ id, faces }));
+    }
+    host.append(row);
+    if (!open) continue;
+    if (mapped.length) host.append(el("p", "none hf-on", `On ${[...mapped].sort((a, b) => holeNum(a) - holeNum(b)).join(", ")}.`));
+    for (const h of f.holes.filter((x) => x.state !== "matched")) {
+      const hcls = h.state === "disagrees" ? "medium" : "nm";
+      const step = h.hole ? steps.get(h.hole) : undefined;
+      const hid = `hfh:${h.id}`;
+      const sub = el(step ? "button" : "div", `pass-row thread-row hf-hole ${hcls}`);
+      sub.dataset.testid = "hole-feature-hole";
+      const l1 = el("span", "row1");
+      l1.append(el("span", `sev ${hcls}`, STATE_WORD[h.state]), el("span", "ftitle", h.hole ? `on ${h.hole}` : h.id), el("span", "fid", h.id));
+      sub.append(l1);
+      if (h.state === "not_mapped") {
+        sub.append(el("span", "fmeta", `Not mapped: ${h.reason ?? "unknown"}. Our limit, not a finding.`));
+      } else {
+        const fd = result.findings.find((x) => x.rule === "hole_mismatch" && x.ipt_hole === h.id);
+        sub.append(el("span", "fmeta", h.gaps.map((g) => g.text).join("; ") + (fd ? ` · finding ${fd.id}` : "")));
+      }
+      if (step && sub instanceof HTMLButtonElement) {
+        sub.type = "button";
+        sub.setAttribute("aria-pressed", String(selected === hid));
+        sub.addEventListener("click", () => onSelect({ id: hid, faces: step.faces }));
+      }
+      host.append(sub);
+    }
   }
 }

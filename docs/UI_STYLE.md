@@ -72,7 +72,7 @@ Contrast (WCAG ratio, measured with a script in the S2 session; S3 swatches: `--
 ## Layout and sizes
 <!-- Columns, gutters and spacing at each target width; what moves or hides at each width. -->
 
-- Next layout, approved and not built yet (D-041): a step-by-step review, [round 3 mock-ups](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8) (`mockups/ui-direction/round3-frames.html`). The lines below describe the screen as built until that slice lands; it then rewrites Controls, Layout and checklist item 9.
+- Next layout, approved and not built yet (D-042): a step-by-step review, [round 3 mock-ups](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8) (`mockups/ui-direction/round3-frames.html`). The lines below describe the screen as built until that slice lands; it then rewrites Controls, Layout and checklist item 9.
 
 - Review screen: the [approved mock-up](https://claude.ai/artifact/2upjSXCWKez2VVsedPVZbH) (`mockups/review-screen.html`, D-012). Top bar: file, process, material, then part size, faces and units on the right. Verdict line under it. At 1280 px: 3D view (flexible) and findings panel (400 px). Below 900 px the findings stack under the view and the bar wraps.
 - The status row under the bar keeps a fixed 34 px height, so an error message never moves the view.
