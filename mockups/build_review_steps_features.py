@@ -122,6 +122,19 @@ BLEND_ROWS = """<p class="intro">Sizes as designed in the .ipt. Tap one to show 
 <div class="irow"><span><span class="st nm">NOT MAPPED</span> <b>Fillet · R0.006 in [0.15 mm]</b></span><span class="num muted">bl-3</span><span class="s">0 of 4 faces found in the STEP</span><span class="s muted">Not mapped: no STEP face of its shape at its place. Our limit, not a finding.</span></div>
 <div class="irow"><span><span class="st mat">MATCHED</span> <b>Fillet · R0.008 in [0.2 mm]</b></span><span class="num muted">bl-4</span><span class="s">4 of 4 faces found in the STEP</span></div>"""
 
+HF_ROWS = """<p class="intro">11 Hole features in the browser, 9 read. Tap a feature to show its holes; tap a hole to show it alone.</p>
+<div class="irow"><span><span class="st mat">MATCHED</span> <b>Simple hole · 4 holes</b></span><span class="num muted">hf-1</span><span class="s">Ø0.236 in [6 mm] through (as designed in the .ipt)</span><span class="s">4 holes: 2 drawn, 2 copied by 1 pattern or mirror feature</span><span class="s">4 matched, 0 disagree, 0 not mapped · tap to show its holes</span></div>
+<div class="irow"><span><span class="st mat">MATCHED</span> <b>Simple hole · 4 holes</b></span><span class="num muted">hf-2</span><span class="s">Ø0.394 in [10 mm] through (as designed in the .ipt)</span><span class="s">4 matched, 0 disagree, 0 not mapped · tap to show its holes</span></div>
+<div class="irow sel"><span><span class="st dis">DISAGREES</span> <b>Simple hole · 2 holes</b></span><span class="num muted">hf-3</span><span class="s">Ø0.097 in [2.46 mm] × 0.502 in [12.74 mm] deep · 118° drill point (as designed in the .ipt)</span><span class="s">0 matched, 2 disagree, 0 not mapped</span><span class="s muted">On hole-5, hole-34.</span></div>
+<div class="irow" style="padding-left:58px"><span><span class="st dis">DISAGREES</span> <b>on hole-5</b></span><span class="num muted">hf-3.1</span><span class="s">Ø0.097 in [2.46 mm] in the .ipt, Ø0.118 in [3.00 mm] in the STEP; the Ø0.097 in [2.46 mm] section is 0.472 in [12.00 mm] long in the .ipt, 0.236 in [6.00 mm] in the STEP · finding F27</span></div>
+<div class="irow" style="padding-left:58px"><span><span class="st dis">DISAGREES</span> <b>on hole-34</b></span><span class="num muted">hf-3.2</span><span class="s">Ø0.097 in [2.46 mm] in the .ipt, Ø0.118 in [3.00 mm] in the STEP; the Ø0.097 in [2.46 mm] section is 0.472 in [12.00 mm] long in the .ipt, 0.236 in [6.00 mm] in the STEP · finding F28</span></div>
+<div class="irow"><span><span class="st mat">MATCHED</span> <b>Simple hole · 1 hole</b></span><span class="num muted">hf-4</span><span class="s">Ø0.217 in [5.5 mm] × 1.148 in [29.15 mm] deep · 118° drill point (as designed in the .ipt)</span><span class="s">1 matched, 0 disagree, 0 not mapped · tap to show its holes</span></div>
+<div class="irow"><span><span class="st dis">DISAGREES</span> <b>Simple hole · 1 hole</b></span><span class="num muted">hf-5</span><span class="s">Ø0.217 in [5.5 mm] × 1.443 in [36.65 mm] deep · 118° drill point (as designed in the .ipt)</span><span class="s">0 matched, 1 disagree, 0 not mapped · tap to show its holes</span></div>
+<div class="irow"><span><span class="st mat">MATCHED</span> <b>Simple hole · 4 holes</b></span><span class="num muted">hf-6</span><span class="s">Ø0.394 in [10 mm] through (as designed in the .ipt)</span><span class="s">4 matched, 0 disagree, 0 not mapped · tap to show its holes</span></div>
+<div class="irow"><span><span class="st mat">MATCHED</span> <b>Simple hole · 4 holes</b></span><span class="num muted">hf-7</span><span class="s">Ø0.394 in [10 mm] through (as designed in the .ipt)</span><span class="s">4 matched, 0 disagree, 0 not mapped · tap to show its holes</span></div>
+<div class="irow"><span><span class="st dis">DISAGREES</span> <b>Simple hole · 2 holes</b></span><span class="num muted">hf-8</span><span class="s">Ø0.097 in [2.46 mm] × 0.502 in [12.74 mm] deep · 118° drill point (as designed in the .ipt)</span><span class="s">0 matched, 2 disagree, 0 not mapped · tap to show its holes</span></div>
+<div class="irow"><span><span class="st dis">DISAGREES</span> <b>Simple hole · 2 holes</b></span><span class="num muted">hf-9</span><span class="s">Ø0.097 in [2.46 mm] × 0.502 in [12.74 mm] deep · 118° drill point (as designed in the .ipt)</span><span class="s">0 matched, 2 disagree, 0 not mapped · tap to show its holes</span></div>"""
+
 CHIPS = '<div style="display:flex;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)"><span class="chip on">Issues 32</span><span class="chip">Passed 294</span><span class="chip">All</span></div>'
 FOOT = '<div style="display:flex;justify-content:space-between;padding:12px;border-top:1px solid var(--line)"><span class="btn ghost">‹ Part</span><span class="btn">Machining ›</span></div>'
 
@@ -146,16 +159,30 @@ NOTE = """<section class="note"><h2>Features groups: what changes</h2>
 <li><b>Proposed:</b> under the Issues rows, one line "From &lt;the .ipt&gt;", then one row per group: name, count and its tally in the approved words (MATCHED, DISAGREES, NOT MAPPED). Tap a row to open it in place; no box scrolls inside another, the step's list scrolls as one.</li>
 <li>An opened group shows today's rows (D-036, D-040, D-043), unchanged; tapping a row still selects its hole or faces on the model. Its intro line drops the "From &lt;.ipt&gt;: n matched, n disagree, n not mapped" part, which the group row now shows, and keeps the rest ("Tap a thread to show its hole."; for Hole features "11 Hole features in the browser, 9 read." stays).</li>
 <li>A group opens by itself when it did before: Threads when the .ipt has threads; Hole features and Fillets and chamfers when one disagrees or isn't mapped. On STC 10 that opens all three; frame 1 shows them folded to show the layout.</li>
-<li>The groups show under every chip (Issues, Passed, All). With no .ipt there are no groups (frame r3-features, unchanged). An .ipt with none of a kind keeps its row: "Threads 0", opening to "No threads in this .ipt."</li>
+<li><b>Proposal:</b> the groups show under every chip (Issues, Passed, All); the spec doesn't say which. With no .ipt there are no groups (frame r3-features, unchanged). An .ipt with none of a kind keeps its row: "Threads 0", opening to "No threads in this .ipt."</li>
+<li>Rule cases other than sharp corner, hole depth, drill size and pocket depth read as today's titles (D-045), so the Thread vs hole and Hole feature vs hole rows still carry ids such as hole-38 and a long sentence. Plainer sentences are later work, shown to Morgan first.</li>
+<li>Hole features shows 7 holes that disagree and the Issues list has 6 "Hole feature vs hole" findings. The 7th, hf-9's hole on hole-38, already has the "Thread vs hole" finding F26, and a hole gets one finding (service/dfma/rules/hole_mismatch.py:3).</li>
 <li>Also for Morgan's eye: the opened row's detail labels its advice "Fix" on a Fix row and "Suggestion" on a Review row (the round 3 frame showed "Fix" only, on a Fix row).</li>
 </ul></section>"""
 
 TODAY = '<section class="note"><h2>Today (built S1, same part)</h2><img src="%s" alt="Today: three scrolling boxes inside the Features step" style="width:100%%;max-width:1280px;border:1px solid var(--line)"></section>'
 
+RECORD = """<section id="check-record" class="note"><h2>Check record</h2>
+<ul>
+<li><b>Files checked:</b> tests/inventor/fixtures/stc_10.json; the built S1 screen on that fixture (web/src/findings.ts renderThreads, renderHoleFeatures, renderBlends; web/src/main.ts); docs/specs/review-steps.md (J3, J6, Design "Rows", S2); docs/DECISIONS.md D-036, D-040, D-042, D-043, D-045, D-047, D-048; docs/UI_STYLE.md; mockups/ui-direction/build_round3_frames.py; service/dfma/rules/hole_mismatch.py.</li>
+<li><b>Facts checked:</b> 41: tab counts (15 Fix, 17 Review), 3 chip counts (Issues 32; Passed 294 = features with no finding that passed a check, the okFeatures rule), 6 rows (shorts, ×n, F ranges, sentences, check and limit words), 3 group tallies, 6 thread rows, 9 Hole feature rows and 2 hole rows, 4 blend rows, the open rules (main.ts).</li>
+<li><b>Fixes after the fresh check:</b> added frame 4 (Hole features open, with a feature's holes); marked "groups under every chip" as a proposal; said that the .ipt rows keep today's titles with ids (D-045); explained 7 disagreeing holes against 6 Hole feature findings (corrected once: the 7th is hole-38, covered by F26).</li>
+<li><b>Fixes before it:</b> one text size 13 px raised to 14 px (lint); frames 1 and 2 drawn full length so the groups show; the opened group's intro drops the counts the group row now shows.</li>
+<li><b>Lint:</b> mockup-lint: 0 warnings (--min-text 14). Light only (UI_STYLE: no dark theme).</li>
+<li><b>Widths:</b> 1280 px (frames 1 to 4) and 900 px (frame 5). Screenshots at 2× of frames 1 and 5, plus today's built screen.</li>
+<li><b>Fresh check:</b> one reviewer agent, 75k tokens: no wrong facts; 1 missing frame, 3 notes for Morgan (all fixed above). The zero-decision re-check before it: 120k tokens. Cost not measured in dollars (estimate about $0.30 to $1 each, the skill's figure).</li>
+</ul></section>"""
+
 frames = [
     frame("f-issues", "2 · FEATURES · ISSUES · .ipt GROUPS FOLDED (FULL LENGTH)", view("model-f10.png") + panel(ROWS_SEL + ROWS_REST + FOLDED), cls="long"),
     frame("f-threads", "2 · FEATURES · THREADS OPEN, DISAGREES TAPPED (FULL LENGTH)", view("model-thread.png") + panel(ROWS_SHUT + ROWS_REST + OPEN_THREADS), cls="long"),
     frame("f-blends", "2 · FEATURES · FILLETS AND CHAMFERS OPEN (SCROLLED)", view("model-f10.png") + panel(SRC + grp("Threads", 6, THREADS_T, False) + grp("Hole features", 9, HF_T, False) + grp("Fillets and chamfers", 4, BL_T, True) + BLEND_ROWS)),
+    frame("f-holes", "2 · FEATURES · HOLE FEATURES OPEN, hf-3 TAPPED (SCROLLED)", view("model-hf.png") + panel(SRC + grp("Threads", 6, THREADS_T, False) + grp("Hole features", 9, HF_T, True) + HF_ROWS + grp("Fillets and chamfers", 4, BL_T, False))),
     frame("f-issues-900", "900 PX · FEATURES", view("model-f10.png") + panel(ROWS_SEL + ROWS_REST + FOLDED), cls="w900"),
 ]
 
@@ -163,6 +190,9 @@ today = IMG / "today.png"
 page = HEAD.replace("</head>", EXTRA + "</head>") + "<body>\n" + NOTE + "".join(frames)
 if today.exists():
     page += TODAY % img("today.png")
-page += "<!--RECORD--></body>\n</html>\n"
+for name, what in (("shot-1280.png", "Screenshot: frame 1 at 1280 px"), ("shot-900.png", "Screenshot: frame 5 at 900 px")):
+    if (IMG / name).exists():
+        page += f'<section class="note"><h2>{what}</h2><img src="{img(name)}" alt="{what}" style="width:100%;max-width:1280px"></section>'
+page += RECORD + "</body>\n</html>\n"
 (HERE / "review-steps-features.html").write_text(page, encoding="utf-8")
 print("wrote review-steps-features.html,", len(frames), "frames")

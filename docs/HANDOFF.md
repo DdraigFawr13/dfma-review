@@ -39,6 +39,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 ## Open questions
 
 - S3 gap from the zero-decision re-check (2026-11-09): the planner puts only holes and pockets in a setup (`plan.py:108`), so by the spec's rule corners and walls fall in "In no setup", but frame `r3-mach` shows Sharp corner ×4 under Setup 2. Recommended: a corner sits with its pocket's setup (corner gains a `pocket` field); a thin wall goes under "Whole part". Asked Morgan with the mock-up.
+- S2 groups mock-up published for approval: [Features groups](https://claude.ai/artifact/Cff2Y88mwZ3FaXqUMBLxwq) (`mockups/review-steps-features.html`). No code before Morgan approves.
 - Shape from the `.ipt` alone: its own phase after I1 (D-035); test-run numbers in the archive.
 - `test_nist.py` ctc_02 took 5.8-7.07 s here and once 10.4 s in a busier container, against a 10 s limit; limit unchanged (VER-04); detail in the archive.
 - Backlog and after-project ideas (hole types, ring-face threads, G-code view, waivers, shop profiles): archive "Moved 2026-11-09".
