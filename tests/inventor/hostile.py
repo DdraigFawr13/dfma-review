@@ -69,22 +69,25 @@ def _put_int(d: bytearray, at: int, v: int) -> None:
     struct.pack_into("<i", d, at + 1, v)
 
 
-def hole_tags(d: bytes, recs: list[dict]) -> list[dict]:
-    return [r for r in recs if (r["name"] or "").startswith("NMx_Hole_Brep_tag")]
+_PREFIX = {"hole": "NMx_Hole_Brep_tag", "blend": "NMx_blend_tag"}  # Inventor 2021 tag records (CTC 04)
 
 
-def _skip(d: bytes) -> bool:
-    """A stream with no model, or a model with no hole tags: left as it is."""
+def hole_tags(d: bytes, recs: list[dict], kind: str = "hole") -> list[dict]:
+    return [r for r in recs if (r["name"] or "").startswith(_PREFIX[kind])]
+
+
+def _skip(d: bytes, kind: str = "hole") -> bool:
+    """A stream with no model, or a model with no tags of this kind: left as it is."""
     m = main_model(d)
-    return m is None or not hole_tags(d, m[1])
+    return m is None or not hole_tags(d, m[1], kind)
 
 
-def no_end(d: bytes, n: int = 0) -> bytes:
+def no_end(d: bytes, n: int = 0, kind: str = "hole") -> bytes:
     """The n-th hole tag's -1 after its (k, id) pairs becomes 7: the pair list never ends."""
-    if _skip(d):
+    if _skip(d, kind):
         return d
     _, recs = main_model(d)
-    r = hole_tags(d, recs)[n]
+    r = hole_tags(d, recs, kind)[n]
     ints = [at for t, at in r["values"] if t == 0x04]
     end = next(at for at in ints[3:] if _int_at(d, at) == -1)
     out = bytearray(d)
@@ -92,41 +95,41 @@ def no_end(d: bytes, n: int = 0) -> bytes:
     return bytes(out)
 
 
-def long_list(d: bytes, n: int = 0, pairs: int = 10_000) -> bytes:
+def long_list(d: bytes, n: int = 0, pairs: int = 10_000, kind: str = "hole") -> bytes:
     """The n-th hole tag's pair list grows to `pairs` (k, id) pairs (repeats of its first), still ending in -1."""
-    if _skip(d):
+    if _skip(d, kind):
         return d
     _, recs = main_model(d)
-    r = hole_tags(d, recs)[n]
+    r = hole_tags(d, recs, kind)[n]
     ints = [at for t, at in r["values"] if t == 0x04]
     first = ints[2]  # 2021: -1, version, then the first k
     pair = d[first:first + 10]  # (k, id): two 5-byte int values
     return d[:first] + pair * pairs + d[first + 10:]
 
 
-def owner_off(d: bytes, n: int = 0) -> bytes:
+def owner_off(d: bytes, n: int = 0, kind: str = "hole") -> bytes:
     """The n-th hole tag's owner pointer (its 4th) points past the record list."""
-    if _skip(d):
+    if _skip(d, kind):
         return d
     _, recs = main_model(d)
-    r = hole_tags(d, recs)[n]
+    r = hole_tags(d, recs, kind)[n]
     ptrs = [at for t, at in r["values"] if t == 0x0c]
     out = bytearray(d)
     _put_int(out, ptrs[3], 10_000_000)
     return bytes(out)
 
 
-def owner_face(d: bytes, n: int = 0) -> int:
+def owner_face(d: bytes, n: int = 0, kind: str = "hole") -> int:
     """The face record index the n-th hole tag sits on (before any change)."""
     _, recs = main_model(d)
-    r = hole_tags(d, recs)[n]
+    r = hole_tags(d, recs, kind)[n]
     return _int_at(d, [at for t, at in r["values"] if t == 0x0c][3])
 
 
 def cycle(d: bytes, face: int) -> bytes:
     """The first coedge of the face's first loop gets as its next another coedge that loops on itself (a full
     circle): the ring never gets back to its first coedge."""
-    if _skip(d):
+    if _skip(d):  # CTC 04's main model holds hole and blend tags; other streams' models are left alone
         return d
     _, recs = main_model(d)
     if face >= len(recs) or recs[face]["name"] != "face":  # another stream's model

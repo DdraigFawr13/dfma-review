@@ -45,6 +45,8 @@ class Thread:
     axis: Vec | None
     face: str  # the threaded face: "hole" (a concave cylinder), "shaft", "cone" or "other"
     reason: str | None = None  # set when the record did not parse: the thread is then not_mapped
+    feature_id: int | None = None  # I2 S2: the record's 9th int (10th in 2024), its Hole feature; None if short
+    feature_name: str | None = None  # I2 S2: that Hole feature's name by the rank rule, else None
 
 
 def _num(s: str) -> float | None:
@@ -94,9 +96,11 @@ def read_threads(recs: list[sab.Record]) -> list[Thread]:
         face = sab.ref(recs, ptrs[3], "face") if len(ptrs) > 3 else None
         kind = _face_kind(recs, face) if face is not None else "other"
         vs = [v for v in r.of("v") if isinstance(v, tuple) and len(v) == 3]
+        ints, at = r.of("i"), 8 if (r.name or "").startswith(THREAD_2021) else 9
         nums = [_num(x) for x in s[7:14]] if len(s) >= 14 else []
         t = Thread(tid, s[1] if len(s) > 1 else None, s[5] if len(s) > 5 else None, s[2] if len(s) > 2 else None,
-                   _num(s[6]) if len(s) > 6 else None, None, None, None, None, None, None, None, kind)
+                   _num(s[6]) if len(s) > 6 else None, None, None, None, None, None, None, None, kind,
+                   feature_id=ints[at] if len(ints) > at and isinstance(ints[at], int) else None)
         if len(vs) < 4 or len(nums) != 7 or any(n is None for n in nums):
             t.reason = NOT_UNDERSTOOD
             out.append(t)
@@ -166,7 +170,7 @@ def _block(t: Thread, start, end, axis) -> dict:
             "pitch_mm": t.pitch_mm, "depth_mm": t.depth_mm, "tap_drill_mm": t.tap_drill_mm,
             "minor_mm": t.minor_mm, "major_mm": t.major_mm,
             "start": r(start), "end": r(end), "axis": r(axis) if axis is not None else None,
-            "state": "not_mapped", "hole": None, "gaps": [], "reason": None, "feature_name": None}
+            "state": "not_mapped", "hole": None, "gaps": [], "reason": None, "feature_name": t.feature_name}
 
 
 def map_threads(threads: list[Thread], holes: list[dict], faces, transform=None) -> list[dict]:

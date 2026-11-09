@@ -206,6 +206,13 @@ Holes gain `"hole_feature": "hf-1"` when matched or disagreeing. On screen lengt
 
 ### S2 Names and copies
 
+**Settled at build (2026-11-09, S2 re-check against main 26d397c; measured on the 16 NIST files):**
+- The rank rule as written gives the spec's numbers unchanged: names equal ids in every plain file but FTC 06 2024 (4 features, 7 names) and STC 10 (9, 11); against the key by S1's position pairing, 70 right and 0 wrong in the count-matched files; FTC 06 2024 and STC 10 Holes are `null`. "Count of Hole feature ids" is `len(hole_features)` as S1 reads them (the same count as every hole-tag last id on NIST).
+- A stream that can't be read or unpacked is skipped (never a refusal); `Hole<n>` texts are printable UTF-16 runs of 3 to 60 characters, as the probe read them. `ole.Ipt.inflate` now serves `models` and the names reader.
+- Thread names follow `Thread.feature_id`; a thread whose id is no Hole feature's gets `null`. The CTC 04 threads read `Hole8` (the key); FTC 10 2021's read the key's three names; STC 10's stay `null`.
+- On screen the name is one more small `fmeta` span (class `fname`) after the size line, on Hole feature rows and thread rows; in the PDF it follows the title (`hf-7 Countersink · 30 holes · Hole20: …`) and the thread callout. `hole_mismatch` titles start with the name when there is one (S1's rule; thread titles stay nameless, I1 S3 default).
+- The copy text replaces S1's `· n copied` on the row as its own line, and is added to the PDF line after the counts; "1 pattern or mirror feature" when one. `inventor.hole_names_seen` is always present when an `.ipt` is read; the "in the browser" note joins the panel's and the PDF section's first line.
+
 - **Morgan tries:** the CTC 04 rows show `Hole8` … `Hole22`; thread rows show `Hole8`; FTC 08's feature shows "4 holes: 1 drawn, 3 copied by 2 pattern or mirror features"; STC 10 shows no names and "11 Hole features in the browser, 9 read". On a work pair, rename one Hole in Inventor, export, and check that its name shows (or no names show) and never a wrong one.
 - **Checks that fail now:** J4 (the asserts go into the existing `test_inventor_names.py`); the copy row text (`copied_by` itself is tested in S1: `test_inventor_holes.py::test_copies`, FTC 08 2021: 1 feature, 4 holes, copier ids 2187 and 2202, pinned in `hole_counts.toml`).
 - **Files:** `inventor/names.py` (reads the streams through `ole.Ipt` under its caps), `threads.py` (`feature_id` from the record, `feature_name`), `holes.py`, `part.py`; `web/src/findings.ts`, `report.ts` (name in small print as I1 S3's defaults); `tests/service/test_inventor_names.py`; fixtures regenerated.
@@ -213,11 +220,20 @@ Holes gain `"hole_feature": "hf-1"` when matched or disagreeing. On screen lengt
 
 ### S3 Fillets and chamfers (I3)
 
-- **First:** the `ui-mockups` mock-up of the Fillets and chamfers panel, approved by Morgan.
+- **First:** the `ui-mockups` mock-up of the Fillets and chamfers panel, approved by Morgan: done, [mock-up](https://claude.ai/artifact/9AedyRhGSNr5Md5Pzj9VxZ) (`mockups/blends-panel.html`), D-043. No demo for S3 (D-044).
 - **Morgan tries:** the demo's CTC 04 lists 7 fillets (25, 13, 5, 5, 5, 4, 2.5 mm) and 1 chamfer 5 x 5 mm; tapping one highlights its faces; the PDF lists them.
 - **Checks that fail now:** J5 (counts and sizes pinned in `tests/inventor/blend_counts.toml`: `[file.<ipt name>] fillets = [radii], chamfers = [[d1, d2]]`, and `[pair.<ipt name>] faces, faces_mapped` per harness pair), J6 (blend part), J7 (blend part).
 - **Files:** `inventor/blends.py`, `part.py`, `analyze.py`; if Open question 3 is yes, `rules/blend_mismatch.py`, `rules/__init__.py`, `analyze.NEEDS_IPT`, `settings.py`, `test_rules.py::test_blend_mismatch` (the built block's r 3.5 case); `web/src/{findings,report,api}.ts`, `web/index.html`; `tests/inventor/blend_counts.toml`; `tests/service/test_inventor_blends.py`, `test_inventor_safety.py`; `tests/e2e/test_blends.py`, `test_pdf.py`; demo.
 - **Waits on:** S1 (tags, topology, surfaces).
+
+**Settled at build (2026-11-09, S3 service; measured on the 16 NIST files, numbers in `tests/inventor/blend_counts.toml`):**
+
+- **Copies, not corner patches (corrects "Blends (measured)"):** a blend tag's last id is the blend; ids before it are the pattern or mirror features that copied the face, as on hole tags. CTC 04's 36 faces tagged (3233, 3193) all have Fillet 3193's 5 mm radius. With the last id, blend counts equal the `Fillet<n>` / `Chamfer<n>` texts in every plain file that has them (CTC 01 4 + 2, CTC 02 12, CTC 04 7 + 1, CTC 05 2 + 1, FTC 06 2, FTC 07 2024 3, FTC 08 4, FTC 10 4, FTC 11 1); the first id gave CTC 04 9 blends for 8 names and CTC 02 13 for 12. Every face is used for sizes; `copied_by` (copier ids) is added to each blend in the response.
+- **Chamfer faces:** each a plane or a cone of 10 to 80 deg, mixed allowed (CTC 04's chamfer has 12 planes and 12 cones). A blend of spline faces only (CTC 02: 4) or with a 2 deg cone (CTC 02 446) is `kind: null`, `blend shape not understood`.
+- **Place of a STEP face:** besides its type and axis line, centre or plane (0.01 mm), the mean of the `.ipt` face's vertices must lie within 1 mm of the STEP face's bounding box (`BOX_MARGIN_MM`): without it one CTC 04 chamfer plane matched two coplanar STEP faces (446, 471). A torus's place includes its ring radius, so a fillet only disagrees on its own radius.
+- **FTC 11's "other radius" face (spec J5):** a torus with the STEP's 0.1 mm fillet radius whose ring is 0.043 mm larger (19.053 against 19.010 mm): it sits elsewhere, so it is not mapped and gives no finding. NIST: 499 of 744 fillet faces mapped, none disagrees.
+- **Chamfers are mapped by place only** (plane: normal and offset; cone: axis line, half-angle within 0.01 deg, radius): they never disagree, since the STEP holds no chamfer distances. CTC 04: 12 of 24 chamfer faces mapped (8 planes, 4 cones; the other 4 planes are 0.018 mm off and 8 cones 0.019-0.059 mm: NIST's two files differ), not the "12 planes and 4 of 12 cones" of Risks.
+- **Not mapped reason** when no face sits on a STEP face: `no STEP face of its shape at its place`. Plane chamfer `angle_deg` is acos of the planes' normals (90 on every NIST chamfer). `blend_mismatch` title: `Fillet bl-<n>: R<ipt> in the .ipt, R<step> in the STEP. Possible cause: ...`, faces = the blend's `step_faces`, rule label "fillet vs face".
 
 ## Verification
 

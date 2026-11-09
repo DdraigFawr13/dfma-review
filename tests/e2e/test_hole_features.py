@@ -80,3 +80,31 @@ def test_panel_hidden_without_ipt(page: Page, base_url: str, tmp_path):
     page.get_by_test_id("upload-file").set_input_files(step)
     expect(page.locator("#status")).to_have_text(f"Showing {result['part']['name']}.")
     expect(page.get_by_test_id("hole-features-panel")).to_be_hidden()
+
+
+STC10 = ("nist_stc_10_asme1_ap242-e2.stp", "INV_nist_ftc_10_asme1_2024.ipt")
+
+
+def test_names(page: Page, base_url: str, tmp_path):
+    """I2 S2: CTC 04's Hole features and threads show their Inventor names in small print (rank rule)."""
+    result = json.loads((FIXTURES / "ctc_04.json").read_text("utf-8"))
+    open_pair(page, base_url, tmp_path, result, CTC04)
+    rows = page.get_by_test_id("hole-feature-row")
+    names = ["Hole8", "Hole10", "Hole11", "Hole12", "Hole13", "Hole19", "Hole20", "Hole21", "Hole22"]
+    for i, n in enumerate(names):
+        expect(rows.nth(i).locator(".fname")).to_have_text(n)
+    expect(page.get_by_test_id("hole-features-panel")).not_to_contain_text("in the browser")
+    threads = page.get_by_test_id("thread-row")
+    expect(threads.first.locator(".fname")).to_have_text("Hole8")
+
+
+def test_no_names_and_copies(page: Page, base_url: str, tmp_path):
+    """I2 S2: STC 10 has 11 Hole names for 9 features read, so no names; its first feature has 2 copied holes."""
+    result = json.loads((FIXTURES / "stc_10.json").read_text("utf-8"))
+    open_pair(page, base_url, tmp_path, result, STC10)
+    panel = page.get_by_test_id("hole-features-panel")
+    expect(panel).to_contain_text("11 Hole features in the browser, 9 read.")
+    expect(panel.locator(".fname")).to_have_count(0)
+    expect(page.get_by_test_id("threads-panel").locator(".fname")).to_have_count(0)
+    expect(page.get_by_test_id("hole-feature-row").first).to_contain_text(
+        "4 holes: 2 drawn, 2 copied by 1 pattern or mirror feature")

@@ -2,7 +2,7 @@
 // changes while a file is loaded. No submit button (spec S1, settled at build).
 
 import { analyze, ApiError, type Analysis, type Material, type Process } from "./api";
-import { collapsePassed, renderDrivers, renderFindings, renderHoleFeatures, renderPlan, renderThreads, renderVerdict, type Pick } from "./findings";
+import { collapsePassed, renderDrivers, renderFindings, renderBlends, renderHoleFeatures, renderPlan, renderThreads, renderVerdict, type Pick } from "./findings";
 import { formatSize } from "./format";
 import { buildReport, reportName } from "./report";
 import { Viewer, type CheckedKind } from "./viewer";
@@ -110,6 +110,10 @@ function stillThere(result: Analysis, id: string | null): Pick | null {
     const faces = [...new Set(holes.flatMap((h) => result.features.find((x) => x.id === h.hole)?.faces ?? []))];
     return faces.length ? { id, faces } : null;
   }
+  if (id.startsWith("bl:")) { // I3 S3: a blend's STEP faces
+    const b = result.inventor?.blends?.find((x) => `bl:${x.id}` === id);
+    return b?.step_faces.length ? { id, faces: b.step_faces } : null;
+  }
   if (id.startsWith("setup:")) {
     const s = result.setups[Number(id.slice(6))];
     const i = Number(id.slice(6));
@@ -145,6 +149,11 @@ function showFindings(result: Analysis | null, message: string): void {
   byId("hole-features").scrollTop = keepHoles;
   byId("hole-features-panel").hidden = !result?.inventor;
   byId("hole-features-count").textContent = result?.inventor ? String(result.inventor.hole_features?.length ?? 0) : "";
+  const keepBlends = byId("blends").scrollTop;
+  renderBlends(byId("blends"), result, select, selected); // I3 S3
+  byId("blends").scrollTop = keepBlends;
+  byId("blends-panel").hidden = !result?.inventor;
+  byId("blends-count").textContent = result?.inventor ? String(result.inventor.blends?.length ?? 0) : "";
   renderDrivers(byId("drivers"), result);
   byId("drivers-panel").hidden = !result;
   byId("drivers-count").textContent = result ? `${result.cost_drivers.length}` : "";
@@ -198,6 +207,8 @@ async function analyse(): Promise<void> {
       byId<HTMLDetailsElement>("threads-panel").open = (result.inventor?.threads?.length ?? 0) > 0;
       // D-040: the Hole features panel opens when a hole disagrees or isn't mapped
       byId<HTMLDetailsElement>("hole-features-panel").open = (result.inventor?.hole_features ?? []).some((f) => f.state !== "matched");
+      // I3 S3: likewise the Fillets and chamfers panel, when a blend disagrees or isn't mapped
+      byId<HTMLDetailsElement>("blends-panel").open = (result.inventor?.blends ?? []).some((b) => b.state !== "matched");
     }
     const keep = samePart ? stillThere(result, selected) : null; // a finding, passed feature or setup
     selected = keep?.id ?? null;

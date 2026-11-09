@@ -1,6 +1,6 @@
 // The verdict line and the findings list in severity groups (spec "Web page", D-012).
 
-import type { Analysis, CostDriver, Feature, Finding, HoleFeature, IptHole, Severity, Thread, Tool } from "./api";
+import type { Analysis, Blend, CostDriver, Feature, Finding, HoleFeature, IptHole, Severity, Thread, Tool } from "./api";
 
 export const RULE_NAMES: Record<string, string> = {
   hole_depth: "hole depth", hole_size: "hole size", corner_radius: "corner radius", pocket_depth: "pocket depth",
@@ -8,6 +8,7 @@ export const RULE_NAMES: Record<string, string> = {
   turn_axis: "turning axis", turn_slender: "length to diameter", turn_offaxis: "off the turning axis",
   bore_depth: "bore depth", looks_turned: "looks turned", thread_mismatch: "thread vs hole", // I1 S2
   hole_mismatch: "Hole feature vs hole", // I2 S1 (D-040)
+  blend_mismatch: "fillet vs face", // I3 S3
 };
 const KIND_NAMES: [string, string, string][] = [["profile", "turned profile", "turned profiles"], ["hole", "hole", "holes"], ["bore", "bore", "bores"], ["groove", "groove", "grooves"],
   ["pocket", "pocket", "pockets"], ["corner", "corner", "corners"], ["wall", "wall", "walls"]];
@@ -474,6 +475,7 @@ export function renderThreads(host: HTMLElement, result: Analysis | null, onSele
     row.append(line);
     const size = threadSize(t);
     if (size) row.append(el("span", "fmeta", size));
+    if (t.feature_name) row.append(el("span", "fmeta fname", t.feature_name)); // I2 S2: small print, never guessed
     const note = threadNote(t, result);
     if (note) row.append(el("span", "fmeta", note));
     if (hole && row instanceof HTMLButtonElement) {
@@ -508,6 +510,19 @@ export function holeFeatureSize(f: HoleFeature, sep = " · "): string {
   return out.join(sep);
 }
 
+/** "4 holes: 1 drawn, 3 copied by 2 pattern or mirror features", or "" when none is copied (I2 S2, D-039). */
+export function holeCopies(f: HoleFeature): string {
+  const copied = f.holes.filter((h) => h.copied_by.length);
+  if (!copied.length) return "";
+  const p = new Set(copied.flatMap((h) => h.copied_by)).size;
+  return `${holeCount(f.holes.length)}: ${f.holes.length - copied.length} drawn, ${copied.length} copied by ${p} pattern or mirror ${p === 1 ? "feature" : "features"}`;
+}
+
+/** "11 Hole features in the browser, 9 read" when the .ipt names more Holes than were read, else "" (I2 S2). */
+export function holeNamesSeen(seen: number | undefined, read: number): string {
+  return seen !== undefined && seen > read ? `${seen} Hole features in the browser, ${read} read` : "";
+}
+
 /** "N matched, N disagree, N not mapped" over holes. */
 export function holeCounts(holes: IptHole[]): string {
   const n = (s: IptHole["state"]) => holes.filter((h) => h.state === s).length;
@@ -530,7 +545,8 @@ export function renderHoleFeatures(host: HTMLElement, result: Analysis | null, o
     return;
   }
   const all = feats.flatMap((f) => f.holes);
-  host.append(el("p", "none", `From ${inv.name}: ${feats.length} Hole features, ${holeCount(all.length)}: ${holeCounts(all)}. Tap a feature to show its holes; tap a hole to show it alone.`));
+  const seen = holeNamesSeen(inv.hole_names_seen, feats.length);
+  host.append(el("p", "none", `From ${inv.name}: ${feats.length} Hole features, ${holeCount(all.length)}: ${holeCounts(all)}.${seen ? ` ${seen}.` : ""} Tap a feature to show its holes; tap a hole to show it alone.`));
   const steps = new Map(result.features.map((f) => [f.id, f]));
   for (const f of feats) {
     const cls = f.state === "matched" ? "ok" : f.state === "disagrees" ? "medium" : "nm";
@@ -546,9 +562,11 @@ export function renderHoleFeatures(host: HTMLElement, result: Analysis | null, o
     row.append(line);
     const size = holeFeatureSize(f);
     if (size) row.append(el("span", "fmeta", `${size} (as designed in the .ipt)`));
+    if (f.name) row.append(el("span", "fmeta fname", f.name)); // I2 S2: small print, never guessed
     if (f.reason) row.append(el("span", "fmeta", `Not mapped: ${f.reason}. Our limit, not a finding.`));
-    const copied = f.holes.filter((h) => h.copied_by.length).length;
-    row.append(el("span", "fmeta", holeCounts(f.holes) + (copied ? ` · ${copied} copied` : "") + (open || !(faces.length || unfolds) ? "" : " · tap to show its holes")));
+    const copies = holeCopies(f);
+    if (copies) row.append(el("span", "fmeta", copies));
+    row.append(el("span", "fmeta", holeCounts(f.holes) + (open || !(faces.length || unfolds) ? "" : " · tap to show its holes")));
     if (row instanceof HTMLButtonElement) {
       row.type = "button";
       row.setAttribute("aria-pressed", String(selected === id));
@@ -580,5 +598,80 @@ export function renderHoleFeatures(host: HTMLElement, result: Analysis | null, o
       }
       host.append(sub);
     }
+  }
+}
+
+// --- I3 S3: fillets and chamfers from the .ipt (mockups/blends-panel.html) ---
+
+/** "Fillet · R0.197 in [5 mm]", "Chamfer · 0.197 in [5 mm] × 0.197 in [5 mm], 90°", "Blend · shape not understood". */
+export function blendTitle(b: Blend): string {
+  if (b.kind === "fillet") return b.radius_mm === null ? "Fillet" : `Fillet · R${inMm(b.radius_mm)}`;
+  if (b.kind === "chamfer") {
+    if (!b.distances_mm) return "Chamfer";
+    const [a, c] = b.distances_mm;
+    return `Chamfer · ${inMm(a)} × ${inMm(c)}${b.angle_deg === null ? "" : `, ${mmText(b.angle_deg)}°`}`;
+  }
+  return "Blend · shape not understood";
+}
+
+/** "7 fillets, 1 chamfer" (and "2 not understood"). */
+export function blendKinds(blends: Blend[]): string {
+  const n = (k: Blend["kind"]) => blends.filter((b) => b.kind === k).length;
+  const word = (c: number, one: string, many: string) => `${c} ${c === 1 ? one : many}`;
+  const out = [word(n("fillet"), "fillet", "fillets"), word(n("chamfer"), "chamfer", "chamfers")];
+  if (n(null)) out.push(`${n(null)} not understood`);
+  return out.join(", ");
+}
+
+/** "N matched, N disagree, N not mapped" over blends. */
+export function blendCounts(blends: Blend[]): string {
+  const n = (s: Blend["state"]) => blends.filter((b) => b.state === s).length;
+  return `${n("matched")} matched, ${n("disagrees")} disagree, ${n("not_mapped")} not mapped`;
+}
+
+/** "22 of 42 faces found in the STEP", plus "copied by 1 pattern or mirror feature" (D-039's words). */
+export function blendFaces(b: Blend): string {
+  if (b.kind === null) return "";
+  const copies = b.copied_by.length ? ` · copied by ${b.copied_by.length} pattern or mirror ${b.copied_by.length === 1 ? "feature" : "features"}` : "";
+  return `${b.faces_mapped} of ${b.faces} ${b.faces === 1 ? "face" : "faces"} found in the STEP${copies}`;
+}
+
+/** The disagreeing or not-mapped line of a blend, or "" when it matched. */
+export function blendNote(b: Blend, result: Analysis): string {
+  if (b.state === "not_mapped") return `Not mapped: ${b.reason ?? "unknown"}. Our limit, not a finding.`;
+  if (b.state !== "disagrees") return "";
+  const f = result.findings.find((x) => x.rule === "blend_mismatch" && x.blend === b.id);
+  return b.gaps.map((g) => g.text).join("; ") + (f ? ` · finding ${f.id}` : "");
+}
+
+/** The Fillets and chamfers panel: one row per blend in feature-id order; a row with STEP faces selects them. */
+export function renderBlends(host: HTMLElement, result: Analysis | null, onSelect: (f: Pick) => void, selected: string | null): void {
+  host.replaceChildren();
+  const inv = result?.inventor;
+  if (!result || !inv) return;
+  const blends = inv.blends ?? [];
+  if (!blends.length) {
+    host.append(el("p", "none", "No fillets or chamfers in this .ipt."));
+    return;
+  }
+  host.append(el("p", "none", `From ${inv.name}: ${blendKinds(blends)}: ${blendCounts(blends)}. Sizes as designed in the .ipt. Tap one to show its faces.`));
+  for (const b of blends) {
+    const cls = b.state === "matched" ? "ok" : b.state === "disagrees" ? "medium" : "nm";
+    const id = `bl:${b.id}`;
+    const row = el(b.step_faces.length ? "button" : "div", `pass-row thread-row bl-row ${cls}`);
+    row.dataset.testid = "blend-row";
+    const line = el("span", "row1");
+    line.append(el("span", `sev ${cls}`, STATE_WORD[b.state]), el("span", "ftitle", blendTitle(b)), el("span", "fid", b.id));
+    row.append(line);
+    const faces = blendFaces(b);
+    if (faces) row.append(el("span", "fmeta", faces));
+    const note = blendNote(b, result);
+    if (note) row.append(el("span", "fmeta", note));
+    if (row instanceof HTMLButtonElement) {
+      row.type = "button";
+      row.setAttribute("aria-pressed", String(selected === id));
+      row.addEventListener("click", () => onSelect({ id, faces: b.step_faces }));
+    }
+    host.append(row);
   }
 }
