@@ -14,6 +14,7 @@ Status: **proposals only**. Nothing here changes a decision until Morgan approve
 
 ## Round log
 
+- 2026-11-09 Round 2 published: [page](https://claude.ai/artifact/PZbfjpJcG6jLqFR1CWShpM) (`ui2` collection): start screen, V1 steps on top (features, machining with issues per setup), V2 checklist rail, V3 overview, 8 choices. Fresh check: 1 reviewer, 48,975 tokens; 11 fixes.
 - 2026-11-09 Round 1 published: [page](https://claude.ai/artifact/3WKMC2icNNuE9i9scBLT3n) (answers in its `ui1` collection). Fresh check: 1 reviewer, 65,865 tokens; 9 fixes (record on the page).
 
 ## Round 1 answers (Morgan, 2026-11-09, `ui1` collection, 43 answers)

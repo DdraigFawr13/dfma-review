@@ -111,7 +111,7 @@ tr.okrow td { color: var(--muted); }
 .step .n { font: 600 .875rem var(--mono); width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid currentColor; display: inline-flex; align-items: center; justify-content: center; }
 .step.on { color: var(--ink); border-color: var(--accent); }
 .step.on .n { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.step.off { opacity: .5; }
+.step.off { color: var(--muted); font-weight: 400; } .step.off .n { border-style: dashed; }
 .step .c { display: inline-flex; align-items: center; gap: 4px; font: 600 .875rem var(--mono); color: var(--ink); }
 .step .mk { transform-origin: center; }
 .srow { display: grid; grid-template-columns: 18px 1fr auto; gap: 3px var(--space-2); padding: 10px var(--space-3); border-bottom: 1px solid var(--line); align-items: baseline; }
@@ -198,11 +198,11 @@ tr.okrow td { color: var(--muted); }
       <div class="score"><h3>3 · Machining</h3><span class="open">Open ›</span>
         <div class="sub"><span>3-axis mill</span><span class="num">2 setups</span><span class="num">4 tool loads</span></div></div>
       <div class="score"><h3>4 · Cost</h3><span class="open">Open ›</span>
-        <div class="sub"><span class="num">7 drivers</span><span>Biggest: distinct tools 4.0, sharp or small inside corners 4.0</span></div></div>
+        <div class="sub"><span class="num">7 drivers</span><span>Biggest: distinct tools 4.0, sharp or small inside corners 4.0 (weights are estimates)</span></div></div>
       <div class="score" style="border:0"><h3>5 · Report</h3><span class="open">Open ›</span><div class="sub">PDF of all of the above</div></div>
       <div style="margin-top:auto;padding:14px 16px;background:var(--bg);border-top:1px solid var(--line);display:grid;gap:6px">
         <span class="label">Fix first</span>
-        <div style="display:flex;gap:8px;align-items:center"><span class="mk high"></span><span class="sev high">Fix</span><b>Sharp corner ×4</b><span class="muted">Inside corners have no radius.</span></div>
+        <div style="display:flex;gap:8px;align-items:center"><span class="mk high"></span><span class="sev high">Fix</span><b>Sharp corner ×4</b><span class="num muted">F4–F7</span><span class="muted">Inside corners have no radius.</span></div>
       </div>
     </div>
   </div>
@@ -235,7 +235,7 @@ tr.okrow td { color: var(--muted); }
       <div class="srow"><span class="mk medium"></span><span class="t"><span class="sev medium">Review</span> Drill size</span><span class="ids">F3</span>
         <span class="s">0.260 in isn't a standard drill. Nearest is 0.266 in (17/64).</span><span class="chk">Hole size check</span></div>
       <div class="srow"><span class="mk medium"></span><span class="t"><span class="sev medium">Review</span> Deep pocket</span><span class="ids">F8</span>
-        <span class="s">8.0× as deep as the end mill that fits. Over 3.0× needs a long tool.</span><span class="chk">Pocket depth check</span></div>
+        <span class="s">Depth is 8.0× the end mill that fits. Over 3.0× needs a long tool.</span><span class="chk">Pocket depth check</span></div>
       <div style="margin-top:auto;display:flex;justify-content:space-between;padding:12px;border-top:1px solid var(--line)"><span class="btn ghost">‹ Part</span><span class="btn">Machining ›</span></div>
     </div>
   </div>
@@ -264,7 +264,7 @@ tr.okrow td { color: var(--muted); }
     <div class="panel" style="display:flex;flex-direction:column;min-height:0">
       <div style="padding:12px 14px;display:grid;grid-template-columns:90px 1fr;gap:4px 10px;border-bottom:1px solid var(--line)">
         <span class="muted">Machine</span><span>3-axis mill</span>
-        <span class="muted">Stock</span><span class="num">2.500 × 4.000 × 2.000 in block</span>
+        <span class="muted">Stock</span><span class="num">2.500 × 4.000 × 2.000 in block <span class="muted" style="font-family:var(--sans)">(part size, no allowance)</span></span>
         <span class="muted">Tool loads</span><span class="num">4</span>
       </div>
       <div style="padding:12px;display:grid;gap:12px">
@@ -272,13 +272,13 @@ tr.okrow td { color: var(--muted); }
           <div class="grouphead">Setup 1 · from +X</div>
           <div class="row" style="grid-template-columns:24px 1fr auto"><span class="num">1</span><span>1/4 in end mill</span><span class="ids">0.260 in hole</span></div>
           <div class="row" style="grid-template-columns:24px 1fr auto"><span class="num">2</span><span>0.250 in (1/4) drill</span><span class="ids">1/4 in hole</span></div>
-          <div class="issue-in"><span class="muted">Issues here:</span><span><span class="mk medium"></span><b class="sev medium">Review</b> Deep hole ×2</span><span><span class="mk medium"></span><b class="sev medium">Review</b> Drill size</span></div>
+          <div class="issue-in"><span class="muted">Issues here:</span><span><span class="mk medium"></span><b class="sev medium">Review</b> Deep hole ×2 <span class="num muted">F1 F2</span></span><span><span class="mk medium"></span><b class="sev medium">Review</b> Drill size <span class="num muted">F3</span></span></div>
         </div>
         <div style="border:2px solid var(--accent)">
           <div class="grouphead" style="background:var(--sel)">Setup 2 · from −X</div>
           <div class="row" style="grid-template-columns:24px 1fr auto"><span class="num">3</span><span>3/4 in end mill</span><span class="ids">pocket</span></div>
           <div class="row" style="grid-template-columns:24px 1fr auto"><span class="num">4</span><span>1/32 in end mill <span class="muted">· smallest; none fits the corners</span></span><span class="ids">pocket</span></div>
-          <div class="issue-in"><span class="muted">Issues here:</span><span><span class="mk high"></span><b class="sev high">Fix</b> Sharp corner ×4</span><span><span class="mk medium"></span><b class="sev medium">Review</b> Deep pocket</span></div>
+          <div class="issue-in"><span class="muted">Issues here:</span><span><span class="mk high"></span><b class="sev high">Fix</b> Sharp corner ×4 <span class="num muted">F4–F7</span></span><span><span class="mk medium"></span><b class="sev medium">Review</b> Deep pocket <span class="num muted">F8</span></span></div>
         </div>
       </div>
       <div style="margin-top:auto;display:flex;justify-content:space-between;padding:12px;border-top:1px solid var(--line)"><span class="btn ghost">‹ Features</span><span class="btn">Cost ›</span></div>
@@ -292,18 +292,18 @@ tr.okrow td { color: var(--muted); }
   <header class="top">
     <h1>DFMA Review</h1>
     <span class="pick file">report_sample.step</span><span class="pick">Milling</span><span class="pick">Aluminum 6061</span>
-    <span class="priv">Stays on this PC</span>
+    <span class="priv">Analysed here; nothing kept</span>
     <span class="spacer"></span>
     <span class="btn">Export PDF</span>
   </header>
   <div style="display:grid;grid-template-columns:230px 1fr 440px;gap:16px;padding:16px;flex:1;min-height:0">
     <nav class="panel rail">
-      <div class="st"><span class="n">1</span>Part<span class="c"><span class="mk ok"></span></span></div>
+      <div class="st"><span class="n">1</span>Part<span class="c muted" style="font-family:var(--sans);font-weight:400">read</span></div>
       <div class="st"><span class="n">2</span>Holes<span class="c"><span><span class="mk medium"></span>3</span></span></div>
       <div class="st on"><span class="n">3</span>Pockets &amp; corners<span class="c"><span><span class="mk high"></span>4</span><span><span class="mk medium"></span>1</span></span></div>
       <div class="st"><span class="n">4</span>Walls<span class="c"><span><span class="mk ok"></span>9</span></span></div>
-      <div class="st"><span class="n">5</span>Setups<span class="c num">2</span></div>
-      <div class="st"><span class="n">6</span>Cost<span class="c num">7</span></div>
+      <div class="st"><span class="n">5</span>Setups<span class="c num" style="font-weight:500;color:var(--muted)">2 setups</span></div>
+      <div class="st"><span class="n">6</span>Cost<span class="c num" style="font-weight:500;color:var(--muted)">7 drivers</span></div>
       <div class="st"><span class="n">7</span>Report<span class="c"></span></div>
     </nav>
     <div class="view">

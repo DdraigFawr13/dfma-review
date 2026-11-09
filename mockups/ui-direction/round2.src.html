@@ -86,7 +86,15 @@ a { color: var(--accent); }
   <h2>Anything else</h2>
   <section class="card"><h3>Anything missing, wrong, or still too wordy?</h3><textarea id="t_else" data-id="else" rows="4" aria-label="Anything else"></textarea></section>
   <p class="small muted">When done, say <b>"round 2 done"</b> in chat.</p>
-  %%RECORD%%
+  <details class="card" id="check-record"><summary><b>Check record</b></summary>
+    <div class="small" style="display:grid;gap:6px">
+      <p>Files checked: the app's output for report_sample.step (findings, plan, cost drivers), docs/UI_STYLE.md, docs/DECISIONS.md, web/index.html.</p>
+      <p>Facts: counts, tools, setups, sizes, 7 drivers and 4 tool loads match the app (fresh check). Proposed wording follows your round 1 picks. Which issue belongs to which setup is an inference, labelled on the picture.</p>
+      <p>Fixes after the fresh check: no invented "Part" pass in the rail; "2 setups" and "7 drivers" labelled; cost weights marked as estimates; the deep-pocket sentence says "8.0× the end mill that fits", as the app does; stock keeps "no allowance"; issue lists name their F ids beside the pins; disabled steps no longer faded below contrast; the walls tint added to the switch question; the verdict question now says what moves where; a new question on counts shown by shape and number without a word (the style guide asks for the word today).</p>
+      <p>Still a question for you, not settled: one OK switch vs per kind (D-014), dropping the verdict line (D-012), shape-only counts (UI_STYLE checklist item 9). Grouped rows ("Sharp corner ×4") follow your round 1 "Keep".</p>
+      <p>Lint: 0 warnings (frames and page, minimum 14 px). Frames at 1280 px. Fresh check: 1 reviewer, 48,975 tokens.</p>
+    </div>
+  </details>
 </main>
 
 <script>
@@ -97,14 +105,14 @@ const SECTIONS = [
     { pic: "frame-p", cap: "Before a file is read: one place to choose the file, the .ipt, process and material. The privacy line stays in full." },
     { id: "s_part", q: "This start screen", opts: ["Like it", "Parts of it", "No"] } ] },
   { h: "V1 · Steps across the top", items: [
-    { pic: "frame-f", cap: "Features step: Fix and Review rows, a plain sentence each, the check named under it. Chips switch Issues, Passed and All. The selected row opens one level." },
-    { pic: "frame-m", cap: "Machining step: each setup lists its own issues, so the plan and the issues sit side by side. The setup chips on the model pick one setup." },
+    { pic: "frame-f", cap: "Features step: Fix and Review rows, a plain sentence each, the check named under it. Chips switch Issues, Passed and All. The selected row opens one level. The one \"Show OK features\" switch is one option; see Choices." },
+    { pic: "frame-m", cap: "Machining step: each setup lists its own issues, so the plan and the issues sit side by side. The setup chips on the model pick one setup. Which issue belongs to which setup is my reading of the plan (holes in setup 1, the pocket and its corners in setup 2); the app doesn't link them yet." },
     { id: "v1", q: "V1 · Steps across the top", opts: ["Like it", "Parts of it", "No"] } ] },
   { h: "V2 · Checklist rail", items: [
     { pic: "frame-r", cap: "A checklist down the left, one step per feature kind, each with its own count. The step's checks sit in a short table (B's density, only this step's rows)." },
     { id: "v2", q: "V2 · Checklist rail", opts: ["Like it", "Parts of it", "No"] } ] },
   { h: "V3 · Overview first", items: [
-    { pic: "frame-o", cap: "After the part is read, an overview: each step with its counts, the biggest cost drivers, and what to fix first. Open any step from here." },
+    { pic: "frame-o", cap: "After the part is read, an overview: each step with its counts, the biggest cost drivers, and what to fix first. Open any step from here. (F2 is on the far side of the part in this view; \"+1\" pins fold F3 into F1 and F8 into F7, as the app does today.)" },
     { id: "v3", q: "V3 · Overview first", opts: ["Like it", "Parts of it", "No"] } ] },
   { h: "Choices", items: [
     { id: "q_steps", q: "Which steps?", why: "V1 groups by stage; V2 gives each feature kind its own step. More steps means more clicks but shorter lists.", opts: ["Part · Features · Machining · Cost · Report", "Part · Holes · Pockets & corners · Walls · Setups · Cost · Report", "Not sure, explain in chat"] },
@@ -112,8 +120,9 @@ const SECTIONS = [
     { id: "q_overview", q: "An overview for the fast check?", opts: ["Yes, open on it after reading", "Yes, as a step I choose", "No"] },
     { id: "q_row", q: "Is this finding row right?", html: SPEC_ROW, opts: ["Yes", "Shorter", "More detail"] },
     { id: "q_list", q: "Inside a step, list rows or a table?", why: "Rows (V1) fit the sentence; a table (V2) lines up the numbers.", opts: ["Rows", "Table", "Table, sentence under the selected row"] },
-    { id: "q_ok", q: "Checked features with no issue (the green, purple, teal tints)", why: "You asked for a switch per feature kind to debug recognition (D-014). With steps, each step could have its own switch, so the 7-entry legend goes.", opts: ["One switch per step", "One switch for all", "Keep today's legend"] },
-    { id: "q_verdict", q: "Replace the verdict line with the step counts?", why: "Today's line lists every rule run (D-012). The counts on each step would carry the same totals.", opts: ["Yes", "Keep a short verdict line too", "No"] } ] },
+    { id: "q_ok", q: "Checked features with no issue (the green, purple, teal and brown tints)", why: "You asked for a switch per feature kind to debug recognition (D-014). With steps, each step could have its own switch, so the 7-entry legend goes.", opts: ["One switch per step", "One switch for all", "Keep today's legend"] },
+    { id: "q_marks", q: "Counts like ▲ 4 ◆ 4 in the steps: shape and number, no word?", why: "The style guide says every severity colour needs its word beside it. The shapes already tell Fix from Review without colour. Words everywhere make the steps twice as long.", opts: ["Shape + number is enough", "Add the words"] },
+    { id: "q_verdict", q: "Replace the verdict line with the step counts?", why: "Today's line (placed by D-012) gives the counts, the features checked and every rule run. Step counts would carry the issue counts; the features checked would move into the Features step; the rule list would go.", opts: ["Yes", "Keep a short verdict line too", "No"] } ] },
 ];
 const state = {}; let db = null; const KEY = "dfma-ui-round2"; const voteIds = []; const paints = []; const notes = [];
 const $ = s => document.querySelector(s);
