@@ -58,7 +58,7 @@ def test_sheet_metal_refused(client):
     r = post(client, nist("nist_ctc_03_asme1_ap242"), INV / "INV_nist_ctc_03_asme1_2021.ipt")
     assert r.status_code == 422
     assert r.json() == {"error": "This Inventor part is a sheet-metal part. Only plain single-body parts can be "
-                                 "read for now."}
+                                 "read for now. Upload the STEP on its own, without the .ipt."}
 
 
 def test_ipt_as_step(client, tmp_path):

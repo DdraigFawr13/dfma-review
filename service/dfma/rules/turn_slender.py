@@ -20,7 +20,7 @@ def support(ratio: float) -> str:
     if ratio <= 3.0:
         return "A chuck alone holds it."
     if ratio <= 6.0:
-        return "Support the free end with a tailstock centre; the part then needs a centre hole."
+        return "Support the free end with a tailstock center; the part then needs a center hole."
     if ratio <= 12.0:
         return "Needs a tailstock and a steady rest, or a Swiss-type lathe."
     return (f"Needs a tailstock and {math.ceil(ratio / 3) - 2} steady rests ({math.ceil(ratio / 3)} holding points), "

@@ -140,10 +140,10 @@ def test_clean_shaft_in_steel_is_slender_by_its_smallest_diameter():
     f = _one(_run("clean_shaft", material="steel1018"), "turn_slender")
     assert (f["severity"], f["limit"]) == ("medium", 3.0)
     assert f["title"] == "Length 4.0× its smallest diameter (0.750 in) (limit 3.0×)"
-    assert f["suggestion"].startswith("Support the free end with a tailstock centre")
+    assert f["suggestion"].startswith("Support the free end with a tailstock center")
 
 
-@pytest.mark.parametrize("ratio, words", [(2.5, "A chuck alone"), (5.0, "tailstock centre"),
+@pytest.mark.parametrize("ratio, words", [(2.5, "A chuck alone"), (5.0, "tailstock center"),
                                           (9.0, "a tailstock and a steady rest"),
                                           (15.0, "a tailstock and 3 steady rests (5 holding points)")])
 def test_support_named_by_ratio(ratio, words):
