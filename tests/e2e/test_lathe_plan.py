@@ -35,7 +35,7 @@ def test_slender_shaft_on_the_lathe(page: Page, base_url: str):
     expect(page.get_by_test_id("overview-features")).to_contain_text("1 turned profile, 1 hole and 1 wall checked")
     expect(page.get_by_test_id("plan-loads")).to_have_text("3 (the first in each setup counts)")  # frame r3-mach words
     expect(page.get_by_test_id("plan-why")).to_have_text(
-        "Why 1 Turned in one setup about its axis. Off the axis, cut with live tooling: hole-1.")
+        "Why 1 setup:Turned in one setup about its axis. Off the axis, cut with live tooling (driven tools on the lathe): hole-1.")
     # S3: the setup chip over the model reads setupHead's words (spec Builder defaults)
     expect(page.get_by_test_id("setup-chip-1")).to_have_text("Setup 1 · on the lathe")
     issues = page.get_by_test_id("issues-setup-1")  # the slender part and the cross hole sit in the lathe setup

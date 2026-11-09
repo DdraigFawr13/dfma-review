@@ -175,10 +175,10 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
   const tools = new Map(result.tools.map((t) => [t.id, t]));
   const byId = new Map(result.features.map((f) => [f.id, f]));
   const whyText = planWhy(result);
-  if (whyText) { // frame r3-mach: "Why 2" (the number of setups) and the plan's reason
+  if (whyText) { // frame r3-mach, amended by D-053 (audit F31): "Why 2 setups:" on its own line, then the reason
     const why = el("p", "why");
     why.dataset.testid = "plan-why";
-    why.append(el("b", undefined, `Why ${n}`), document.createTextNode(` ${whyText}`));
+    why.append(el("b", undefined, `Why ${n} ${n === 1 ? "setup" : "setups"}:`), el("span", "wtext", whyText));
     host.append(why);
   }
   const whole = issuesBlock(placed("whole"), "Whole part:", "issues-whole-part");
@@ -232,8 +232,11 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
       box.append(why);
     }
     const issues = issuesBlock(placed(i), "Issues here:", `issues-setup-${i + 1}`);
-    if (issues) box.append(issues);
-    host.append(box);
+    // the issues sit beside the setup's button, not in it: each is a button of its own (audit F27)
+    const wrap = el("div", "setupbox");
+    wrap.append(box);
+    if (issues) wrap.append(issues);
+    host.append(wrap);
   });
   const away = notPlanned(result);
   const noSetup = placed("none");
@@ -267,7 +270,7 @@ export function planWhy(result: Analysis): string | null {
   if (isLathe(result)) {
     const off = planned.filter((id) => result.findings.some((x) => x.rule === "turn_offaxis" && x.feature === id));
     return "Turned in one setup about its axis. "
-      + (off.length ? `Off the axis, cut with live tooling: ${off.join(", ")}.` : "Every feature is on the axis.");
+      + (off.length ? `Off the axis, cut with live tooling (driven tools on the lathe): ${off.join(", ")}.` : "Every feature is on the axis."); // gloss: audit F13
   }
   const byId = new Map(result.features.map((f) => [f.id, f]));
   return `Each can be cut from: ${planned.map((id) => `${id} ${dirs(byId.get(id)?.open_dirs ?? [])}`).join(" · ")}. `

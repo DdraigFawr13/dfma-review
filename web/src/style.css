@@ -131,9 +131,9 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 .plan .setup:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .plan .swhy { display: grid; gap: 2px; font-size: 0.875rem; color: var(--ink); border-left: 2px solid var(--accent); padding-left: var(--space-2); margin-top: 2px; }
 .plan .shead { font: 600 0.875rem var(--mono); }
-.plan .op { font-size: 0.875rem; display: flex; justify-content: space-between; gap: var(--space-2); }
+.plan .op { font-size: 0.875rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 var(--space-2); } /* wraps rather than squeeze the tool name (audit F30) */
 .plan .op .onum { font-family: var(--mono); font-weight: 600; }
-.plan .ofeat { font-family: var(--mono); color: var(--muted); white-space: nowrap; }
+.plan .ofeat { font-family: var(--mono); color: var(--muted); margin-left: auto; }
 .plan .note { margin: 0; color: var(--muted); font-size: 0.875rem; }
 /* S7: cost drivers and the Export PDF button */
 .drivers-panel { flex: 0 0 auto; max-height: none; }
@@ -155,6 +155,8 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 /* Pins (D-017): white, ringed in the finding's severity colour; the selected one solid in that colour. */
 .flag { position: absolute; pointer-events: none; font: 700 0.875rem var(--mono); color: var(--ink); background: var(--panel); border: 2px solid var(--sev, var(--line)); border-radius: 999px; padding: 1px 7px; white-space: nowrap; transform: translate(-50%, -100%); }
 .flag .sev { display: none; margin-left: 6px; }
+.flag .mk { color: var(--sev); margin-right: 4px; } /* every pin carries its ▲/◆ (D-053 amends D-017) */
+.flag.chosen .mk { color: var(--accent-ink); }
 .flag[data-more]:not([data-more=""])::after { content: " " attr(data-more); color: var(--muted); }
 .flag.chosen { background: var(--sev); color: var(--accent-ink); border-color: var(--accent-ink); box-shadow: 0 0 0 3px var(--sev), 0 2px 8px rgba(22, 38, 61, 0.6); font-size: 1.0625rem; padding: 4px 12px; z-index: 3; }
 .flag.chosen .sev { display: inline; color: var(--accent-ink); }
@@ -228,14 +230,17 @@ div.thread-row { text-align: left; }
 /* review-steps S3 (frame r3-mach): setup chips over the model, "Why n", issues in each setup */
 .setupchips { position: absolute; left: var(--space-3); top: var(--space-3); display: flex; flex-wrap: wrap; gap: var(--space-2); z-index: 4; }
 .plan .why { margin: 0; font-size: 0.875rem; }
-.plan .why b { margin-right: 6px; }
-.issue-in { display: flex; gap: 4px 10px; flex-wrap: wrap; padding: 8px 12px; background: var(--bg); font-size: 0.875rem; align-items: center; border-top: 1px solid var(--line); margin-top: 4px; }
-.placed { display: inline-flex; gap: 5px; align-items: baseline; }
+.plan .why b { display: block; } /* "Why 2 setups:" on its own line (audit F31) */
+.issue-in { display: grid; justify-items: start; gap: 2px; padding: 8px 12px; background: var(--bg); font-size: 0.875rem; border-top: 1px solid var(--line); margin-top: 4px; } /* one issue a line (audit F29) */
+.placed { display: inline-flex; flex-wrap: wrap; gap: 0 5px; align-items: baseline; border: 0; background: none; padding: 2px 0; font: inherit; color: inherit; text-align: left; cursor: pointer; min-height: 32px; }
+.placed .num { white-space: nowrap; } /* "F4–F7" never breaks after its dash */
+.placed:hover { text-decoration: underline; }
 .placed .sev { font-size: 0.875rem; }
 .nosetup { display: grid; gap: 4px; border-top: 1px solid var(--line); padding-top: var(--space-1); }
 .nosetup .shead { font: 600 0.875rem var(--mono); }
-/* Below 900 px, after every rule above: touch-sized targets (audit F16); Show OK under the chips (audit F18) */
+/* Below 900 px, after every rule above: touch-sized targets (F16), Show OK under the chips (F18), setup chips above the model (F33) */
 @media (max-width: 900px) {
   .stepper, .chip, .pfeat { min-height: 44px; } .stepper { min-width: 44px; }
   #page-features .showok { padding: 8px 12px; border-bottom: 1px solid var(--line); }
+  .setupchips { position: static; order: -1; } /* above the model, not over it (audit F33) */
 }

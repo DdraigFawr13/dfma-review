@@ -48,7 +48,7 @@ def test_click_highlights_face(page: Page, base_url: str):
     opacity = page.evaluate("window.__dfma.opacities()")
     assert all(opacity[str(i)] == (1 if i in finding["faces"] else 0.35) for i in range(len(result["faces"])))
     # A flag on the view names the finding and its severity, so colour is not the only sign.
-    expect(page.locator(".viewer .flag")).to_have_text("F1Review")
+    expect(page.locator(".viewer .flag")).to_have_text("◆F1Review")  # its mark too (D-053)
 
     # Changing the material re-analyses the same part and keeps the view and the selection,
     # including a view the user has moved: pan first (right-drag), which moves the camera target.

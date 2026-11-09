@@ -396,7 +396,7 @@ def test_machining(page: Page, base_url: str, sample: dict):
     plan = page.get_by_test_id("page-machining")
     expect(plan).to_contain_text("3-axis mill")
     expect(plan).to_contain_text("(the first in each setup counts)")
-    expect(page.get_by_test_id("plan-why")).to_contain_text("Why 2")
+    expect(page.get_by_test_id("plan-why")).to_contain_text("Why 2 setups:")
     s1, s2 = page.get_by_test_id("plan-setup-1"), page.get_by_test_id("plan-setup-2")
     expect(s1).to_contain_text("Setup 1 · from +X")
     issues1, issues2 = page.get_by_test_id("issues-setup-1"), page.get_by_test_id("issues-setup-2")

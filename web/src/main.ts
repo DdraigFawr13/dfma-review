@@ -7,7 +7,7 @@ import { blendKinds, renderBlends, renderHoleFeatures, renderPlan, renderThreads
 import { formatSize } from "./format";
 import { buildReport, reportName } from "./report";
 import { STEPS, STEP_NAMES, groupTally, placeRows, placedLine, renderChips, renderCost, renderOverview, renderReport,
-  renderRows, renderSetupChips, rowFaces, stepCounts, type RowFilter, type Step } from "./steps";
+  renderRows, renderSetupChips, rowFaces, stepCounts, type Placed, type RowFilter, type Step } from "./steps";
 import { Viewer, type CheckedKind } from "./viewer";
 
 function byId<T extends HTMLElement>(id: string): T {
@@ -64,6 +64,7 @@ declare global {
       checkedFaces(kind?: CheckedKind): number[];
       flagBoxes(): { id: string; x: number; y: number; w: number; h: number }[];
       flagState(): { id: string; shown: boolean; mergedInto: string }[];
+      pinFootprints(): { id: string; x: number; y: number; w: number; h: number }[];
     };
   }
 }
@@ -74,6 +75,7 @@ window.__dfma = {
   opacities: () => viewer.opacities(),
   flagBoxes: () => viewer.flagBoxes(), // test hook: where each visible finding label sits
   flagState: () => viewer.flagState(), // test hook: each pin shown, folded into another, or hidden
+  pinFootprints: () => viewer.pinFootprints(), // test hook: each pin shown with its stem and dot (audit F27)
   checkedFaces: (kind?: CheckedKind) => viewer.checkedFaces(kind), // test hook: drawn in a kind's "checked" colour
 };
 
@@ -188,6 +190,18 @@ const rowHandlers = {
   },
 };
 
+/** An issue line on Machining: open its row on Features at its first finding there, with keyboard focus on it (audit F27). */
+function openPlaced(p: Placed): void {
+  rowFilter = "issues";
+  openRow = p.row.id;
+  sel = { kind: "row", row: p.row.id, at: Math.max(0, p.row.findings.indexOf(p.ids[0])) };
+  apply();
+  showStep("features", false);
+  const row = rowsHost.querySelector<HTMLElement>('.srow[aria-expanded="true"]');
+  row?.scrollIntoView({ block: "nearest" });
+  row?.focus();
+}
+
 function showFindings(result: Analysis | null, message: string): void {
   const side = document.querySelector<HTMLElement>(".side")!, keepScroll = side.scrollTop; // keep the reader's place
   const active = document.activeElement as HTMLElement | null; // redrawn lists keep keyboard focus (APP-02)
@@ -215,7 +229,7 @@ function showFindings(result: Analysis | null, message: string): void {
   // S3 (frame r3-mach, D-049): each row's findings placed in a setup, the whole part or no setup
   const placed = result ? placeRows(result) : new Map();
   renderPlan(byId("plan"), byId("plan-count"), result, select, selected,
-    (where) => (placed.get(where) ?? []).map(placedLine));
+    (where) => (placed.get(where) ?? []).map((p: Placed) => placedLine(p, openPlaced)));
   byId("plan-panel").hidden = !result?.machine;
   byId("plan-none").hidden = !result || !!result.machine;
   if (result) renderSetupChips(byId("setup-chips"), result, result.setups.map((s, i) => setupHead(s, i).replace(", about the turning axis", "")),

@@ -362,9 +362,11 @@ export function placeRows(result: Analysis): Map<string | number, Placed[]> {
   return out;
 }
 
-/** "▲ Fix Sharp corner ×2 F4 F5": one placed row as a line. */
-export function placedLine(p: Placed): HTMLElement {
-  const line = el("span", "placed");
+/** "▲ Fix Sharp corner ×2 F4 F5": one placed row as a button that opens its row on Features (audit F27). */
+export function placedLine(p: Placed, onOpen: (p: Placed) => void = () => {}): HTMLElement {
+  const line = el("button", "placed");
+  line.type = "button";
+  line.addEventListener("click", () => onOpen(p));
   const mark = el("span", `mk ${p.row.severity}`, sevMark(p.row.severity));
   mark.setAttribute("aria-hidden", "true");
   const title = p.ids.length > 1 ? `${p.row.short} ×${p.ids.length}` : p.row.short;
