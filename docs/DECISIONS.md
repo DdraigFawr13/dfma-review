@@ -347,3 +347,15 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-09; Morgan: "can you show mockups and demos in the new UI design from now on please", then, told D-042 isn't built: "go with recommended here").
 - **Decision:** from now on every mock-up is drawn in the D-042 step-by-step design (round 3 frames, `mockups/ui-direction/`). S3 finishes on today's screen (tests and PDF) with no new demo; the D-042 build is specced (`write-spec`) and built next, and every demo after it is built from the new screen (D-009 unchanged: demos come from the real code).
 - **Why:** demos must show what the app really does (D-009), and the new design exists only as approved mock-ups; S3's panel is already built and its PDF section doesn't depend on the screen.
+
+## D-045 Review-in-steps spec approved
+
+- **Status:** Accepted (2026-11-09; Morgan, on the approval question: "Approved, start building").
+- **Decision:** build the D-042 screen from `docs/specs/review-steps.md` in three slices (S1 steps, overview, Cost total, Report, Fix / Review words; S2 grouped Features rows and Show OK switches; S3 Machining with issues per setup). Row wording, grouping and limit-source text live in one service module, `service/dfma/rows.py`, with the short titles and check names in the spec's Design "Rows" table; rule cases other than sharp corner, hole depth, drill size and pocket depth keep today's titles as their sentences until plainer ones are shown to Morgan. The step is in the address (`#part` … `#report`). The cost total is computed in the service and labelled a score. The build cuts from main; whichever of it and PR #27 merges second brings the other in and places Fillets and chamfers as a Features group.
+- **Why:** D-042 approved the screen; the spec passed paraphrase, critic and zero-decision checks with two fix passes and a final zero-decision pass (LESSONS "spec").
+
+## D-046 Merge I2 S2 and I3 S3 now; the work-pair check follows
+
+- **Status:** Accepted (2026-11-09; Morgan: "approve all please merge"). Amends D-041 (the PR merged only after the work-pair check) and D-039's "one PR merged after the work-pair check".
+- **Decision:** PR #27 (Hole names and copies, fillets and chamfers) merges now. Morgan's hand check of one work pair in Inventor, with one Hole renamed, is still owed from 2026-11-12. If it shows a wrong Hole name, Hole names are switched off (Morgan's rule, D-039: "Check, then ship").
+- **Why:** Morgan approved the work; the names come from a rule with 70 of 70 right and 0 wrong on the NIST key, and the risk the hand check guards (two faults cancelling out) is stated in the spec's Risks.
