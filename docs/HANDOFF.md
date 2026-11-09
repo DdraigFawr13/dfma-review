@@ -29,7 +29,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-00. Now: the port spec with `write-spec` (Morgan: "Go ahead and plan the port", 2026-11-09), at step 2: round 1 form [Port Round 1](https://claude.ai/artifact/GsFh2jKiaVwTGoDRxyRE4z) (collection `round1`; wait for "round 1 done"); then the review round, `docs/specs/gitlab-pages-port.md`, 3 fresh checks, Morgan's approval.
+00. Now: the port spec with `write-spec` (Morgan: "Go ahead and plan the port", 2026-11-09), at step 2: round 1 form [Port Round 1](https://claude.ai/artifact/GsFh2jKiaVwTGoDRxyRE4z) done 2026-11-09; answers verbatim in the review page's recap) · review page [Port Review 1](https://claude.ai/artifact/LB487Hw6uY7NAmwZHLERKk) (collection `review1`, 11 findings + round 2 questions; wait for "review 1 done"), `docs/specs/gitlab-pages-port.md`, 3 fresh checks, Morgan's approval.
 0. Now: plainer sentences for the rule cases that still read as titles, each shown to Morgan first (D-045). Follow-up from the audit fixes: Hole feature rows still carry aria-pressed and aria-expanded (F15's pattern, out of its scope).
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `python tests/inventor/local_pairs.py` (now prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
 2. Recognition and stress-test status, scoring commands and the MFCAD++ download: archive "Moved 2026-11-09" (old Next 3 and 3a). Re-run them on every recognition change.
