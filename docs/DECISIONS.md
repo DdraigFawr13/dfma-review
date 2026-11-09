@@ -297,3 +297,15 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-09; Morgan, in chat while the I2+I3 spec was starting: "You can actually create or and merge what's there before the spec"). Amends D-037 (one branch, one merge).
 - **Decision:** PR #23 (I1 S3: the names answer key, the decode probe, `test_inventor_names.py`; no app change) merges now. The combined I2+I3 spec and its build go on a new branch cut from the merged main (GIT-01), with their own PR, merged after Morgan's approval.
 - **Why:** S3 changes no app code and its checks are green, so it need not wait for I2 and I3; a merged branch is never reused.
+
+## D-039 Inventor I2 + I3 spec approved
+
+- **Status:** Accepted (2026-11-09; Morgan, on the [approval page](https://claude.ai/artifact/CKm1QJ3P9fADdFuZQrb8Ev): "Approved, start building", then "Approved" in chat). Amends D-032 (names).
+- **Decision:**
+  - Build I2 and I3 from [docs/specs/inventor-i2-i3-holes-fillets.md](specs/inventor-i2-i3-holes-fillets.md): S1 hole features, S2 names and copies, S3 fillets and chamfers, on branch `inventor-i2-i3` (PR #24).
+  - Names by the rank rule, default names only: a renamed Hole has no name and the part then shows no Hole names ("OK, default names only"; amends D-032's "default or renamed"). Names ship only from a rule checked against an answer key with zero misses (Morgan, 2026-11-09: "Check, then ship"; 70 of 70, 0 wrong).
+  - Fillet and chamfer names left out for now ("Leave them out for now"): no answer key can check them.
+  - A fillet or chamfer that disagrees with the STEP is a finding, like threads and holes (`blend_mismatch`, S3).
+  - One PR, merged only after Morgan's hand check of one work pair in Inventor (work pairs owed from 2026-11-12, D-035).
+  - Copies show as "copied by n pattern or mirror features"; the kind is not named.
+- **Why:** measured on the 16 NIST files (docs/research/inventor-i2-probe): face tags give Hole features, copies and blends; type and diameter 73/73 against the key; 6 fresh checks found no open decision left beyond these five.

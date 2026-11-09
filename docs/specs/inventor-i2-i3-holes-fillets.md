@@ -1,7 +1,7 @@
 # Inventor parts I2 + I3: hole features, names, fillets and chamfers
 
-- **Status:** Draft for Morgan's approval (6 fresh checks, 2026-11-09)
-- **Planned in:** D-032 (phase plan, "Build order" I2 and I3), D-033 (names move to I2), D-037 and D-038 (one combined spec, own branch), chat 2026-11-09 (names: "Check, then ship"). **Decisions:** D-001, D-005, D-031, D-032, D-033, D-036, D-038.
+- **Status:** Approved 2026-11-09 (D-039)
+- **Planned in:** D-032 (phase plan, "Build order" I2 and I3), D-033 (names move to I2), D-037 and D-038 (one combined spec, own branch), chat 2026-11-09 (names: "Check, then ship"), [approval page](https://claude.ai/artifact/CKm1QJ3P9fADdFuZQrb8Ev). **Decisions:** D-001, D-005, D-031, D-032, D-033, D-036, D-038, D-039.
 
 Every "measured" fact below was measured in this session (2026-11-09) on the 16 NIST `.ipt` files in `tests/inventor/files/` with the scripts in [docs/research/inventor-i2-probe/](../research/inventor-i2-probe/README.md). Every unmeasured one says **Assumption**; every inference says **Inference**. Builds on the I1 spec, [inventor-i1-threads.md](inventor-i1-threads.md) (its words, upload, checks, refusals and Threads panel are not repeated here).
 
@@ -83,8 +83,8 @@ All Python tests go in `tests/service/`, browser tests in `tests/e2e/` (`e2e` ma
 ## Decisions
 
 - Our own reader; features mapped by position; three states; names in small print; NIST `.ipt` with checksums (D-031, D-032).
-- Names ship only from a rule checked against an answer key with zero misses, else none (Morgan, 2026-11-09: "Check, then ship"; recorded as D-039 on approval).
-- **Deliberate change to D-032** ("every name (default or renamed)"): a renamed Hole has no name, and makes the part show none (the counts differ); fillets and chamfers show none (no key). For Morgan on the approval page.
+- Names ship only from a rule checked against an answer key with zero misses, else none (Morgan, 2026-11-09: "Check, then ship"; D-039).
+- **Deliberate change to D-032** ("every name (default or renamed)"): a renamed Hole has no name, and makes the part show none (the counts differ); fillets and chamfers show none (no key). Approved by Morgan (D-039).
 - I2 and I3 on branch `inventor-i2-i3`, one PR (D-038).
 
 ## Alternatives rejected
@@ -215,6 +215,4 @@ Holes gain `"hole_feature": "hf-1"` when matched or disagreeing. On screen lengt
 
 ## Open questions
 
-1. Fillet and chamfer names: no answer key can check them (InventorLoader gives none), so by Morgan's rule they don't show. Counts match the names on all 12 plain files that have blends. Recommendation: leave them out until a work pair is checked by hand in Inventor, then decide.
-2. Pattern vs mirror: the tags say "copied by feature id n" but not which kind. Recommendation: show "copied by n pattern or mirror features"; naming each needs the tree decode.
-3. A fillet whose radius disagrees with the STEP: a finding (`blend_mismatch`, like threads and holes), or shown in the panel only? Recommendation: a finding, as D-032 says ("disagrees … becomes a finding"); one face may on FTC 11 (a STEP torus at its place with other radii, unexplained). If yes, S3 adds `rules/blend_mismatch.py` as `hole_mismatch`.
+All answered on the [approval page](https://claude.ai/artifact/CKm1QJ3P9fADdFuZQrb8Ev) (D-039): 1. fillet and chamfer names left out for now; 2. copies show as "pattern or mirror"; 3. a disagreeing blend is a finding (`blend_mismatch` in S3, with the files listed there).
