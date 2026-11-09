@@ -34,19 +34,19 @@ Tests named here are new unless marked "moved"; each fails at the starting commi
 
 ### J2 Walk the steps
 
-- **When** Morgan taps a tab, "Open ›", Next or Back. **Then** that step shows, its tab has `aria-current="step"`, focus moves to the step's heading; the Features tab reads "▲ 4 ◆ 4"; Back is hidden on Part, Next on Report. **Check:** `test_steps.py::test_walk`.
+- **When** Morgan taps a tab, "Open ›", Next or Back, or the phone's Back. **Then** that step shows, its tab has `aria-current="step"`, focus moves to the step's heading, and the address ends in `#part`, `#features`, `#machining`, `#cost` or `#report` (browser Back and Forward walk the steps). Each tab shows its number and name; the Features tab adds "▲ 4 ◆ 4", counts of findings (not rows), as the frames show. Back is hidden on Part, Next on Report. At 200% text the tabs wrap to two lines, at 1280 px and at 900 px. **Check:** `test_steps.py::test_walk`.
 
 ### J3 Features step rows
 
-- **Then** chips "Issues 8 · Passed 9 · All", Issues on; rows as `r3-features` (word + shape, short title, ×n, F range, one sentence, the check and its limit source). Tapping a row selects all its findings' faces and opens the detail: "F4 · corner-1 · 1 of 4", Measured, the suggestion, ‹ › to step through the group (each step selects that finding alone). Passed (`r3-passed`) groups OK features ("Walls ×9"); a passed row's detail keeps its checks, why and math (D-023). Show OK switches (Holes, Pockets, Corners, Walls, each with its colour swatch and label) at the foot of the model on this step only, defaults as today (walls off); the 7-entry legend is gone. The selected pin reads "F4 FIX"; other pins stay ringed only (D-017). **Check:** `test_steps.py::test_feature_rows`, `::test_rows_in_view`, `::test_show_ok`; `tests/service/test_rows.py`.
+- **Then** chips "Issues 8 · Passed 9 · All", Issues on; rows as `r3-features` (word + shape, short title, ×n, F range, one sentence, the check and its limit source). Tapping a row selects all its findings' faces (selection `row:<first F id>`, so it survives a material change as `stillThere` does today) and opens the detail: "F4 · corner-1 · 1 of 4", Measured (`meta`), the suggestion, ‹ › to step through the group (selection becomes `F5` etc., the row stays open). The selected pin is the shown finding's. Passed (`r3-passed`) groups OK features ("Walls ×9"); a passed row's detail keeps its checks, why and math (D-023). Show OK switches (Holes, Pockets, Corners, Walls, each with its colour swatch and label) at the foot of the model on this step only, defaults as today (walls off); the 7-entry legend is gone. The selected pin reads "F4 FIX"; other pins stay ringed only, folding "+n" as today (D-017). The legend's Fix / Review swatches go: every list and the selected pin carry the word. **Check:** `test_steps.py::test_feature_rows`, `::test_rows_in_view`, `::test_show_ok`; `tests/service/test_rows.py`.
 
 ### J4 Machining
 
-- **Then** as `r3-mach`: machine, stock, tool loads, "Why 2" with `planWhy`'s line, each setup's numbered operations and "Issues here" (the rows whose finding's feature is in one of that setup's operations); setup chips on the model select a setup as today's `setup:` selection does. **Check:** `test_steps.py::test_machining`.
+- **Then** as `r3-mach`: machine, stock, tool loads, "Why 2" with `planWhy`'s line, each setup's numbered operations and "Issues here" (the rows with a finding whose `feature` is in one of that setup's operations' `features`); a "Whole part" block before the setups holds rows with no feature (looks_turned, turn_axis); "In no setup" after them holds the rest (today's `notPlanned` line). Setup chips are buttons over the model's top-left corner ("Setup 1 · from +X"), in `steps.ts`, one per setup; a tap is today's `setup:<n>` selection. **Check:** `test_steps.py::test_machining`.
 
 ### J5 Cost and Report
 
-- **Then** Cost as `r3-cost`: per driver, count × weight = score and its F ids; "Total score 14.0" with "Score is count × weight. Every weight is an estimate. No time or dollars yet." Report as `r3-report`: what the PDF holds, "Rules run" as plain names, "Assumptions (n)" folded (n = `assumptions` length), Export PDF. The PDF's summary reads "8 findings: 4 Fix, 4 Review." and a finding page heads "F4 · FIX". **Check:** `test_steps.py::test_cost_total`, `::test_report_step`; `tests/e2e/test_pdf.py` (moved; its "HIGH"/"MEDIUM" assertions become "FIX"/"REVIEW"); `web/src/report.test.ts`.
+- **Then** Cost as `r3-cost`: per driver, count × weight = score, and its F ids (drivers counted from findings) or "from the machine plan" (setups, tools, small tools: they count no findings); "Total score 14.0 points" (`cost_total`, one decimal) with "Score is count × weight. Every weight is an estimate. No time or dollars yet." The overview's "two biggest" are the first two of `cost_drivers` as the service orders them. Report as `r3-report`: what the PDF holds, "Rules run" as plain names, "Assumptions (n)" folded (n = `assumptions` length), Export PDF. The PDF's summary reads "8 findings: 4 Fix, 4 Review." and a finding page heads "F4 · FIX". **Check:** `test_steps.py::test_cost_total`, `::test_report_step`; `tests/e2e/test_pdf.py` (moved; its "HIGH"/"MEDIUM" assertions become "FIX"/"REVIEW"); `web/src/report.test.ts`.
 
 ### J6 With an .ipt
 
@@ -54,21 +54,22 @@ Tests named here are new unless marked "moved"; each fails at the starting commi
 
 ### J7 Empty and other states
 
-- No findings: no "Fix first"; the Features card reads "No findings. Every feature checked passed its rules." No Fix rows: "Fix first" is replaced by "Review first" with the first Review row. No cost drivers: Cost reads "None: one setup and no tools to load." (today's PDF wording) and no total. Turning: the Machining card reads the plan's machine name ("Lathe"), setups and tool loads; no `machine`: "No machine plan for this part." **Check:** `test_steps.py::test_empty_states` (fixtures edited from report_sample's response), `::test_turning_overview` (`tests/parts/` lathe part as `test_lathe_plan.py` uses).
+- No findings: no "Fix first"; the Features card reads "No findings. Every feature checked passed its rules." No Fix rows: "Fix first" is replaced by "Review first" with the first Review row. No cost drivers: Cost reads "None: one setup and no tools to load." (today's PDF wording) and no total. Turning: the Machining card reads the plan's machine name ("Lathe"), setups and tool loads; no `machine`: "No machine plan for this part." Fix first ties: the lowest F id. **Check:** `test_steps.py::test_empty_states` (report_sample's response with `findings` or `cost_drivers` emptied, answered through `page.route` as `test_hole_features.py` does), `::test_turning_overview` (`slender_shaft.step`, Turning, steel1018, as `test_lathe_plan.py:26`).
 
 ## Decisions
 
 - The screen, words and layout are D-042; this spec decides how to build it.
 - Severity stays `high` / `medium` in the API; the words change on screen and in the PDF (D-042).
-- Row wording and grouping live in one service module, `rows.py`, used by the screen and the PDF (Design "Rows").
+- Row wording and grouping live in one service module, `rows.py`; the screen shows its rows; PDF finding pages stay one per finding as today, with the new words.
 - The cost total is computed in the service (D-001: every number traces to the service).
 - Mock-ups in the new design; demos from the built screen (D-044).
 
 ## Alternatives rejected
 
-- **Row wording in the web code:** the measured value, limit and unit live in each rule, and the PDF needs the same words; two copies would drift.
+- **Row wording in the web code:** the units and fractions (`fmt_in`, `units.py`) and the thresholds live in the service; the web would copy them.
 - **Wording in each of the 16 rule files:** 16 places to keep consistent and test; one table in `rows.py` keyed by rule and case is shorter and tested in one file.
 - **Restyle today's panels in place:** keeps 4 scrolling boxes, the problem Morgan named (layouts C and E were cut in round 1).
+- **Step not in the address:** the phone's Back would leave the review; a hash per step costs a few lines.
 - **One slice for the whole screen:** 36 browser tests in 9 files move at once; too big for one session.
 - **Build on PR #27's branch:** the screen would wait for Morgan's work-pair check (from 2026-11-12, D-041). The build cuts from main; whichever PR merges second merges the other in and places Fillets and chamfers as a Features group.
 
@@ -83,11 +84,12 @@ Tests named here are new unless marked "moved"; each fails at the starting commi
 
 ### Parts
 
-- `service/dfma/rows.py` (new): `ROWS` table (rule, case → short, check, sentence and group templates), `limit_text(source)`, `finding_rows(findings) -> list[Row]`, `passed_rows(features, passed) -> list[Row]`. Called at the end of `analyze`; the response gains `rows`, `passed_rows`, and `cost_total`, and each cost driver gains `findings` (its F ids, by its `rules`).
-- `web/index.html`: `nav#steps` with five buttons (`data-testid="step-part"`, `"step-features"`, `"step-machining"`, `"step-cost"`, `"step-report"`), one `section` per step (`data-testid="page-part"` …), each with an `h2` (`tabindex="-1"`), Back / Next (`data-testid="step-back"`, `"step-next"`) in a bar fixed to the step's foot; the model beside them (side panel 460 px at 1280 px; under the model at `max-width: 900px`). The start form, `#error` (`data-testid="error-message"`) and the privacy line live in `page-part`; `#status` stays one line under the step bar for messages after a part is read (PDF failure). Overview: `data-testid="overview"`, cards `overview-features` … `overview-report`, each "Open ›" `open-<step>`, `fix-first`, `change-file`.
-- `web/src/main.ts`: `step` variable and `showStep(name)` (hides other sections, sets `aria-current`, focuses the `h2`). Not in the URL (browser Back leaves the app, as today). "Change file" shows the start form; process and material keep their values, the file inputs clear, `run` is bumped (an analysis in flight is dropped) and the selection clears. Changing process or material on the start form with a file chosen re-runs, as today.
+- `service/dfma/rows.py` (new): `ROWS` table (rule, case → short, check, sentence and group templates), `limit_text(source)`, `finding_rows(findings) -> list[Row]`, `passed_rows(features, passed) -> list[Row]`. `check_name(rule)`, `limit_text(source)` and the cost fields come in S1; `ROWS`, `finding_rows` and `passed_rows` in S2. Called at the end of `analyze`; the response gains `cost_total` (S1: sum of driver scores, rounded to 1 decimal), each cost driver gains `findings` (S1: F ids of findings whose rule is in its `rules`; `[]` for the setups, tools and small-tools drivers), then `rows` and `passed_rows` (S2).
+- `web/index.html`: `nav#steps` with five buttons (`data-testid="step-part"`, `"step-features"`, `"step-machining"`, `"step-cost"`, `"step-report"`), one `section` per step (`data-testid="page-part"` …), each with an `h2` (`tabindex="-1"`), Back / Next (`data-testid="step-back"`, `"step-next"`) in a bar fixed to the step's foot; the model beside them (side panel 460 px at 1280 px; under the model at `max-width: 900px`). The start form, `#error` (`data-testid="error-message"`) and the privacy line live in `page-part`; `#status` stays one line under the step bar for messages after a part is read (PDF failure). Export PDF (`data-testid="export-pdf"`) sits at the right of the top bar on every step once a part is read, as the frames show. Overview: `data-testid="overview"`, cards `overview-features` … `overview-report`, each "Open ›" `open-<step>`, `fix-first`, `change-file`.
+- `web/src/main.ts`: `step` from `location.hash` (`#part` when none), `showStep(name)` sets the hash, hides other sections, sets `aria-current`, focuses the `h2`; `hashchange` calls it. Selection: `type Sel = {kind: "row", row: string, at: number} | {kind: "finding" | "pass" | "setup" | "thread" | "hf" | "hfh" | "bl", id: string} | null` replacing the `selected` string. "Change file" shows the start form; process and material keep their values, both file inputs clear, `run` is bumped (an analysis in flight is dropped) and the selection clears. Changing process or material on the start form with a file chosen re-runs, as today.
 - `web/src/steps.ts` (new): `renderOverview`, `renderRows` (Features), `renderMachining`, `renderCost`, `renderReport`; reuses `findings.ts` (`renderPlan`, `planWhy`, `driverLine`, `renderThreads`, `renderHoleFeatures`, `meta`).
-- `web/src/viewer.ts`: the selected pin's word becomes Fix / Review; OK tints show only while the Features step is shown.
+- `web/src/words.ts` (new, S1): `sevWord(severity)` ("Fix", "Review", "OK"), `sevMark` ("▲", "◆", ""), used by `findings.ts`, `steps.ts`, `viewer.ts` and `report.ts`.
+- `web/src/viewer.ts`: the selected pin's word from `sevWord` (S1); OK tints only while the Features step is shown (S2).
 - `web/src/report.ts`: words Fix / Review in the summary and finding heads; finding pages unchanged otherwise.
 - `docs/UI_STYLE.md`: rewritten for the step screen in S3.
 
@@ -98,7 +100,7 @@ Tests named here are new unless marked "moved"; each fails at the starting commi
 - **Grouping:** findings with the same rule, case, severity and `limit` (the finding's own `limit` field, a number) form one row, in F-id order; rows in order of their first F id, Fix rows first. Passed rows group by kind and rule.
 - **Sentence:** one finding: the case's `one` template with its value. Several: if every finding's sentence is the same, that sentence; else the `many` template with the distinct values, high to low, joined "a and b" (2), "a, b and c" (3), "from a to z" (4 or more).
 - **Range:** "F4–F7" when the ids run without a gap, else ids with spaces ("F1 F3").
-- **Limit source** (`limit_text`): `estimate` → "limit is an estimate"; `assumption` → "limit is an assumption"; `spec` → "limit from the spec"; `drill list in config/tools.toml` → "drill list, within 0.0005 in"; `D-032: the .ipt and STEP must agree` → "the .ipt and STEP must agree within 0.01 mm"; another `D-0nn…` → "limit agreed in D-0nn"; anything else: the text as given, and `test_rows.py` fails on any source not in this list.
+- **Limit source** (`limit_text`): `estimate` → "limit is an estimate"; `assumption` → "limit is an assumption"; `spec` → "limit from the spec"; `drill list in config/tools.toml` → "drill list, within 0.0005 in"; `D-032: the .ipt and STEP must agree` → "the .ipt and STEP must agree within 0.01 mm"; `D-021`, `D-025` → "limit Morgan approved"; `D-026 (Sandvik)` → "limit from Sandvik's tables"; no decision ids on screen. `test_rows.py::test_limit_text` fails on any source not in this list.
 
 Short titles and check names (proposed; Morgan approves them with the spec):
 
@@ -121,7 +123,17 @@ Short titles and check names (proposed; Morgan approves them with the spec):
 | hole_mismatch | | Hole feature vs hole | .ipt check |
 | blend_mismatch (after #27) | | Fillet vs face | .ipt check |
 
-Each rule case's `one` and `many` sentences are written in `rows.py` from today's title and suggestion; the four in the frames are fixed: Sharp corner "Inside corners have no radius. Needs {limit} or more, or EDM."; Deep hole "{values} the diameter deep. Over {limit} needs peck drilling."; Drill size "{value} isn't a standard drill. Nearest is {nearest}."; Deep pocket "Depth is {value} the end mill that fits. Over {limit} needs a long tool."
+Cases: a rule's case is its finding's `severity` (only corner_radius has two). Values are formatted from `measured` and `limit` by `unit`: `in` → `fmt_in` with its fraction ("0.031 in (1/32)"), `ratio` → one decimal and "×" ("9.6×"), `deg` → one decimal and "°", anything else → the number and unit as given. Sentences:
+
+| Rule, case | one | many |
+|---|---|---|
+| corner_radius, high | Inside corner has no radius. Needs {limit} or more, or EDM. | Inside corners have no radius. Needs {limit} or more, or EDM. |
+| hole_depth | {measured} the diameter deep. Over {limit} needs peck drilling. | {values} the diameter deep. Over {limit} needs peck drilling. |
+| hole_size | {measured} isn't a standard drill. Nearest is {limit}. | {values} aren't standard drills. Nearest are listed in the detail. |
+| pocket_depth | Depth is {measured} the end mill that fits. Over {limit} needs a long tool. | Depths are {values} the end mill that fits. Over {limit} needs a long tool. |
+| every other rule case | the finding's `title` + "." | the `title` of the finding with the largest `measured` + ". Worst of {count}." |
+
+Plainer sentences for the other cases are later work, each shown to Morgan first; until then they read as today's titles. Passed rows: `short` = the kind's plural ("Walls"), `check` = the rule's check name, sentence = the first pass's `title`; the detail lists each pass's title and `math` (D-023).
 
 ### Words and marks
 
@@ -129,26 +141,28 @@ Fix (▲, `--high`) for `high`, Review (◆, `--medium`) for `medium`, OK (no ma
 
 ## Slices
 
-### S1 Steps, Part, Cost and Report
+Every slice adds `tests/e2e/steps.py` helpers as needed (`open_step(page, name)`), updates every browser test whose panel moved so it opens its step first and asserts the same behaviour (VER-01), touches `web/src/style.css`, rebuilds the demo (`scripts/make_demo.py`) and publishes a status page.
 
-- **Morgan tries:** the first demo in the new design: pick a part, see the overview, walk the five steps; Fix / Review words everywhere, including the PDF. Features and Machining hold today's lists, moved as they are (findings list with the new words; legend still under the model; plan panel); Cost has its total; Report is final.
-- **Checks that fail now:** J1, J2, J5, J7; `test_rows.py::test_cost_total_and_driver_findings`.
-- **Files:** `service/dfma/drivers.py` (`findings` per driver), `analyze.py` (`cost_total`), `web/index.html`, `web/src/main.ts`, `web/src/steps.ts` (`renderOverview`, `renderCost`, `renderReport`), `web/src/findings.ts` (severity words; `checkedLine` without "Rules run"), `web/src/report.ts` and `report.test.ts` (words), `web/src/style.css`, `tests/e2e/test_steps.py`; moved: `test_view.py`, `test_upload_pair.py`, `test_findings.py`, `test_pdf.py`, `test_plan_panel.py`, `test_lathe_plan.py` (selectors only); `scripts/make_demo.py` (still works; demo rebuilt); status page.
+### S1 Steps, Part, Cost, Report and the words
+
+- **Morgan tries:** the first demo in the new design: pick a part, the overview, walk the five steps (tabs, Open ›, Next / Back, the phone's Back); Fix / Review in lists, the selected pin and the PDF. Features holds today's findings list, Passed list, Threads and Hole features panels and the legend; Machining today's plan panel; Cost the drivers with their F ids and total; Report final.
+- **Checks that fail now:** J1, J2, J5, J7; `tests/service/test_rows.py::test_cost_total`, `::test_driver_findings`, `::test_limit_text` (every `threshold_source` in `service/dfma/rules` and `config/thresholds.toml`), `::test_check_names` (every rule in `RULES`).
+- **Files:** `service/dfma/rows.py` (`check_name`, `limit_text`), `drivers.py` (`findings`), `analyze.py` (`cost_total`), `tests/service/test_rows.py`, `web/src/api.ts` (`cost_total`, driver `findings`), `web/src/words.ts`, `web/index.html`, `web/src/main.ts`, `web/src/steps.ts` (`renderOverview`, `renderCost`, `renderReport`), `web/src/findings.ts` (words; `checkedLine` without "Rules run"), `web/src/viewer.ts` (pin word), `web/src/report.ts`, `report.test.ts`, `tests/e2e/test_steps.py`; moved: all 9 browser test files (selectors and `open_step`; "high"/"medium" assertions become "Fix"/"Review", "HIGH"/"MEDIUM" in the PDF become "FIX"/"REVIEW").
 - **Waits on:** none.
 
 ### S2 Features rows
 
 - **First:** a mock-up of the Threads, Hole features and Fillets and chamfers groups inside the Features step (the frames don't show them): `mockups/review-steps-features.html`, in the new design, approved by Morgan.
-- **Morgan tries:** report_sample's Features step (4 rows, detail 1 of 4, Passed with math, Show OK switches, "F4 FIX" pin); a NIST pair with its groups.
-- **Checks that fail now:** J3, J6; `test_rows.py`.
-- **Files:** `service/dfma/rows.py`, `analyze.py`, `tests/service/test_rows.py`, `web/src/api.ts` (`Row`, `rows`, `passed_rows`, `cost_total`), `web/src/steps.ts` (`renderRows`), `web/src/viewer.ts`, `web/index.html` (legend out, Show OK switches keep `data-testid` `show-checked`, `show-checked-pockets`, `show-checked-corners`, `show-checked-walls`); moved: `test_findings.py`, `test_passed_and_setups.py` (its Passed tests), `test_threads.py`, `test_hole_features.py`, `test_blends.py` if #27 is in.
-- **Waits on:** S1.
+- **Morgan tries:** report_sample's Features step (4 rows, detail 1 of 4, Passed with its math, Show OK switches only on this step, legend gone); a NIST pair with its groups.
+- **Checks that fail now:** J3, J6; `test_rows.py::test_rows_report_sample` (4 rows, the frame's sentences), `::test_every_case` (each case on 1, 2 and 4 findings), `::test_parts` (every part in `tests/parts` and the NIST STEP files gives rows covering every finding once).
+- **Files:** `service/dfma/rows.py` (`ROWS`, `finding_rows`, `passed_rows`), `analyze.py`, `web/src/api.ts` (`Row`), `web/src/steps.ts` (`renderRows`), `web/src/main.ts` (`Sel` row kind), `web/src/viewer.ts` (OK tints on Features only), `web/index.html` (legend out; Show OK switches, with swatch and label, keep `data-testid` `show-checked`, `show-checked-pockets`, `show-checked-corners`, `show-checked-walls`, in the viewfoot row only on Features); moved: `test_findings.py`, `test_passed_and_setups.py` (its Passed tests), `test_threads.py`, `test_hole_features.py`, and `test_blends.py` once #27 is merged.
+- **Waits on:** S1; the groups mock-up.
 
 ### S3 Machining and the style guide
 
-- **Morgan tries:** Machining with "Issues here" per setup and setup chips on the model; the final demo.
+- **Morgan tries:** Machining with "Whole part", "Issues here" per setup, "In no setup", and setup chips on the model; the final demo.
 - **Checks that fail now:** J4.
-- **Files:** `web/src/steps.ts` (`renderMachining`), `web/src/viewer.ts` (setup chips); moved: `test_plan_panel.py`, `test_lathe_plan.py`, `test_passed_and_setups.py` (its setup tests); `docs/UI_STYLE.md` rewritten (checklist item 9: word and shape); D-012, D-014, D-017, D-023 each gain "Amended by D-042 (built <date>)" with the changed lines.
+- **Files:** `web/src/steps.ts` (`renderMachining`, setup chips); moved: `test_plan_panel.py`, `test_lathe_plan.py`, `test_passed_and_setups.py` (its setup tests); `docs/UI_STYLE.md` rewritten for the step screen (checklist item 9: word and shape); D-012, D-014, D-017 and D-023 each gain "Amended by D-042, built <date>:" with one line: D-012 verdict line → overview and Report; D-014 legend → Show OK switches on Features; D-017 HIGH/MEDIUM → FIX/REVIEW; D-023 Plan → Machining step, Passed → Features chip.
 - **Waits on:** S2.
 
 ## Verification
