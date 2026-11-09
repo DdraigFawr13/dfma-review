@@ -19,9 +19,27 @@ export interface Inventor {
   threads?: Thread[]; // S2: always a list when an .ipt was read
   hole_features?: HoleFeature[]; // I2 S1: always a list when an .ipt was read
   hole_names_seen?: number; // I2 S2: `Hole<n>` names in the .ipt; names fill in only when it equals the features read
+  blends?: Blend[]; // I3 S3: always a list when an .ipt was read
 }
 
 type MapState = "matched" | "disagrees" | "not_mapped";
+
+/** I3 S3 (spec I2+I3 "Response"): one fillet or chamfer from the .ipt, sizes as designed, mm. */
+export interface Blend {
+  id: string;
+  feature_id: number;
+  kind: "fillet" | "chamfer" | null; // null: its shape was not understood
+  radius_mm: number | null;
+  distances_mm: number[] | null; // chamfer: [d1, d2] (plane) or [radial, axial] (cone)
+  angle_deg: number | null; // plane chamfer: the angle between its two neighbour faces
+  faces: number;
+  faces_mapped: number;
+  copied_by: number[];
+  state: MapState;
+  step_faces: number[];
+  gaps: { what: "radius"; mm: number; text: string }[];
+  reason: string | null;
+}
 
 /** I2 S1 (spec I2+I3 "Response"): one Hole feature from the .ipt, sizes as designed, mm. */
 export interface HoleFeature {
@@ -161,6 +179,7 @@ export interface Finding {
   thread?: string; // thread_mismatch (I1 S2): the thread's id
   hole_feature?: string; // hole_mismatch (I2 S1): the Hole feature's id
   ipt_hole?: string; // hole_mismatch (I2 S1): the .ipt hole's id
+  blend?: string; // blend_mismatch (I3 S3): the blend's id
 }
 
 export class ApiError extends Error {}

@@ -748,3 +748,31 @@ def test_hole_not_mapped(monkeypatch, tmp_path):
     [h] = result["inventor"]["hole_features"][0]["holes"]
     assert (h["state"], h["hole"], h["reason"]) == ("not_mapped", None, "no hole on this axis")
     assert [f for f in result["findings"] if f["rule"] == "hole_mismatch"] == []
+
+
+@pytest.mark.parametrize("radius", [3.0, 3.5])
+def test_blend_mismatch(monkeypatch, tmp_path, radius):
+    """I3 S3 (D-039): the built block's fillet at r 3.5 where the STEP's is 3 mm gives one medium finding, last in
+    RULES; at r 3 none. The chamfer is matched either way (its size is not compared)."""
+    import dfma.inventor
+    from inventor.built import block_blends, filleted_block, ipt_from_step
+    step = filleted_block(tmp_path / "block.step")
+    part = ipt_from_step(step, [], (), block_blends(radius))
+    monkeypatch.setattr(dfma.inventor, "read_ipt", lambda path: part)
+    result = analyze(step, "block.step", ipt_path=tmp_path / "p.ipt", ipt_name="p.ipt")
+    assert "blend_mismatch" in result["rules_run"]
+    fillet, chamfer = result["inventor"]["blends"]
+    assert chamfer["state"] == "matched"
+    found = [f for f in result["findings"] if f["rule"] == "blend_mismatch"]
+    if radius == 3.0:
+        assert fillet["state"] == "matched" and found == []
+        return
+    [f] = found
+    assert f["severity"] == "medium" and f["feature"] == "bl-1" and f["blend"] == "bl-1" and f["unit"] == "in"
+    assert f["faces"] == fillet["step_faces"] and f["faces"]
+    assert f["measured"] == pytest.approx(0.5 / 25.4, abs=1e-6) and f["limit"] == pytest.approx(0.01 / 25.4, abs=1e-6)
+    assert f["title"] == ("Fillet bl-1: R0.138 in [3.50 mm] in the .ipt, R0.118 in [3.00 mm] in the STEP. Possible "
+                          "cause: the part or an old STEP export differs from the .ipt")
+    assert f["threshold_source"] == "D-032: the .ipt and STEP must agree"
+    assert f["suggestion"] == "Export the STEP again from this .ipt, or check this fillet in Inventor."
+    assert f["id"] == f"F{len(result['findings'])}"

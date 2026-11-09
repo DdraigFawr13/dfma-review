@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .. import settings
 from ..errors import ReadError
-from . import holes as hl, names as nm, ole, sab, tags as tg, threads as th
+from . import blends as bl, holes as hl, names as nm, ole, sab, tags as tg, threads as th
 
 PLAIN_PART = "4D29B490-49B2-11D0-93C3-7E0706000000"  # Design Tracking property 31 of 13 NIST files
 SHEET_METAL = "9C464203-9BAE-11D3-8BAD-0060B0CE6BB4"  # CTC 03, FTC 09 2021 and 2024
@@ -33,6 +33,7 @@ class IptPart:
     hole_features: list = field(default_factory=list)  # I2 S1: holes.HoleFeature, by feature id
     hole_names: list[str] = field(default_factory=list)  # I2 S2: the `Hole<n>` texts seen, by number
     hole_names_seen: int = 0  # I2 S2: how many; names fill in only when it equals len(hole_features)
+    blends: list = field(default_factory=list)  # I3: blends.Blend, by feature id
 
 
 def _text(v) -> str | None:
@@ -120,10 +121,12 @@ def read_ipt(path: str | Path, stream_cap: int | None = None) -> IptPart:
             sub = str(uuid.UUID(sub)).upper()
         except ValueError:
             pass
-    features = hl.read_hole_features(recs, tg.feature_tags(recs))
+    tags = tg.feature_tags(recs)
+    features = hl.read_hole_features(recs, tags)
     nm.assign(features, names)
     threads = th.read_threads(recs)
     nm.name_threads(threads, features)
     return IptPart(saved_with=_text(props.get(67)) or "unknown", acis_version=version, subtype=sub,
                    model_state_names=states, solid_bodies=_bodies(recs), corners_mm=corners, face_count=n_faces,
-                   threads=threads, hole_features=features, hole_names=names, hole_names_seen=len(names))
+                   threads=threads, hole_features=features, hole_names=names, hole_names_seen=len(names),
+                   blends=bl.read_blends(recs, tags))

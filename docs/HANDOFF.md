@@ -16,13 +16,14 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ✔ Spec the first usable version (D-007, 6 fresh checks, $1.49).
 - ✔ Build slice by slice: S1 to S7, grading spike, recognition rounds, stress-test, undercut and turning sets (#3 to #18).
 - ○ Assemblies and DFA · history and compare · time and $.
-- ▶ Inventor parts (Morgan, 2026-11-08): ✔ research · ✔ own reader (D-031) · ✔ plan (D-032) · ✔ spec I1 (D-033) · ✔ I1 S1 #21, S2 #22, S3 #23 · ✔ spec I2+I3 (D-039) · ✔ I2 S1 hole features #24 (D-041) · ✔ S2 names and copies built (#27) · ○ S3 fillets and chamfers (merge after Morgan's work-pair check).
+- ▶ Inventor parts (Morgan, 2026-11-08): ✔ research · ✔ own reader (D-031) · ✔ plan (D-032) · ✔ spec I1 (D-033) · ✔ I1 S1 #21, S2 #22, S3 #23 · ✔ spec I2+I3 (D-039) · ✔ I2 S1 hole features #24 (D-041) · ✔ S2 names and copies built (#27) · ▶ S3 fillets and chamfers: service built, mock-up sent (merge after Morgan's work-pair check).
 - ○ Inventor shape from the `.ipt` alone (D-035; after I1).
 - ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ○ build the step-by-step review screen: `write-spec` after I2+I3 merges ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
 
+- 2026-11-09 I3 S3 service built on `inventor-i2-s2`: `inventor/blends.py` (read and map fillets and chamfers), `rules/blend_mismatch.py`, `tests/inventor/blend_counts.toml`, `test_inventor_blends.py`, safety and rule tests, built filleted block. NIST: blend counts equal the Fillet/Chamfer names; 499 of 744 fillet faces mapped, none disagrees. Spec corrections measured (copies, not corner patches; FTC 11 is a place gap): spec S3 "Settled at build". Panel drafted in `web/src` for the [mock-up](https://claude.ai/artifact/9AedyRhGSNr5Md5Pzj9VxZ) (`mockups/blends-panel.html`; fresh check 8 findings, 6 fixed; lint 0); `check.py` all passed (810 service, 38 browser). e2e and PDF wait on Morgan's approval.
 - 2026-11-09 Main (#25 UI direction D-042, #26 harness v4.12.0) merged into `inventor-i2-s2` (PR #27); only HANDOFF and its archive conflicted (main's archive already held every branch line).
 - 2026-11-09 I2 S2 (names and copies) built, draft PR [#27](https://github.com/DdraigFawr13/dfma-review/pull/27). `inventor/names.py` rank rule: NIST 70/70 checkable Holes right, 0 wrong; FTC 06 2024 and STC 10 no names; CTC 04 threads `Hole8`. Copy text, "n in the browser, m read" note, names in small print on rows and PDF. Fresh review fixes committed; `check.py` all passed (771 service, 38 browser) before the main merge. Left: stream size as the probe measured it, the count-coincidence risk (spec Risks). [Status page](https://claude.ai/artifact/DGZmySgSRTSkP9XtrW2hNZ); [demo](https://claude.ai/artifact/WSwfP6u74iVZ3Rpa5jUNp5).
 - 2026-11-09 Harness upgraded to AI-Master-Instructions `v4.12.0`, merged as #26 (Morgan approved: "Approved"; master D-066, from the master's review of this project): new REP-05; session start lists unmerged branches and an over-cap HANDOFF; `ui-mockups` now does D-024's fit-width tap-to-zoom (`add-zoom.mjs`); `docs/harness/drift/` keeps guard counts. This HANDOFF cut to the cap.
@@ -30,7 +31,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-0. Now: S3 fillets and chamfers on `inventor-i2-s2` and PR #27 (mock-up first). The PR merges only after Morgan's hand check of one work pair, including one renamed Hole (from 2026-11-12, D-041).
+0. Now: Morgan's answer on the S3 [mock-up](https://claude.ai/artifact/9AedyRhGSNr5Md5Pzj9VxZ) (Approve / Change / Rethink). On approve: record D-043, then `tests/e2e/test_blends.py`, PDF section (`report.ts`, `test_pdf.py`), demo rebuild, status page. PR #27 merges only after Morgan's work-pair check, including one renamed Hole (from 2026-11-12, D-041).
 1. Owed from 2026-11-12 (D-035): one of Morgan's work pairs by Drive share into `tests/inventor/.local/<pair>/`, then `python tests/inventor/local_pairs.py` (now prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
 2. Recognition and stress-test status, scoring commands and the MFCAD++ download: archive "Moved 2026-11-09" (old Next 3 and 3a). Re-run them on every recognition change.
 3. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).

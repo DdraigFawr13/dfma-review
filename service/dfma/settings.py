@@ -45,6 +45,9 @@ IPT_ASSUMPTION = ("iParts, derived and Content Center parts are not detected yet
                   "may not match its STEP.")
 MSG_FEATURE_BAD = "feature data not understood"  # I2: a Hole feature whose faces could not be read
 MSG_NO_HOLE_ON_AXIS = "no hole on this axis"  # I2: an .ipt hole with no STEP hole near its axis
+MSG_BLEND_SHAPE = "blend shape not understood"  # I3: faces neither one fillet radius nor a chamfer's planes or cones
+MSG_CHAMFER_NEIGHBOURS = "chamfer neighbours not understood"  # I3: no two neighbour planes at an angle
+MSG_NO_BLEND_FACE = "no STEP face of its shape at its place"  # I3: no STEP face where the blend's faces sit
 PAIR_TOL_MM = 0.01  # D-032: the .ipt and STEP must agree within this, corners and outer size
 
 ASSUMPTIONS = [

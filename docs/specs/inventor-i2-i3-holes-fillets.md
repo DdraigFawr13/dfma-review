@@ -226,6 +226,15 @@ Holes gain `"hole_feature": "hf-1"` when matched or disagreeing. On screen lengt
 - **Files:** `inventor/blends.py`, `part.py`, `analyze.py`; if Open question 3 is yes, `rules/blend_mismatch.py`, `rules/__init__.py`, `analyze.NEEDS_IPT`, `settings.py`, `test_rules.py::test_blend_mismatch` (the built block's r 3.5 case); `web/src/{findings,report,api}.ts`, `web/index.html`; `tests/inventor/blend_counts.toml`; `tests/service/test_inventor_blends.py`, `test_inventor_safety.py`; `tests/e2e/test_blends.py`, `test_pdf.py`; demo.
 - **Waits on:** S1 (tags, topology, surfaces).
 
+**Settled at build (2026-11-09, S3 service; measured on the 16 NIST files, numbers in `tests/inventor/blend_counts.toml`):**
+
+- **Copies, not corner patches (corrects "Blends (measured)"):** a blend tag's last id is the blend; ids before it are the pattern or mirror features that copied the face, as on hole tags. CTC 04's 36 faces tagged (3233, 3193) all have Fillet 3193's 5 mm radius. With the last id, blend counts equal the `Fillet<n>` / `Chamfer<n>` texts in every plain file that has them (CTC 01 4 + 2, CTC 02 12, CTC 04 7 + 1, CTC 05 2 + 1, FTC 06 2, FTC 07 2024 3, FTC 08 4, FTC 10 4, FTC 11 1); the first id gave CTC 04 9 blends for 8 names and CTC 02 13 for 12. Every face is used for sizes; `copied_by` (copier ids) is added to each blend in the response.
+- **Chamfer faces:** each a plane or a cone of 10 to 80 deg, mixed allowed (CTC 04's chamfer has 12 planes and 12 cones). A blend of spline faces only (CTC 02: 4) or with a 2 deg cone (CTC 02 446) is `kind: null`, `blend shape not understood`.
+- **Place of a STEP face:** besides its type and axis line, centre or plane (0.01 mm), the mean of the `.ipt` face's vertices must lie within 1 mm of the STEP face's bounding box (`BOX_MARGIN_MM`): without it one CTC 04 chamfer plane matched two coplanar STEP faces (446, 471). A torus's place includes its ring radius, so a fillet only disagrees on its own radius.
+- **FTC 11's "other radius" face (spec J5):** a torus with the STEP's 0.1 mm fillet radius whose ring is 0.043 mm larger (19.053 against 19.010 mm): it sits elsewhere, so it is not mapped and gives no finding. NIST: 499 of 744 fillet faces mapped, none disagrees.
+- **Chamfers are mapped by place only** (plane: normal and offset; cone: axis line, half-angle within 0.01 deg, radius): they never disagree, since the STEP holds no chamfer distances. CTC 04: 12 of 24 chamfer faces mapped (8 planes, 4 cones; the other 4 planes are 0.018 mm off and 8 cones 0.019-0.059 mm: NIST's two files differ), not the "12 planes and 4 of 12 cones" of Risks.
+- **Not mapped reason** when no face sits on a STEP face: `no STEP face of its shape at its place`. Plane chamfer `angle_deg` is acos of the planes' normals (90 on every NIST chamfer). `blend_mismatch` title: `Fillet bl-<n>: R<ipt> in the .ipt, R<step> in the STEP. Possible cause: ...`, faces = the blend's `step_faces`, rule label "fillet vs face".
+
 ## Verification
 
 - Every push: `python scripts/check.py` in the dfma env with `DFMA_CHROMIUM` set and `set -o pipefail`.
