@@ -1,0 +1,223 @@
+<title>DFMA Look Round 1</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+<style>
+/* Layout: one reading column of cards; each screen is a full-width picture with its vote under it. Drawing office tokens (docs/UI_STYLE.md). */
+:root {
+  --bg: #eef2f6; --panel: #ffffff; --ink: #16263d; --muted: #55657a; --line: #c4cfdc;
+  --accent: #1f5fa8; --accent-ink: #ffffff; --soft: #e6eef7;
+  --high: #b3261e; --medium: #a35a00; --low: #3f6b2a;
+  --sans: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111a26; --panel: #1a2533; --ink: #e3eaf2; --muted: #9fb0c4; --line: #33435a;
+  --accent: #79aef0; --accent-ink: #0d1520; --soft: #20324a; --high: #f0857d; --medium: #e3a256; --low: #8cc274; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111a26; --panel: #1a2533; --ink: #e3eaf2; --muted: #9fb0c4; --line: #33435a;
+  --accent: #79aef0; --accent-ink: #0d1520; --soft: #20324a; --high: #f0857d; --medium: #e3a256; --low: #8cc274; color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 16px/1.5 var(--sans); margin: 0; }
+main { max-width: 860px; margin: 0 auto; padding-block: 20px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 14px; }
+h1 { font-size: 1.5rem; margin: 0; text-wrap: balance; }
+h2 { font-size: 1.125rem; margin: 22px 0 0; text-wrap: balance; }
+h3 { font-size: 1rem; margin: 0; }
+p { margin: 0; }
+.lead { color: var(--muted); max-width: 62ch; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0; }
+.card.done { border-left: 4px solid var(--accent); }
+.mono, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: .875rem; }
+figure { margin: 0; display: grid; gap: 6px; }
+figure img { width: 100%; height: auto; border: 1px solid var(--line); display: block; }
+figcaption { font-size: .875rem; color: var(--muted); }
+.eyebrow { font: 700 .875rem var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.pros { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: .9375rem; }
+.pros dt { font-weight: 600; } .pros dd { margin: 0; }
+.seg { display: grid; gap: 6px; grid-template-columns: repeat(var(--n, 3), 1fr); }
+.seg button { min-height: 40px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 2px; font: 600 .9375rem var(--sans); cursor: pointer; padding: 6px 8px; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.seg button:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+textarea { width: 100%; min-height: 44px; font: 400 .9375rem var(--sans); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 2px; padding: 8px 10px; resize: vertical; }
+.item { display: grid; gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); }
+.item:first-of-type { border-top: 0; padding-top: 0; }
+.item .name { font-weight: 600; }
+.item .desc { font-size: .9375rem; color: var(--muted); }
+.problem { display: grid; grid-template-columns: 2.4rem 1fr; gap: 0 10px; }
+.problem .big { font: 700 1.25rem var(--mono); color: var(--high); text-align: right; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
+.bar div { max-width: 860px; margin: 0 auto; padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; gap: 12px; align-items: center; font-size: .875rem; }
+.meter { flex: 1; height: 6px; background: var(--soft); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+@media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
+.specimen { display: grid; gap: 6px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 2px; font-size: .9375rem; }
+.specimen .r { display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.sev { font: 700 .875rem var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.sev.h { color: var(--high); } .sev.m { color: var(--medium); }
+a { color: var(--accent); }
+.legend { font-size: .875rem; color: var(--muted); }
+.bad { text-decoration: line-through; color: var(--muted); }
+</style>
+
+<div class="bar" aria-live="polite"><div><b>Round 1</b><span class="meter" aria-hidden="true"><i id="meter"></i></span><span id="count" class="num">0 answered</span><span id="save" class="muted">Saved on this device</span></div></div>
+<main>
+  <header style="display:grid;gap:8px">
+    <span class="eyebrow">DFMA Review · look and layout</span>
+    <h1>Round 1: what should the review screen be?</h1>
+    <p class="lead">Five ways to lay out the same review, built from your real report_sample part. Tap a picture to zoom. Mark what you like; each answer saves as you tap. Pieces you keep get combined in round 2. Say <b>"round 1 done"</b> in chat when finished.</p>
+    <p class="small muted">The pictures are drawn at a 1280 px desktop screen, the app's target. They are mock-ups, not the app. Proposals only; nothing is decided until you say so. Some would change earlier picks: the verdict line and layout (D-012), the 7-entry legend (D-014), Plan and Passed placement (D-023). Those get their own question before anything is built.</p>
+  </header>
+
+  <h2>1 · What's wrong today</h2>
+  <figure><img src="{{img:cur-report}}" alt="The current review screen with report_sample.step loaded"><figcaption>Today's screen, report_sample.step, 1280 px wide (demo build, 2026-11-09).</figcaption></figure>
+  <section class="card">
+    <p class="small muted">Measured on that screen. Mark each one: is it a real problem for you?</p>
+    <div id="problems"></div>
+  </section>
+
+  <h2>2 · Rules from the research</h2>
+  <section class="card">
+    <p class="small muted">From DFM tools (Protolabs, aPriori, Fictiv, Siemens NX), BIM issue trackers (Autodesk, BIMcollab) and design systems (IBM Carbon, Atlassian, GitLab, NN/g). Links on each rule. Keep the rule, maybe, or cut it.</p>
+    <div id="rules"></div>
+  </section>
+
+  <h2>3 · Five layouts</h2>
+  <p class="small muted">All five use the same proposed short words and marks (section 5 sets them beside today's), so compare the layout only: where things sit and what's one tap away.</p>
+  <div id="layouts" style="display:grid;gap:14px"></div>
+
+  <h2>4 · Pieces to mix</h2>
+  <section class="card">
+    <p class="small muted">Any piece can move to another layout. Keep it, maybe, or cut it.</p>
+    <div id="pieces"></div>
+  </section>
+
+  <h2>5 · Words</h2>
+  <div id="words" style="display:grid;gap:14px"></div>
+
+  <h2>6 · Look</h2>
+  <div id="look" style="display:grid;gap:14px"></div>
+
+  <h2>7 · Anything else</h2>
+  <section class="card"><h3>What does the tool look like in your head?</h3><p class="small muted">A tool you like the feel of, a screen you hate, a word that bugs you.</p><textarea id="t_else" data-id="else" rows="4" aria-label="Anything else"></textarea></section>
+  <p class="small muted">When done, say <b>"round 1 done"</b> in chat.</p>
+  <details class="card" id="check-record"><summary><b>Check record</b></summary>
+    <div class="small" style="display:grid;gap:6px">
+      <p>Files checked: docs/UI_STYLE.md, docs/DECISIONS.md, web/index.html, the demo build's text for report_sample.step (findings, plan, cost drivers).</p>
+      <p>Facts: every measured value, limit, id, count, size, setup and tool on the frames matches the app's output (fresh check confirmed). The titles "Sharp corner", "Deep hole", "Drill size", "Deep pocket", the column names and "Plan" / "Cost" are proposed wording, not the app's.</p>
+      <p>Fixes after the fresh check: severity word on every row in A, C and E; selected pins read "F4 HIGH"; file field, .ipt field and a privacy note back in the top bar (APP-01); 0.250 in (1/4) drill; Threads panel counted only when an .ipt has threads; 13 px label raised to 14 px; decisions these proposals would change named at the top.</p>
+      <p>Left as is: this feedback page loads IBM Plex from Google Fonts and has a dark theme. It is a review page, not the app; the app rule (fonts ship with the app, light only) still holds for the frames, which use the app's own font files.</p>
+      <p>Lint: mockup-lint 0 warnings (frames and page, minimum text 14 px). Widths: 1280 px frames, page checked at 390 px. Fresh check: 1 reviewer agent, 65,865 tokens.</p>
+    </div>
+  </details>
+</main>
+
+<script>
+const IMG = {{imgs}};
+const PROBLEMS = [
+  ["p_stack", "3 panels stacked in one 400 px column", "Findings, Machine plan and Cost drivers each scroll inside their own box (4 with Threads, when an .ipt has threads). At 1280 × 900, 1 of 8 findings is in view."],
+  ["p_words", "479 words in the findings list", "8 findings plus 9 passed walls. The whole screen with every panel open: 910 words."],
+  ["p_repeat", "The same sentence 4 times", "\"Sharp inside corner: needs EDM or a corner radius\" and its fix line, once per corner."],
+  ["p_legend", "7 legend entries under the model", "High, Medium, Selected, then 4 \"… checked, no finding\" switches."],
+  ["p_ids", "Code names on screen", "\"em-0.250\", \"dr-0.2500\", \"config/tools.toml\", \"limit: estimate\"."],
+  ["p_verdict", "The verdict line lists every rule run", "\"Rules run: hole depth, hole size, corner radius, pocket depth, undercut, thin wall, access, looks turned.\""],
+];
+const RULES = [
+  ["r_title", "Finding titles are 2–3 words, feature first", "\"Sharp corner\", \"Deep hole\". People read about 2 words of a list item.", "https://www.nngroup.com/articles/first-2-words-a-signal-for-scanning/"],
+  ["r_line", "One line of numbers under the title", "Measured value against the limit, with units: \"r 0.000 in · needs ≥ 0.031 in\". No sentences in the list.", "https://www.protolabs.com/resources/design-tips/navigating-manufacturing-analysis/"],
+  ["r_one", "Detail one tap away, never two", "The fix and the math open on select. Designs past 2 levels of disclosure test poorly.", "https://www.nngroup.com/articles/progressive-disclosure/"],
+  ["r_group", "Same finding, one row", "4 sharp corners become \"Sharp corner ×4\", each still a pin on the model.", "https://docs.apriori.com/en/Pro/current/app/ug/Review-Manufacturability-Issues.htm"],
+  ["r_shape", "Severity by shape + word + colour", "▲ HIGH, ◆ MEDIUM, ✓ OK. Colour alone fails for colour-blind readers.", "https://carbondesignsystem.com/patterns/status-indicator-pattern/"],
+  ["r_sync", "List and model always in step", "Tap a row: its faces light and the camera frames them. Tap a pin: its row opens.", "https://help.autodesk.com/cloudhelp/2023/ENU/Revit-Collaborate/files/GUID-C52A8E15-1D5E-4D9C-BC5A-E8280191571E.htm"],
+  ["r_dense", "Dense panels, calm page", "One list and one model on screen; everything else behind a tab or button.", "https://carbondesignsystem.com/elements/spacing/overview/"],
+  ["r_nohover", "Nothing needed lives only in a hover", "Hover can repeat a row, never hold the only copy.", "https://www.nngroup.com/articles/tooltip-guidelines/"],
+];
+const LAYOUTS = [
+  ["l_a", "frame-a", "A · Tabs", "The model, and one panel beside it with tabs: Issues, Plan, Cost, Passed. The selected issue opens in place.", "Closest to today; nothing hides more than one tap away.", "Plan and Cost are never on screen together with the issues."],
+  ["l_b", "frame-b", "B · Inspection sheet", "A table like a CMM report: feature, check, measured, limit, result. Filter chips switch Issues, Passed and All.", "Every number lines up; Passed rows use the same columns; easy to check by eye.", "The model gets less room; long fixes don't fit a table cell, so they sit in a strip under it."],
+  ["l_c", "frame-c", "C · Model first", "The model fills the screen. Issues float as short tags on the left; the selected one opens as a card with prev / next.", "Feels like a CAD viewer; the part is the hero.", "Panels sit over the part; Plan and Cost need their own drawer."],
+  ["l_d", "frame-d", "D · Steps", "The app becomes 5 steps across the top: Part, Issues, Plan, Cost, Report. Each step gets the whole side panel. Shown: the Plan step.", "Each screen has one job; a natural order for a shop review.", "Comparing an issue with the plan means switching steps."],
+  ["l_e", "frame-e", "E · Feature tree", "A tree of every feature (corners, holes, pockets, walls), the model in the middle, and an inspector for the selected one.", "Issues and passed features in one list; feels like a CAD browser.", "Three columns; the model is narrower; long trees on big parts."],
+];
+const PIECES = [
+  ["k_tabs", "Tabs on the side panel", "A"], ["k_table", "Table with Measured and Limit columns", "B"], ["k_strip", "Detail strip under the list", "B"],
+  ["k_chips", "Filter chips: Issues · Passed · All", "B"], ["k_float", "Floating detail card with prev / next", "C"], ["k_tags", "Short issue tags over the model", "C"],
+  ["k_steps", "Steps across the top bar", "D"], ["k_setup", "Setup chips on the model (show what each setup cuts)", "D"], ["k_tree", "Feature tree", "E"],
+  ["k_inspector", "Inspector panel for the selected item", "E"], ["k_oktoggle", "One \"OK features\" switch instead of the 7-entry legend", "A, C"], ["k_tally", "Counts with marks in the top bar (▲ 4 ◆ 4 ✓ 9)", "B, C"],
+  ["k_filechip", "File, .ipt and privacy note squeezed into the top bar", "all"],
+];
+const WORDS = [
+  ["w_sev", "Severity words", "single", ["HIGH / MEDIUM (today)", "Must fix / Check", "Fix / Review"], `<div class="specimen"><div class="r"><span class="sev h">▲ HIGH</span><span class="sev m">◆ MEDIUM</span></div><div class="r"><span class="sev h">▲ MUST FIX</span><span class="sev m">◆ CHECK</span></div><div class="r"><span class="sev h">▲ FIX</span><span class="sev m">◆ REVIEW</span></div></div><p class="small muted">Protolabs splits "required changes" from "advisories"; NX uses pass / fail / info marks.</p>`],
+  ["w_line", "One finding, three ways", "single", ["Today's wording", "Short title + number line", "Short title + plain sentence"], `<div class="specimen"><div><b>Sharp inside corner: needs EDM or a corner radius</b><br><span class="small muted">corner-1 · radius 0.000 in, pocket 0.250 in deep · limit: estimate</span></div><div><b>Sharp corner</b><br><span class="small mono">r 0.000 in · needs ≥ 0.031 in</span></div><div><b>Sharp corner</b><br><span class="small">Radius is 0.000 in; needs 0.031 in or more.</span></div></div>`],
+  ["w_ids", "Feature names like corner-1, hole-2", "single", ["Keep them", "Only in the detail", "Hide them; pin numbers are enough"], `<p class="small muted">They tie the list, the plan and the PDF together, but read like code.</p>`],
+];
+const LOOK = [
+  ["v_look", "Is the look part of the problem?", "single", ["No: keep Drawing office, fix layout and words", "Partly: same colours, more contrast and bolder type", "Yes: show me other looks in round 2"], `<p class="small muted">Drawing office (pale blue-grey paper, navy ink) was your pick on 2026-11-06 (D-010). Round 1 keeps it so only layout and words change.</p>`],
+  ["v_mode", "How will you mostly use it?", "multi", ["Check one part fast", "Go through every finding", "Show it to the shop / a customer", "Debug the tool's recognition"], `<p class="small muted">Decides what sits up front. Pick any.</p>`],
+];
+
+const state = {}; let db = null; const KEY = "dfma-ui-round1";
+const $ = s => document.querySelector(s);
+function el(tag, attrs = {}, ...kids) { const e = document.createElement(tag); for (const k in attrs) { if (k.startsWith("on")) e.addEventListener(k.slice(2), attrs[k]); else if (k === "class") e.className = attrs[k]; else if (k === "html") e.innerHTML = attrs[k]; else e.setAttribute(k, attrs[k]); } kids.flat().forEach(k => k != null && e.append(k)); return e; }
+const answered = v => Array.isArray(v) ? v.length > 0 : !!v;
+const voteIds = [];
+async function put(id, v) {
+  state[id] = v; try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  progress();
+  if (!db) return;
+  $("#save").textContent = "Saving…";
+  try { await db.collection("ui1").doc(id).set({ v, at: Date.now() }); $("#save").textContent = "Saved"; }
+  catch (e) { $("#save").textContent = "Saved on this device only"; }
+}
+function progress() { const n = voteIds.filter(id => answered(state[id])).length; $("#count").textContent = n + " of " + voteIds.length; $("#meter").style.width = (100 * n / voteIds.length) + "%"; }
+function seg(id, opts, multi) {
+  voteIds.push(id);
+  const box = el("div", { class: "seg", style: "--n:" + Math.min(opts.length, 3), role: "group" });
+  const paint = () => box.querySelectorAll("button").forEach(b => { const v = state[id]; b.setAttribute("aria-pressed", String(multi ? (v || []).includes(b.dataset.v) : v === b.dataset.v)); });
+  for (const o of opts) box.append(el("button", { type: "button", "data-v": o, onclick: () => {
+    let v = state[id]; if (multi) { v = (v || []).slice(); const i = v.indexOf(o); i < 0 ? v.push(o) : v.splice(i, 1); } else v = v === o ? "" : o;
+    put(id, v); paint(); box.closest(".card, .item")?.classList.toggle("done", answered(v));
+  } }, o));
+  box._paint = paint; paints.push(paint); return box;
+}
+const paints = [], notes = [];
+function note(id, label, rows = 1) {
+  const t = el("textarea", { id: "t_" + id, "data-id": "note_" + id, rows, "aria-label": "Note on " + label, placeholder: "Note (optional)" });
+  notes.push(t); return t;
+}
+for (const [id, name, desc] of PROBLEMS) $("#problems").append(el("div", { class: "item" }, el("div", { class: "name" }, name), el("div", { class: "desc" }, desc), seg(id, ["Yes, fix it", "Minor", "Not a problem"]), note(id, name)));
+for (const [id, name, desc, url] of RULES) $("#rules").append(el("div", { class: "item" }, el("div", { class: "name" }, name), el("div", { class: "desc" }, desc, " ", el("a", { href: url, target: "_blank", rel: "noopener" }, "Source")), seg(id, ["Keep", "Maybe", "Cut"]), note(id, name)));
+for (const [id, img, name, idea, good, cost] of LAYOUTS) $("#layouts").append(el("section", { class: "card" },
+  el("h3", {}, name), el("figure", {}, el("img", { src: IMG[img], alt: "Mock-up " + name, loading: "lazy" })), el("p", {}, idea),
+  el("dl", { class: "pros" }, el("dt", {}, "Good"), el("dd", {}, good), el("dt", {}, "Costs"), el("dd", {}, cost)),
+  seg(id, ["Like it", "Parts of it", "No"]), note(id, name, 2)));
+for (const [id, name, from] of PIECES) $("#pieces").append(el("div", { class: "item" }, el("div", {}, el("span", { class: "name" }, name), el("span", { class: "small muted" }, "  · from " + from)), seg(id, ["Keep", "Maybe", "Cut"]), note(id, name)));
+for (const [host, list] of [["#words", WORDS], ["#look", LOOK]]) for (const [id, q, kind, opts, html] of list) $(host).append(el("section", { class: "card" }, el("h3", {}, q), el("div", { html }), seg(id, opts, kind === "multi"), note(id, q, 2)));
+
+let timers = {};
+for (const t of [...notes, $("#t_else")]) {
+  t.addEventListener("input", () => { clearTimeout(timers[t.id]); timers[t.id] = setTimeout(() => put(t.dataset.id, t.value), 700); });
+}
+const voteSet = new Set(voteIds);
+function restore() {
+  for (const p of paints) p();
+  for (const t of [...notes, $("#t_else")]) if (state[t.dataset.id] != null && document.activeElement !== t) t.value = state[t.dataset.id];
+  document.querySelectorAll(".seg").forEach(s => s.closest(".card, .item")?.classList.toggle("done", [...s.querySelectorAll("button")].some(b => b.getAttribute("aria-pressed") === "true")));
+  progress();
+}
+try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
+restore();
+(async () => {
+  try {
+    db = await window.claude?.use?.("db");
+    if (!db) { $("#save").textContent = "Saved on this device only"; return; }
+    const snap = await db.collection("ui1").get();
+    const local = { ...state };
+    snap.docs.forEach(d => { const v = d.data(); if (v && "v" in v) state[d.id] = v.v; });
+    const push = Object.keys(local).filter(k => answered(local[k]) && !answered(state[k]));
+    restore();
+    for (const k of push) await put(k, local[k]);
+    restore(); $("#save").textContent = "Saved";
+  } catch (e) { $("#save").textContent = "Saved on this device only"; }
+})();
+</script>
