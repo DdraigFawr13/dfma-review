@@ -22,7 +22,7 @@ Morgan (2026-11-08, D-031): "See if there is any way you can get that inventory 
 
 - **Hole features (I2):** every Hole feature in an uploaded `.ipt` is listed with its type as designed (simple, counterbore, countersink), its sizes (diameter, depth or through, counterbore diameter and depth, countersink diameter and angle, drill point angle), its holes and which are copies; each hole is **matched**, **disagrees** (gap in mm, a finding) or **not mapped** (our limit, never a finding) (D-032).
 - **Names (I2):** each Hole feature, and each thread's `feature_name`, shows its Inventor name when the rank rule applies, and nothing otherwise; never a guess (D-032, Morgan's "Check, then ship" 2026-11-09). Fillets and chamfers show no names (no answer key can check them, Open question 1).
-- **Fillets and chamfers (I3):** every fillet feature with its radius, every chamfer with its two distances, each mapped to the STEP faces it made, with the same three states.
+- **Fillets and chamfers (I3):** every fillet feature with its radius, every chamfer with its two distances, each mapped to the STEP faces it made, with the three states; whether a disagreeing blend is a finding is Open question 3.
 - **Measured on NIST, through the harness** (D-032's 95% is for exact pairs; NIST pairs come from two CAD systems): holes on a STEP hole axis within 0.01 mm (matched / disagrees / not mapped): CTC 01 10/0/0, CTC 02 42/6/4, CTC 04 48/5/1, CTC 05 13/5/0, FTC 08 2021 4/0/0, FTC 10 2021 34/1/0, STC 10 22/2/0 (173 of 197 matched); the rest lie 0.01 to 8.13 mm off because the two NIST files differ. This does not show D-032's 95%: that target is for exact pairs, so I2 is done only when Morgan's work pairs reach it (Verification). Names: 70 of 70 checkable Holes in the 8 files where the counts match, 0 wrong.
 
 ## Non-goals
@@ -65,7 +65,7 @@ All Python tests go in `tests/service/`, browser tests in `tests/e2e/` (`e2e` ma
 
 - **Given** each NIST `.ipt`, and the built pair
 - **When** `read_ipt` and the mapping run
-- **Then** fillet and chamfer counts and sizes as measured (CTC 01: 4 fillets, 2 chamfers 50 x 50 and 5 x 5 mm; CTC 04: 7 fillets of 25, 13, 5, 5, 5, 4 and 2.5 mm, 1 chamfer 5 x 5; CTC 05: 2 fillets, 1 chamfer 6.35 x 6.35; FTC 10: 4 fillets 1, 2, 0.2, 0.15 mm …, full table in `tests/inventor/blend_counts.toml`); on the harness pairs every fillet face that sits on a STEP face of its type and place has its radius (499 of 744 faces sit on one; the rest are `not_mapped`). **Check:** `tests/service/test_inventor_blends.py`; `tests/e2e/test_blends.py::test_panel`.
+- **Then** fillet and chamfer counts and sizes as measured (CTC 01: 4 fillets, 2 chamfers 50 x 50 and 5 x 5 mm; CTC 04: 7 fillets of 25, 13, 5, 5, 5, 4 and 2.5 mm, 1 chamfer 5 x 5; CTC 05: 2 fillets, 1 chamfer 6.35 x 6.35; FTC 10 2021: 4 fillets 1, 2, 0.2 and 0.15 mm; the full table in `tests/inventor/blend_counts.toml`); on the 11 harness pairs (every plain file but FTC 07, whose pair the harness can't line up) no fillet face sits on a STEP face of its type and place with another radius except 1 on FTC 11, and 499 of 744 faces sit on one (pinned per pair as `faces`, `faces_mapped`). **Check:** `tests/service/test_inventor_blends.py`; `tests/e2e/test_blends.py::test_panel`.
 
 ### J6 Report
 
@@ -100,9 +100,9 @@ All Python tests go in `tests/service/`, browser tests in `tests/e2e/` (`e2e` ma
 
 - **The rank rule is an inference** that holds on 70 of 70 checkable Holes (8 files, Inventor 2021 and 2024), with no held-out files. Two faults could cancel out and shift every name by one with the counts still equal: a deleted Hole whose name lingers plus a Hole that left no tag (each seen alone: FTC 06 2024 and STC 10 have more names than ids). No file check can catch that case; the guard is Morgan's hand check of a work pair in Inventor before S2 merges (Verification). If it shows a wrong name, names are dropped (Morgan's rule). → Morgan's work pairs, each checked by hand in Inventor (S2 "Morgan tries"); a renamed feature in a work pair is the test. **Assumption:** renaming doesn't change feature ids.
 - **Tags missing in some saves:** STC 10 has 9 Hole ids for 11 names (2 Holes left no hole tag), FTC 06 2024 4 for 7. Such Holes are not listed; the panel says "n Hole features in the browser, m read" when the name count is larger.
-- Blend sizes are read for 499 of 744 fillet faces on the 11 harness pairs that have fillets (the rest have no STEP face of their type at their place, so they stay not mapped); the panel shows per feature how many of its faces were mapped.
+- Blend faces are mapped for 499 of 744 fillet faces on the 11 harness pairs (the rest have no STEP face of their type at their place, so they stay not mapped); the panel shows per feature how many of its faces were mapped.
 - **Fillet vs chamfer by face shape** is an **inference**: Inventor writes the same blend tag for both. Plane and cone faces → chamfer, except a cone within 10 deg of its axis (CTC 02's 2-degree blend, counted with the Fillet names) → not mapped (`blend shape not understood`). Counts equal the names on all 12 plain files that have blends.
-- **Chamfer distances** come from the faces next to the chamfer, assumed planar (plane chamfer) or a plane and a cylinder (cone chamfer); other neighbours give `not_mapped` (`chamfer neighbours not understood`). Checked on 3 plain files only (CTC 01, 04, 05).
+- **Chamfer distances** come from the faces next to the chamfer, assumed planar (plane chamfer) or a plane and a cylinder (cone chamfer); other neighbours give `not_mapped` (`chamfer neighbours not understood`). Checked on all 3 plain files that have chamfers (CTC 01, 04, 05; 0 misses against their STEP faces where the STEP has the face: CTC 01 7/7, CTC 05 2/2, CTC 04 12 planes and 4 of 12 cones).
 - NIST pairs FTC 06 and FTC 07 are not lined up by the harness (FTC 06 8/18 and 4/12, FTC 07 2024 0/12 holes): left out of J3, as I1 left them out of J4.
 
 ## Design
@@ -114,8 +114,8 @@ All Python tests go in `tests/service/`, browser tests in `tests/e2e/` (`e2e` ma
 - `service/dfma/inventor/surfaces.py` (new): `surface(recs, face) -> Surf` (`plane | cyl | cone | torus | sphere | other`, mm, unit axes; a cone's half-angle from its sine). Shared with `threads._face_kind` (which keeps its behaviour).
 - `service/dfma/inventor/holes.py` (I2): `read_hole_features(recs, tags) -> list[HoleFeature]`; `map_holes(features, holes, faces, transform=None)` with the I1 mapping maths (`threads.py` "Mapping": `_cylinder` axis lines, gap = the larger distance of the hole's two ends from the STEP axis).
 - `service/dfma/inventor/names.py` (I2): `hole_names(ole, n_ids) -> list[str] | None`.
-- `service/dfma/inventor/blends.py` (I3): `read_blends(recs, tags) -> list[Blend]`; `map_blends(blends, part, transform=None)`.
-- `part.py`: `IptPart` gains `hole_features`, `hole_names_seen: int`, `blends`; `threads.Thread` gains `feature_id`.
+- `service/dfma/inventor/blends.py` (I3): `read_blends(recs, tags) -> list[Blend]`; `map_blends(blends, faces, transform=None)`.
+- `part.py`: `IptPart` gains `hole_features` (S1), `hole_names` and `hole_names_seen: int` (S2), `blends` (S3); `threads.Thread` gains `feature_id` (S2).
 - `analyze.py`: after `map_threads`, `map_holes` then (I3) `map_blends`, on the same final hole list; `summary["inventor_holes"]`; rule `hole_mismatch` in `NEEDS_IPT`.
 - `rules/hole_mismatch.py`: one finding per disagreeing hole; as `thread_mismatch` (severity medium, limit `PAIR_TOL_MM`, source `D-032`), title `<feature name or "Hole feature"> hole on <hole id>: <gaps>. Possible cause: the part or an old STEP export differs from the .ipt`; goes last in `RULES`.
 - `web/`: a fold-away "Hole features" panel and a "Fillets and chamfers" panel after Threads, both hidden without an `.ipt`; layouts from the `ui-mockups` mock-ups at the start of S1 and S3. PDF sections in `report.ts`.
@@ -153,9 +153,10 @@ All Python tests go in `tests/service/`, browser tests in `tests/e2e/` (`e2e` ma
       "holes": [{"id": "hf-1.1", "start": [x, y, z], "axis": [x, y, z], "copied_by": [], "state": "matched" | "disagrees" | "not_mapped",
                  "hole": "hole-36" | null, "gaps": [], "reason": null}],
       "reason": null}],
+      "state": "matched" | "disagrees" | "not_mapped",
   "hole_names_seen": 9,
   "blends": [{"id": "bl-1", "feature_id": 3193, "kind": "fillet" | "chamfer", "radius_mm": 5.0 | null, "distances_mm": [5.0, 5.0] | null,
-      "angle_deg": 90 | null, "faces": 24, "state": "matched" | "disagrees" | "not_mapped", "step_faces": [12, 13], "gaps": [], "reason": null}]
+      "angle_deg": 90 | null, "faces": 24, "faces_mapped": 24, "state": "matched" | "disagrees" | "not_mapped", "step_faces": [12, 13], "gaps": [], "reason": null}]
 }
 ```
 
@@ -173,6 +174,15 @@ Holes gain `"hole_feature": "hf-1"` when matched or disagreeing. On screen lengt
 - `hole_mismatch` title in S1 uses `Hole feature hf-<n>`; S2 swaps in the name when there is one.
 - Cone chamfer: `distances_mm` = [radial, axial] sorted, `angle_deg` `null`. A plane chamfer whose two neighbour planes are parallel or not both planes is `not_mapped` (`chamfer neighbours not understood`).
 - `make_demo.py` and the fixtures are regenerated in every slice that changes the response (S1, S2, S3); `built.py` gains Hole features in S1 and a filleted block in S3 (`tests/parts/` has none: S3 builds one with OpenCascade's `BRepFilletAPI_MakeFillet`, prototyped at the start of S3).
+- `map_holes` takes the same list `map_threads` takes (`hole_list` plus bores, final ids, `analyze.py`) and `part.faces`; it writes `hole_feature` into those hole and bore dicts beside `thread`.
+- `hole_mismatch` skips a STEP hole that already has a `thread_mismatch` finding (one finding per hole; the thread finding names the gap). Its `through` gap: `mm` = the difference between the `.ipt` length and the STEP depth, text `the .ipt hole is through, the STEP hole is blind` (or the reverse).
+- Feature `state`: `disagrees` if any hole disagrees, else `not_mapped` if any is not mapped, else `matched` (a key on each feature, beside its holes).
+- Tags: up to 64 pairs kept, 65 or more dropped; ids in record order, "last" = the pair just before `-1`. `copied_by` is filled in S1 (the data is in the tags); S2 adds its row text.
+- J7: `tests/inventor/hostile.py` (S1) rewrites one tag or pointer of a NIST `.ipt` in place (as I1's J6 helper); S1 asserts hole tags and topology, the caps on `tags.feature_tags` and `topo.face_points` directly; S3 adds blend cases with the same helper.
+- Names (S2): `read_ipt` reads them inside its open file (`names.hole_names(f: ole.Ipt) -> list[str]`) and `IptPart` gains `hole_names`; ties on stream size go to the stream name's sort order. `Thread.feature_id` (S2) is the record's 9th int (10th in 2024), `None` when the record is short. Names are English default names only: a localised Inventor writes other words, so such parts show no names (fails safe).
+- Blends (S3): `map_blends(blends, faces, transform=None)` with `part.faces` from `read_step`; `step_faces` are indices into `part.faces`, as features' `faces` lists. Response adds `faces_mapped`. A blend is `matched` when at least one of its sized faces is matched and none disagree (the radius comes from the `.ipt` either way), `disagrees` when any face disagrees, else `not_mapped`. `distances_mm` keep the order of the neighbours (the longer shared edge first).
+- Built filleted part (S3): `tests/inventor/built.py` makes a 40 x 30 x 20 mm block with a 3 mm fillet on one vertical edge and a 2 x 2 mm chamfer on one top edge (`BRepFilletAPI_MakeFillet`, `BRepFilletAPI_MakeChamfer`), and an `IptPart` whose `blends` hold the same two; expected: fillet r 3 matched, chamfer [2, 2] matched; with the fillet given r 3.5: `disagrees`, gap 0.5.
+- Each slice ends with a status page and the rebuilt view-only demo (D-009); mock-ups use screenshots of the real viewer at 2x with `scripts/add_zoom.py` (D-024). S2 re-pins the `hole_mismatch` titles and PDF lines S1 pinned once names fill in.
 - `surfaces.py` in S1 has tests for every surface kind (plane, cylinder, cone, torus, sphere) on the NIST files, not only those holes use.
 
 ### S1 Hole features read, typed and mapped
@@ -188,7 +198,7 @@ Holes gain `"hole_feature": "hf-1"` when matched or disagreeing. On screen lengt
 - **Morgan tries:** the CTC 04 rows show `Hole8` … `Hole22`; thread rows show `Hole8`; FTC 08's feature shows "4 holes: 1 drawn, 3 copied by 2 pattern or mirror features"; STC 10 shows no names and "11 Hole features in the browser, 9 read". On a work pair, rename one Hole in Inventor, export, and check that its name shows (or no names show) and never a wrong one.
 - **Checks that fail now:** J4 (the asserts go into the existing `test_inventor_names.py`); `test_inventor_holes.py::test_copies` (FTC 08 2021: 1 feature, 4 holes, copier ids 2187 and 2202, pinned in `hole_counts.toml`).
 - **Files:** `inventor/names.py` (reads the streams through `ole.Ipt` under its caps), `threads.py` (`feature_id` from the record, `feature_name`), `holes.py`, `part.py`; `web/src/findings.ts`, `report.ts` (name in small print as I1 S3's defaults); `tests/service/test_inventor_names.py`; fixtures regenerated.
-- **Waits on:** S1.
+- **Waits on:** S1; before S2 merges, Morgan's hand check of one work pair in Inventor (work pairs are owed from 2026-11-12, D-035), so the PR merges no earlier than that check.
 
 ### S3 Fillets and chamfers (I3)
 
@@ -201,7 +211,7 @@ Holes gain `"hole_feature": "hf-1"` when matched or disagreeing. On screen lengt
 ## Verification
 
 - Every push: `python scripts/check.py` in the dfma env with `DFMA_CHROMIUM` set and `set -o pipefail`.
-- End to end: `tests/inventor/local_pairs.py` on Morgan's work pairs (owed from 2026-11-12, D-035), now with hole-feature and blend counts; at least 95% of their holes matched (D-032); Morgan checks one part's names and sizes against Inventor, including one renamed Hole, before S2 merges (VER-07).
+- End to end: `tests/inventor/local_pairs.py` on Morgan's work pairs (owed from 2026-11-12, D-035), now with hole-feature and blend counts; at least 95% of their holes matched (D-032's "95% of Hole features map to a hole", read per hole, since one Hole feature places many holes; the per-feature rate is reported beside it); Morgan checks one part's names and sizes against Inventor, including one renamed Hole, before S2 merges (VER-07).
 
 ## Open questions
 
