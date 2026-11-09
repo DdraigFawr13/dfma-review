@@ -116,6 +116,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 
 - **Status:** Accepted (2026-11-07).
 - **Amended by D-042, built 2026-11-09:** HIGH / MEDIUM read FIX / REVIEW on screen and in the PDF; the selected pin reads "F4 FIX".
+- **Amended by D-053 (2026-11-09):** every pin carries its ▲/◆ mark, selected or not, so a pin's severity no longer rests on its ring colour alone (UX audit F26).
 - **Decision:**
   - Each finding's label is a pin ("F5") on a visible spot of its faces, white and ringed in its severity colour. A pin that would cover one already placed folds into it ("F4 +2"); a pin whose spot is behind the part is hidden. This replaces D-015's labels that moved to the nearest free spot.
   - The selected finding's pin is solid in its severity colour (red for HIGH, orange for MEDIUM), larger, with its severity word ("F5 HIGH"), raised on a stem to a dot on its spot. Its faces still turn the Selected colour (`--accent`); nothing else dims.
@@ -329,6 +330,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 ## D-042 Review screen redesign: a step-by-step review
 
 - **Status:** Accepted (2026-11-09; Morgan, on the [round 3 page](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8): "Approved with the changes I wrote" and "The cost section isn't showing any total but otherwise go with what you recommend"). Not built yet: the build is its own slice, planned with `write-spec` after the Inventor I2+I3 work. Until then UI_STYLE describes the screen as built. When built, it amends D-012 (layout and verdict line), D-014 (legend), D-017 (severity words) and D-023 (where Plan and Passed sit).
+- **Amended by D-053 (2026-11-09):** the setup count's reason reads "Why n setups:" on its own line (F31); Fix first stays last on the overview, but the cards column no longer stretches, so no blank band sits above it (F21).
 - **Decision:**
   - Steps across the top: Part · Features · Machining · Cost · Report, with Back / Next at the foot of each. The Part step is the start form; once the part is read it becomes the overview (counts per step, features checked, biggest cost drivers, Fix first) with "Change file".
   - Severity words Fix (was HIGH) and Review (was MEDIUM), with shape marks ▲ and ◆, in the app and the PDF. Step tabs show shape + number; every list, card and selected pin carries the word (amends UI_STYLE checklist item 9 when built).
@@ -379,6 +381,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 ## D-049 Features groups mock-up approved; corners go with their pocket's setup
 
 - **Status:** Accepted (2026-11-09; Morgan, on the mock-up: "I do approve of the design and you can move forward"; on Machining placement: "With their pocket").
+- **Amended by D-053 (2026-11-09):** a row's advice is labelled "What to do" on a Fix row and a Review row alike, on screen and in the PDF (F34).
 - **Decision:** S2 builds the [Features groups mock-up](https://claude.ai/artifact/Cff2Y88mwZ3FaXqUMBLxwq) (`mockups/review-steps-features.html`): under the Issues rows, "From <.ipt>", then one folding row per group (Threads, Hole features, Fillets and chamfers) with its count and tally in the approved words; an opened group shows today's rows (D-036, D-040, D-043) and its intro without the counts the group row shows; the groups show under every chip; a row's advice is labelled "Fix" on a Fix row and "Suggestion" on a Review row. S3: an inside corner sits in the setup that cuts its pocket (as frame `r3-mach` shows); a thin wall sits under "Whole part". This amends the spec's "Machining placement" default, which read setup membership from `setups[].features` only (holes and pockets, `plan.py:108`).
 - **Why:** the zero-decision re-check found the spec's rule put every corner in "In no setup", against the approved frame; Morgan chose the frame.
 
@@ -399,3 +402,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-09; Morgan: "can they not just do multiple passes at multiple z heights? Maybe add that in the review in some way to that is simple to understand how many passes at safe depths you would need"; on the depth per pass: "Base this on common machining practices. You may research this to confirm what those are").
 - **Decision:** a `pocket_depth` finding gives `passes` and `pass_in`: the depth split into even passes no deeper than `pass_xd` × the end mill's diameter (`config/thresholds.toml`: 1.0 in aluminium, steel 1018 and plastic, 0.5 in stainless; an estimate). The row's sentence adds "Cut in 8 passes of 0.031 in (1/32)."; the advice says the tool still reaches the full depth, so it is a long-reach end mill. The finding stays a Review. Built in PR #30 before its merge.
 - **Why:** passes lower each cut's load, but the tool's reach is the full depth either way, so the long tool stays the issue. Sources for the per-pass depth (common practice for slotting with solid end mills): MMC Carbide's "Depth of cut" course (slotting with roughing edges up to 1D; shallower for harder material and more flutes), and Haas speeds-and-feeds sheets as reported by a web search (1.0D for aluminium and carbon steel, 0.5D for stainless; the sheets themselves refused automated reading, so their columns are unverified). Plastic: as aluminium (assumption; no source found).
+
+## D-053 UX audit fixes, 2026-11-09
+
+- **Status:** Accepted (2026-11-09; Morgan, on the audit's reply page: "Go with your recommendations to fix").
+- **Decision:** fix all 34 findings of [docs/audit/2026-11-09-ux.md](audit/2026-11-09-ux.md) as each one's Fix recommends, on one branch (`audit-2026-11-09-fixes`) and one PR. Where a Fix offers two ways, the first is taken unless it says "leave it" first: F9 keeps the approved frames' words and names them in UI_STYLE; F16 raises small targets to 44 px below 900 px; F20 scrolls the steps in one row below 500 px; F24 makes each card heading the link; F25 is left as it is (F19 gives disabled tabs their reason). Amends D-017 (F26), D-042 (F21, F31) and D-049 (F34). A code fix closes with a test that fails before it; a wording fix closes with its commit.
+- **Why:** the audit (PR #31) found no blocking issue but 34 smaller ones across wording, narrow widths at 200% text, ARIA and the Machining step; Morgan accepted every recommended Fix.
