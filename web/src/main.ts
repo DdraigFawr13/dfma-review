@@ -2,7 +2,7 @@
 // changes while a file is loaded. No submit button (spec S1, settled at build).
 
 import { analyze, ApiError, type Analysis, type Material, type Process } from "./api";
-import { collapsePassed, renderDrivers, renderFindings, renderPlan, renderVerdict, type Pick } from "./findings";
+import { collapsePassed, renderDrivers, renderFindings, renderPlan, renderThreads, renderVerdict, type Pick } from "./findings";
 import { formatSize } from "./format";
 import { buildReport, reportName } from "./report";
 import { Viewer, type CheckedKind } from "./viewer";
@@ -98,6 +98,11 @@ function stillThere(result: Analysis, id: string | null): Pick | null {
     const ok = f && !result.findings.some((x) => x.feature === f.id) && result.passed.some((p) => p.feature === f.id);
     return ok ? { id, faces: f.faces } : null;
   }
+  if (id.startsWith("thread:")) { // I1 S2: a thread row selects its hole
+    const t = result.inventor?.threads?.find((x) => `thread:${x.id}` === id);
+    const hole = t?.hole ? result.features.find((x) => x.id === t.hole) : undefined;
+    return hole ? { id, faces: hole.faces } : null;
+  }
   if (id.startsWith("setup:")) {
     const s = result.setups[Number(id.slice(6))];
     const i = Number(id.slice(6));
@@ -123,6 +128,11 @@ function showFindings(result: Analysis | null, message: string): void {
   list.scrollTop = keepScroll;
   planBox.scrollTop = keepPlan;
   byId("plan-panel").hidden = !result?.machine;
+  const threadsBox = byId<HTMLDetailsElement>("threads-panel"), keepThreads = byId("threads").scrollTop;
+  renderThreads(byId("threads"), result, select, selected); // I1 S2 (D-036)
+  byId("threads").scrollTop = keepThreads;
+  threadsBox.hidden = !result?.inventor;
+  byId("threads-count").textContent = result?.inventor ? String(result.inventor.threads?.length ?? 0) : "";
   renderDrivers(byId("drivers"), result);
   byId("drivers-panel").hidden = !result;
   byId("drivers-count").textContent = result ? `${result.cost_drivers.length}` : "";
@@ -170,7 +180,11 @@ async function analyse(): Promise<void> {
     for (const [kind, box] of SWITCHES) viewer.setShowChecked(kind, box.checked);
     shownFile = file;
     shownIpt = ipt;
-    if (!samePart) collapsePassed();
+    if (!samePart) {
+      collapsePassed();
+      // D-036: the Threads panel opens when a new part's .ipt has threads; after that it stays as the reader left it
+      byId<HTMLDetailsElement>("threads-panel").open = (result.inventor?.threads?.length ?? 0) > 0;
+    }
     const keep = samePart ? stillThere(result, selected) : null; // a finding, passed feature or setup
     selected = keep?.id ?? null;
     if (keep) viewer.select(keep, false); // restore the selection without moving the camera

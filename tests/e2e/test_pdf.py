@@ -68,3 +68,31 @@ def test_export_pdf(page: Page, base_url: str, tmp_path):
     images = [x.get_object()._data for x in pdf.pages[1]["/Resources"]["/XObject"].values()]  # the shared table: one picture per set of faces
     # Two findings on the same faces (hole-1's size and depth) get the same picture, which jsPDF stores once.
     assert len(images) == len({tuple(sorted(f["faces"])) for f in result["findings"]}) and len(set(images)) == len(images)
+
+
+def test_pdf_threads(page: Page, base_url: str, tmp_path):
+    """J5: the summary page's Threads section, one line per thread; F26 (the disagreeing thread) has its page."""
+    import json
+    result = json.loads((PARTS.parent / "inventor" / "fixtures" / "stc_10.json").read_text("utf-8"))
+    page.route("**/api/analyze", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps(result)))
+    page.goto(base_url)
+    step, ipt = tmp_path / "nist_stc_10_asme1_ap242-e2.stp", tmp_path / "INV_nist_ftc_10_asme1_2024.ipt"
+    step.write_text("placeholder")
+    ipt.write_bytes(b"placeholder")
+    page.get_by_test_id("upload-ipt").set_input_files(ipt)
+    page.get_by_test_id("upload-file").set_input_files(step)
+    expect(page.get_by_test_id("threads-panel")).to_be_visible(timeout=30_000)
+    with page.expect_download() as download:
+        page.get_by_test_id("export-pdf").click()
+    path = tmp_path / "report.pdf"
+    download.value.save_as(path)
+    pdf = PdfReader(path)
+    text = " ".join(p.extract_text() for p in pdf.pages).replace("\n", " ")
+    text = re.sub(r" +", " ", text)
+    for line in ("Threads (from INV_nist_ftc_10_asme1_2024.ipt)", "5 matched, 1 disagrees, 0 not mapped.",
+                 "hole-38 M3x0.5 - 6H 0.236 in [6 mm] deep tap drill 0.098 in [2.5 mm] disagrees: 0.004 in [0.10 mm] "
+                 "off the hole's axis; see F26",
+                 "hole-36 M3x0.5 - 6H 0.236 in [6 mm] deep tap drill 0.098 in [2.5 mm] matched"):
+        assert line in text, f"{line!r} is not in the PDF"
+    pages = [p.extract_text().replace("\n", " ") for p in pdf.pages]
+    assert any(p.startswith("F26") or "F26 · MEDIUM" in p for p in pages)  # its finding page

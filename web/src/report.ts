@@ -5,7 +5,7 @@
 // Imported up front, not on demand: the view-only demo page inlines one script and has no chunks to load (D-009).
 import { jsPDF } from "jspdf";
 import type { Analysis, Finding } from "./api";
-import { RULE_NAMES, axisText, checkedLine, driverLine, meta, notPlanned, planFoot, planWhy, setupHead, stockText, toolName } from "./findings";
+import { RULE_NAMES, axisText, checkedLine, driverLine, inMm, meta, notPlanned, planFoot, planWhy, setupHead, stockText, threadCallout, threadCounts, threadSize, toolName } from "./findings";
 import { formatIn, formatRatio, formatSize } from "./format";
 
 /** What the report needs besides the analysis: the labels the reader chose, today's date, and a picture per finding. */
@@ -143,6 +143,31 @@ function summaryPage(p: Page, input: ReportInput): void {
     const sources = [...new Set(result.cost_drivers.map((d) => d.weight_source))].join(", ");
     p.text(`Score is count x weight, highest first. Every weight is an ${sources} (config/drivers.toml). No time or dollars yet.`, { colour: [85, 101, 122] });
   }
+  if (result.inventor) threadsSection(p, input);
+}
+
+/** One thread as a PDF line (D-036): "hole-38  M3x0.5 - 6H  0.236 in [6 mm] deep  tap drill 0.098 in [2.5 mm]  matched". */
+export function threadLine(t: NonNullable<NonNullable<Analysis["inventor"]>["threads"]>[number], result: Analysis): string {
+  const size = threadSize(t).replace(" · ", "  ").replace(" (as stored in the .ipt)", "");
+  let state: string = t.state === "not_mapped" ? `not mapped: ${t.reason ?? "unknown"} (our limit, not a finding)` : t.state;
+  if (t.state === "disagrees") {
+    const f = result.findings.find((x) => x.rule === "thread_mismatch" && x.thread === t.id);
+    const gaps = t.gaps.map((g) => (g.what === "axis" ? `${inMm(g.mm, 2)} off the hole's axis` : g.text)).join("; ");
+    state = `disagrees: ${gaps}${f ? `; see ${f.id}` : ""}`;
+  }
+  return [t.hole ?? t.id, threadCallout(t), size, state].filter(Boolean).join("  ");
+}
+
+/** The summary page's Threads section, after Cost drivers (D-036); a long list runs onto the next page. */
+function threadsSection(p: Page, input: ReportInput): void {
+  const inv = input.result.inventor!, threads = inv.threads ?? [];
+  p.heading(`Threads (from ${inv.name})`);
+  if (!threads.length) {
+    p.text("No threads in this .ipt.");
+    return;
+  }
+  p.text(`${threadCounts(threads)}. Callout, depth and tap drill as stored in the .ipt.`);
+  for (const t of threads) p.text(threadLine(t, input.result), { indent: 12, gap: 1 });
 }
 
 function findingPage(p: Page, f: Finding, input: ReportInput): void {

@@ -20,6 +20,7 @@ from .units import mm_to_in
 __all__ = ["ReadError", "analyze"]
 
 TURN_NEEDS_AXIS = ("turn_slender", "turn_offaxis", "bore_depth")
+NEEDS_IPT = ("thread_mismatch",)  # runs only when an .ipt was read, so rules_run is unchanged without one
 
 
 def _off_axis(f: dict, faces, turn: dict) -> tuple[float, float]:
@@ -34,7 +35,10 @@ def _off_axis(f: dict, faces, turn: dict) -> tuple[float, float]:
 
 
 def analyze(path: str | Path, name: str, process: str = "mill", material: str = "al6061",
-            ipt_path: str | Path | None = None, ipt_name: str | None = None) -> dict:
+            ipt_path: str | Path | None = None, ipt_name: str | None = None,
+            ipt_transform=None, ipt_check: bool = True) -> dict:
+    """`ipt_transform` ((rows, shift), applied to the .ipt) and `ipt_check=False` (skip the pair check) are for
+    the test harness only (tests/inventor/nist_pair.py, spec I1 "Test files"); the app never passes them."""
     if process not in settings.PROCESSES:
         raise ValueError(f"unknown process {process!r}")
     if material not in settings.MATERIALS:
@@ -46,7 +50,8 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
         from . import inventor as inv
         ipt = inv.read_ipt(ipt_path)
         inv.check_part_type(ipt, part)
-        inventor = inv.inventor_block(ipt, ipt_name or Path(ipt_path).name, inv.check_pair(ipt, part))
+        checks = inv.check_pair(ipt, part) if ipt_check else inv.pair_reason(ipt, part)[1]
+        inventor = inv.inventor_block(ipt, ipt_name or Path(ipt_path).name, checks)
     infos = [face_info(i, f) for i, f in enumerate(part.faces)]
     meshes = mesh_faces(part.solid, part.faces)
     vertices = [tuple(m["positions"][i:i + 3]) for m in meshes for i in range(0, len(m["positions"]), 3)]
@@ -73,12 +78,19 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
                 f.pop("on_axis", None)  # recorded instead as the angle and offset turn_offaxis reads
                 f["off_axis_deg"], f["off_axis_mm"] = _off_axis(f, part.faces, turn)
             turn_features = bores + groove_list + [profile]
+    if inventor is not None:  # S2: threads onto the final holes and bores, before the rules (thread_mismatch)
+        inventor["threads"] = inv.map_threads(ipt.threads, hole_list + [f for f in turn_features or []
+                                                                         if f["kind"] == "bore"],
+                                              part.faces, ipt_transform)
     features = (hole_list + (turn_features or []) + pocket_list + corner_list + number(wall_list, "wall"))
     pocket_faces = {i for f in pocket_list for i in f["faces"]}
     summary = {"units_in_file": part.units_in_file, "frame": frame, "turn": turn, "face_count": len(part.faces)}
+    if inventor is not None:
+        summary["inventor_threads"] = inventor["threads"]
     limits = settings.thresholds(material)
     rules = [rule for rule in RULES if process in rule.PROCESSES
-             and not (rule.ID in TURN_NEEDS_AXIS and turn_features is None)]  # no axis: only the shared rules
+             and not (rule.ID in TURN_NEEDS_AXIS and turn_features is None)
+             and not (rule.ID in NEEDS_IPT and inventor is None)]  # no axis: only the shared rules
     findings = [f for rule in rules for f in rule.check(features, summary, limits)]
     findings = [{"id": f"F{n}", **f} for n, f in enumerate(findings, 1)]
     passed = [p for rule in rules if hasattr(rule, "passes") for p in rule.passes(features, summary, limits)]

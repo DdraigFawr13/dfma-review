@@ -124,3 +124,11 @@ body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
   .meta { margin-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+/* I1 S2 Threads panel (D-036): folds like Cost drivers; a row's left edge and label give its state. */
+.threads-panel { display: flex; flex-direction: column; gap: var(--space-2); }
+.threads-panel[open] { flex: 0 1 auto; min-height: 12rem; overflow-y: auto; }
+.thread-row.medium { border-left-color: var(--medium); }
+.thread-row.nm { border-left-color: var(--line); cursor: default; }
+div.thread-row { text-align: left; }
+.sev.nm { color: var(--muted); }
+

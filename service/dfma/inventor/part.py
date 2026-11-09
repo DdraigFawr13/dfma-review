@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .. import settings
 from ..errors import ReadError
-from . import ole, sab
+from . import ole, sab, threads as th
 
 PLAIN_PART = "4D29B490-49B2-11D0-93C3-7E0706000000"  # Design Tracking property 31 of 13 NIST files
 SHEET_METAL = "9C464203-9BAE-11D3-8BAD-0060B0CE6BB4"  # CTC 03, FTC 09 2021 and 2024
@@ -29,7 +29,7 @@ class IptPart:
     solid_bodies: int  # in the main model; a body of under 4 faces, all planes, is a surface body
     corners_mm: list[tuple[float, float, float]]  # the point of each vertex record of the main model
     face_count: int
-    threads: list = field(default_factory=list)  # S2
+    threads: list = field(default_factory=list)  # S2: threads.Thread, in record order
 
 
 def _text(v) -> str | None:
@@ -117,4 +117,5 @@ def read_ipt(path: str | Path, stream_cap: int | None = None) -> IptPart:
         except ValueError:
             pass
     return IptPart(saved_with=_text(props.get(67)) or "unknown", acis_version=version, subtype=sub,
-                   model_state_names=states, solid_bodies=_bodies(recs), corners_mm=corners, face_count=n_faces)
+                   model_state_names=states, solid_bodies=_bodies(recs), corners_mm=corners, face_count=n_faces,
+                   threads=th.read_threads(recs))

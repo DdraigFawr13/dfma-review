@@ -30,6 +30,7 @@ Shared rules come from AI-Master-Instructions and load through CLAUDE.md (`.clau
 - Screenshots on Morgan's pages fit the screen and zoom on tap: take them at 2× and run `scripts/add_zoom.py` on the page (D-024; replaces the `ui-mockups` fixed-width frames).
 - When the GitHub API refuses a public repo, use the browser on github.com instead (Morgan, 2026-11-07); put this in research briefs.
 - Compare tools only like with like: each tool's current release, the same parts, through our own scorer (`tests/grading/grade.py --engine`); never set our numbers beside numbers another tool measured its own way, and say whose answer key each set is (LESSONS "reports", ×2).
+- Before code or a spec relies on a field of an `.ipt` record, check it against the geometry it should agree with on every NIST file that has it, and count the misses (LESSONS "read", ×2).
 - Keep the app portable: it moves later to a company host and the company GitLab, so avoid lock-in to one hosting vendor (D-001).
 
 ## Overrides

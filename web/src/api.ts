@@ -16,6 +16,28 @@ export interface Inventor {
   saved_with: string;
   acis_version: string;
   checks: { faces: [number, number]; corners: [number, number]; worst_corner_gap_mm: number | null };
+  threads?: Thread[]; // S2: always a list when an .ipt was read
+}
+
+/** I1 S2 (spec "Response"): one thread from the .ipt; mm and file coordinates as stored. */
+export interface Thread {
+  id: string;
+  designation: string | null;
+  class: string | null;
+  standard: string | null;
+  pitch_mm: number | null;
+  depth_mm: number | null;
+  tap_drill_mm: number | null;
+  minor_mm: [number, number] | null;
+  major_mm: [number, number] | null;
+  start: number[] | null;
+  end: number[] | null;
+  axis: number[] | null;
+  state: "matched" | "disagrees" | "not_mapped";
+  hole: string | null;
+  gaps: { what: "axis" | "diameter" | "depth"; mm: number; text: string }[];
+  reason: string | null;
+  feature_name: string | null;
 }
 
 export interface Analysis {
@@ -84,6 +106,7 @@ export interface Feature {
   dims_mm: Record<string, number>;
   outside?: boolean; // a groove: outside (true) or inside a bore (false), S6
   edge_mm?: number[][]; // a sharp corner's edge (two end points), drawn by the viewer (S3)
+  thread?: string[]; // I1 S2: ids of the threads mapped to this hole or bore
 }
 
 export interface Finding {
@@ -98,6 +121,7 @@ export interface Finding {
   feature: string;
   threshold_source: string;
   suggestion: string;
+  thread?: string; // thread_mismatch (I1 S2): the thread's id
 }
 
 export class ApiError extends Error {}

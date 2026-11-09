@@ -13,8 +13,6 @@ from nist_files import ap242_files
 from dfma import settings
 from dfma.analyze import analyze
 from dfma.app import create_app
-from dfma.inventor.pair import PLAIN_PART, step_corners
-from dfma.inventor.part import IptPart
 from dfma.read import read_step
 
 INV = PARTS.parent / "inventor" / "files"
@@ -86,18 +84,26 @@ def test_ipt_over_limit(client, tmp_path):
 
 
 def test_attach_in_process(monkeypatch, tmp_path):
-    """The passing app path on every push: read_ipt patched to an IptPart built from the STEP itself."""
+    """The passing app path on every push (S2): read_ipt patched to an IptPart built from the STEP itself plus one
+    thread on its hole, so the part type, pair check, mapping and rule all run."""
+    from inventor.built import BOX_TOP, DOWN, ipt_from_step, thread
+    part = ipt_from_step(BOX, [thread(BOX_TOP, DOWN, 10.0)])
     step = read_step(BOX)
-    part = IptPart(saved_with="2024.1 (Build 281209000, 209)", acis_version="229.6.0.65535", subtype=PLAIN_PART,
-                   model_state_names=["[Primary]"], solid_bodies=1, corners_mm=step_corners(step.solid),
-                   face_count=len(step.faces))
     import dfma.inventor
     monkeypatch.setattr(dfma.inventor, "read_ipt", lambda path: part)
     result = analyze(BOX, BOX.name, ipt_path=tmp_path / "box.ipt", ipt_name="box.ipt")
+    threads = result["inventor"].pop("threads")
     assert result["inventor"] == {"name": "box.ipt", "saved_with": "2024.1 (Build 281209000, 209)",
                                   "acis_version": "229.6.0.65535",
                                   "checks": {"faces": [len(step.faces)] * 2, "corners": [10, 10],
                                              "worst_corner_gap_mm": 0.0}}
+    [t] = threads
+    assert (t["id"], t["state"], t["hole"], t["gaps"], t["reason"]) == ("thread-1", "matched", "hole-1", [], None)
+    assert t["designation"] == "1/4-20 UNC" and t["depth_mm"] == 10.0 and t["start"] == [25.4, 12.7, 12.7]
     assert result["assumptions"][-1] == settings.IPT_ASSUMPTION
+    assert "thread_mismatch" in result["rules_run"]
     plain = analyze(BOX, BOX.name)
+    assert "thread_mismatch" not in plain["rules_run"]
+    hole = next(f for f in result["features"] if f["id"] == "hole-1")
+    assert hole.pop("thread") == ["thread-1"]
     assert result["findings"] == plain["findings"] and result["features"] == plain["features"]

@@ -1,12 +1,12 @@
 // The verdict line and the findings list in severity groups (spec "Web page", D-012).
 
-import type { Analysis, CostDriver, Feature, Finding, Severity, Tool } from "./api";
+import type { Analysis, CostDriver, Feature, Finding, Severity, Thread, Tool } from "./api";
 
 export const RULE_NAMES: Record<string, string> = {
   hole_depth: "hole depth", hole_size: "hole size", corner_radius: "corner radius", pocket_depth: "pocket depth",
   undercut: "undercut", thin_wall: "thin wall", access: "access",
   turn_axis: "turning axis", turn_slender: "length to diameter", turn_offaxis: "off the turning axis",
-  bore_depth: "bore depth", looks_turned: "looks turned",
+  bore_depth: "bore depth", looks_turned: "looks turned", thread_mismatch: "thread vs hole", // I1 S2
 };
 const KIND_NAMES: [string, string, string][] = [["profile", "turned profile", "turned profiles"], ["hole", "hole", "holes"], ["bore", "bore", "bores"], ["groove", "groove", "grooves"],
   ["pocket", "pocket", "pockets"], ["corner", "corner", "corners"], ["wall", "wall", "walls"]];
@@ -73,6 +73,8 @@ export function meta(f: Finding, result: Analysis): string {
     parts.push(f.rule === "hole_size" ? `${d.toFixed(3)} in diameter` : `${diameterText(d)} diameter, ${(feature.dims_mm.depth / 25.4).toFixed(3)} in deep`);
   }
   parts.push(f.rule === "hole_size" ? `limit: ${f.threshold_source}, within 0.0005 in` : `limit: ${f.threshold_source}`);
+  const thread = holeThreads(feature, result); // I1 S2 (D-036)
+  if (thread) parts.push(thread);
   return parts.join(" · ");
 }
 
@@ -173,6 +175,8 @@ function renderPassed(host: HTMLElement, result: Analysis, onSelect: (f: Pick) =
       const line = el("span", "row1");
       line.append(el("span", "sev ok", "ok"), el("span", "ftitle", featureLine(f)), el("span", "fid", f.id));
       row.append(line);
+      const thread = holeThreads(f, result); // I1 S2 (D-036)
+      if (thread) row.append(el("span", "pcheck", thread));
       for (const p of result.passed.filter((x) => x.feature === f.id)) {
         const check = el("span", "pcheck");
         check.append(el("span", "prule", `✓ ${RULE_NAMES[p.rule] ?? p.rule}: `), document.createTextNode(p.title));
@@ -391,4 +395,91 @@ export function axisText(v: number[], result: Analysis): string {
   const k = c.findIndex((x) => Math.abs(x) >= Math.cos(0.5 * Math.PI / 180));
   if (k >= 0) return `along ${c[k] > 0 ? "+" : "−"}${"XYZ"[k]} of the part`;
   return `(${c.map((x) => x.toFixed(2)).join(", ")}) in the part's axes`;
+}
+
+// --- I1 S2: threads from the .ipt (D-036, mockups/threads-panel.html) ---
+
+const STATE_WORD: Record<Thread["state"], string> = { matched: "matched", disagrees: "disagrees", not_mapped: "not mapped" };
+
+/** A stored mm value as written: "25", "10.25" (as the .ipt holds it, no padding). */
+function mmText(mm: number): string {
+  return String(Math.round(mm * 100) / 100);
+}
+
+/** "0.984 in [25 mm]": inches first, the stored mm in brackets (D-005, D-036). */
+export function inMm(mm: number, digits?: number): string {
+  return `${(mm / 25.4).toFixed(3)} in [${digits === undefined ? mmText(mm) : mm.toFixed(digits)} mm]`;
+}
+
+/** "M12x1.75 - 6H". */
+export function threadCallout(t: Thread): string {
+  return [t.designation ?? "thread", t.class].filter(Boolean).join(" - ");
+}
+
+/** "0.984 in [25 mm] deep · tap drill 0.404 in [10.25 mm] (as stored in the .ipt)". */
+export function threadSize(t: Thread): string {
+  const parts = [];
+  if (t.depth_mm !== null) parts.push(`${inMm(t.depth_mm)} deep`);
+  if (t.tap_drill_mm !== null) parts.push(`tap drill ${inMm(t.tap_drill_mm)} (as stored in the .ipt)`);
+  return parts.join(" · ");
+}
+
+/** One gap: the axis gap in inches with its mm, the others as the service words them. */
+function gapText(g: Thread["gaps"][number]): string {
+  return g.what === "axis" ? `${inMm(g.mm, 2)} off the hole's axis` : g.text;
+}
+
+/** The disagreeing or not-mapped line of a thread, or "" when it matched. */
+export function threadNote(t: Thread, result: Analysis): string {
+  if (t.state === "not_mapped") return `Not mapped: ${t.reason ?? "unknown"}. Our limit, not a finding.`;
+  if (t.state !== "disagrees") return "";
+  const f = result.findings.find((x) => x.rule === "thread_mismatch" && x.thread === t.id);
+  return t.gaps.map(gapText).join("; ") + (f ? ` · finding ${f.id}` : "");
+}
+
+/** "N matched, N disagrees, N not mapped". */
+export function threadCounts(threads: Thread[]): string {
+  return (["matched", "disagrees", "not_mapped"] as const)
+    .map((s) => `${threads.filter((t) => t.state === s).length} ${STATE_WORD[s]}`).join(", ");
+}
+
+/** "Thread: M12x1.75 - 6H (from the .ipt)" for a hole a thread is mapped to, or "" (D-036). */
+export function holeThreads(f: Feature | undefined, result: Analysis): string {
+  const ids = f?.thread ?? [];
+  const threads = (result.inventor?.threads ?? []).filter((t) => ids.includes(t.id));
+  return threads.length ? `Thread: ${[...new Set(threads.map(threadCallout))].join(", ")} (from the .ipt)` : "";
+}
+
+/** The Threads panel's rows (D-036): one per thread in record order; a mapped row selects its hole. */
+export function renderThreads(host: HTMLElement, result: Analysis | null, onSelect: (f: Pick) => void, selected: string | null): void {
+  host.replaceChildren();
+  const inv = result?.inventor;
+  if (!result || !inv) return;
+  const threads = inv.threads ?? [];
+  if (!threads.length) {
+    host.append(el("p", "none", "No threads in this .ipt."));
+    return;
+  }
+  host.append(el("p", "none", `From ${inv.name}: ${threadCounts(threads)}. Tap a thread to show its hole.`));
+  const holes = new Map(result.features.map((f) => [f.id, f]));
+  for (const t of threads) {
+    const hole = t.hole ? holes.get(t.hole) : undefined;
+    const cls = t.state === "matched" ? "ok" : t.state === "disagrees" ? "medium" : "nm";
+    const id = `thread:${t.id}`;
+    const row = el(hole ? "button" : "div", `pass-row thread-row ${cls}`);
+    row.dataset.testid = "thread-row";
+    const line = el("span", "row1");
+    line.append(el("span", `sev ${cls}`, STATE_WORD[t.state]), el("span", "ftitle", threadCallout(t)), el("span", "fid", t.hole ?? t.id));
+    row.append(line);
+    const size = threadSize(t);
+    if (size) row.append(el("span", "fmeta", size));
+    const note = threadNote(t, result);
+    if (note) row.append(el("span", "fmeta", note));
+    if (hole && row instanceof HTMLButtonElement) {
+      row.type = "button";
+      row.setAttribute("aria-pressed", String(selected === id));
+      row.addEventListener("click", () => onSelect({ id, faces: hole.faces }));
+    }
+    host.append(row);
+  }
 }
