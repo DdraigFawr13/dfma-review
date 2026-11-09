@@ -23,7 +23,8 @@ jobs:
   check:
     # Draft PRs don't run CI; marking one ready does (CI-06).
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moved to 26.04 on 2026-11-09, where Playwright 1.60 can't install Chromium (LESSONS "ci").
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     defaults:
       run:
