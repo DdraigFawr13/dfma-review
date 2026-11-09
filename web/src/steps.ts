@@ -263,7 +263,7 @@ function passedDetail(r: Row, state: RowState, result: Analysis, h: RowHandlers)
     // the size line only when the check's title doesn't already state it (audit F14: a wall said its thickness 3 times)
     const size = feature ? featureLine(feature) : "";
     const lead = /^[^\d]*([\d.]+)/.exec(size)?.[1];
-    const said = !size || (lead !== undefined && p.title.includes(lead));
+    const said = !size || (lead !== undefined && new RegExp(`(^|[^\\d.])${lead.replace(".", "\\.")} in`).test(p.title));
     b.append(el("span", "pt", said ? `${fid} · ✓ ${p.title}` : `${fid} · ${size}`));
     if (!said) b.append(el("span", "pt", `✓ ${p.title}`));
     const thread = holeThreads(feature, result); // I1 S2 (D-036): its callout

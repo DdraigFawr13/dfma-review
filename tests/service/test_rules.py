@@ -37,7 +37,7 @@ def test_deep_hole():
     assert f["limit"] == 6.0 and f["unit"] == "ratio"
     assert f["feature"] == "hole-1" and set(f["faces"]) == set(hole["faces"])
     assert f["threshold_source"] == "estimate"
-    assert f["suggestion"] == "Needs peck drilling. Make it shallower or larger if the design allows."
+    assert f["suggestion"] == "Needs peck drilling (drilling in short steps to clear chips). Make it shallower or larger if the design allows."
 
 
 def test_very_deep_hole_is_high_with_its_limit():
@@ -297,7 +297,7 @@ def test_sharp_corner_and_undersized_tool():
     assert [f["rule"] for f in findings] == ["corner_radius"] * 4 + ["pocket_depth"]
     c = findings[0]
     assert c["id"] == "F1" and c["severity"] == "high" and c["feature"] == "corner-1"
-    assert c["title"] == "Sharp inside corner: needs EDM or a corner radius"
+    assert c["title"] == "Sharp inside corner: needs EDM (spark erosion) or a corner radius"
     assert c["measured"] == 0 and c["limit"] == 0.03125 and c["unit"] == "in"
     assert c["suggestion"] == ("Add a corner radius of 0.031 in (1/32) or more; "
                                "a larger radius lets a larger end mill cut the pocket.")

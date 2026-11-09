@@ -107,7 +107,7 @@ def test_f7_f8_f22_f23_report_and_cost_words(page: Page, base_url: str):
     expect(report).to_contain_text("Checks run")
     expect(report).not_to_contain_text("Rules run")
     expect(report).to_contain_text(re.compile("fillets and chamfers", re.I))
-    assert report.locator("ul.plain li").count() >= 5
+    assert report.locator(".block", has_text="The PDF holds").locator("li").count() >= 5  # the one-line bullet, split
     rules = page.get_by_test_id("report-rules")
     for text in ("Corner radius check: 4 findings", "Hole depth check: 2 findings", "Hole size check: 1 finding",
                  "Undercut check: none"):
@@ -304,6 +304,7 @@ def test_f27_pins_clear_each_others_stems_and_issues_open_their_row(page: Page, 
     line.click()
     expect(page.get_by_test_id("page-features")).to_be_visible()
     expect(page.get_by_test_id("row-F4")).to_have_attribute("aria-expanded", "true")
+    expect(page.get_by_test_id("row-F4")).to_be_focused()  # the keyboard lands on the opened row
 
 
 def test_f29_f31_f32_machining_lines_at_200_percent_text(page: Page, base_url: str):

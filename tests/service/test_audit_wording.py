@@ -61,11 +61,17 @@ def test_f13_jargon_glossed(results):
     sentences = {row["rule"]: row["sentence"] for row in results[0]["rows"]}
     assert "EDM (spark erosion)" in sentences["corner_radius"]
     assert "peck drilling (drilling in short steps to clear chips)" in sentences["hole_depth"]
+    by_rule = {f["rule"]: f for f in results[0]["findings"]}  # the PDF prints titles and advice: glossed there too
+    assert "EDM (spark erosion)" in next(f["title"] for f in results[0]["findings"] if f["rule"] == "corner_radius" and f["severity"] == "high")
+    assert "peck drilling (drilling in short steps" in by_rule["hole_depth"]["suggestion"]
 
 
 def test_f14_wall_math_in_its_title_decimals(results):
     wall = next(p for p in results[0]["passed"] if p["feature"] == "wall-1")
     assert wall["math"] == "4.000 in ≥ 0.030 in"
+    holes = analyze(PARTS / "clean_holes.step", "clean_holes.step")["passed"]
+    depth = [p["math"] for p in holes if p["rule"] == "hole_depth"]
+    assert depth and all(re.match(r"\d+\.\d{3} in deep ÷ \d+\.\d{3} in diameter", m) for m in depth), depth
 
 
 def test_f3_only_a_timeout_offers_to_try_again(monkeypatch):

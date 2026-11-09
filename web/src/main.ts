@@ -300,7 +300,7 @@ function showStep(name: Step, focus = true): void {
   for (const s of STEPS) {
     byId(`page-${s}`).hidden = s !== name;
     const tab = tabs.get(s)!;
-    if (s === name) tab.setAttribute("aria-current", "step");
+    if (s === name) { tab.setAttribute("aria-current", "step"); tab.scrollIntoView?.({ block: "nearest", inline: "nearest" }); } // in view when the bar scrolls (F20)
     else tab.removeAttribute("aria-current");
   }
   const i = STEPS.indexOf(name);

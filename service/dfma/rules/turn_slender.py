@@ -72,6 +72,6 @@ def passes(features: list[dict], part: dict, limits: dict) -> list[dict]:
         length = f["dims_mm"]["length"]
         out.append({"rule": ID, "feature": f["id"], "faces": f["faces"], "threshold_source": table["source"],
                     "title": f"Length {ratio:.1f}× {_what(stepped, d)}, at most {table['medium']:.1f}×",
-                    "math": f"{length / MM_PER_IN:.4f} in long ÷ {d / MM_PER_IN:.4f} in "
+                    "math": f"{length / MM_PER_IN:.3f} in long ÷ {d / MM_PER_IN:.3f} in "
                             f"{'smallest ' if stepped else ''}diameter = {ratio:.2f}× ≤ {table['medium']:.1f}×"})
     return out

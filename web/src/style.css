@@ -171,7 +171,7 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 }
 @media (max-width: 500px) {
   /* audit F20: the five steps scroll in one row instead of wrapping into several */
-  .steps { flex: 1 1 100%; flex-wrap: nowrap; overflow-x: auto; }
+  .steps { flex: 1 1 100%; flex-wrap: nowrap; overflow-x: auto; padding: 6px; margin: -6px; } /* room for the focus ring */
   /* audit F5: a cost driver's label on its own row, count × weight and score under it */
   .driver { grid-template-columns: 1fr auto; }
   .driver > b { grid-column: 1 / -1; }

@@ -33,7 +33,7 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
         r_in = dims["radius"] / MM_PER_IN
         base = {"rule": ID, "faces": f["faces"], "feature": f["id"], "threshold_source": table["source"]}
         if dims["radius"] <= SHARP_MM:
-            out.append({**base, "severity": "high", "title": "Sharp inside corner: needs EDM or a corner radius",
+            out.append({**base, "severity": "high", "title": "Sharp inside corner: needs EDM (spark erosion) or a corner radius",
                         "measured": 0.0, "limit": min_in, "unit": "in", "suggestion": SUGGEST_SHARP})
             continue
         reasons = []  # (title part, measured, limit, unit, suggestion), radius reason first
