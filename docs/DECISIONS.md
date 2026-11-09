@@ -335,3 +335,21 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - Report step: what the PDF holds, the rules run (off the verdict line, which goes), the assumptions, Export PDF.
   - Side panel 460 px at 1280 px; the panel moves under the model at 900 px and below. Errors show in the start form. Look unchanged (Drawing office).
 - **Why:** Morgan, 2026-11-09: the UI was "increasingly convoluted and complicated with too much description and unclear labeling". Measured on report_sample.step: 1 of 8 findings in view, 910 words with every panel open, the same sentence 4 times, a 7-entry legend. Research (DFM tools, BIM issue trackers, NN/g, IBM Carbon) and three mock-up rounds: [round 1](https://claude.ai/artifact/3WKMC2icNNuE9i9scBLT3n), [round 2](https://claude.ai/artifact/PZbfjpJcG6jLqFR1CWShpM), [round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8). Answers and sources: `docs/research/ui-direction/README.md`; frames: `mockups/ui-direction/round3-frames.html`.
+
+## D-043 I3 S3: Fillets and chamfers panel and PDF section
+
+- **Status:** Accepted (2026-11-09; Morgan, in chat after the [mock-up](https://claude.ai/artifact/9AedyRhGSNr5Md5Pzj9VxZ): "Approved").
+- **Decision:** a fold-away "Fillets and chamfers" panel after Hole features, hidden without an `.ipt` (`mockups/blends-panel.html`). One row per blend in feature-id order: state (matched / disagrees / not mapped, in text and colour), `Fillet · R<size>` or `Chamfer · <d1> × <d2>, <angle>°` (inches first, mm in brackets), its id, "n of m faces found in the STEP", "copied by n pattern or mirror features" when copied (kind not named, D-039). Tapping a row selects its STEP faces. The panel opens when a blend disagrees or isn't mapped. A fillet radius gap is a medium "fillet vs face" finding; chamfers are checked by place only. The PDF gets a "Fillets and chamfers" section after Hole features, one line per blend, with "finding F<n>" as on screen. The wording in the mock-up is approved with it.
+- **Why:** the same pattern as Threads (D-036) and Hole features (D-040); measured on NIST (spec S3 "Settled at build").
+
+## D-044 Mock-ups in the new design now; demos after it is built
+
+- **Status:** Accepted (2026-11-09; Morgan: "can you show mockups and demos in the new UI design from now on please", then, told D-042 isn't built: "go with recommended here").
+- **Decision:** from now on every mock-up is drawn in the D-042 step-by-step design (round 3 frames, `mockups/ui-direction/`). S3 finishes on today's screen (tests and PDF) with no new demo; the D-042 build is specced (`write-spec`) and built next, and every demo after it is built from the new screen (D-009 unchanged: demos come from the real code).
+- **Why:** demos must show what the app really does (D-009), and the new design exists only as approved mock-ups; S3's panel is already built and its PDF section doesn't depend on the screen.
+
+## D-045 Review-in-steps spec approved
+
+- **Status:** Accepted (2026-11-09; Morgan, on the approval question: "Approved, start building").
+- **Decision:** build the D-042 screen from `docs/specs/review-steps.md` in three slices (S1 steps, overview, Cost total, Report, Fix / Review words; S2 grouped Features rows and Show OK switches; S3 Machining with issues per setup). Row wording, grouping and limit-source text live in one service module, `service/dfma/rows.py`, with the short titles and check names in the spec's Design "Rows" table; rule cases other than sharp corner, hole depth, drill size and pocket depth keep today's titles as their sentences until plainer ones are shown to Morgan. The step is in the address (`#part` … `#report`). The cost total is computed in the service and labelled a score. The build cuts from main; whichever of it and PR #27 merges second brings the other in and places Fillets and chamfers as a Features group.
+- **Why:** D-042 approved the screen; the spec passed paraphrase, critic and zero-decision checks with two fix passes and a final zero-decision pass (LESSONS "spec").
