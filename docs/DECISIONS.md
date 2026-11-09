@@ -309,3 +309,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - One PR, merged only after Morgan's hand check of one work pair in Inventor (work pairs owed from 2026-11-12, D-035).
   - Copies show as "copied by n pattern or mirror features"; the kind is not named.
 - **Why:** measured on the 16 NIST files (docs/research/inventor-i2-probe): face tags give Hole features, copies and blends; type and diameter 73/73 against the key; 6 fresh checks found no open decision left beyond these five.
+
+## D-040 I2 S1: Hole features panel and PDF section
+
+- **Status:** Accepted (2026-11-09; Morgan, in chat after the [mock-up](https://claude.ai/artifact/BRpP8rxBEi2U1nwX8piYHT): "Approved with your recommendation").
+- **Decision:** a fold-away "Hole features" panel after Threads, hidden without an `.ipt` (`mockups/hole-features-panel.html`). One row per Hole feature in id order: state (matched / disagrees / not mapped, in text and colour), `<type> · <n> holes`, its id, its sizes as designed (inches first, mm in brackets), and its hole counts per state. Tapping a feature selects all its mapped STEP holes and unfolds the list of its holes and the rows of holes that disagree or aren't mapped; tapping a hole row selects that hole alone. The panel opens when any hole disagrees or isn't mapped, else it is folded. The PDF's summary page gets a "Hole features" section after Threads, one line per feature, with its findings and any not-mapped reason. Rule label "Hole feature vs hole". The wording in the mock-up is approved with it.
+- **Why:** 54 holes under 9 features would bury the Machine plan; the features fold their holes, and a disagreeing hole is also a finding, so folding can't hide it.

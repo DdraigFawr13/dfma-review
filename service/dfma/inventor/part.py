@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .. import settings
 from ..errors import ReadError
-from . import ole, sab, threads as th
+from . import holes as hl, ole, sab, tags as tg, threads as th
 
 PLAIN_PART = "4D29B490-49B2-11D0-93C3-7E0706000000"  # Design Tracking property 31 of 13 NIST files
 SHEET_METAL = "9C464203-9BAE-11D3-8BAD-0060B0CE6BB4"  # CTC 03, FTC 09 2021 and 2024
@@ -30,6 +30,7 @@ class IptPart:
     corners_mm: list[tuple[float, float, float]]  # the point of each vertex record of the main model
     face_count: int
     threads: list = field(default_factory=list)  # S2: threads.Thread, in record order
+    hole_features: list = field(default_factory=list)  # I2 S1: holes.HoleFeature, by feature id
 
 
 def _text(v) -> str | None:
@@ -118,4 +119,4 @@ def read_ipt(path: str | Path, stream_cap: int | None = None) -> IptPart:
             pass
     return IptPart(saved_with=_text(props.get(67)) or "unknown", acis_version=version, subtype=sub,
                    model_state_names=states, solid_bodies=_bodies(recs), corners_mm=corners, face_count=n_faces,
-                   threads=th.read_threads(recs))
+                   threads=th.read_threads(recs), hole_features=hl.read_hole_features(recs, tg.feature_tags(recs)))

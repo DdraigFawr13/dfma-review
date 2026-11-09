@@ -1,0 +1,116 @@
+# I2 S1: Hole features per NIST .ipt, measured 2026-11-09 with service/dfma/inventor/holes.py (spec I2+I3 J2, J3).
+# [file.<ipt>]: Hole features read and their holes (copies included); [pair.<ipt>]: holes per state on the NIST
+# pair the test harness lines up (tests/inventor/nist_pair.py), and the hole_mismatch findings it gives.
+
+[file."INV_nist_ctc_01_asme1_2021.ipt"]
+features = 7
+holes = 10
+
+[file."INV_nist_ctc_02_asme1_2021.ipt"]
+features = 28
+holes = 52
+
+[file."INV_nist_ctc_03_asme1_2021.ipt"]
+features = 4
+holes = 9
+
+[file."INV_nist_ctc_04_asme1_2021.ipt"]
+features = 9
+holes = 54
+
+[file."INV_nist_ctc_05_asme1_2021.ipt"]
+features = 5
+holes = 21
+
+[file."INV_nist_ftc_06_asme1_2021.ipt"]
+features = 9
+holes = 18
+
+[file."INV_nist_ftc_06_asme1_2024.ipt"]
+features = 4
+holes = 12
+
+[file."INV_nist_ftc_07_asme1_2021.ipt"]
+features = 0
+holes = 0
+
+[file."INV_nist_ftc_07_asme1_2024.ipt"]
+features = 3
+holes = 12
+
+[file."INV_nist_ftc_08_asme1_2021.ipt"]
+features = 1
+holes = 4
+
+[file."INV_nist_ftc_08_asme1_2024.ipt"]
+features = 0
+holes = 0
+
+[file."INV_nist_ftc_09_asme1_2021.ipt"]
+features = 1
+holes = 4
+
+[file."INV_nist_ftc_09_asme1_2024.ipt"]
+features = 1
+holes = 4
+
+[file."INV_nist_ftc_10_asme1_2021.ipt"]
+features = 11
+holes = 35
+
+[file."INV_nist_ftc_10_asme1_2024.ipt"]
+features = 9
+holes = 24
+
+[file."INV_nist_ftc_11_asme1_2021.ipt"]
+features = 0
+holes = 0
+
+[pair."INV_nist_ctc_01_asme1_2021.ipt"]
+step = "nist_ctc_01_asme1_ap242-e1.stp"
+matched = 10
+disagrees = 0
+not_mapped = 0
+findings = 0
+
+[pair."INV_nist_ctc_02_asme1_2021.ipt"]
+step = "nist_ctc_02_asme1_ap242-e2.stp"
+matched = 42
+disagrees = 6
+not_mapped = 4
+findings = 6
+
+[pair."INV_nist_ctc_04_asme1_2021.ipt"]
+step = "nist_ctc_04_asme1_ap242-e1.stp"
+matched = 40
+disagrees = 13
+not_mapped = 1
+findings = 13
+
+[pair."INV_nist_ctc_05_asme1_2021.ipt"]
+step = "nist_ctc_05_asme1_ap242-e1.stp"
+matched = 10
+disagrees = 11
+not_mapped = 0
+findings = 11
+
+[pair."INV_nist_ftc_08_asme1_2021.ipt"]
+step = "nist_ftc_08_asme1_ap242-e2.stp"
+matched = 0
+disagrees = 4
+not_mapped = 0
+findings = 4
+
+[pair."INV_nist_ftc_10_asme1_2021.ipt"]
+step = "nist_ftc_10_asme1_ap242-e2.stp"
+matched = 31
+disagrees = 4
+not_mapped = 0
+findings = 4
+
+[pair."INV_nist_ftc_10_asme1_2024.ipt"]
+step = "nist_stc_10_asme1_ap242-e2.stp"
+matched = 17
+disagrees = 7
+not_mapped = 0
+findings = 6

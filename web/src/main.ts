@@ -2,7 +2,7 @@
 // changes while a file is loaded. No submit button (spec S1, settled at build).
 
 import { analyze, ApiError, type Analysis, type Material, type Process } from "./api";
-import { collapsePassed, renderDrivers, renderFindings, renderPlan, renderThreads, renderVerdict, type Pick } from "./findings";
+import { collapsePassed, renderDrivers, renderFindings, renderHoleFeatures, renderPlan, renderThreads, renderVerdict, type Pick } from "./findings";
 import { formatSize } from "./format";
 import { buildReport, reportName } from "./report";
 import { Viewer, type CheckedKind } from "./viewer";
@@ -103,6 +103,13 @@ function stillThere(result: Analysis, id: string | null): Pick | null {
     const hole = t?.hole ? result.features.find((x) => x.id === t.hole) : undefined;
     return hole ? { id, faces: hole.faces } : null;
   }
+  if (id.startsWith("hf:") || id.startsWith("hfh:")) { // I2 S1 (D-040): a feature's holes, or one hole
+    const feats = result.inventor?.hole_features ?? [];
+    const holes = id.startsWith("hf:") ? feats.find((f) => `hf:${f.id}` === id)?.holes ?? []
+      : feats.flatMap((f) => f.holes).filter((h) => `hfh:${h.id}` === id);
+    const faces = [...new Set(holes.flatMap((h) => result.features.find((x) => x.id === h.hole)?.faces ?? []))];
+    return faces.length ? { id, faces } : null;
+  }
   if (id.startsWith("setup:")) {
     const s = result.setups[Number(id.slice(6))];
     const i = Number(id.slice(6));
@@ -133,6 +140,11 @@ function showFindings(result: Analysis | null, message: string): void {
   byId("threads").scrollTop = keepThreads;
   threadsBox.hidden = !result?.inventor;
   byId("threads-count").textContent = result?.inventor ? String(result.inventor.threads?.length ?? 0) : "";
+  const keepHoles = byId("hole-features").scrollTop;
+  renderHoleFeatures(byId("hole-features"), result, select, selected); // I2 S1 (D-040)
+  byId("hole-features").scrollTop = keepHoles;
+  byId("hole-features-panel").hidden = !result?.inventor;
+  byId("hole-features-count").textContent = result?.inventor ? String(result.inventor.hole_features?.length ?? 0) : "";
   renderDrivers(byId("drivers"), result);
   byId("drivers-panel").hidden = !result;
   byId("drivers-count").textContent = result ? `${result.cost_drivers.length}` : "";
@@ -184,6 +196,8 @@ async function analyse(): Promise<void> {
       collapsePassed();
       // D-036: the Threads panel opens when a new part's .ipt has threads; after that it stays as the reader left it
       byId<HTMLDetailsElement>("threads-panel").open = (result.inventor?.threads?.length ?? 0) > 0;
+      // D-040: the Hole features panel opens when a hole disagrees or isn't mapped
+      byId<HTMLDetailsElement>("hole-features-panel").open = (result.inventor?.hole_features ?? []).some((f) => f.state !== "matched");
     }
     const keep = samePart ? stillThere(result, selected) : null; // a finding, passed feature or setup
     selected = keep?.id ?? null;

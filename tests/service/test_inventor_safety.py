@@ -68,3 +68,94 @@ def test_not_an_ipt(client, tmp_path):
     p.write_text("not a compound file")
     r = post(client, p)
     assert (r.status_code, r.json()) == (422, {"error": settings.MSG_IPT_NOT_IPT})
+
+
+# --- I2 S1 J7: hostile feature tags and topology (tests/inventor/hostile.py) ---
+
+CTC04 = INV / "INV_nist_ctc_04_asme1_2021.ipt"
+
+
+def _summary(feats) -> dict:
+    return {f.feature_id: (f.type, round(f.diameter_mm or 0, 4), len(f.holes), f.reason) for f in feats}
+
+
+def _read_changed(tmp_path, change):
+    from dfma.inventor import read_ipt
+    p = tmp_path / "part.ipt"
+    shutil.copyfile(CTC04, p)
+    rewrite_ipt_models(p, change)
+    return read_ipt(p)
+
+
+def _owner_feature() -> tuple[int, int, int]:
+    """(tag number, face, feature id) of CTC 04's first hole tag on a hole's own face, from the clean file."""
+    import zlib
+
+    import olefile
+
+    from inventor import hostile
+    best = None  # the stream whose model has the most faces, as read_ipt picks it
+    with olefile.OleFileIO(str(CTC04)) as f:
+        for e in f.listdir(streams=True, storages=False):
+            raw = f.openstream(e).read()
+            k = raw.find(b"x^")
+            if "/".join(e).startswith("RSeStorage/B") and k >= 0:
+                d = zlib.decompressobj().decompress(raw[k:])
+                m = hostile.main_model(d)
+                n_faces = sum(1 for r in m[1] if r["name"] == "face") if m else 0
+                if best is None or n_faces > best[0]:
+                    best = (n_faces, d, m)
+    from dfma.inventor import read_ipt
+    _, d, m = best
+    feats = read_ipt(CTC04).hole_features
+    for n in range(len(hostile.hole_tags(d, m[1]))):
+        face = hostile.owner_face(d, n)
+        fid = next((x.feature_id for x in feats for h in x.holes if face in h.faces), None)
+        if fid is not None:
+            return n, face, fid
+    raise AssertionError("no hole tag")
+
+
+@pytest.mark.parametrize("kind", ["no_end", "long_list", "owner_off"])
+def test_bad_tags(tmp_path, kind):
+    """A bad tag is dropped, never a refusal: its face leaves its feature and every other feature reads as before."""
+    from dfma.inventor import read_ipt
+    from inventor import hostile
+    clean = _summary(read_ipt(CTC04).hole_features)
+    n, face, fid = _owner_feature()
+    feats = _read_changed(tmp_path, lambda d: getattr(hostile, kind)(d, n)).hole_features
+    got = _summary(feats)
+    assert {k: v for k, v in got.items() if k != fid} == {k: v for k, v in clean.items() if k != fid}
+    assert all(face not in h.faces for f in feats for h in f.holes)
+
+
+def test_cycling_loop(tmp_path):
+    """A coedge ring that never closes stops after topo.MAX_STEPS steps; that hole is not mapped with the reason
+    `feature data not understood`, and the other features read as before."""
+    from dfma.inventor import map_holes, read_ipt
+    from inventor import hostile
+    clean = _summary(read_ipt(CTC04).hole_features)
+    _, face, fid = _owner_feature()
+    feats = _read_changed(tmp_path, lambda d: hostile.cycle(d, face)).hole_features
+    got = _summary(feats)
+    assert {k: v for k, v in got.items() if k != fid} == {k: v for k, v in clean.items() if k != fid}
+    [bad] = [h for f in feats for h in f.holes if face in h.faces]
+    assert bad.reason == settings.MSG_FEATURE_BAD
+    rows = [h for f in map_holes(feats, [], []) for h in f["holes"] if h["reason"] == settings.MSG_FEATURE_BAD]
+    assert len(rows) == 1 and rows[0]["state"] == "not_mapped"
+
+
+def test_caps():
+    """The caps themselves (spec Builder defaults): 64 pairs per tag, MAX_STEPS per loop or coedge ring."""
+    from dfma.inventor import sab, tags, topo
+    assert tags.pair_ids([1, 5] * 64 + [-1]) == [5] * 64
+    assert tags.pair_ids([1, 5] * 65 + [-1]) is None
+    assert tags.pair_ids([1, 5, 1, 6]) is None  # no -1
+    # face -> loop -> coedge whose next is itself, but never the first: built records
+    recs = [sab.Record("face", [("p", -1), ("p", -1), ("p", -1), ("p", 1)]),
+            sab.Record("loop", [("p", -1), ("p", -1), ("p", -1), ("p", 2), ("p", 0)]),
+            sab.Record("coedge", [("p", -1), ("p", -1), ("p", 3)]),
+            sab.Record("coedge", [("p", -1), ("p", -1), ("p", 3)])]
+    with pytest.raises(topo.TopologyError):
+        topo.face_points(recs, 0)
+    assert topo.MAX_STEPS == 10_000
