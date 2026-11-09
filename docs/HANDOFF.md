@@ -25,7 +25,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 ## Just done
 
 - 2026-11-09 opencascade.js trial (Morgan: run "on Gitlab pages completely"): the fork reads all 33 NIST files the same as the app, 8,137 of 8,137 faces, in Node and Chromium; recognizer engine calls identical except 214 meshed faces; 512 of 512 `.ipt` streams. `spikes/ocjs/README.md`, D-054. [Status](https://claude.ai/artifact/Xi214RHUBM5P85dq69PbE9).
-- 2026-11-09 Audit fixes approved by Morgan ("Approved, merge when ready") and merged in #32 (D-053): all 34 findings, Outcome lines in the report; tests: tests/service/test_audit_wording.py, web/src/audit.test.ts, tests/e2e/test_audit_2026_11_09.py, each failing on main first. Fresh review: 30 of 34 fixed outright, its points fixed in 92b43fc. Pin root cause: pins placed before their font loaded. `check.py`: 926 service, 26 web, 78 browser, all passed (an earlier run under load had ctc_02 at 10.7 s, alone 8.35 s; limit unchanged). [Status](https://claude.ai/artifact/QnW3crMaHcEUYYxYTrWLf3), [demo](https://claude.ai/artifact/2tpN1GTLdC5xnxL5hRenVH), [PR #32](https://github.com/DdraigFawr13/dfma-review/pull/32) 
+- 2026-11-09 Audit fixes approved by Morgan ("Approved, merge when ready") and merged in #32 (D-053): all 34 findings; `check.py` 926 service, 26 web, 78 browser passed. [PR #32](https://github.com/DdraigFawr13/dfma-review/pull/32); full entry in the archive.
 
 ## Next
 
