@@ -95,7 +95,7 @@ a { color: var(--accent); }
       <p>Facts: counts, sizes, setups, tools and drivers match the app; status and error lines are the app's own; "Assumptions (8)" is the count the app shows for this part. Which issue sits in which setup is an inference, labelled.</p>
       <p>Fixes after the fresh check: every row keeps its limit source (estimate, or the drill list within 0.0005 in); sharp corners keep the EDM option; the PDF list adds the threads section and the assumptions page; Passed drawn closed (D-023); Machining gets the brief why (D-023) and the tool-load note; no colour-only pins on Cost and Report; ticks on the Show OK switches; one status line while reading. Newly named as proposals: the spinner, the error inside the form, the 460 px panel and stacking at 900 px, Fix / Review in the PDF.</p>
       <p>Left as is: this approval page loads IBM Plex from Google Fonts (a review page, not the app; the frames use the app's own font files).</p>
-      <p>Lint: 0 warnings (frames and page, minimum 14 px). Frames at 1280 and 900 px. Fresh check: 1 reviewer, 66,215 tokens.</p>
+      <p>Lint: 0 warnings (frames and page, minimum 14 px). Frames at 1280 and 900 px. Fresh check: 1 reviewer, 66,215 tokens. After approval: total score 14.0 added to Cost (sum of the 7 driver scores; the app has no total yet).</p>
     </div>
   </details>
 </main>
@@ -115,7 +115,7 @@ const SECTIONS = [
   { h: "3 · Machining", items: [
     { pic: "r3-mach", cap: "Setups with their operations and, under each, the issues it holds. Setup chips on the model pick one and show its features; \"Why 2\" gives the brief why (D-023). Which issue sits in which setup is my reading; the app doesn't link them yet." } ] },
   { h: "4 · Cost and 5 · Report", items: [
-    { pic: "r3-cost", cap: "Cost drivers, count × weight, with the findings that feed each one. Weights are estimates; no time or dollars yet." },
+    { pic: "r3-cost", cap: "Cost drivers, count × weight, with the findings that feed each one, and the total score (added after your round 3 note). Weights are estimates; no time or dollars yet." },
     { pic: "r3-report", cap: "Report: what the PDF holds, the rules run (moved off the verdict line), the assumptions, and Export PDF." } ] },
   { h: "900 px", items: [
     { pic: "r3-overview-900", cap: "At 900 px the panel moves under the model. Today it stacks only below 900 px; the side panel also grows from 400 to 460 px at 1280 for the sentences. Both are proposals." },

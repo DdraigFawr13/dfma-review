@@ -18,6 +18,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ○ Assemblies and DFA · history and compare · time and $.
 - ▶ Inventor parts (Morgan, 2026-11-08): read `.ipt` files and their feature data; learn the conversion from NIST parts that come as both native and STEP, plus other online sources, and test it. CONCEPT allows it once STEP works. ✔ research ([page](https://claude.ai/artifact/94JciyGLeYsorjas1XCyUw): NIST has 16 `.ipt`) · ✔ route: own reader (D-031) · ✔ thread spike · ✔ round 1 · ✔ [review](https://claude.ai/artifact/JKC9dFPSgWqzhpq65qzArK) · ✔ approval (D-032) · ✔ spec I1 (D-033) · ✔ build I1 (✔ S1 pair upload and checks, #21 · ✔ S2 threads, #22 · ✔ S3 names time box: key built, decode moved to I2) · ✔ S3 merged in #23 (D-038) · ▶ spec I2+I3 (new branch) · ○ build I2 hole features and names · ○ I3 fillets and chamfers.
 - ○ Inventor shape from the `.ipt` alone (D-035; after I1).
+- ✔ UI direction: research and 3 mock-up rounds, approved (D-041, #25) · ○ build the step-by-step review screen: `write-spec` after I2+I3 merges ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
@@ -45,6 +46,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-09 D-041: review screen redesign approved (steps Part · Features · Machining · Cost · Report, overview after reading, Fix / Review, plain-sentence rows, Show OK per kind, cost total); not built. Found on that branch: `test_nist` ctc_02 took 10.5 s and 11.1 s (limit 10 s) in 2 of 3 full runs in a cloud container under load, 9.19 s alone; limit unchanged (VER-04).
 - 2026-11-09 D-038: S3 merges now (#23); I2+I3 on a new branch with its own PR.
 - 2026-11-09 D-037: S3, I2 and I3 on branch `inventor-i1-s3`, one PR, merged together after Morgan's approval; one combined I2+I3 spec first. Morgan allowed the InventorLoader run (scratch, output only).
 - 2026-11-08 D-035: finish I1 with the pair, then plan shape-from-`.ipt` as its own phase; S1 goes on without the work pair (`check_pair` provisional); don't ask for the pair before 2026-11-12.

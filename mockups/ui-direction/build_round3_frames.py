@@ -138,6 +138,7 @@ COST = """<div class="panel" style="display:flex;flex-direction:column;min-heigh
   <div class="driver"><b>Setups beyond the first</b><span class="num muted">1 × 1.0</span><span class="num">1.0</span></div>
   <div class="driver"><b>Non-standard holes</b><span class="num muted">1 × 1.0</span><span class="num">1.0</span><span class="f num">F3</span></div>
   <div class="driver"><b>Undersized or sub-1/8 in tools</b><span class="num muted">1 × 1.0</span><span class="num">1.0</span></div>
+  <div class="driver" style="background:var(--bg);border-bottom:2px solid var(--ink)"><b>Total score</b><span></span><span class="num" style="font-weight:700">14.0</span></div>
   <p class="muted" style="margin:0;padding:12px 14px;font-size:.875rem">Score is count × weight. Every weight is an estimate. No time or dollars yet.</p>
   <div style="margin-top:auto;display:flex;justify-content:space-between;padding:12px;border-top:1px solid var(--line)"><span class="btn ghost">‹ Machining</span><span class="btn">Report ›</span></div>
 </div>"""
