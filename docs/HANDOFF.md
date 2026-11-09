@@ -4,7 +4,7 @@ Updated: 2026-11-09. A fresh session must be able to continue from this file alo
 
 ## Phase
 
-Build. First usable version: S1 to S7 merged (#3 to #18). Inventor parts phase: plan (D-031, D-032), I1 spec (D-033, [docs/specs/inventor-i1-threads.md](specs/inventor-i1-threads.md)), I1 S1 (#21), S2 (#22) and S3 (#23, D-038) merged. Now: the combined I2+I3 spec on branch `inventor-i2-i3` (draft #24). History and full entries: [docs/archive/handoff-2026-11.md](archive/handoff-2026-11.md) (grep it; "Moved 2026-11-09" holds the long entries cut from here).
+Build. First usable version: S1 to S7 merged (#3 to #18). Inventor parts phase: plan (D-031, D-032), I1 spec (D-033, [docs/specs/inventor-i1-threads.md](specs/inventor-i1-threads.md)), I1 S1 (#21), S2 (#22) and S3 (#23, D-038) merged. I2+I3 spec approved (D-039); I2 S1 hole features merged in #24 (D-041). Now: I2 S2 names and copies on a new branch `inventor-i2-s2`. History and full entries: [docs/archive/handoff-2026-11.md](archive/handoff-2026-11.md) (grep it; "Moved 2026-11-09" holds the long entries cut from here).
 
 ## Plan map
 
@@ -16,19 +16,19 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ✔ Spec the first usable version (D-007, 6 fresh checks, $1.49).
 - ✔ Build slice by slice: S1 to S7, grading spike, recognition rounds, stress-test, undercut and turning sets (#3 to #18).
 - ○ Assemblies and DFA · history and compare · time and $.
-- ▶ Inventor parts (Morgan, 2026-11-08): ✔ research · ✔ own reader (D-031) · ✔ plan (D-032) · ✔ spec I1 (D-033) · ✔ I1 S1 #21, S2 #22, S3 #23 · ▶ spec I2+I3 (`inventor-i2-i3`, #24) · ○ build I2 hole features and names · ○ I3 fillets and chamfers.
+- ▶ Inventor parts (Morgan, 2026-11-08): ✔ research · ✔ own reader (D-031) · ✔ plan (D-032) · ✔ spec I1 (D-033) · ✔ I1 S1 #21, S2 #22, S3 #23 · ✔ spec I2+I3 (D-039) · ✔ I2 S1 hole features #24 (D-041) · ▶ S2 names and copies (new branch) · ○ S3 fillets and chamfers (merge after Morgan's work-pair check).
 - ○ Inventor shape from the `.ipt` alone (D-035; after I1).
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
 
 - 2026-11-09 Harness upgraded to AI-Master-Instructions `v4.12.0`, merged as #26 (Morgan approved: "Approved"; master D-066, from the master's review of this project): new REP-05; session start lists unmerged branches and an over-cap HANDOFF; `ui-mockups` now does D-024's fit-width tap-to-zoom (`add-zoom.mjs`); `docs/harness/drift/` keeps guard counts. This HANDOFF cut to the cap.
-- 2026-11-09 S3 merged in #23 (D-038); I2+I3 spec started on `inventor-i2-i3`. Names: start from `docs/research/inventor-names-probe/README.md`; per-face `NMx_Hole_Brep_tag` and `NMx_blend_tag` carry a feature id (archive, "Moved 2026-11-09").
+- 2026-11-09 I2 S1 (hole features) approved by Morgan ("Ok approved") and merged in #24 (D-041): `check.py` all passed (745 service, 36 browser); 85 Holes keyed by position, type and diameter 85/85, depth 43/43. [Status page](https://claude.ai/artifact/5yW8LBj6ZjYb3aA4v3zFy6), [demo](https://claude.ai/artifact/WSwfP6u74iVZ3Rpa5jUNp5). Full entry, fresh-review leftovers: archive "Moved 2026-11-09".
 
 ## Next
 
-0. Now: the combined I2+I3 spec with `write-spec` on `inventor-i2-i3` (D-038), for Morgan's approval; then build it there and PR.
-1. Owed from 2026-11-12 (D-035): one of Morgan's work pairs by Drive share into `tests/inventor/.local/<pair>/`, then `python tests/inventor/local_pairs.py`; counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
+0. Now: I2 S2 (names and copies) in a new session on a new branch `inventor-i2-s2` from main (D-041; S3 joins it); its PR merges only after Morgan's hand check of one work pair (from 2026-11-12). Start with the zero-decision re-check of spec S2 against merged main. Then S3 fillets and chamfers (mock-up first).
+1. Owed from 2026-11-12 (D-035): one of Morgan's work pairs by Drive share into `tests/inventor/.local/<pair>/`, then `python tests/inventor/local_pairs.py` (now prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
 2. Recognition and stress-test status, scoring commands and the MFCAD++ download: archive "Moved 2026-11-09" (old Next 3 and 3a). Re-run them on every recognition change.
 3. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
 
@@ -41,5 +41,8 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-09 D-041: merge I2 S1 now (#24); S2 and S3 on a new branch, merged after the work-pair check.
+- 2026-11-09 D-040: Hole features panel and PDF section approved (mock-up).
+- 2026-11-09 D-039: I2+I3 spec approved; default names only; no fillet or chamfer names; blend disagreements are findings; one PR merged after the work-pair check; copies as "pattern or mirror".
 - 2026-11-09 D-038: S3 merges now (#23); I2+I3 on a new branch with its own PR.
 - D-001 to D-037: see `docs/DECISIONS.md` (`grep '^## D-'`).

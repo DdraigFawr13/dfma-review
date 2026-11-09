@@ -60,8 +60,8 @@ PAIRS = [
 # I1 S2: NIST pairs lined up by the test harness (tests/inventor/nist_pair.py), so their threads show. Their file
 # names get " (lined up)" in the demo, so the shim's key differs from the refused entry of the same files.
 HARNESS = [
-    ("nist_ctc_04_asme1_ap242-e1.stp", "INV_nist_ctc_04_asme1_2021.ipt", "I1 S2: 4 threads M12x1.75 - 6H, matched"),
-    ("nist_stc_10_asme1_ap242-e2.stp", "INV_nist_ftc_10_asme1_2024.ipt", "I1 S2: 6 threads, one 0.10 mm off its hole (a finding)"),
+    ("nist_ctc_04_asme1_ap242-e1.stp", "INV_nist_ctc_04_asme1_2021.ipt", "I1 S2 + I2 S1: 4 threads M12x1.75 - 6H, matched; 9 Hole features, 54 holes (13 disagree: NIST's two files differ)"),
+    ("nist_stc_10_asme1_ap242-e2.stp", "INV_nist_ftc_10_asme1_2024.ipt", "I1 S2 + I2 S1: 6 threads, one 0.10 mm off its hole (a finding); 9 Hole features, 24 holes"),
 ]
 LINED_UP = " (lined up)"
 

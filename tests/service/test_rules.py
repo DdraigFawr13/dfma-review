@@ -666,3 +666,74 @@ def test_thread_no_hole(monkeypatch, tmp_path):
     from inventor.built import thread
     result = _with_threads(monkeypatch, tmp_path, "box_through_hole", [thread((5.0, 5.0, 12.7), (0, 0, -1), 5.0)])
     assert result["inventor"]["threads"][0]["reason"] == "no hole on this thread's axis"
+
+
+def _with_holes(monkeypatch, tmp_path, step: str, feats, threads=()) -> dict:
+    """The app path with read_ipt patched to an IptPart built from the STEP plus Hole features (I2 S1)."""
+    import dfma.inventor
+    from inventor.built import ipt_from_step
+    part = ipt_from_step(PARTS / f"{step}.step", list(threads), feats)
+    monkeypatch.setattr(dfma.inventor, "read_ipt", lambda path: part)
+    return analyze(PARTS / f"{step}.step", f"{step}.step", ipt_path=tmp_path / "p.ipt", ipt_name="p.ipt")
+
+
+@pytest.mark.parametrize("case", ["axis", "diameter", "depth", "through", "centred"])
+def test_hole_mismatch(monkeypatch, tmp_path, case):
+    """I2 S1: built cases, each one medium finding with its gap; a centred hole on the same part gives none."""
+    from inventor.built import BOX_TOP, DOWN, DRILL_TOP, hole_feature
+    if case == "axis":  # 0.10 mm off the hole's axis
+        feats = [hole_feature((25.5, 12.7, 12.7), DOWN, 6.35, 12.7, through=True)]
+        step, gap, mm, text = "box_through_hole", "axis", 0.10, "0.004 in [0.10 mm] off the hole's axis"
+    elif case == "diameter":
+        feats = [hole_feature(BOX_TOP, DOWN, 6.6, 12.7, through=True)]
+        step, gap, mm, text = "box_through_hole", "diameter", 0.25, "Ø0.260 in [6.60 mm] in the .ipt, Ø0.250 in [6.35 mm] in the STEP"
+    elif case == "depth":  # a 20 mm blind hole where the STEP's is 25.4 mm
+        feats = [hole_feature(DRILL_TOP, DOWN, 6.35, 20.0, through=False, point_deg=118.0)]
+        step, gap, mm, text = "drill_point_hole", "depth", 5.4, ("the Ø0.250 in [6.35 mm] section is 0.787 in [20.00 mm] long in the .ipt, "
+                                                       "1.000 in [25.40 mm] in the STEP")
+    elif case == "through":  # blind in the .ipt, through in the STEP: the gap is their length difference
+        feats = [hole_feature(BOX_TOP, DOWN, 6.35, 10.0, through=False)]
+        step, gap, mm, text = "box_through_hole", "through", 2.7, "the .ipt hole is blind, the STEP hole is through"
+    else:
+        result = _with_holes(monkeypatch, tmp_path, "box_through_hole",
+                             [hole_feature(BOX_TOP, DOWN, 6.35, 12.7, through=True)])
+        [hf] = result["inventor"]["hole_features"]
+        assert (hf["state"], hf["holes"][0]["state"], hf["holes"][0]["hole"]) == ("matched", "matched", "hole-1")
+        assert next(f for f in result["features"] if f["id"] == "hole-1")["hole_feature"] == "hf-1"
+        assert [f for f in result["findings"] if f["rule"] == "hole_mismatch"] == []
+        return
+    result = _with_holes(monkeypatch, tmp_path, step, feats)
+    [hf] = result["inventor"]["hole_features"]
+    [h] = hf["holes"]
+    assert (hf["state"], h["state"], h["hole"], h["id"]) == ("disagrees", "disagrees", "hole-1", "hf-1.1")
+    [g] = h["gaps"]
+    assert (g["what"], g["text"]) == (gap, text) and g["mm"] == pytest.approx(mm, abs=1e-4)
+    [f] = [f for f in result["findings"] if f["rule"] == "hole_mismatch"]
+    assert f["severity"] == "medium" and f["feature"] == "hole-1" and f["unit"] == "in"
+    assert f["measured"] == pytest.approx(mm / 25.4, abs=1e-6)
+    assert f["limit"] == pytest.approx(0.01 / 25.4, abs=1e-6)
+    assert f["title"] == (f"Hole feature hf-1 hole on hole-1: {text}. Possible cause: the part or an old STEP "
+                          "export differs from the .ipt")
+    assert f["threshold_source"] == "D-032: the .ipt and STEP must agree"
+    assert f["suggestion"] == "Export the STEP again from this .ipt, or check this Hole feature in Inventor."
+    assert f["id"] == f"F{len(result['findings'])}"  # last in RULES: the other findings keep their numbers
+
+
+def test_hole_mismatch_after_thread(monkeypatch, tmp_path):
+    """A STEP hole with a thread_mismatch finding gets no hole_mismatch one; the hole keeps its gaps."""
+    from inventor.built import DOWN, hole_feature, thread
+    off = (25.5, 12.7, 12.7)
+    result = _with_holes(monkeypatch, tmp_path, "box_through_hole",
+                         [hole_feature(off, DOWN, 6.35, 12.7, through=True)], [thread(off, DOWN, 10.0)])
+    assert [f["rule"] for f in result["findings"] if f["rule"].endswith("_mismatch")] == ["thread_mismatch"]
+    assert result["inventor"]["hole_features"][0]["holes"][0]["state"] == "disagrees"
+
+
+def test_hole_not_mapped(monkeypatch, tmp_path):
+    """Not mapped is our limit, never a finding (D-032)."""
+    from inventor.built import DOWN, hole_feature
+    result = _with_holes(monkeypatch, tmp_path, "box_through_hole",
+                         [hole_feature((5.0, 5.0, 12.7), DOWN, 6.35, 12.7, through=True)])
+    [h] = result["inventor"]["hole_features"][0]["holes"]
+    assert (h["state"], h["hole"], h["reason"]) == ("not_mapped", None, "no hole on this axis")
+    assert [f for f in result["findings"] if f["rule"] == "hole_mismatch"] == []
