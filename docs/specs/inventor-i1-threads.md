@@ -271,6 +271,15 @@ A fresh zero-decision re-check of S2 found 24 gaps (9 high, 11 medium, 4 low); n
 - **Files:** `service/dfma/inventor/names.py`, `threads.py`; `web/src/findings.ts`, `report.ts`; `tests/inventor/names_key.json`; `tests/service/test_inventor_names.py`.
 - **If the decode fails in the time box:** no names code ships; rows and PDF lines stay without a name; HANDOFF records what was tried, and names move to I2 (Open question 2).
 - **Waits on:** S2.
+- **Outcome (2026-11-09):** the key was built (`tests/inventor/names_key.json`, 16 threads: CTC 04 Hole8 ×4; FTC 10 2021 and 2024 Hole17, Hole9, Hole16 ×2 each), but the decode time box ended without a thread → name link, so no names code ships: `feature_name` stays `null` and rows and PDF lines show no name. Names move to I2 (D-033), built on the same branch (D-037). `tests/service/test_inventor_names.py` pins the key and the measured feature-id field. What was tried: `docs/research/inventor-names-probe/README.md`.
+
+### Builder defaults, S3 re-check (2026-11-09, against main 3804787)
+
+A fresh zero-decision re-check of S3 found 18 gaps (7 high, 8 medium, 3 low); each takes the default below; none needed Morgan. They apply when names are built (now I2).
+- `feature_name` per thread is a string or `null`; never guessed; an empty or blank decoded name is `null`; threads of one feature share its name.
+- On screen: the bare name (`Hole8`) as one more `fmeta` span on the thread row, after the size line, set with `textContent`; nothing when `null`. PDF: one more field after the callout, left out when `null`, so lines without names are unchanged. Not in finding titles or the Passed-row callout (this spec's S3 wording; D-033 amends D-032's "beside its finding").
+- Names are read through `ole.Ipt` under the same caps; every count, length and offset is bounds-checked; a name is at most 255 characters; bad data gives `null`, never a refusal.
+- The key is by `.ipt` name and covers CTC 04, FTC 10 2021 and 2024; files without threads get no entries. Fixtures are regenerated with `tests/inventor/make_fixture.py` once names fill in.
 
 ## Verification
 

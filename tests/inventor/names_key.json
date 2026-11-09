@@ -1,0 +1,48 @@
+{
+ "_source": {
+  "tool": "InventorLoader (GPL, run in a scratch FreeCAD env; output only, its source not read, D-031)",
+  "inventorloader": "1.5.1, commit e94bdf5 (2024-12-17)",
+  "freecad": "26.3.0 (conda-forge)",
+  "date": "2026-11-09",
+  "method": "import as feature model ('nativ'); each PartDesign::Hole's profile-sketch centres in model mm; a thread belongs to the Hole whose centre lies on the thread's axis (start + axis from read_ipt), parallel to the sketch normal. All 16 threads: 0.0000 mm from exactly one centre; the next nearest is 10.49 mm or more away (FTC 10; CTC 04 30.0 mm)."
+ },
+ "feature_ids": {
+  "INV_nist_ctc_04_asme1_2021.ipt": {
+   "2437": "Hole8"
+  },
+  "INV_nist_ftc_10_asme1_2021.ipt": {
+   "9337": "Hole17",
+   "1604": "Hole9",
+   "9190": "Hole16"
+  },
+  "INV_nist_ftc_10_asme1_2024.ipt": {
+   "9337": "Hole17",
+   "1604": "Hole9",
+   "9190": "Hole16"
+  }
+ },
+ "threads": {
+  "INV_nist_ctc_04_asme1_2021.ipt": {
+   "thread-1": "Hole8",
+   "thread-2": "Hole8",
+   "thread-3": "Hole8",
+   "thread-4": "Hole8"
+  },
+  "INV_nist_ftc_10_asme1_2021.ipt": {
+   "thread-1": "Hole17",
+   "thread-2": "Hole17",
+   "thread-3": "Hole9",
+   "thread-4": "Hole16",
+   "thread-5": "Hole9",
+   "thread-6": "Hole16"
+  },
+  "INV_nist_ftc_10_asme1_2024.ipt": {
+   "thread-1": "Hole17",
+   "thread-2": "Hole17",
+   "thread-3": "Hole9",
+   "thread-4": "Hole16",
+   "thread-5": "Hole9",
+   "thread-6": "Hole16"
+  }
+ }
+}

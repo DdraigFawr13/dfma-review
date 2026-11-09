@@ -51,6 +51,7 @@ Index page: https://www.nist.gov/ctl/smart-connected-systems-division/smart-conn
 - `NIST-FTC-CTC-PMI-CAD-models.zip` (https://www.nist.gov/document/nist-ftc-ctc-pmi-cad-models, 60,294,624 bytes, SHA-256 `17e14dbf207f447f16e0182a7eda5254ee19afff591dd409b8b510103dd05d10`): folders CATIA V5-6R2019, Creo 10, Creo 4, `Inventor 2021` (11 `.ipt`, CTC 01-05 and FTC 06-11), NX 1980, SolidWorks MBD 2018, plus geometry-only STEP in `CTC Definitions/` and `FTC Definitions/` ("STEP files of FTC model geometry, no PMI is included"). README: "this test system is not subject to copyright protection and is in the public domain".
 - `NIST-STC-PMI-v4.zip` (https://www.nist.gov/document/nist-stc-pmi-v4, 51,125,067 bytes, SHA-256 `bb4fb9939476542af6e90fd2616b4e897756916494a4c92f11404fc13dd1aba8`): `Inventor/` holds 5 `.ipt` for STC 06-10, named `INV_nist_ftc_0N_asme1_2024.ipt`. README: "the Inventor models were not" updated in v2, then (29 Aug 2023) "all of the Inventor models have been updated".
 - The 16 `.ipt` files total 13,755,904 bytes. Inside: OLE compound file, zlib streams, ACIS binary B-rep (`asmheader` 226.0.3 in 2021, 229.x in 2024), feature tree names (Hole, Extrusion, Fillet …). Research page: `docs/research/inventor.html`. HTC, MTC and D2MI zips have no Inventor files.
+- Feature-name answer key (2026-11-09): `tests/inventor/names_key.json`, the Hole feature of each of the 16 threads in CTC 04 and FTC 10 (2021, 2024), from InventorLoader's output (D-031).
 
 ## Checksums (SHA-256)
 
