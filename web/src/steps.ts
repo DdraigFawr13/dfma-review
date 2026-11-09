@@ -69,12 +69,16 @@ function machineName(machine: string): string {
 function card(step: Step, n: number, onOpen: (s: Step) => void): HTMLElement {
   const box = el("div", "card");
   box.dataset.testid = `overview-${step}`;
-  const open = el("button", "open", "Open ›");
+  const open = el("button", "open", `${n} · ${STEP_NAMES[step]} `); // the heading is the link (audit F24)
   open.type = "button";
   open.dataset.testid = `open-${step}`;
-  open.setAttribute("aria-label", `Open ${STEP_NAMES[step]}`);
+  const arrow = el("span", undefined, "›");
+  arrow.setAttribute("aria-hidden", "true");
+  open.append(arrow);
   open.addEventListener("click", () => onOpen(step));
-  box.append(el("h3", undefined, `${n} · ${STEP_NAMES[step]}`), open);
+  const head = el("h3");
+  head.append(open);
+  box.append(head);
   return box;
 }
 
@@ -201,8 +205,8 @@ function rowButton(r: Row, open: boolean, onRow: (r: Row) => void): HTMLButtonEl
   const b = el("button", `srow ${r.severity}`);
   b.type = "button";
   b.dataset.testid = `row-${r.id.replace(/^row:/, "")}`;
-  b.setAttribute("aria-pressed", String(open));
-  b.setAttribute("aria-expanded", String(open));
+  b.setAttribute("aria-expanded", String(open)); // one state: open or closed (audit F15)
+  if (open) b.setAttribute("aria-controls", detailId(r));
   const t = el("span", "t");
   t.append(el("b", `sev ${r.severity}`, sevWord(r.severity)), document.createTextNode(` ${rowTitle(r)}`));
   const mark = el("span", `mk ${r.severity}`, sevMark(r.severity));
@@ -212,10 +216,14 @@ function rowButton(r: Row, open: boolean, onRow: (r: Row) => void): HTMLButtonEl
   return b;
 }
 
+/** The id of a row's detail, for its button's aria-controls ("detail-F4"). */
+const detailId = (r: Row) => `detail-${r.id.replace(/^row:/, "").replace(/[^\w-]/g, "_")}`;
+
 /** The open finding row's detail: "‹ F4 · corner-1 · 1 of 4 ›", what was measured and the advice. */
 function findingDetail(r: Row, at: number, result: Analysis, h: RowHandlers): HTMLElement {
   const f = result.findings.find((x) => x.id === r.findings[at]) as Finding;
   const dl = el("dl", "more");
+  dl.id = detailId(r);
   dl.dataset.testid = "row-detail";
   const showing = el("dd", "num showing");
   const step = (text: string, label: string, testid: string, delta: number, off: boolean) => {
@@ -242,6 +250,7 @@ function findingDetail(r: Row, at: number, result: Analysis, h: RowHandlers): HT
 /** The open passed row's detail (D-023): each feature with the check it passed and the math; a feature selects alone. */
 function passedDetail(r: Row, state: RowState, result: Analysis, h: RowHandlers): HTMLElement {
   const box = el("div", "more passes");
+  box.id = detailId(r);
   box.dataset.testid = "row-detail";
   for (const fid of r.features) {
     const p = result.passed.find((x) => x.feature === fid && x.rule === r.rule);

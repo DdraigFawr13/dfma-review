@@ -42,7 +42,7 @@ def test_click_highlights_face(page: Page, base_url: str):
     target = page.evaluate("window.__dfma.cameraTarget()")
     centre = bbox_centre(result, finding["faces"])
     assert sum((a - b) ** 2 for a, b in zip(target, centre)) ** 0.5 <= 1.0
-    expect(row).to_have_attribute("aria-pressed", "true")
+    expect(row).to_have_attribute("aria-expanded", "true")
     # What is drawn: the finding's faces in the accent colour, every other face faded to 0.35.
     assert page.evaluate("window.__dfma.paintedFaces()") == sorted(finding["faces"])
     opacity = page.evaluate("window.__dfma.opacities()")

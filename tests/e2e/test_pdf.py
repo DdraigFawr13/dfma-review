@@ -44,7 +44,7 @@ def test_export_pdf(page: Page, base_url: str, tmp_path):
     assert page.evaluate("window.__dfma.highlightedFaces()") == sorted(
         {i for f in result["findings"] if f["id"] in row["findings"] for i in f["faces"]})
     assert page.evaluate("window.__dfma.cameraTarget()") == camera
-    expect(page.get_by_test_id("row-F1")).to_have_attribute("aria-pressed", "true")
+    expect(page.get_by_test_id("row-F1")).to_have_attribute("aria-expanded", "true")
     expect(page.get_by_test_id("row-detail")).to_contain_text("F2 · hole-2 · 2 of 2")
 
     pdf = PdfReader(path)

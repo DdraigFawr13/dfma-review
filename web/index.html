@@ -12,11 +12,12 @@
     <header class="top">
       <h1>DFMA Review</h1>
       <nav class="steps" id="steps" aria-label="Review steps">
+        <span class="sr-only" id="steps-why">Read a STEP file to open steps 2 to 5.</span>
         <button type="button" class="step" data-step="part" data-testid="step-part"><span class="n">1</span>Part</button>
-        <button type="button" class="step" data-step="features" data-testid="step-features" disabled><span class="n">2</span>Features <span class="c" id="step-counts" aria-hidden="true"></span></button>
-        <button type="button" class="step" data-step="machining" data-testid="step-machining" disabled><span class="n">3</span>Machining</button>
-        <button type="button" class="step" data-step="cost" data-testid="step-cost" disabled><span class="n">4</span>Cost</button>
-        <button type="button" class="step" data-step="report" data-testid="step-report" disabled><span class="n">5</span>Report</button>
+        <button type="button" class="step" data-step="features" data-testid="step-features" aria-disabled="true" aria-describedby="steps-why" title="Read a STEP file to open steps 2 to 5"><span class="n">2</span>Features <span class="c" id="step-counts" aria-hidden="true"></span></button>
+        <button type="button" class="step" data-step="machining" data-testid="step-machining" aria-disabled="true" aria-describedby="steps-why" title="Read a STEP file to open steps 2 to 5"><span class="n">3</span>Machining</button>
+        <button type="button" class="step" data-step="cost" data-testid="step-cost" aria-disabled="true" aria-describedby="steps-why" title="Read a STEP file to open steps 2 to 5"><span class="n">4</span>Cost</button>
+        <button type="button" class="step" data-step="report" data-testid="step-report" aria-disabled="true" aria-describedby="steps-why" title="Read a STEP file to open steps 2 to 5"><span class="n">5</span>Report</button>
       </nav>
       <span class="spacer"></span>
       <span class="topfile" id="top-file" data-testid="top-file" hidden></span>
@@ -25,12 +26,12 @@
     <p id="status" class="status" role="status" aria-live="polite">Choose a STEP file to start. Add its .ipt too, if you have one.</p>
     <main class="cols">
       <section class="viewer" aria-label="3D view of the part">
-        <canvas data-testid="viewer-canvas" id="viewer"></canvas>
+        <canvas data-testid="viewer-canvas" id="viewer" role="img" aria-label="3D model of the part"></canvas>
         <!-- review-steps S3 (frame r3-mach): one chip per setup over the model, on the Machining step only -->
         <div class="setupchips" role="group" aria-label="Setups" id="setup-chips" data-testid="setup-chips" hidden></div>
         <div class="viewer-note" id="viewer-note" data-testid="viewer-note"><span class="spin" id="spin" aria-hidden="true" hidden></span><span id="viewer-note-text">The part shows here once it's read.</span></div>
         <div class="viewfoot">
-          <p class="hint">Drag to rotate, scroll to zoom, right-drag to pan.</p>
+          <p class="hint">Drag to rotate, scroll to zoom, right-drag to pan. By keyboard or touch, the lists and chips pick what the model shows.</p>
           <!-- review-steps S2 (D-014 amended by D-042): the Show OK switches, on the Features step only -->
           <div class="showok" role="group" aria-labelledby="show-ok-label" data-testid="show-ok" id="show-ok" hidden>
             <span class="lbl" id="show-ok-label">Show OK</span>
@@ -50,7 +51,10 @@
               <label class="action filebtn" for="file">Open STEP file…</label>
               <input id="file" class="sr-file" data-testid="upload-file" type="file" accept=".step,.stp,.STEP,.STP" aria-labelledby="file-label" />
             </div>
-            <div class="field">
+            <!-- audit F3: the reason sits under the file it is about, and describes that field while it shows -->
+            <p id="error" class="error" data-testid="error-message" role="alert" hidden></p>
+            <p id="error-next" class="error-next" hidden>Choose another file, or try again.</p>
+            <div class="field" id="ipt-field">
               <span class="flabel" id="ipt-label">Inventor part (.ipt), optional</span>
               <label class="ghostbtn filebtn" for="ipt">Add .ipt…</label>
               <input id="ipt" class="sr-file" data-testid="upload-ipt" type="file" accept=".ipt,.IPT" aria-labelledby="ipt-label" />
@@ -73,8 +77,6 @@
                 </select>
               </div>
             </div>
-            <p id="error" class="error" data-testid="error-message" role="alert" hidden></p>
-            <p id="error-next" class="error-next" hidden>Choose another file, or try again.</p>
             <p class="privacy">Your files are analyzed on this computer and deleted straight after. Nothing is kept.</p>
           </form>
           <div class="overview" id="overview" data-testid="overview" hidden>

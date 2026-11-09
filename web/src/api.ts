@@ -208,7 +208,12 @@ export interface Finding {
   blend?: string; // blend_mismatch (I3 S3): the blend's id
 }
 
-export class ApiError extends Error {}
+/** A message for the reader; `retry` when trying again can help (no answer, a timeout, a server fault: audit F3). */
+export class ApiError extends Error {
+  constructor(message: string, readonly retry = false) {
+    super(message);
+  }
+}
 
 const GENERIC = "The analysis failed. Try again, or try another file.";
 
@@ -222,15 +227,17 @@ export async function analyze(file: File, ipt: File | null, process: Process, ma
   try {
     response = await fetch("/api/analyze", { method: "POST", body });
   } catch {
-    throw new ApiError("The app isn't answering. Is `python -m dfma start` still running?");
+    throw new ApiError("The app isn't answering on this computer. Ask whoever set up DFMA Review to start it again.", true);
   }
   if (response.ok) return (await response.json()) as Analysis;
   let message = GENERIC;
+  let retry = response.status >= 500;
   try {
-    const data = (await response.json()) as { error?: unknown };
+    const data = (await response.json()) as { error?: unknown; retry?: unknown };
     if (typeof data.error === "string") message = data.error;
+    if (data.retry === true) retry = true; // a timeout (audit F3)
   } catch {
     // keep the generic message
   }
-  throw new ApiError(message);
+  throw new ApiError(message, retry || message === GENERIC);
 }

@@ -248,12 +248,16 @@ function showFindings(result: Analysis | null, message: string): void {
   byId("export-pdf").hidden = !result;
   byId("top-file").hidden = !result;
   byId("top-file").textContent = result?.part.name ?? "";
-  for (const s of STEPS) if (s !== "part") tabs.get(s)!.disabled = !result;
+  for (const s of STEPS) if (s !== "part") { // focusable while closed, with the reason (audit F19)
+    const tab = tabs.get(s)!;
+    if (result) { tab.removeAttribute("aria-disabled"); tab.removeAttribute("aria-describedby"); tab.removeAttribute("title"); }
+    else { tab.setAttribute("aria-disabled", "true"); tab.setAttribute("aria-describedby", "steps-why"); tab.title = "Read a STEP file to open steps 2 to 5"; }
+  }
   overview.hidden = !result;
   startForm.hidden = !!result;
   // Process and material: in the form, then in the overview. Moved only when that changes, so a select keeps focus.
   if (settings.parentElement !== (result ? byId("settings-slot") : startForm)) {
-    (result ? byId("settings-slot") : error).insertAdjacentElement(result ? "beforeend" : "beforebegin", settings);
+    (result ? byId("settings-slot") : byId("ipt-field")).insertAdjacentElement(result ? "beforeend" : "afterend", settings);
   }
   if (!result) return;
   renderOverview(byId("overview-cards"), byId("fix-first"), result, (s) => showStep(s));
@@ -297,7 +301,7 @@ function showStep(name: Step, focus = true): void {
   if (focus) [...byId(`page-${name}`).querySelectorAll<HTMLElement>("h2")].find((h) => h.offsetParent !== null)?.focus();
 }
 
-for (const [s, tab] of tabs) tab.addEventListener("click", () => showStep(s));
+for (const [s, tab] of tabs) tab.addEventListener("click", () => { if (tab.getAttribute("aria-disabled") !== "true") showStep(s); });
 
 // audit F18: below 900 px the model sits above the list, so Show OK moves under the chips; back at the model's foot when wide
 const narrow = window.matchMedia("(max-width: 900px)");
@@ -339,6 +343,7 @@ async function analyse(): Promise<void> {
   status.textContent = `Analyzing ${file.name}${both}…`;
   error.hidden = true;
   errorNext.hidden = true;
+  fileInput.removeAttribute("aria-describedby");
   if (!shown) viewerNote(`Analyzing ${file.name}${both}…`, true);
   try {
     const result = await analyze(file, ipt, processSelect.value as Process, materialSelect.value as Material);
@@ -378,17 +383,18 @@ async function analyse(): Promise<void> {
     status.textContent = `Showing ${result.part.name}${result.inventor ? ` with ${result.inventor.name}` : ""}.`;
   } catch (e) {
     if (mine !== run) return;
-    showError(e instanceof ApiError ? e.message : "Something went wrong showing this part.");
+    showError(e instanceof ApiError ? e.message : "Something went wrong showing this part.", e instanceof ApiError ? e.retry : true);
     if (!(e instanceof ApiError)) console.error(e);
   }
 }
 
 /** A refused or failed part: the reason, and nothing left of the previous part on screen. */
-function showError(message: string): void {
+function showError(message: string, retry = false): void {
   clearPart();
   error.textContent = message;
   error.hidden = false;
-  errorNext.hidden = false;
+  errorNext.hidden = !retry; // "try again" only when it can help (audit F3)
+  fileInput.setAttribute("aria-describedby", "error");
   viewerNote("No part loaded.");
   status.textContent = "";
 }
@@ -412,6 +418,7 @@ byId("change-file").addEventListener("click", () => {
   iptInput.value = "";
   error.hidden = true;
   errorNext.hidden = true;
+  fileInput.removeAttribute("aria-describedby");
   clearPart();
   viewerNote("The part shows here once it's read.");
   status.textContent = "Choose a STEP file to start. Add its .ipt too, if you have one.";

@@ -25,7 +25,7 @@ body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
 .step .n { font: 600 0.875rem var(--mono); width: 1.43em; height: 1.43em; border-radius: 50%; border: 1.5px solid currentColor; display: inline-flex; align-items: center; justify-content: center; }
 .step[aria-current="step"] { color: var(--ink); border-bottom-color: var(--accent); }
 .step[aria-current="step"] .n { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.step:disabled { font-weight: 400; cursor: not-allowed; } .step:disabled .n { border-style: dashed; }
+.step[aria-disabled="true"] { font-weight: 400; cursor: not-allowed; } .step[aria-disabled="true"] .n { border-style: dashed; }
 .step .c { font: 600 0.875rem var(--mono); color: var(--ink); display: inline-flex; gap: 4px; align-items: center; }
 .step .c:empty { display: none; }
 .mk.high { color: var(--high); } .mk.medium { color: var(--medium); } .mk.ok { color: var(--low); }
@@ -69,8 +69,8 @@ h2.label { font-size: 0.875rem; font-weight: 600; }
 .oslot .field label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .oslot .field select { min-width: 0; min-height: 32px; padding: 2px 6px; font-size: 0.875rem; color: var(--muted); }
 .card { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); align-items: center; }
-.card h3 { margin: 0; font-size: 1rem; }
-.card .open { border: 0; background: none; font: 600 0.9375rem var(--sans); color: var(--accent); cursor: pointer; min-height: 32px; padding: 0 4px; }
+.card h3 { margin: 0; font-size: 1rem; grid-column: 1 / 3; }
+.card .open { border: 0; background: none; font: 600 1rem var(--sans); color: var(--accent); cursor: pointer; min-height: 32px; padding: 0; text-align: left; } /* the heading is the link (audit F24) */
 .card .sub { grid-column: 1 / 3; font-size: 0.875rem; color: var(--muted); display: flex; gap: 4px 14px; flex-wrap: wrap; align-items: center; }
 .card .tally { display: inline-flex; gap: 5px; align-items: center; color: var(--muted); }
 .first { padding: 14px 16px; background: var(--bg); border-top: 1px solid var(--line); display: grid; gap: 6px; }

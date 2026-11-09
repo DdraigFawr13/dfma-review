@@ -74,8 +74,8 @@ def test_part_step(page: Page, base_url: str, sample: dict):
     expect(cost).to_contain_text("7 cost drivers")
     expect(cost).to_contain_text("Biggest: distinct tools and sharp or small inside corners, tied at 4.0 points (weights are estimates)")
     expect(page.get_by_test_id("overview-report")).to_contain_text("PDF of all of the above")
-    for name in STEPS[1:]:
-        expect(page.get_by_test_id(f"open-{name}")).to_have_text("Open ›")
+    for i, name in enumerate(STEPS[1:], 2):  # the card heading is the link (audit F24)
+        expect(page.get_by_test_id(f"open-{name}")).to_have_text(f"{i} · {name.capitalize()} ›")
 
     first = page.get_by_test_id("fix-first")  # S2: the first Fix row, its short title, ids and first sentence
     expect(first).to_contain_text("Fix first")
@@ -93,7 +93,7 @@ def test_refused_in_form(page: Page, base_url: str):
     error = page.get_by_test_id("start-form").get_by_test_id("error-message")
     expect(error).to_have_text("This is not a STEP file this tool can read. Export it again as .step or .stp from your CAD.", timeout=30_000)
     assert error.evaluate("e => getComputedStyle(e, '::before').content") == '"Error: "'
-    expect(page.get_by_test_id("start-form")).to_contain_text("Choose another file, or try again.")
+    expect(page.locator("#error-next")).to_be_hidden()  # a refused file: trying again can't help (audit F3)
     expect(page.get_by_test_id("viewer-note")).to_have_text("No part loaded.")
     expect(page.get_by_test_id("overview")).to_be_hidden()
     expect(page.get_by_test_id("step-features")).to_be_disabled()
@@ -281,7 +281,7 @@ def test_feature_rows(page: Page, base_url: str, sample: dict):
     f4 = next(f for f in sample["findings"] if f["id"] == "F4")
     faces = sorted({i for f in sample["findings"] if f["rule"] == "corner_radius" for i in f["faces"]})
     row.click()
-    expect(row).to_have_attribute("aria-pressed", "true")
+    expect(row).to_have_attribute("aria-expanded", "true")
     detail = page.get_by_test_id("row-detail")
     expect(detail).to_contain_text("F4 · corner-1 · 1 of 4")
     expect(detail).to_contain_text("radius 0.000 in, pocket 0.250 in deep")
@@ -291,7 +291,7 @@ def test_feature_rows(page: Page, base_url: str, sample: dict):
     page.get_by_test_id("row-next").click()
     expect(detail).to_contain_text("F5 · corner-2 · 2 of 4")
     expect(page.locator(".viewer .flag.chosen")).to_have_attribute("data-id", "F5")
-    expect(row).to_have_attribute("aria-pressed", "true")
+    expect(row).to_have_attribute("aria-expanded", "true")
     assert page.evaluate("document.activeElement.dataset.testid") == "row-next"  # focus survives the redraw (APP-02)
     page.get_by_test_id("row-prev").click()
     expect(detail).to_contain_text("F4 · corner-1 · 1 of 4")
@@ -301,7 +301,7 @@ def test_feature_rows(page: Page, base_url: str, sample: dict):
     page.get_by_test_id("setup-chip-1").click()
     open_step(page, "features")
     expect(page.get_by_test_id("row-detail")).to_have_count(0)
-    expect(row).to_have_attribute("aria-pressed", "false")
+    expect(row).to_have_attribute("aria-expanded", "false")
     row.click()
     page.get_by_test_id("row-F1").click()  # a Review row labels its advice "What to do" too (D-053)
     expect(page.get_by_test_id("row-detail")).to_contain_text("What to do")
