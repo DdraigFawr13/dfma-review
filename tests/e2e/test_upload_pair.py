@@ -47,7 +47,8 @@ def test_nist_pair_refused(page: Page, base_url: str):
     expect(page.get_by_test_id("error-message")).to_have_text(
         "These files don't match: the STEP has 483 faces, the .ipt 368. Export the STEP again from this .ipt "
         "and upload both.", timeout=30_000)
-    expect(page.locator("#summary")).to_be_hidden()
+    expect(page.get_by_test_id("overview")).to_be_hidden()  # no part numbers beside the error
+    expect(page.get_by_test_id("start-form")).to_be_visible()
 
 
 def test_pair_shown(page: Page, base_url: str):

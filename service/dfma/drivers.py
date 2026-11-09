@@ -20,9 +20,11 @@ def cost_drivers(findings: list[dict], setups: list[dict], tools: list[dict]) ->
         elif how == "small":  # spec: undersized or sub-1/8 in tools
             count = sum(1 for t in tools if t["undersized"]
                         or (t["diameter_in"] is not None and t["diameter_in"] < d["under_in"] - 1e-9))
-        else:  # "findings"
-            count = sum(1 for f in findings if f["rule"] in d["rules"])
+        ids: list[str] = []  # the findings a driver counts (review-steps S1); none for setups and tools
+        if how == "findings":
+            ids = [f["id"] for f in findings if f["rule"] in d["rules"]]
+            count = len(ids)
         if count > 0:
             out.append({"driver": key, "label": d["label"], "count": count, "weight": float(d["weight"]),
-                        "score": round(count * float(d["weight"]), 6), "weight_source": d["source"]})
+                        "score": round(count * float(d["weight"]), 6), "weight_source": d["source"], "findings": ids})
     return sorted(out, key=lambda x: (-x["score"], x["driver"]))

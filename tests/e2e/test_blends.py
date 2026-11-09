@@ -9,6 +9,7 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from helpers import PARTS
+from steps import open_step
 from test_hole_features import CTC04, open_pair
 
 pytestmark = pytest.mark.e2e
@@ -68,4 +69,5 @@ def test_panel_hidden_without_ipt(page: Page, base_url: str, tmp_path):
     step.write_text("placeholder")
     page.get_by_test_id("upload-file").set_input_files(step)
     expect(page.locator("#status")).to_have_text(f"Showing {result['part']['name']}.")
+    open_step(page, "features")
     expect(page.get_by_test_id("blends-panel")).to_be_hidden()

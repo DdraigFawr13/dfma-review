@@ -9,6 +9,7 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from helpers import PARTS
+from steps import open_step
 
 pytestmark = pytest.mark.e2e
 FIXTURES = PARTS.parent / "inventor" / "fixtures"
@@ -31,6 +32,7 @@ def open_pair(page: Page, base_url: str, tmp_path, result: dict, names) -> None:
     page.get_by_test_id("upload-ipt").set_input_files(ipt)
     page.get_by_test_id("upload-file").set_input_files(step)
     expect(page.locator("#status")).to_have_text(f"Showing {result['part']['name']} with {names[1]}.")
+    open_step(page, "features")  # the .ipt panels are groups in the Features step (review-steps J6)
 
 
 def test_threads_panel(page: Page, base_url: str, tmp_path):
@@ -100,4 +102,5 @@ def test_no_threads_and_no_ipt(page: Page, base_url: str, tmp_path):
     page.get_by_test_id("upload-ipt").set_input_files([])
     page.get_by_test_id("upload-file").set_input_files(PARTS / "box_through_hole.step")
     expect(page.locator("#status")).to_have_text(f"Showing {result['part']['name']}.")
+    open_step(page, "features")
     expect(panel).to_be_hidden()

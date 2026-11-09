@@ -13,8 +13,9 @@ describe("report text (S7)", () => {
 
   it("opens with the answer in plain words", () => {
     expect(verdictText(withFindings([]))).toBe("No findings. Every feature checked passed its rules.");
-    expect(verdictText(withFindings(["high", "medium", "medium"]))).toBe("3 findings: 1 high, 2 medium.");
-    expect(verdictText(withFindings(["high"]))).toBe("1 finding: 1 high.");
+    expect(verdictText(withFindings(["high", "medium", "medium"]))).toBe("3 findings: 1 Fix, 2 Review.");
+    expect(verdictText(withFindings(["high"]))).toBe("1 finding: 1 Fix.");
+    expect(verdictText(withFindings(["medium", "medium", "medium", "medium", "high", "high", "high", "high"]))).toBe("8 findings: 4 Fix, 4 Review.");
   });
 
   it("names the download after the part", () => {

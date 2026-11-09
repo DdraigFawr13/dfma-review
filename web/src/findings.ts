@@ -1,6 +1,8 @@
-// The verdict line and the findings list in severity groups (spec "Web page", D-012).
+// The findings list in severity groups, the machine plan and the .ipt panels (spec "Web page", D-012), shown in the
+// Features and Machining steps (review-steps S1, D-045).
 
 import type { Analysis, Blend, CostDriver, Feature, Finding, HoleFeature, IptHole, Severity, Thread, Tool } from "./api";
+import { sevMark, sevWord } from "./words";
 
 export const RULE_NAMES: Record<string, string> = {
   hole_depth: "hole depth", hole_size: "hole size", corner_radius: "corner radius", pocket_depth: "pocket depth",
@@ -22,41 +24,30 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: 
 }
 
 function sevLabel(severity: Severity): HTMLElement {
-  return el("span", `sev ${severity}`, severity);
+  return el("span", `sev ${severity}`, sevWord(severity));
 }
 
-/** "2 holes checked · Rules run: …", or "1 pocket and 4 corners checked · …": the kinds the part
- *  has; a part with none of them still says "0 holes checked". */
-export function checkedLine(result: Analysis): string {
+/** "2 holes checked", or "1 pocket and 4 corners checked": the kinds the part has; a part with none of them still
+ *  says "0 holes checked". */
+export function checkedCount(result: Analysis): string {
   const parts = KIND_NAMES.map(([kind, one, many]) => {
     const n = result.features.filter((f) => f.kind === kind).length;
     return n ? `${n} ${n === 1 ? one : many}` : "";
   }).filter(Boolean);
   const counted = parts.length === 0 ? "0 holes" : parts.length === 1 ? parts[0]
     : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
-  const rules = result.rules_run.map((r) => RULE_NAMES[r] ?? r.replace(/_/g, " ")).join(", ");
-  return `${counted} checked · Rules run: ${rules}.`;
+  return `${counted} checked`;
 }
 
-export function renderVerdict(host: HTMLElement, result: Analysis | null, waiting = false): void {
-  host.replaceChildren();
-  if (!result) {
-    host.append(el("span", "tally zero", waiting ? "Analysing…" : "No part loaded"));
-    return;
-  }
-  if (result.findings.length === 0) {
-    const clean = el("span", "tally clean");
-    clean.append(el("span", "sev", "clean"), document.createTextNode(" no findings"));
-    host.append(clean);
-  }
-  for (const severity of GROUPS) {
-    const n = result.findings.filter((f) => f.severity === severity).length;
-    const tally = el("span", n ? "tally" : "tally zero");
-    const label = el("span", n ? `sev ${severity}` : "sev", severity);
-    tally.append(label, document.createTextNode(` ${n}`));
-    host.append(tally);
-  }
-  host.append(el("span", "rules", checkedLine(result)));
+/** The PDF summary's line: "2 holes checked · Rules run: Hole depth check, …." (check names, review-steps S1). */
+export function checkedLine(result: Analysis): string {
+  return `${checkedCount(result)} · Rules run: ${result.checks_run.join(", ")}.`;
+}
+
+/** Features with no finding that passed a check: the OK count and the Passed list (D-023). */
+export function okFeatures(result: Analysis): Feature[] {
+  const flagged = new Set<string | null>(result.findings.map((f) => f.feature));
+  return result.features.filter((f) => !flagged.has(f.id) && result.passed.some((p) => p.feature === f.id));
 }
 
 export function meta(f: Finding, result: Analysis): string {
@@ -74,7 +65,7 @@ export function meta(f: Finding, result: Analysis): string {
     const d = feature.dims_mm.diameter / 25.4;
     parts.push(f.rule === "hole_size" ? `${d.toFixed(3)} in diameter` : `${diameterText(d)} diameter, ${(feature.dims_mm.depth / 25.4).toFixed(3)} in deep`);
   }
-  parts.push(f.rule === "hole_size" ? `limit: ${f.threshold_source}, within 0.0005 in` : `limit: ${f.threshold_source}`);
+  parts.push(f.limit_text); // "limit is an estimate": plain words, no decision ids (review-steps S1)
   const thread = holeThreads(feature, result); // I1 S2 (D-036)
   if (thread) parts.push(thread);
   return parts.join(" · ");
@@ -112,7 +103,7 @@ export function renderFindings(host: HTMLElement, result: Analysis | null, messa
   for (const severity of GROUPS) {
     const items = result.findings.filter((f) => f.severity === severity);
     const head = el("p", `ghead ${severity}`);
-    head.append(el("span", undefined, severity), el("span", undefined, String(items.length)));
+    head.append(el("span", undefined, `${sevMark(severity)} ${sevWord(severity)}`), el("span", undefined, String(items.length)));
     host.append(head);
     if (items.length === 0) host.append(el("p", "none", "None."));
     for (const f of items) {
@@ -155,7 +146,7 @@ function featureLine(f: Feature): string {
  *  Collapsed by default; a row selects its faces like a finding and opens its math. */
 function renderPassed(host: HTMLElement, result: Analysis, onSelect: (f: Pick) => void, selected: string | null): void {
   const flagged = new Set<string | null>(result.findings.map((f) => f.feature));
-  const ok = result.features.filter((f) => !flagged.has(f.id) && result.passed.some((p) => p.feature === f.id));
+  const ok = okFeatures(result);
   const box = el("details", "passed");
   box.dataset.testid = "passed";
   box.open = passedOpen; // collapsed by default; stays as the reader left it while they select rows
@@ -182,7 +173,7 @@ function renderPassed(host: HTMLElement, result: Analysis, onSelect: (f: Pick) =
       for (const p of result.passed.filter((x) => x.feature === f.id)) {
         const check = el("span", "pcheck");
         check.append(el("span", "prule", `✓ ${RULE_NAMES[p.rule] ?? p.rule}: `), document.createTextNode(p.title));
-        const math = el("span", "pmath", `${p.math} · limit: ${p.threshold_source}`);
+        const math = el("span", "pmath", `${p.math} · ${p.limit_text}`);
         math.hidden = selected !== id;
         row.append(check, math);
       }
@@ -361,25 +352,6 @@ export function planFoot(result: Analysis): string {
 /** One cost driver as a line: "Distinct tools: 4 × 1.0 = 4.0". */
 export function driverLine(d: CostDriver): string {
   return `${d.label}: ${d.count} × ${d.weight.toFixed(1)} = ${d.score.toFixed(1)}`;
-}
-
-/** The cost drivers panel (S7, spec "Cost drivers"): counts and weights, ranked by score. No time or dollars. */
-export function renderDrivers(host: HTMLElement, result: Analysis | null): void {
-  host.replaceChildren();
-  if (!result) return;
-  if (!result.cost_drivers.length) {
-    host.append(el("p", "none", "No cost drivers: one setup and no tools to load."));
-    return;
-  }
-  const list = el("ul", "drivers");
-  for (const d of result.cost_drivers) {
-    const li = el("li");
-    li.dataset.testid = `driver-${d.driver}`;
-    li.append(el("span", "dlabel", d.label), el("span", "dscore", `${d.count} × ${d.weight.toFixed(1)} = ${d.score.toFixed(1)}`));
-    list.append(li);
-  }
-  host.append(list, el("p", "note", `Score is count × weight. Every weight is an ${[...new Set(result.cost_drivers.map((d) => d.weight_source))].join(", ")} `
-    + "(config/drivers.toml). No time or dollars yet."));
 }
 
 /** "0.500 in round bar, 4.500 in long" or "2.000 × 3.000 × 1.500 in block": the part's own size, no allowance. */
