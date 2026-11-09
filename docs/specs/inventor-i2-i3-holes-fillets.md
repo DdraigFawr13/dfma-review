@@ -206,6 +206,13 @@ Holes gain `"hole_feature": "hf-1"` when matched or disagreeing. On screen lengt
 
 ### S2 Names and copies
 
+**Settled at build (2026-11-09, S2 re-check against main 26d397c; measured on the 16 NIST files):**
+- The rank rule as written gives the spec's numbers unchanged: names equal ids in every plain file but FTC 06 2024 (4 features, 7 names) and STC 10 (9, 11); against the key by S1's position pairing, 70 right and 0 wrong in the count-matched files; FTC 06 2024 and STC 10 Holes are `null`. "Count of Hole feature ids" is `len(hole_features)` as S1 reads them (the same count as every hole-tag last id on NIST).
+- A stream that can't be read or unpacked is skipped (never a refusal); `Hole<n>` texts are printable UTF-16 runs of 3 to 60 characters, as the probe read them. `ole.Ipt.inflate` now serves `models` and the names reader.
+- Thread names follow `Thread.feature_id`; a thread whose id is no Hole feature's gets `null`. The CTC 04 threads read `Hole8` (the key); FTC 10 2021's read the key's three names; STC 10's stay `null`.
+- On screen the name is one more small `fmeta` span (class `fname`) after the size line, on Hole feature rows and thread rows; in the PDF it follows the title (`hf-7 Countersink · 30 holes · Hole20: …`) and the thread callout. `hole_mismatch` titles start with the name when there is one (S1's rule; thread titles stay nameless, I1 S3 default).
+- The copy text replaces S1's `· n copied` on the row as its own line, and is added to the PDF line after the counts; "1 pattern or mirror feature" when one. `inventor.hole_names_seen` is always present when an `.ipt` is read; the "in the browser" note joins the panel's and the PDF section's first line.
+
 - **Morgan tries:** the CTC 04 rows show `Hole8` … `Hole22`; thread rows show `Hole8`; FTC 08's feature shows "4 holes: 1 drawn, 3 copied by 2 pattern or mirror features"; STC 10 shows no names and "11 Hole features in the browser, 9 read". On a work pair, rename one Hole in Inventor, export, and check that its name shows (or no names show) and never a wrong one.
 - **Checks that fail now:** J4 (the asserts go into the existing `test_inventor_names.py`); the copy row text (`copied_by` itself is tested in S1: `test_inventor_holes.py::test_copies`, FTC 08 2021: 1 feature, 4 holes, copier ids 2187 and 2202, pinned in `hole_counts.toml`).
 - **Files:** `inventor/names.py` (reads the streams through `ole.Ipt` under its caps), `threads.py` (`feature_id` from the record, `feature_name`), `holes.py`, `part.py`; `web/src/findings.ts`, `report.ts` (name in small print as I1 S3's defaults); `tests/service/test_inventor_names.py`; fixtures regenerated.

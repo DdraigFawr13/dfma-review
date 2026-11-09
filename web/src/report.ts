@@ -5,7 +5,7 @@
 // Imported up front, not on demand: the view-only demo page inlines one script and has no chunks to load (D-009).
 import { jsPDF } from "jspdf";
 import type { Analysis, Finding } from "./api";
-import { RULE_NAMES, axisText, holeCounts, holeFeatureSize, holeFeatureTitle, checkedLine, driverLine, inMm, meta, notPlanned, planFoot, planWhy, setupHead, stockText, threadCallout, threadCounts, threadSize, toolName } from "./findings";
+import { RULE_NAMES, axisText, holeCopies, holeCounts, holeFeatureSize, holeNamesSeen, holeFeatureTitle, checkedLine, driverLine, inMm, meta, notPlanned, planFoot, planWhy, setupHead, stockText, threadCallout, threadCounts, threadSize, toolName } from "./findings";
 import { formatIn, formatRatio, formatSize } from "./format";
 
 /** What the report needs besides the analysis: the labels the reader chose, today's date, and a picture per finding. */
@@ -151,10 +151,12 @@ function summaryPage(p: Page, input: ReportInput): void {
  *  mapped (findings F35, F36, F37, F38)". */
 export function holeFeatureLine(f: NonNullable<NonNullable<Analysis["inventor"]>["hole_features"]>[number], result: Analysis): string {
   const ids = result.findings.filter((x) => x.rule === "hole_mismatch" && x.hole_feature === f.id).map((x) => x.id);
-  let line = `${f.id} ${holeFeatureTitle(f)}: ${holeFeatureSize(f, ", ")}. ${holeCounts(f.holes)}`;
+  let line = `${f.id} ${holeFeatureTitle(f)}${f.name ? ` · ${f.name}` : ""}: ${holeFeatureSize(f, ", ")}. ${holeCounts(f.holes)}`;
   if (ids.length) line += ` (${ids.length === 1 ? "finding" : "findings"} ${ids.join(", ")})`;
   const reasons = [...new Set(f.holes.filter((h) => h.state === "not_mapped").map((h) => h.reason ?? "unknown"))];
   if (reasons.length) line += `; not mapped: ${reasons.join(", ")} (our limit, not a finding)`;
+  const copies = holeCopies(f);
+  if (copies) line += `; ${copies}`;
   return `${line}.`;
 }
 
@@ -167,7 +169,8 @@ function holeFeaturesSection(p: Page, input: ReportInput): void {
     return;
   }
   const all = feats.flatMap((f) => f.holes);
-  p.text(`${feats.length} Hole features, ${all.length} holes: ${holeCounts(all)}. Sizes as designed in the .ipt.`);
+  const seen = holeNamesSeen(inv.hole_names_seen, feats.length);
+  p.text(`${feats.length} Hole features, ${all.length} holes: ${holeCounts(all)}.${seen ? ` ${seen}.` : ""} Sizes as designed in the .ipt.`);
   for (const f of feats) p.text(holeFeatureLine(f, input.result), { indent: 12, gap: 1 });
 }
 
@@ -180,7 +183,7 @@ export function threadLine(t: NonNullable<NonNullable<Analysis["inventor"]>["thr
     const gaps = t.gaps.map((g) => (g.what === "axis" ? `${inMm(g.mm, 2)} off the hole's axis` : g.text)).join("; ");
     state = `disagrees: ${gaps}${f ? `; see ${f.id}` : ""}`;
   }
-  return [t.hole ?? t.id, threadCallout(t), size, state].filter(Boolean).join("  ");
+  return [t.hole ?? t.id, threadCallout(t), t.feature_name, size, state].filter(Boolean).join("  ");
 }
 
 /** The summary page's Threads section, after Cost drivers (D-036); a long list runs onto the next page. */

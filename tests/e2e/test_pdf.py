@@ -119,11 +119,13 @@ def test_pdf_hole_features(page: Page, base_url: str, tmp_path):
     text = re.sub(r" +", " ", " ".join(p.extract_text() for p in pdf.pages).replace("\n", " "))
     for line in ("Hole features (from INV_nist_ctc_04_asme1_2021.ipt)",
                  "9 Hole features, 54 holes: 40 matched, 13 disagree, 1 not mapped. Sizes as designed in the .ipt.",
-                 "hf-7 Countersink · 30 holes: Ø0.551 in [14 mm] through, countersink Ø0.787 in [20 mm] × 90°. "
+                 "hf-7 Countersink · 30 holes · Hole20: Ø0.551 in [14 mm] through, countersink Ø0.787 in [20 mm] × 90°. "
                  "26 matched, 4 disagree, 0 not mapped (findings F35, F36, F37, F38).",
-                 "hf-8 Countersink · 1 hole: Ø0.551 in [14 mm] through, countersink Ø0.787 in [20 mm] × 90°. "
+                 "hf-8 Countersink · 1 hole · Hole21: Ø0.551 in [14 mm] through, countersink Ø0.787 in [20 mm] × 90°. "
                  "0 matched, 0 disagree, 1 not mapped; not mapped: no hole on this axis (our limit, not a finding).",
-                 "(finding F39)"):
+                 "(finding F39)",
+                 "hole-37 M12x1.75 - 6H Hole8 0.984 in [25 mm] deep",  # I2 S2: the thread's feature name
+                 "F35 · MEDIUM · Hole feature vs hole Hole20 hole on hole-12"):  # I2 S2: the name in its title
         assert line in text, f"{line!r} is not in the PDF"
     assert text.index("Threads (from") < text.index("Hole features (from")
     pages = [p.extract_text().replace("\n", " ") for p in pdf.pages]

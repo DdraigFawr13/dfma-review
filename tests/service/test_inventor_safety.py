@@ -159,3 +159,34 @@ def test_caps():
     with pytest.raises(topo.TopologyError):
         topo.face_points(recs, 0)
     assert topo.MAX_STEPS == 10_000
+
+
+def test_bad_names_stream():
+    """I2 S2: a names stream that can't be read or unpacked gives no names, never a refusal (spec Builder
+    defaults, I1 S3 re-check); the rank rule then leaves every Hole feature unnamed."""
+    from dfma.errors import ReadError
+    from dfma.inventor import names as nm, ole
+    f = ole.Ipt(INV / "INV_nist_ctc_04_asme1_2021.ipt")
+    try:
+        assert len(nm.hole_names(f)) == 9
+        assert nm.hole_names(f, stream_cap=1000) == []  # every stream over the cap: skipped, no ReadError
+
+        def broken(name):
+            raise ReadError(settings.MSG_IPT_FORMAT.format(version="unknown"))
+        f.read = broken  # a stream olefile can't open
+        assert nm.hole_names(f) == []
+    finally:
+        f.close()
+
+
+def test_names_need_equal_counts():
+    """I2 S2: one name too many or too few and no feature is named (never a shifted guess)."""
+    from dfma.inventor import names as nm
+    from dfma.inventor.holes import HoleFeature
+    feats = [HoleFeature(30), HoleFeature(10)]
+    nm.assign(feats, ["Hole1"])
+    assert [f.name for f in feats] == [None, None]
+    nm.assign(feats, ["Hole1", "Hole2", "Hole3"])
+    assert [f.name for f in feats] == [None, None]
+    nm.assign(feats, ["Hole1", "Hole2"])
+    assert [f.name for f in feats] == ["Hole2", "Hole1"]  # the smallest id gets the smallest number

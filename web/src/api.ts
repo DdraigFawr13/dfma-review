@@ -18,6 +18,7 @@ export interface Inventor {
   checks: { faces: [number, number]; corners: [number, number]; worst_corner_gap_mm: number | null };
   threads?: Thread[]; // S2: always a list when an .ipt was read
   hole_features?: HoleFeature[]; // I2 S1: always a list when an .ipt was read
+  hole_names_seen?: number; // I2 S2: `Hole<n>` names in the .ipt; names fill in only when it equals the features read
 }
 
 type MapState = "matched" | "disagrees" | "not_mapped";

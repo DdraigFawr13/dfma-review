@@ -94,6 +94,7 @@ def test_attach_in_process(monkeypatch, tmp_path):
     result = analyze(BOX, BOX.name, ipt_path=tmp_path / "box.ipt", ipt_name="box.ipt")
     threads = result["inventor"].pop("threads")
     assert result["inventor"].pop("hole_features") == []  # I2 S1: always a list when an .ipt is read
+    assert result["inventor"].pop("hole_names_seen") == 0  # I2 S2: the built part has no Hole names
     assert result["inventor"] == {"name": "box.ipt", "saved_with": "2024.1 (Build 281209000, 209)",
                                   "acis_version": "229.6.0.65535",
                                   "checks": {"faces": [len(step.faces)] * 2, "corners": [10, 10],

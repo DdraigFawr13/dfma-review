@@ -474,6 +474,7 @@ export function renderThreads(host: HTMLElement, result: Analysis | null, onSele
     row.append(line);
     const size = threadSize(t);
     if (size) row.append(el("span", "fmeta", size));
+    if (t.feature_name) row.append(el("span", "fmeta fname", t.feature_name)); // I2 S2: small print, never guessed
     const note = threadNote(t, result);
     if (note) row.append(el("span", "fmeta", note));
     if (hole && row instanceof HTMLButtonElement) {
@@ -508,6 +509,19 @@ export function holeFeatureSize(f: HoleFeature, sep = " · "): string {
   return out.join(sep);
 }
 
+/** "4 holes: 1 drawn, 3 copied by 2 pattern or mirror features", or "" when none is copied (I2 S2, D-039). */
+export function holeCopies(f: HoleFeature): string {
+  const copied = f.holes.filter((h) => h.copied_by.length);
+  if (!copied.length) return "";
+  const p = new Set(copied.flatMap((h) => h.copied_by)).size;
+  return `${holeCount(f.holes.length)}: ${f.holes.length - copied.length} drawn, ${copied.length} copied by ${p} pattern or mirror ${p === 1 ? "feature" : "features"}`;
+}
+
+/** "11 Hole features in the browser, 9 read" when the .ipt names more Holes than were read, else "" (I2 S2). */
+export function holeNamesSeen(seen: number | undefined, read: number): string {
+  return seen !== undefined && seen > read ? `${seen} Hole features in the browser, ${read} read` : "";
+}
+
 /** "N matched, N disagree, N not mapped" over holes. */
 export function holeCounts(holes: IptHole[]): string {
   const n = (s: IptHole["state"]) => holes.filter((h) => h.state === s).length;
@@ -530,7 +544,8 @@ export function renderHoleFeatures(host: HTMLElement, result: Analysis | null, o
     return;
   }
   const all = feats.flatMap((f) => f.holes);
-  host.append(el("p", "none", `From ${inv.name}: ${feats.length} Hole features, ${holeCount(all.length)}: ${holeCounts(all)}. Tap a feature to show its holes; tap a hole to show it alone.`));
+  const seen = holeNamesSeen(inv.hole_names_seen, feats.length);
+  host.append(el("p", "none", `From ${inv.name}: ${feats.length} Hole features, ${holeCount(all.length)}: ${holeCounts(all)}.${seen ? ` ${seen}.` : ""} Tap a feature to show its holes; tap a hole to show it alone.`));
   const steps = new Map(result.features.map((f) => [f.id, f]));
   for (const f of feats) {
     const cls = f.state === "matched" ? "ok" : f.state === "disagrees" ? "medium" : "nm";
@@ -546,9 +561,11 @@ export function renderHoleFeatures(host: HTMLElement, result: Analysis | null, o
     row.append(line);
     const size = holeFeatureSize(f);
     if (size) row.append(el("span", "fmeta", `${size} (as designed in the .ipt)`));
+    if (f.name) row.append(el("span", "fmeta fname", f.name)); // I2 S2: small print, never guessed
     if (f.reason) row.append(el("span", "fmeta", `Not mapped: ${f.reason}. Our limit, not a finding.`));
-    const copied = f.holes.filter((h) => h.copied_by.length).length;
-    row.append(el("span", "fmeta", holeCounts(f.holes) + (copied ? ` · ${copied} copied` : "") + (open || !(faces.length || unfolds) ? "" : " · tap to show its holes")));
+    const copies = holeCopies(f);
+    if (copies) row.append(el("span", "fmeta", copies));
+    row.append(el("span", "fmeta", holeCounts(f.holes) + (open || !(faces.length || unfolds) ? "" : " · tap to show its holes")));
     if (row instanceof HTMLButtonElement) {
       row.type = "button";
       row.setAttribute("aria-pressed", String(selected === id));
