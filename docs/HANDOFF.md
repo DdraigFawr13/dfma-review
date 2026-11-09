@@ -29,7 +29,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-0. Now: sort the 3 fresh checks' findings on `docs/specs/review-steps.md` (write-spec steps 6-7), re-check, then the approval form for Morgan (short titles table, build-from-main fork). Then S1 in a new session.
+0. Now: review-steps spec, fix pass 1 done (paraphrase 18 gaps, critic 10 with 2 high, zero-decision ~40 choices: rows and wording moved to service `rows.py`, cost total in the service, Report into S1, empty states J7, testids named); critic and zero-decision re-checks running. Then sort them, then Morgan's approval (short titles table, build from main). Then S1 in a new session.
 1. Owed from 2026-11-12 (D-035): one of Morgan's work pairs by Drive share into `tests/inventor/.local/<pair>/`, then `python tests/inventor/local_pairs.py` (now prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
 2. Recognition and stress-test status, scoring commands and the MFCAD++ download: archive "Moved 2026-11-09" (old Next 3 and 3a). Re-run them on every recognition change.
 3. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
