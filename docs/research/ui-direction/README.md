@@ -16,6 +16,15 @@ Status: **proposals only**. Nothing here changes a decision until Morgan approve
 
 - 2026-11-09 Round 1 published: [page](https://claude.ai/artifact/3WKMC2icNNuE9i9scBLT3n) (answers in its `ui1` collection). Fresh check: 1 reviewer, 65,865 tokens; 9 fixes (record on the page).
 
+## Round 1 answers (Morgan, 2026-11-09, `ui1` collection, 43 answers)
+
+- Problems: all 6 "Yes, fix it".
+- Rules kept: 2-3 word titles, detail one tap away, group repeats, shape + word + colour, list and model in step, dense panels and a calm page, nothing hover-only. One line of numbers: Maybe ("It would be nice to know a little more about it like the general test it failed name").
+- Layouts: D steps "Parts of it" ("I think I like this the most but your con has me a little worried"); A "Parts of it" ("I like the compactness"); B "Parts of it" ("detail is dense and easy to understand but it takes up way too much of the screen"); C No; E No.
+- Pieces kept: filter chips, steps, setup chips, inspector. Cut: feature tree. The other 8: Maybe.
+- Words: "Fix / Review"; "Short title + plain sentence"; ids "Only in the detail". Look: keep Drawing office. Use: check one part fast, and go through every finding.
+- Anything else: "a quick way to walk through the dfma steps of like a design review and observe the issues that come up for each step".
+
 ## What's wrong today (measured 2026-11-09, demo build, report_sample.step, 1280 × 900)
 
 - The side column holds 4 panels (Findings, Threads, Machine plan, Cost drivers), each scrolling in its own box; 1 of 8 findings is in view.

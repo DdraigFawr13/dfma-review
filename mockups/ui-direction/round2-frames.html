@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>UI direction round 2 frames</title>
+<!--
+  Source of the round 2 screenshots (built on round 1 answers: steps, Fix / Review, short title + plain sentence naming the check) (scripts in docs/research/ui-direction/README.md).
+  Five layouts of the same review: report_sample.step, Milling, Aluminum 6061, the real findings, plan and cost
+  drivers from the demo build of 2026-11-09. Every frame is 1280 x 800 (UI_STYLE first width). Tokens from docs/UI_STYLE.md.
+  Pins are placed by hand from the app's own pin positions; the model pictures are real renders from the app.
+-->
+<style>
+@font-face { font-family: "IBM Plex Sans"; src: url("../../web/public/fonts/IBMPlexSans-latin-var.woff2") format("woff2"); font-weight: 100 700; }
+@font-face { font-family: "IBM Plex Mono"; src: url("../../web/public/fonts/IBMPlexMono-latin-500.woff2") format("woff2"); font-weight: 500; }
+@font-face { font-family: "IBM Plex Mono"; src: url("../../web/public/fonts/IBMPlexMono-latin-600.woff2") format("woff2"); font-weight: 600; }
+@font-face { font-family: "IBM Plex Mono"; src: url("../../web/public/fonts/IBMPlexMono-latin-700.woff2") format("woff2"); font-weight: 700; }
+:root {
+  --bg: #eef2f6; --panel: #ffffff; --ink: #16263d; --muted: #55657a; --line: #c4cfdc;
+  --accent: #1f5fa8; --accent-ink: #ffffff; --view: #e3eaf2; --grid: #cfd9e5;
+  --sel: #eaf1f9; --high: #b3261e; --medium: #a35a00; --low: #3f6b2a; --radius: 2px;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --sans: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: #8a96a6; font: 400 14px/1.4 var(--sans); color: var(--ink); }
+.frame { width: 1280px; height: 800px; background: var(--bg); margin: 0 0 40px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+button, select { font: inherit; color: inherit; }
+
+/* shared top bar */
+.top { display: flex; align-items: center; gap: var(--space-3); padding: 0 var(--space-4); height: 52px; background: var(--panel); border-bottom: 1px solid var(--line); flex: none; }
+.top h1 { font-size: 1rem; font-weight: 700; margin: 0 var(--space-2) 0 0; }
+.pick { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); white-space: nowrap; }
+.pick::after { content: ""; width: 7px; height: 7px; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: rotate(45deg) translateY(-2px); margin-left: 4px; }
+.pick.file { font-family: var(--mono); font-weight: 600; }
+.pick.file::after, .pick.add::after { display: none; }
+.pick.add { color: var(--accent); font-weight: 600; }
+.priv { font-size: .875rem; color: var(--muted); white-space: nowrap; }
+.spacer { flex: 1; }
+.btn { height: 34px; padding: 0 14px; border-radius: var(--radius); border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); font-weight: 600; display: inline-flex; align-items: center; }
+.btn.ghost { background: var(--panel); color: var(--accent); }
+
+/* severity marks: shape + word + colour */
+.mk { display: inline-block; width: 12px; height: 12px; flex: none; }
+.mk.high { background: var(--high); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.mk.medium { background: var(--medium); transform: rotate(45deg) scale(.78); }
+.mk.ok { width: 12px; height: 7px; border-left: 2.5px solid var(--low); border-bottom: 2.5px solid var(--low); transform: rotate(-45deg) translate(1px, -2px); }
+.sev { font: 700 .875rem var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.sev.high { color: var(--high); } .sev.medium { color: var(--medium); } .sev.ok { color: var(--low); }
+.tally { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+
+/* 3D view with hand-placed pins over a real render (image ratio 1352:677) */
+.view { position: relative; background: var(--view); border: 1px solid var(--line); overflow: hidden; display: flex; align-items: center; justify-content: center; min-width: 0; }
+.stage { position: relative; width: 100%; aspect-ratio: 1352 / 677; flex: none; }
+.stage img { width: 100%; height: 100%; display: block; clip-path: inset(4px); }
+.stage { background: var(--view); }
+.pin { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; }
+.pin b { font: 600 .875rem var(--mono); background: #fff; border: 2px solid var(--c); border-radius: 12px; padding: 0 7px; line-height: 20px; white-space: nowrap; }
+.pin i { width: 2px; height: 16px; background: var(--c); }
+.pin i::after { content: ""; display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin: 13px 0 0 -3px; }
+.pin.h { --c: var(--high); } .pin.m { --c: var(--medium); }
+.pin.sel b { background: var(--c); color: #fff; font-size: .9375rem; line-height: 26px; padding: 0 10px; }
+.pin.sel i { height: 34px; }
+.pin.sel i::after { margin-top: 31px; }
+.viewtools { position: absolute; left: var(--space-3); bottom: var(--space-3); display: flex; gap: var(--space-2); }
+.chip { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); font-size: .875rem; white-space: nowrap; }
+.chip.on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.chip .box { width: 14px; height: 14px; border: 1.5px solid var(--muted); border-radius: 2px; }
+.chip.on .box { background: var(--accent); border-color: var(--accent); }
+
+/* lists */
+.panel { background: var(--panel); border: 1px solid var(--line); min-width: 0; }
+.row { display: grid; grid-template-columns: 18px 1fr auto; gap: 2px var(--space-2); align-items: center; padding: 10px var(--space-3); border-bottom: 1px solid var(--line); }
+.row .t { font-weight: 600; }
+.row .v { grid-column: 2 / 4; color: var(--muted); font-family: var(--mono); font-size: .875rem; }
+.row .ids { font: 500 .875rem var(--mono); color: var(--muted); }
+.row.sel { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--sel); }
+.detail { grid-column: 2 / 4; display: grid; grid-template-columns: 76px 1fr; gap: 4px var(--space-2); margin-top: 8px; font-size: .875rem; }
+.detail dt { color: var(--muted); } .detail dd { margin: 0; }
+.grouphead { display: flex; align-items: center; gap: var(--space-2); padding: 8px var(--space-3); background: var(--bg); border-bottom: 1px solid var(--line); font-weight: 600; font-size: .875rem; }
+.tabs { display: flex; border-bottom: 1px solid var(--line); flex: none; }
+.tabs span { padding: 12px var(--space-3) 10px; font-weight: 600; color: var(--muted); border-bottom: 3px solid transparent; display: inline-flex; gap: 6px; align-items: baseline; }
+.tabs span.on { color: var(--ink); border-color: var(--accent); }
+.tabs .num { font-size: .875rem; color: var(--muted); }
+h2 { font-size: 1.125rem; margin: 0; }
+.label { font-size: .875rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.tag { position: absolute; right: 24px; top: 64px; z-index: 5; font: 700 14px var(--mono); background: var(--ink); color: #fff; padding: 4px 10px; border-radius: 2px; letter-spacing: .04em; }
+
+/* B: table */
+table { border-collapse: collapse; width: 100%; font-size: .875rem; }
+th { text-align: left; font-weight: 600; color: var(--muted); font-size: .875rem; padding: 8px 10px; border-bottom: 1px solid var(--line); background: var(--bg); position: sticky; top: 0; white-space: nowrap; }
+td { padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+tr.sel td { background: var(--sel); box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent); }
+tr.okrow td { color: var(--muted); }
+.res { display: inline-flex; align-items: center; gap: 6px; }
+
+/* E: tree */
+.tree { font-size: .875rem; }
+.tree .n1 { display: flex; align-items: center; gap: 8px; padding: 8px var(--space-3); font-weight: 600; border-bottom: 1px solid var(--line); }
+.tree .n2 { display: flex; align-items: center; gap: 8px; padding: 6px var(--space-3) 6px 34px; border-bottom: 1px solid #e6ecf2; font-family: var(--mono); }
+.tree .n2.sel { background: var(--sel); outline: 2px solid var(--accent); outline-offset: -2px; }
+.tree .caret { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--muted); }
+.tree .cnt { margin-left: auto; font-family: var(--mono); color: var(--muted); font-weight: 500; }
+</style>
+<style>
+/* round 2 additions: steps in the top bar, step rail, sentence rows */
+.steps { display: flex; gap: 2px; margin-left: 4px; }
+.step { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-bottom: 3px solid transparent; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.step .n { font: 600 .875rem var(--mono); width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid currentColor; display: inline-flex; align-items: center; justify-content: center; }
+.step.on { color: var(--ink); border-color: var(--accent); }
+.step.on .n { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.step.off { opacity: .5; }
+.step .c { display: inline-flex; align-items: center; gap: 4px; font: 600 .875rem var(--mono); color: var(--ink); }
+.step .mk { transform-origin: center; }
+.srow { display: grid; grid-template-columns: 18px 1fr auto; gap: 3px var(--space-2); padding: 10px var(--space-3); border-bottom: 1px solid var(--line); align-items: baseline; }
+.srow .mk { align-self: center; }
+.srow .t { font-weight: 600; }
+.srow .s { grid-column: 2 / 4; font-size: .9375rem; }
+.srow .chk { grid-column: 2 / 4; font-size: .875rem; color: var(--muted); }
+.srow.sel { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--sel); }
+.srow .more { grid-column: 2 / 4; display: grid; grid-template-columns: 70px 1fr; gap: 4px 8px; font-size: .875rem; margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+.srow .more dt { color: var(--muted); } .srow .more dd { margin: 0; }
+.rail { display: flex; flex-direction: column; }
+.rail .st { display: grid; grid-template-columns: 24px 1fr auto; gap: 8px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--line); font-weight: 600; }
+.rail .st .n { font: 600 .875rem var(--mono); width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--muted); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; }
+.rail .st.on { background: var(--sel); box-shadow: inset 4px 0 0 var(--accent); }
+.rail .st.on .n { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.rail .st .c { display: inline-flex; gap: 8px; align-items: center; font: 600 .875rem var(--mono); }
+.rail .st .c span { display: inline-flex; gap: 4px; align-items: center; }
+.score { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); align-items: center; }
+.score h3 { margin: 0; font-size: 1rem; }
+.score .open { color: var(--accent); font-weight: 600; }
+.score .sub { grid-column: 1 / 3; font-size: .875rem; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+.score .sub span { display: inline-flex; gap: 5px; align-items: center; }
+.drop { border: 2px dashed var(--line); border-radius: var(--radius); padding: 28px; display: grid; gap: 14px; justify-items: start; background: var(--panel); }
+.field { display: grid; gap: 4px; }
+.field label { font-weight: 600; font-size: .875rem; }
+.inp { height: 36px; display: inline-flex; align-items: center; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); min-width: 240px; }
+.inp.sel::after { content: ""; width: 7px; height: 7px; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: rotate(45deg); margin-left: auto; }
+.issue-in { display: flex; gap: 10px; flex-wrap: wrap; padding: 8px 12px; background: var(--bg); font-size: .875rem; align-items: center; border-top: 1px solid var(--line); }
+#frame-r td, #frame-r th { padding: 7px 8px; }
+.pin.tall i { height: 36px; } .pin.tall i::after { margin-top: 33px; }
+.issue-in span { display: inline-flex; gap: 5px; align-items: center; }
+</style>
+</head>
+<body>
+
+
+<!-- ============ P: Part step (start, empty) ============ -->
+<section class="frame" id="frame-p">
+  <span class="tag">STEP 1 · PART</span>
+  <header class="top">
+    <h1>DFMA Review</h1>
+    <nav class="steps"><span class="step on"><span class="n">1</span>Part</span><span class="step off"><span class="n">2</span>Features</span><span class="step off"><span class="n">3</span>Machining</span><span class="step off"><span class="n">4</span>Cost</span><span class="step off"><span class="n">5</span>Report</span></nav>
+    <span class="spacer"></span>
+  </header>
+  <div style="display:grid;grid-template-columns:1fr 440px;gap:16px;padding:16px;flex:1;min-height:0">
+    <div class="view"><p class="muted" style="font-size:1rem">The part shows here once it's read.</p></div>
+    <div class="drop">
+      <h2>Start a review</h2>
+      <div class="field"><label>STEP file</label><span class="btn">Open STEP file…</span></div>
+      <div class="field"><label>Inventor part (.ipt), optional</label><span class="btn ghost">Add .ipt…</span></div>
+      <div class="field"><label>Process</label><span class="inp sel">Milling</span></div>
+      <div class="field"><label>Material</label><span class="inp sel">Aluminum 6061</span></div>
+      <p class="muted" style="font-size:.875rem;margin:0">Your files are analysed on this computer and deleted straight after. Nothing is kept.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ V3: Overview (fast check) ============ -->
+<section class="frame" id="frame-o">
+  <span class="tag">V3 · OVERVIEW</span>
+  <header class="top">
+    <h1>DFMA Review</h1>
+    <nav class="steps"><span class="step"><span class="n">1</span>Part</span><span class="step on"><span class="n">★</span>Overview</span><span class="step"><span class="n">2</span>Features</span><span class="step"><span class="n">3</span>Machining</span><span class="step"><span class="n">4</span>Cost</span><span class="step"><span class="n">5</span>Report</span></nav>
+    <span class="spacer"></span>
+    <span class="btn">Export PDF</span>
+  </header>
+  <div style="display:grid;grid-template-columns:1fr 460px;gap:16px;padding:16px;flex:1;min-height:0">
+    <div class="view">
+      <div class="stage"><img src="img/model-wide.png" alt="">
+        <span class="pin m" style="left:60.9%;top:40.2%"><b>F1 +1</b><i></i></span>
+        <span class="pin h" style="left:54.2%;top:39.7%"><b>F4</b><i></i></span>
+        <span class="pin h" style="left:40.8%;top:30.2%"><b>F5</b><i></i></span>
+        <span class="pin h tall" style="left:59.6%;top:33.7%"><b>F6</b><i></i></span>
+        <span class="pin h" style="left:46.4%;top:29.2%"><b>F7 +1</b><i></i></span>
+      </div>
+    </div>
+    <div class="panel" style="display:flex;flex-direction:column">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--line);display:grid;gap:4px">
+        <span class="label">report_sample.step</span>
+        <span class="num">4.000 × 2.500 × 2.000 in · Milling · Aluminum 6061</span>
+      </div>
+      <div class="score"><h3>2 · Features</h3><span class="open">Open ›</span>
+        <div class="sub"><span><span class="mk high"></span><b class="sev high">Fix</b> 4</span><span><span class="mk medium"></span><b class="sev medium">Review</b> 4</span><span><span class="mk ok"></span><b class="sev ok">OK</b> 9</span></div></div>
+      <div class="score"><h3>3 · Machining</h3><span class="open">Open ›</span>
+        <div class="sub"><span>3-axis mill</span><span class="num">2 setups</span><span class="num">4 tool loads</span></div></div>
+      <div class="score"><h3>4 · Cost</h3><span class="open">Open ›</span>
+        <div class="sub"><span class="num">7 drivers</span><span>Biggest: distinct tools 4.0, sharp or small inside corners 4.0</span></div></div>
+      <div class="score" style="border:0"><h3>5 · Report</h3><span class="open">Open ›</span><div class="sub">PDF of all of the above</div></div>
+      <div style="margin-top:auto;padding:14px 16px;background:var(--bg);border-top:1px solid var(--line);display:grid;gap:6px">
+        <span class="label">Fix first</span>
+        <div style="display:flex;gap:8px;align-items:center"><span class="mk high"></span><span class="sev high">Fix</span><b>Sharp corner ×4</b><span class="muted">Inside corners have no radius.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ V1: Features step ============ -->
+<section class="frame" id="frame-f">
+  <span class="tag">V1 · STEPS · FEATURES</span>
+  <header class="top">
+    <h1>DFMA Review</h1>
+    <nav class="steps"><span class="step"><span class="n">1</span>Part</span><span class="step on"><span class="n">2</span>Features <span class="c"><span class="mk high"></span>4 <span class="mk medium"></span>4</span></span><span class="step"><span class="n">3</span>Machining</span><span class="step"><span class="n">4</span>Cost</span><span class="step"><span class="n">5</span>Report</span></nav>
+    <span class="spacer"></span>
+    <span class="num muted">report_sample.step</span>
+    <span class="btn">Export PDF</span>
+  </header>
+  <div style="display:grid;grid-template-columns:1fr 460px;gap:16px;padding:16px;flex:1;min-height:0">
+    <div class="view">
+      <div class="stage"><img src="img/model-wide-sel.png" alt=""><span class="pin h sel" style="left:50%;top:45%"><b>F4 FIX</b><i></i></span></div>
+      <div class="viewtools"><span class="chip"><span class="box"></span>Show OK features</span></div>
+    </div>
+    <div class="panel" style="display:flex;flex-direction:column;min-height:0">
+      <div style="display:flex;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)"><span class="chip on">Issues 8</span><span class="chip">Passed 9</span><span class="chip">All</span></div>
+      <div class="srow sel"><span class="mk high"></span><span class="t"><span class="sev high">Fix</span> Sharp corner ×4</span><span class="ids">F4–F7</span>
+        <span class="s">Inside corners have no radius. Needs 0.031 in (1/32) or more.</span>
+        <span class="chk">Corner radius check · limit is an estimate</span>
+        <dl class="more"><dt>Showing</dt><dd class="num">F4 · corner-1 · 1 of 4</dd><dt>Measured</dt><dd class="num">radius 0.000 in, pocket 0.250 in deep</dd><dt>Fix</dt><dd>A larger radius also lets a larger end mill cut the pocket.</dd></dl>
+      </div>
+      <div class="srow"><span class="mk medium"></span><span class="t"><span class="sev medium">Review</span> Deep hole ×2</span><span class="ids">F1 F2</span>
+        <span class="s">9.6× and 7.2× the diameter deep. Over 6.0× needs peck drilling.</span><span class="chk">Hole depth check</span></div>
+      <div class="srow"><span class="mk medium"></span><span class="t"><span class="sev medium">Review</span> Drill size</span><span class="ids">F3</span>
+        <span class="s">0.260 in isn't a standard drill. Nearest is 0.266 in (17/64).</span><span class="chk">Hole size check</span></div>
+      <div class="srow"><span class="mk medium"></span><span class="t"><span class="sev medium">Review</span> Deep pocket</span><span class="ids">F8</span>
+        <span class="s">8.0× as deep as the end mill that fits. Over 3.0× needs a long tool.</span><span class="chk">Pocket depth check</span></div>
+      <div style="margin-top:auto;display:flex;justify-content:space-between;padding:12px;border-top:1px solid var(--line)"><span class="btn ghost">‹ Part</span><span class="btn">Machining ›</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ V1: Machining step, issues per setup ============ -->
+<section class="frame" id="frame-m">
+  <span class="tag">V1 · STEPS · MACHINING</span>
+  <header class="top">
+    <h1>DFMA Review</h1>
+    <nav class="steps"><span class="step"><span class="n">1</span>Part</span><span class="step"><span class="n">2</span>Features <span class="c"><span class="mk high"></span>4 <span class="mk medium"></span>4</span></span><span class="step on"><span class="n">3</span>Machining</span><span class="step"><span class="n">4</span>Cost</span><span class="step"><span class="n">5</span>Report</span></nav>
+    <span class="spacer"></span>
+    <span class="num muted">report_sample.step</span>
+    <span class="btn">Export PDF</span>
+  </header>
+  <div style="display:grid;grid-template-columns:1fr 460px;gap:16px;padding:16px;flex:1;min-height:0">
+    <div class="view">
+      <div class="stage"><img src="img/model-wide.png" alt="">
+        <span class="pin h" style="left:54.2%;top:39.7%"><b>F4</b><i></i></span>
+        <span class="pin h" style="left:40.8%;top:30.2%"><b>F5</b><i></i></span>
+        <span class="pin h" style="left:59.6%;top:33.7%"><b>F6</b><i></i></span>
+        <span class="pin h" style="left:46.4%;top:29.2%"><b>F7 +1</b><i></i></span>
+      </div>
+      <div class="viewtools"><span class="chip">Setup 1 · from +X</span><span class="chip on">Setup 2 · from −X</span></div>
+    </div>
+    <div class="panel" style="display:flex;flex-direction:column;min-height:0">
+      <div style="padding:12px 14px;display:grid;grid-template-columns:90px 1fr;gap:4px 10px;border-bottom:1px solid var(--line)">
+        <span class="muted">Machine</span><span>3-axis mill</span>
+        <span class="muted">Stock</span><span class="num">2.500 × 4.000 × 2.000 in block</span>
+        <span class="muted">Tool loads</span><span class="num">4</span>
+      </div>
+      <div style="padding:12px;display:grid;gap:12px">
+        <div style="border:1px solid var(--line)">
+          <div class="grouphead">Setup 1 · from +X</div>
+          <div class="row" style="grid-template-columns:24px 1fr auto"><span class="num">1</span><span>1/4 in end mill</span><span class="ids">0.260 in hole</span></div>
+          <div class="row" style="grid-template-columns:24px 1fr auto"><span class="num">2</span><span>0.250 in (1/4) drill</span><span class="ids">1/4 in hole</span></div>
+          <div class="issue-in"><span class="muted">Issues here:</span><span><span class="mk medium"></span><b class="sev medium">Review</b> Deep hole ×2</span><span><span class="mk medium"></span><b class="sev medium">Review</b> Drill size</span></div>
+        </div>
+        <div style="border:2px solid var(--accent)">
+          <div class="grouphead" style="background:var(--sel)">Setup 2 · from −X</div>
+          <div class="row" style="grid-template-columns:24px 1fr auto"><span class="num">3</span><span>3/4 in end mill</span><span class="ids">pocket</span></div>
+          <div class="row" style="grid-template-columns:24px 1fr auto"><span class="num">4</span><span>1/32 in end mill <span class="muted">· smallest; none fits the corners</span></span><span class="ids">pocket</span></div>
+          <div class="issue-in"><span class="muted">Issues here:</span><span><span class="mk high"></span><b class="sev high">Fix</b> Sharp corner ×4</span><span><span class="mk medium"></span><b class="sev medium">Review</b> Deep pocket</span></div>
+        </div>
+      </div>
+      <div style="margin-top:auto;display:flex;justify-content:space-between;padding:12px;border-top:1px solid var(--line)"><span class="btn ghost">‹ Features</span><span class="btn">Cost ›</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ V2: Checklist rail ============ -->
+<section class="frame" id="frame-r">
+  <span class="tag">V2 · CHECKLIST RAIL</span>
+  <header class="top">
+    <h1>DFMA Review</h1>
+    <span class="pick file">report_sample.step</span><span class="pick">Milling</span><span class="pick">Aluminum 6061</span>
+    <span class="priv">Stays on this PC</span>
+    <span class="spacer"></span>
+    <span class="btn">Export PDF</span>
+  </header>
+  <div style="display:grid;grid-template-columns:230px 1fr 440px;gap:16px;padding:16px;flex:1;min-height:0">
+    <nav class="panel rail">
+      <div class="st"><span class="n">1</span>Part<span class="c"><span class="mk ok"></span></span></div>
+      <div class="st"><span class="n">2</span>Holes<span class="c"><span><span class="mk medium"></span>3</span></span></div>
+      <div class="st on"><span class="n">3</span>Pockets &amp; corners<span class="c"><span><span class="mk high"></span>4</span><span><span class="mk medium"></span>1</span></span></div>
+      <div class="st"><span class="n">4</span>Walls<span class="c"><span><span class="mk ok"></span>9</span></span></div>
+      <div class="st"><span class="n">5</span>Setups<span class="c num">2</span></div>
+      <div class="st"><span class="n">6</span>Cost<span class="c num">7</span></div>
+      <div class="st"><span class="n">7</span>Report<span class="c"></span></div>
+    </nav>
+    <div class="view">
+      <div class="stage"><img src="img/model-wide-sel.png" alt=""><span class="pin h sel" style="left:50%;top:45%"><b>F4 FIX</b><i></i></span></div>
+    </div>
+    <div class="panel" style="display:flex;flex-direction:column;min-height:0">
+      <div style="padding:12px 14px;border-bottom:1px solid var(--line)"><h2>Pockets &amp; corners</h2></div>
+      <table>
+        <thead><tr><th>Check</th><th style="text-align:right">Measured</th><th style="text-align:right">Limit</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr class="sel"><td>Corner radius ×4</td><td class="n">0.000 in</td><td class="n">≥ 0.031 in</td><td><span class="res"><span class="mk high"></span><span class="sev high">Fix</span></span></td></tr>
+          <tr><td>Pocket depth</td><td class="n">8.0× tool</td><td class="n">≤ 3.0×</td><td><span class="res"><span class="mk medium"></span><span class="sev medium">Review</span></span></td></tr>
+        </tbody>
+      </table>
+      <div style="padding:14px;display:grid;gap:8px;border-top:1px solid var(--line);margin-top:8px">
+        <div style="display:flex;gap:8px;align-items:center"><span class="mk high"></span><span class="sev high">Fix</span><b>Sharp corner ×4</b><span class="spacer"></span><span class="num muted">F4–F7</span></div>
+        <p style="margin:0">Inside corners have no radius. Needs 0.031 in (1/32) or more; a larger radius also lets a larger end mill cut the pocket.</p>
+        <p class="muted" style="margin:0;font-size:.875rem">Corner radius check · limit is an estimate · corner-1 to corner-4</p>
+      </div>
+      <div style="margin-top:auto;display:flex;justify-content:space-between;padding:12px;border-top:1px solid var(--line)"><span class="btn ghost">‹ Holes</span><span class="btn">Walls ›</span></div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>
