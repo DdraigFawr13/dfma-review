@@ -4,7 +4,7 @@ Updated: 2026-11-09. A fresh session must be able to continue from this file alo
 
 ## Phase
 
-Build. First usable version: S1 to S7 merged (#3 to #18). Inventor parts phase: plan (D-031, D-032), I1 spec (D-033, [docs/specs/inventor-i1-threads.md](specs/inventor-i1-threads.md)), I1 S1 (#21), S2 (#22) and S3 (#23, D-038) merged. I2+I3 spec approved (D-039); I2 S1 hole features merged in #24 (D-041). I2 S2 and I3 S3 merged in #27 (D-046). Review-steps S1 merged in #29 (D-047). Now: review-steps S2 (Features rows) in a new session on a new branch from main. History and full entries: [docs/archive/handoff-2026-11.md](archive/handoff-2026-11.md) (grep it; "Moved 2026-11-09" holds the long entries cut from here).
+Build. First usable version: S1 to S7 merged (#3 to #18). Inventor parts phase: plan (D-031, D-032), I1 spec (D-033, [docs/specs/inventor-i1-threads.md](specs/inventor-i1-threads.md)), I1 S1 (#21), S2 (#22) and S3 (#23, D-038) merged. I2+I3 spec approved (D-039); I2 S1 hole features merged in #24 (D-041). I2 S2 and I3 S3 merged in #27 (D-046). Review-steps S1 merged in #29 (D-047). Now: review-steps S2 and S3 together on `review-steps-s2-s3` (D-048). History and full entries: [docs/archive/handoff-2026-11.md](archive/handoff-2026-11.md) (grep it; "Moved 2026-11-09" holds the long entries cut from here).
 
 ## Plan map
 
@@ -18,7 +18,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ○ Assemblies and DFA · history and compare · time and $.
 - ▶ Inventor parts (Morgan, 2026-11-08): ✔ research · ✔ own reader (D-031) · ✔ plan (D-032) · ✔ spec I1 (D-033) · ✔ I1 S1 #21, S2 #22, S3 #23 · ✔ spec I2+I3 (D-039) · ✔ I2 S1 hole features #24 (D-041) · ✔ S2 names and copies and S3 fillets and chamfers, merged in #27 (D-043, D-046) · ▶ work-pair check owed (from 2026-11-12).
 - ○ Inventor shape from the `.ipt` alone (D-035; after I1).
-- ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ✔ spec approved (D-045, #28) · ✔ S1 merged in #29 (D-047) · ▶ S2 · ○ S3 ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
+- ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ✔ spec approved (D-045, #28) · ✔ S1 merged in #29 (D-047) · ▶ S2 + S3 together (D-048) ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
@@ -31,7 +31,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-0. Now: review-steps S2 (Features rows) in a new session on a new branch `review-steps-s2` from main: [docs/specs/review-steps.md](specs/review-steps.md) S2. First the zero-decision re-check of S2 (with its cross-slice part) against merged S1 (write-spec step 8), then the mock-up of the Threads, Hole features and Fillets and chamfers groups inside Features (`mockups/review-steps-features.html`, `ui-mockups` skill) for Morgan's approval before code. Open from S1's review: no browser test yet for Change file followed by browser Back.
+0. Now: review-steps S2 + S3 together (D-048) on branch `review-steps-s2-s3` from main, one PR: [docs/specs/review-steps.md](specs/review-steps.md) S2 and S3. Steps: zero-decision re-check of both against merged S1; the groups mock-up (`mockups/review-steps-features.html`, `ui-mockups`) for Morgan's approval before code (S3 builds to `r3-mach`, no mock-up); checks fail first; build; `check.py`; fresh review; demo and status page; draft PR. Open from S1's review: add a browser test for Change file followed by browser Back.
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `python tests/inventor/local_pairs.py` (now prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
 2. Recognition and stress-test status, scoring commands and the MFCAD++ download: archive "Moved 2026-11-09" (old Next 3 and 3a). Re-run them on every recognition change.
 3. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
@@ -45,6 +45,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-09 D-048: review-steps S2 and S3 built and merged together, one branch and one PR.
 - 2026-11-09 D-047: review-steps S1 approved and merged (#29); builder calls recorded.
 - 2026-11-09 D-046: merge #27 now; the work-pair check follows the merge (amends D-041).
 - 2026-11-09 D-045: review-steps spec approved; 3 slices; rows.py; build from main.

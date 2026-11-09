@@ -365,3 +365,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-09; Morgan: "Approved. Merge please then start a new session for s2").
 - **Decision:** PR #29 (review-steps S1) merges, with the builder's calls listed on its [status page](https://claude.ai/artifact/1DBpmPRjdQ97e1vezTzHUV): once a part is read, process and material are two dropdowns under the file name; id ranges dash for 3 or more ids in a row ("F4–F7"), two stay spaced ("F1 F2"); a limit source missing from `rows.LIMITS` shows as given ("limit: <source>"), and `test_rows.py` fails on any such source in the repo; pins stay on every step. S2 starts in a new session.
 - **Why:** Morgan tried the first demo in the new design and approved it; the frames left these points open (the spec's zero-decision re-check found no gap that needed a question).
+
+## D-048 Review-steps S2 and S3 built and merged together
+
+- **Status:** Accepted (2026-11-09; Morgan: "in the new session let's just combine s2 and s3 they aren't that big of builds so let's combine those and start them in a new session on merge").
+- **Decision:** review-steps S2 (Features rows) and S3 (Machining and the style guide) are built in one session on one branch, `review-steps-s2-s3`, cut from main after #29, and merge in one PR. S2's groups mock-up (`mockups/review-steps-features.html`) is still approved by Morgan before code; S3 builds to frame `r3-mach` (D-044). Both slices' checks must fail before the build and pass before the PR.
+- **Why:** Morgan judged both slices small enough for one session; S3 waited only on S2.
