@@ -405,6 +405,6 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 
 ## D-053 UX audit fixes, 2026-11-09
 
-- **Status:** Accepted (2026-11-09; Morgan, on the audit's reply page: "Go with your recommendations to fix").
+- **Status:** Accepted (2026-11-09; Morgan, on the audit's reply page: "Go with your recommendations to fix"). Built and approved: "Approved, merge when ready" (2026-11-09), merged in PR #32.
 - **Decision:** fix all 34 findings of [docs/audit/2026-11-09-ux.md](audit/2026-11-09-ux.md) as each one's Fix recommends, on one branch (`audit-2026-11-09-fixes`) and one PR. Where a Fix offers two ways, the first is taken unless it says "leave it" first: F9 keeps the approved frames' words and names them in UI_STYLE; F16 raises small targets to 44 px below 900 px; F20 scrolls the steps in one row below 500 px; F24 makes each card heading the link; F25 is left as it is (F19 gives disabled tabs their reason). Amends D-017 (F26), D-042 (F21, F31) and D-049 (F34). A code fix closes with a test that fails before it; a wording fix closes with its commit.
 - **Why:** the audit (PR #31) found no blocking issue but 34 smaller ones across wording, narrow widths at 200% text, ARIA and the Machining step; Morgan accepted every recommended Fix.
