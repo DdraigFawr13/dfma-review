@@ -96,3 +96,35 @@ def test_pdf_threads(page: Page, base_url: str, tmp_path):
         assert line in text, f"{line!r} is not in the PDF"
     pages = [p.extract_text().replace("\n", " ") for p in pdf.pages]
     assert any(p.startswith("F26") or "F26 · MEDIUM" in p for p in pages)  # its finding page
+
+
+def test_pdf_hole_features(page: Page, base_url: str, tmp_path):
+    """I2 S1 J6: the summary page's Hole features section after Threads (D-040), one line per feature; a
+    disagreeing hole (F39) has its finding page."""
+    import json
+    result = json.loads((PARTS.parent / "inventor" / "fixtures" / "ctc_04.json").read_text("utf-8"))
+    page.route("**/api/analyze", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps(result)))
+    page.goto(base_url)
+    step, ipt = tmp_path / "nist_ctc_04_asme1_ap242-e1.stp", tmp_path / "INV_nist_ctc_04_asme1_2021.ipt"
+    step.write_text("placeholder")
+    ipt.write_bytes(b"placeholder")
+    page.get_by_test_id("upload-ipt").set_input_files(ipt)
+    page.get_by_test_id("upload-file").set_input_files(step)
+    expect(page.get_by_test_id("hole-features-panel")).to_be_visible(timeout=30_000)
+    with page.expect_download() as download:
+        page.get_by_test_id("export-pdf").click()
+    path = tmp_path / "report.pdf"
+    download.value.save_as(path)
+    pdf = PdfReader(path)
+    text = re.sub(r" +", " ", " ".join(p.extract_text() for p in pdf.pages).replace("\n", " "))
+    for line in ("Hole features (from INV_nist_ctc_04_asme1_2021.ipt)",
+                 "9 Hole features, 54 holes: 40 matched, 13 disagree, 1 not mapped. Sizes as designed in the .ipt.",
+                 "hf-7 Countersink · 30 holes: Ø0.551 in [14 mm] through, countersink Ø0.787 in [20 mm] × 90°. "
+                 "26 matched, 4 disagree, 0 not mapped (findings F35, F36, F37, F38).",
+                 "hf-8 Countersink · 1 hole: Ø0.551 in [14 mm] through, countersink Ø0.787 in [20 mm] × 90°. "
+                 "0 matched, 0 disagree, 1 not mapped; not mapped: no hole on this axis (our limit, not a finding).",
+                 "(finding F39)"):
+        assert line in text, f"{line!r} is not in the PDF"
+    assert text.index("Threads (from") < text.index("Hole features (from")
+    pages = [p.extract_text().replace("\n", " ") for p in pdf.pages]
+    assert any("F39 · MEDIUM" in p for p in pages)  # its finding page

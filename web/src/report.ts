@@ -5,7 +5,7 @@
 // Imported up front, not on demand: the view-only demo page inlines one script and has no chunks to load (D-009).
 import { jsPDF } from "jspdf";
 import type { Analysis, Finding } from "./api";
-import { RULE_NAMES, axisText, checkedLine, driverLine, inMm, meta, notPlanned, planFoot, planWhy, setupHead, stockText, threadCallout, threadCounts, threadSize, toolName } from "./findings";
+import { RULE_NAMES, axisText, holeCounts, holeFeatureSize, holeFeatureTitle, checkedLine, driverLine, inMm, meta, notPlanned, planFoot, planWhy, setupHead, stockText, threadCallout, threadCounts, threadSize, toolName } from "./findings";
 import { formatIn, formatRatio, formatSize } from "./format";
 
 /** What the report needs besides the analysis: the labels the reader chose, today's date, and a picture per finding. */
@@ -144,6 +144,31 @@ function summaryPage(p: Page, input: ReportInput): void {
     p.text(`Score is count x weight, highest first. Every weight is an ${sources} (config/drivers.toml). No time or dollars yet.`, { colour: [85, 101, 122] });
   }
   if (result.inventor) threadsSection(p, input);
+  if (result.inventor) holeFeaturesSection(p, input);
+}
+
+/** One Hole feature as a PDF line (D-040): "hf-7 Countersink · 30 holes: <sizes>. 26 matched, 4 disagree, 0 not
+ *  mapped (findings F35, F36, F37, F38)". */
+export function holeFeatureLine(f: NonNullable<NonNullable<Analysis["inventor"]>["hole_features"]>[number], result: Analysis): string {
+  const ids = result.findings.filter((x) => x.rule === "hole_mismatch" && x.hole_feature === f.id).map((x) => x.id);
+  let line = `${f.id} ${holeFeatureTitle(f)}: ${holeFeatureSize(f, ", ")}. ${holeCounts(f.holes)}`;
+  if (ids.length) line += ` (${ids.length === 1 ? "finding" : "findings"} ${ids.join(", ")})`;
+  const reasons = [...new Set(f.holes.filter((h) => h.state === "not_mapped").map((h) => h.reason ?? "unknown"))];
+  if (reasons.length) line += `; not mapped: ${reasons.join(", ")} (our limit, not a finding)`;
+  return `${line}.`;
+}
+
+/** The summary page's Hole features section, after Threads (D-040). */
+function holeFeaturesSection(p: Page, input: ReportInput): void {
+  const inv = input.result.inventor!, feats = inv.hole_features ?? [];
+  p.heading(`Hole features (from ${inv.name})`);
+  if (!feats.length) {
+    p.text("No Hole features in this .ipt.");
+    return;
+  }
+  const all = feats.flatMap((f) => f.holes);
+  p.text(`${feats.length} Hole features, ${all.length} holes: ${holeCounts(all)}. Sizes as designed in the .ipt.`);
+  for (const f of feats) p.text(holeFeatureLine(f, input.result), { indent: 12, gap: 1 });
 }
 
 /** One thread as a PDF line (D-036): "hole-38  M3x0.5 - 6H  0.236 in [6 mm] deep  tap drill 0.098 in [2.5 mm]  matched". */

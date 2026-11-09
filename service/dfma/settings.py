@@ -43,6 +43,8 @@ MSG_IPT_NO_MODEL = "No 3D model found inside this .ipt"
 MSG_IPT_FORMAT = "This .ipt uses a format this tool can't read yet (ACIS {version})"
 IPT_ASSUMPTION = ("iParts, derived and Content Center parts are not detected yet; the thread data of such a part "
                   "may not match its STEP.")
+MSG_FEATURE_BAD = "feature data not understood"  # I2: a Hole feature whose faces could not be read
+MSG_NO_HOLE_ON_AXIS = "no hole on this axis"  # I2: an .ipt hole with no STEP hole near its axis
 PAIR_TOL_MM = 0.01  # D-032: the .ipt and STEP must agree within this, corners and outer size
 
 ASSUMPTIONS = [
