@@ -66,7 +66,7 @@ a { color: var(--accent); }
     <span class="eyebrow">DFMA Review · look and layout</span>
     <h1>Round 1: what should the review screen be?</h1>
     <p class="lead">Five ways to lay out the same review, built from your real report_sample part. Tap a picture to zoom. Mark what you like; each answer saves as you tap. Pieces you keep get combined in round 2. Say <b>"round 1 done"</b> in chat when finished.</p>
-    <p class="small muted">The pictures are drawn at a 1280 px desktop screen, the app's target. They are mock-ups, not the app. Proposals only; nothing is decided until you say so.</p>
+    <p class="small muted">The pictures are drawn at a 1280 px desktop screen, the app's target. They are mock-ups, not the app. Proposals only; nothing is decided until you say so. Some would change earlier picks: the verdict line and layout (D-012), the 7-entry legend (D-014), Plan and Passed placement (D-023). Those get their own question before anything is built.</p>
   </header>
 
   <h2>1 · What's wrong today</h2>
@@ -83,7 +83,7 @@ a { color: var(--accent); }
   </section>
 
   <h2>3 · Five layouts</h2>
-  <p class="small muted">All five use the same words and marks (section 5 asks about those), so compare the layout only: where things sit and what's one tap away.</p>
+  <p class="small muted">All five use the same proposed short words and marks (section 5 sets them beside today's), so compare the layout only: where things sit and what's one tap away.</p>
   <div id="layouts" style="display:grid;gap:14px"></div>
 
   <h2>4 · Pieces to mix</h2>
@@ -101,12 +101,21 @@ a { color: var(--accent); }
   <h2>7 · Anything else</h2>
   <section class="card"><h3>What does the tool look like in your head?</h3><p class="small muted">A tool you like the feel of, a screen you hate, a word that bugs you.</p><textarea id="t_else" data-id="else" rows="4" aria-label="Anything else"></textarea></section>
   <p class="small muted">When done, say <b>"round 1 done"</b> in chat.</p>
+  <details class="card" id="check-record"><summary><b>Check record</b></summary>
+    <div class="small" style="display:grid;gap:6px">
+      <p>Files checked: docs/UI_STYLE.md, docs/DECISIONS.md, web/index.html, the demo build's text for report_sample.step (findings, plan, cost drivers).</p>
+      <p>Facts: every measured value, limit, id, count, size, setup and tool on the frames matches the app's output (fresh check confirmed). The titles "Sharp corner", "Deep hole", "Drill size", "Deep pocket", the column names and "Plan" / "Cost" are proposed wording, not the app's.</p>
+      <p>Fixes after the fresh check: severity word on every row in A, C and E; selected pins read "F4 HIGH"; file field, .ipt field and a privacy note back in the top bar (APP-01); 0.250 in (1/4) drill; Threads panel counted only when an .ipt has threads; 13 px label raised to 14 px; decisions these proposals would change named at the top.</p>
+      <p>Left as is: this feedback page loads IBM Plex from Google Fonts and has a dark theme. It is a review page, not the app; the app rule (fonts ship with the app, light only) still holds for the frames, which use the app's own font files.</p>
+      <p>Lint: mockup-lint 0 warnings (frames and page, minimum text 14 px). Widths: 1280 px frames, page checked at 390 px. Fresh check: 1 reviewer agent, 65,865 tokens.</p>
+    </div>
+  </details>
 </main>
 
 <script>
 const IMG = {{imgs}};
 const PROBLEMS = [
-  ["p_stack", "4 panels stacked in one 400 px column", "Findings, Machine plan, Threads and Cost drivers each scroll inside their own box. At 1280 × 900, 1 of 8 findings is in view."],
+  ["p_stack", "3 panels stacked in one 400 px column", "Findings, Machine plan and Cost drivers each scroll inside their own box (4 with Threads, when an .ipt has threads). At 1280 × 900, 1 of 8 findings is in view."],
   ["p_words", "479 words in the findings list", "8 findings plus 9 passed walls. The whole screen with every panel open: 910 words."],
   ["p_repeat", "The same sentence 4 times", "\"Sharp inside corner: needs EDM or a corner radius\" and its fix line, once per corner."],
   ["p_legend", "7 legend entries under the model", "High, Medium, Selected, then 4 \"… checked, no finding\" switches."],
@@ -135,7 +144,7 @@ const PIECES = [
   ["k_chips", "Filter chips: Issues · Passed · All", "B"], ["k_float", "Floating detail card with prev / next", "C"], ["k_tags", "Short issue tags over the model", "C"],
   ["k_steps", "Steps across the top bar", "D"], ["k_setup", "Setup chips on the model (show what each setup cuts)", "D"], ["k_tree", "Feature tree", "E"],
   ["k_inspector", "Inspector panel for the selected item", "E"], ["k_oktoggle", "One \"OK features\" switch instead of the 7-entry legend", "A, C"], ["k_tally", "Counts with marks in the top bar (▲ 4 ◆ 4 ✓ 9)", "B, C"],
-  ["k_filechip", "File as a drop-down chip, not a file box", "all"],
+  ["k_filechip", "File, .ipt and privacy note squeezed into the top bar", "all"],
 ];
 const WORDS = [
   ["w_sev", "Severity words", "single", ["HIGH / MEDIUM (today)", "Must fix / Check", "Fix / Review"], `<div class="specimen"><div class="r"><span class="sev h">▲ HIGH</span><span class="sev m">◆ MEDIUM</span></div><div class="r"><span class="sev h">▲ MUST FIX</span><span class="sev m">◆ CHECK</span></div><div class="r"><span class="sev h">▲ FIX</span><span class="sev m">◆ REVIEW</span></div></div><p class="small muted">Protolabs splits "required changes" from "advisories"; NX uses pass / fail / info marks.</p>`],

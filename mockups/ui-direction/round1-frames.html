@@ -17,7 +17,7 @@
 :root {
   --bg: #eef2f6; --panel: #ffffff; --ink: #16263d; --muted: #55657a; --line: #c4cfdc;
   --accent: #1f5fa8; --accent-ink: #ffffff; --view: #e3eaf2; --grid: #cfd9e5;
-  --high: #b3261e; --medium: #a35a00; --low: #3f6b2a; --radius: 2px;
+  --sel: #eaf1f9; --high: #b3261e; --medium: #a35a00; --low: #3f6b2a; --radius: 2px;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
   --sans: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
 }
@@ -34,6 +34,9 @@ button, select { font: inherit; color: inherit; }
 .pick { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); white-space: nowrap; }
 .pick::after { content: ""; width: 7px; height: 7px; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: rotate(45deg) translateY(-2px); margin-left: 4px; }
 .pick.file { font-family: var(--mono); font-weight: 600; }
+.pick.file::after, .pick.add::after { display: none; }
+.pick.add { color: var(--accent); font-weight: 600; }
+.priv { font-size: .875rem; color: var(--muted); white-space: nowrap; }
 .spacer { flex: 1; }
 .btn { height: 34px; padding: 0 14px; border-radius: var(--radius); border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); font-weight: 600; display: inline-flex; align-items: center; }
 .btn.ghost { background: var(--panel); color: var(--accent); }
@@ -72,7 +75,7 @@ button, select { font: inherit; color: inherit; }
 .row .t { font-weight: 600; }
 .row .v { grid-column: 2 / 4; color: var(--muted); font-family: var(--mono); font-size: .875rem; }
 .row .ids { font: 500 .875rem var(--mono); color: var(--muted); }
-.row.sel { outline: 2px solid var(--accent); outline-offset: -2px; background: #f4f8fc; }
+.row.sel { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--sel); }
 .detail { grid-column: 2 / 4; display: grid; grid-template-columns: 76px 1fr; gap: 4px var(--space-2); margin-top: 8px; font-size: .875rem; }
 .detail dt { color: var(--muted); } .detail dd { margin: 0; }
 .grouphead { display: flex; align-items: center; gap: var(--space-2); padding: 8px var(--space-3); background: var(--bg); border-bottom: 1px solid var(--line); font-weight: 600; font-size: .875rem; }
@@ -82,14 +85,14 @@ button, select { font: inherit; color: inherit; }
 .tabs .num { font-size: .875rem; color: var(--muted); }
 h2 { font-size: 1.125rem; margin: 0; }
 .label { font-size: .875rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-.tag { position: absolute; right: 24px; top: 64px; z-index: 5; font: 700 13px var(--mono); background: var(--ink); color: #fff; padding: 4px 10px; border-radius: 2px; letter-spacing: .04em; }
+.tag { position: absolute; right: 24px; top: 64px; z-index: 5; font: 700 14px var(--mono); background: var(--ink); color: #fff; padding: 4px 10px; border-radius: 2px; letter-spacing: .04em; }
 
 /* B: table */
 table { border-collapse: collapse; width: 100%; font-size: .875rem; }
 th { text-align: left; font-weight: 600; color: var(--muted); font-size: .875rem; padding: 8px 10px; border-bottom: 1px solid var(--line); background: var(--bg); position: sticky; top: 0; white-space: nowrap; }
 td { padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
-tr.sel td { background: #eaf1f9; box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent); }
+tr.sel td { background: var(--sel); box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent); }
 tr.okrow td { color: var(--muted); }
 .res { display: inline-flex; align-items: center; gap: 6px; }
 
@@ -97,7 +100,7 @@ tr.okrow td { color: var(--muted); }
 .tree { font-size: .875rem; }
 .tree .n1 { display: flex; align-items: center; gap: 8px; padding: 8px var(--space-3); font-weight: 600; border-bottom: 1px solid var(--line); }
 .tree .n2 { display: flex; align-items: center; gap: 8px; padding: 6px var(--space-3) 6px 34px; border-bottom: 1px solid #e6ecf2; font-family: var(--mono); }
-.tree .n2.sel { background: #eaf1f9; outline: 2px solid var(--accent); outline-offset: -2px; }
+.tree .n2.sel { background: var(--sel); outline: 2px solid var(--accent); outline-offset: -2px; }
 .tree .caret { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--muted); }
 .tree .cnt { margin-left: auto; font-family: var(--mono); color: var(--muted); font-weight: 500; }
 </style>
@@ -109,9 +112,10 @@ tr.okrow td { color: var(--muted); }
   <span class="tag">A · TABS</span>
   <header class="top">
     <h1>DFMA Review</h1>
-    <span class="pick file">report_sample.step</span>
+    <span class="pick file">report_sample.step</span><span class="pick add">+ .ipt</span>
     <span class="pick">Milling</span>
     <span class="pick">Aluminum 6061</span>
+    <span class="priv">Stays on this PC</span>
     <span class="spacer"></span>
     <span class="num muted">4.000 × 2.500 × 2.000 in</span>
     <span class="btn">Export PDF</span>
@@ -129,13 +133,13 @@ tr.okrow td { color: var(--muted); }
         <span class="tally"><span class="mk high"></span><span class="sev high">High</span> 4</span>
         <span class="tally"><span class="mk medium"></span><span class="sev medium">Medium</span> 4</span>
       </div>
-      <div class="row sel"><span class="mk high"></span><span class="t">Sharp corner <span class="muted">×4</span></span><span class="ids">F4–F7</span>
+      <div class="row sel"><span class="mk high"></span><span class="t"><span class="sev high">High</span> Sharp corner <span class="muted">×4</span></span><span class="ids">F4–F7</span>
         <span class="v">r 0.000 in · needs ≥ 0.031 in</span>
         <dl class="detail"><dt>Feature</dt><dd class="num">corner-1 · pocket 0.250 in deep</dd><dt>Limit</dt><dd>estimate</dd><dt>Fix</dt><dd>Corner radius 0.031 in (1/32) or more</dd></dl>
       </div>
-      <div class="row"><span class="mk medium"></span><span class="t">Deep hole <span class="muted">×2</span></span><span class="ids">F1 F2</span><span class="v">9.6× and 7.2× dia · limit 6.0×</span></div>
-      <div class="row"><span class="mk medium"></span><span class="t">Drill size</span><span class="ids">F3</span><span class="v">0.260 in · nearest 0.266 in</span></div>
-      <div class="row"><span class="mk medium"></span><span class="t">Deep pocket</span><span class="ids">F8</span><span class="v">8.0× tool · limit 3.0×</span></div>
+      <div class="row"><span class="mk medium"></span><span class="t"><span class="sev medium">Medium</span> Deep hole <span class="muted">×2</span></span><span class="ids">F1 F2</span><span class="v">9.6× and 7.2× dia · limit 6.0×</span></div>
+      <div class="row"><span class="mk medium"></span><span class="t"><span class="sev medium">Medium</span> Drill size</span><span class="ids">F3</span><span class="v">0.260 in · nearest 0.266 in</span></div>
+      <div class="row"><span class="mk medium"></span><span class="t"><span class="sev medium">Medium</span> Deep pocket</span><span class="ids">F8</span><span class="v">8.0× tool · limit 3.0×</span></div>
     </aside>
   </div>
 </section>
@@ -145,9 +149,10 @@ tr.okrow td { color: var(--muted); }
   <span class="tag">B · SHEET</span>
   <header class="top">
     <h1>DFMA Review</h1>
-    <span class="pick file">report_sample.step</span>
+    <span class="pick file">report_sample.step</span><span class="pick add">+ .ipt</span>
     <span class="pick">Milling</span>
     <span class="pick">Aluminum 6061</span>
+    <span class="priv">Stays on this PC</span>
     <span class="spacer"></span>
     <span class="tally"><span class="mk high"></span><span class="sev high">High</span> 4</span>
     <span class="tally"><span class="mk medium"></span><span class="sev medium">Medium</span> 4</span>
@@ -156,7 +161,7 @@ tr.okrow td { color: var(--muted); }
   </header>
   <div style="display:grid;grid-template-columns:500px 1fr;gap:16px;padding:16px;flex:1;min-height:0">
     <div class="view">
-      <div class="stage"><img src="img/model-wide-sel.png" alt=""><span class="pin h sel" style="left:50%;top:45%"><b>F4</b><i></i></span></div>
+      <div class="stage"><img src="img/model-wide-sel.png" alt=""><span class="pin h sel" style="left:50%;top:45%"><b>F4 HIGH</b><i></i></span></div>
     </div>
     <div class="panel" style="display:flex;flex-direction:column;min-height:0">
       <div style="display:flex;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);align-items:center">
@@ -192,20 +197,21 @@ tr.okrow td { color: var(--muted); }
   <span class="tag">C · MODEL FIRST</span>
   <header class="top" style="height:46px">
     <h1>DFMA Review</h1>
-    <span class="pick file">report_sample.step</span>
+    <span class="pick file">report_sample.step</span><span class="pick add">+ .ipt</span>
     <span class="pick">Milling</span>
     <span class="pick">Aluminum 6061</span>
+    <span class="priv">Stays on this PC</span>
     <span class="spacer"></span>
     <span class="btn ghost">Plan</span><span class="btn ghost">Cost</span><span class="btn">Export PDF</span>
   </header>
   <div class="view" style="flex:1;border:0">
     <div class="stage" style="width:118%"><img src="img/model-wide-sel.png" alt=""><span class="pin h sel" style="left:50%;top:45%"><b>F4 HIGH</b><i></i></span></div>
     <div style="position:absolute;left:16px;top:16px;width:250px;display:flex;flex-direction:column;gap:6px">
-      <div class="panel" style="padding:8px 12px;display:flex;gap:14px"><span class="tally"><span class="mk high"></span><span class="sev high">High</span> 4</span><span class="tally"><span class="mk medium"></span><span class="sev medium">Med</span> 4</span><span class="tally"><span class="mk ok"></span><span class="sev ok">OK</span> 9</span></div>
-      <div class="panel" style="padding:8px 12px;display:flex;gap:8px;align-items:center;outline:2px solid var(--accent);outline-offset:-2px"><span class="mk high"></span><b>Sharp corner</b><span class="muted">×4</span><span class="spacer"></span><span class="num muted">F4–F7</span></div>
-      <div class="panel" style="padding:8px 12px;display:flex;gap:8px;align-items:center"><span class="mk medium"></span><b>Deep hole</b><span class="muted">×2</span><span class="spacer"></span><span class="num muted">F1 F2</span></div>
-      <div class="panel" style="padding:8px 12px;display:flex;gap:8px;align-items:center"><span class="mk medium"></span><b>Drill size</b><span class="spacer"></span><span class="num muted">F3</span></div>
-      <div class="panel" style="padding:8px 12px;display:flex;gap:8px;align-items:center"><span class="mk medium"></span><b>Deep pocket</b><span class="spacer"></span><span class="num muted">F8</span></div>
+      <div class="panel" style="padding:8px 12px;display:flex;gap:14px"><span class="tally"><span class="mk high"></span><span class="sev high">High</span> 4</span><span class="tally"><span class="mk medium"></span><span class="sev medium">Medium</span> 4</span><span class="tally"><span class="mk ok"></span><span class="sev ok">OK</span> 9</span></div>
+      <div class="panel" style="padding:8px 12px;display:flex;gap:8px;align-items:center;outline:2px solid var(--accent);outline-offset:-2px"><span class="mk high"></span><span class="sev high">High</span><b>Sharp corner</b><span class="muted">×4</span><span class="spacer"></span><span class="num muted">F4–F7</span></div>
+      <div class="panel" style="padding:8px 12px;display:flex;gap:8px;align-items:center"><span class="mk medium"></span><span class="sev medium">Med</span><b>Deep hole</b><span class="muted">×2</span><span class="spacer"></span><span class="num muted">F1 F2</span></div>
+      <div class="panel" style="padding:8px 12px;display:flex;gap:8px;align-items:center"><span class="mk medium"></span><span class="sev medium">Med</span><b>Drill size</b><span class="spacer"></span><span class="num muted">F3</span></div>
+      <div class="panel" style="padding:8px 12px;display:flex;gap:8px;align-items:center"><span class="mk medium"></span><span class="sev medium">Med</span><b>Deep pocket</b><span class="spacer"></span><span class="num muted">F8</span></div>
     </div>
     <div class="panel" style="position:absolute;right:16px;bottom:16px;width:360px;padding:14px 16px;display:grid;gap:8px;box-shadow:0 4px 16px rgba(22,38,61,.16)">
       <div style="display:flex;align-items:center;gap:8px"><span class="mk high"></span><span class="sev high">High</span><b style="font-size:1rem">Sharp corner</b><span class="spacer"></span><span class="num muted">F4 · 1 of 4 ›</span></div>
@@ -227,6 +233,7 @@ tr.okrow td { color: var(--muted); }
     </nav>
     <span class="spacer"></span>
     <span class="num muted">report_sample.step · Milling · Aluminum 6061</span>
+    <span class="priv">· Stays on this PC</span>
   </header>
   <div style="display:grid;grid-template-columns:1fr 470px;gap:16px;padding:16px;flex:1;min-height:0">
     <div class="view">
@@ -245,9 +252,9 @@ tr.okrow td { color: var(--muted); }
         <span class="muted">Tool loads</span><span class="num">4</span>
       </div>
       <div style="border:2px solid var(--accent);border-radius:2px">
-        <div class="grouphead" style="background:#eaf1f9">Setup 1 · from +X</div>
+        <div class="grouphead" style="background:var(--sel)">Setup 1 · from +X</div>
         <div class="row" style="grid-template-columns:24px 1fr auto"><span class="num">1</span><span>1/4 in end mill</span><span class="ids">hole-1</span></div>
-        <div class="row" style="grid-template-columns:24px 1fr auto;border:0"><span class="num">2</span><span>0.250 in drill</span><span class="ids">hole-2</span></div>
+        <div class="row" style="grid-template-columns:24px 1fr auto;border:0"><span class="num">2</span><span>0.250 in (1/4) drill</span><span class="ids">hole-2</span></div>
       </div>
       <div style="border:1px solid var(--line)">
         <div class="grouphead">Setup 2 · from −X</div>
@@ -264,9 +271,10 @@ tr.okrow td { color: var(--muted); }
   <span class="tag">E · TREE</span>
   <header class="top">
     <h1>DFMA Review</h1>
-    <span class="pick file">report_sample.step</span>
+    <span class="pick file">report_sample.step</span><span class="pick add">+ .ipt</span>
     <span class="pick">Milling</span>
     <span class="pick">Aluminum 6061</span>
+    <span class="priv">Stays on this PC</span>
     <span class="spacer"></span>
     <span class="btn ghost">Plan</span><span class="btn ghost">Cost</span><span class="btn">Export PDF</span>
   </header>
@@ -274,19 +282,19 @@ tr.okrow td { color: var(--muted); }
     <div class="panel tree">
       <div class="n1" style="background:var(--bg)">Features</div>
       <div class="n1"><span class="caret"></span>Corners <span class="cnt"><span class="mk high" style="display:inline-block;vertical-align:-1px"></span> 4</span></div>
-      <div class="n2 sel"><span class="mk high"></span>corner-1 <span class="cnt">F4</span></div>
-      <div class="n2"><span class="mk high"></span>corner-2 <span class="cnt">F5</span></div>
-      <div class="n2"><span class="mk high"></span>corner-3 <span class="cnt">F6</span></div>
-      <div class="n2"><span class="mk high"></span>corner-4 <span class="cnt">F7</span></div>
+      <div class="n2 sel"><span class="mk high"></span><span class="sev high">High</span>corner-1 <span class="cnt">F4</span></div>
+      <div class="n2"><span class="mk high"></span><span class="sev high">High</span>corner-2 <span class="cnt">F5</span></div>
+      <div class="n2"><span class="mk high"></span><span class="sev high">High</span>corner-3 <span class="cnt">F6</span></div>
+      <div class="n2"><span class="mk high"></span><span class="sev high">High</span>corner-4 <span class="cnt">F7</span></div>
       <div class="n1"><span class="caret"></span>Holes <span class="cnt"><span class="mk medium" style="display:inline-block"></span> 2</span></div>
-      <div class="n2"><span class="mk medium"></span>hole-1 <span class="cnt">F1 F3</span></div>
-      <div class="n2"><span class="mk medium"></span>hole-2 <span class="cnt">F2</span></div>
+      <div class="n2"><span class="mk medium"></span><span class="sev medium">Med</span>hole-1 <span class="cnt">F1 F3</span></div>
+      <div class="n2"><span class="mk medium"></span><span class="sev medium">Med</span>hole-2 <span class="cnt">F2</span></div>
       <div class="n1"><span class="caret"></span>Pockets <span class="cnt"><span class="mk medium" style="display:inline-block"></span> 1</span></div>
-      <div class="n2"><span class="mk medium"></span>pocket-1 <span class="cnt">F8</span></div>
+      <div class="n2"><span class="mk medium"></span><span class="sev medium">Med</span>pocket-1 <span class="cnt">F8</span></div>
       <div class="n1"><span class="caret" style="transform:rotate(-90deg)"></span>Walls <span class="cnt"><span class="mk ok" style="display:inline-block"></span> 9</span></div>
     </div>
     <div class="view">
-      <div class="stage"><img src="img/model-wide-sel.png" alt=""><span class="pin h sel" style="left:50%;top:45%"><b>F4</b><i></i></span></div>
+      <div class="stage"><img src="img/model-wide-sel.png" alt=""><span class="pin h sel" style="left:50%;top:45%"><b>F4 HIGH</b><i></i></span></div>
     </div>
     <div class="panel" style="padding:16px;display:flex;flex-direction:column;gap:12px">
       <div class="label">corner-1</div>

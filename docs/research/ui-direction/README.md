@@ -14,7 +14,7 @@ Status: **proposals only**. Nothing here changes a decision until Morgan approve
 
 ## Round log
 
-- 2026-11-09 Round 1 published: [page](RESULT_LINK_R1) (answers in its `ui1` collection).
+- 2026-11-09 Round 1 published: [page](https://claude.ai/artifact/3WKMC2icNNuE9i9scBLT3n) (answers in its `ui1` collection). Fresh check: 1 reviewer, 65,865 tokens; 9 fixes (record on the page).
 
 ## What's wrong today (measured 2026-11-09, demo build, report_sample.step, 1280 × 900)
 
