@@ -67,7 +67,7 @@ Tests named here are new unless marked "moved"; each fails at the starting commi
 ## Alternatives rejected
 
 - **Row wording in the web code:** the units and fractions (`fmt_in`, `units.py`) and the thresholds live in the service; the web would copy them.
-- **Wording in each of the 16 rule files:** 16 places to keep consistent and test; one table in `rows.py` keyed by rule and case is shorter and tested in one file.
+- **Wording in each of the 14 rule modules** (15 with #27's `blend_mismatch`): 14 places to keep consistent and test; one table in `rows.py` keyed by rule and case is shorter and tested in one file.
 - **Restyle today's panels in place:** keeps 4 scrolling boxes, the problem Morgan named (layouts C and E were cut in round 1).
 - **Step not in the address:** the phone's Back would leave the review; a hash per step costs a few lines.
 - **One slice for the whole screen:** 36 browser tests in 9 files move at once; too big for one session.
@@ -123,13 +123,13 @@ Short titles and check names (proposed; Morgan approves them with the spec):
 | hole_mismatch | | Hole feature vs hole | .ipt check |
 | blend_mismatch (after #27) | | Fillet vs face | .ipt check |
 
-Cases: a rule's case is its finding's `severity` (only corner_radius has two). Values are formatted from `measured` and `limit` by `unit`: `in` → `fmt_in` with its fraction ("0.031 in (1/32)"), `ratio` → one decimal and "×" ("9.6×"), `deg` → one decimal and "°", anything else → the number and unit as given. Sentences:
+Cases: a rule's case is its finding's `severity`, and for corner_radius medium also its `unit` (`in`: a small radius; `ratio`: a corner too deep for its radius, `corner_radius.py:41-53`); both medium cases have short "Small corner radius" and use the "every other rule case" sentences. Values are formatted from `measured` and `limit` by `unit`: `in` → `fmt_in` with its fraction ("0.031 in (1/32)"), `ratio` → one decimal and "×" ("9.6×"), `deg` → one decimal and "°", anything else → the number and unit as given. Sentences:
 
 | Rule, case | one | many |
 |---|---|---|
 | corner_radius, high | Inside corner has no radius. Needs {limit} or more, or EDM. | Inside corners have no radius. Needs {limit} or more, or EDM. |
 | hole_depth | {measured} the diameter deep. Over {limit} needs peck drilling. | {values} the diameter deep. Over {limit} needs peck drilling. |
-| hole_size | {measured} isn't a standard drill. Nearest is {limit}. | {values} aren't standard drills. Nearest are listed in the detail. |
+| hole_size | {measured} isn't a standard drill. Nearest is {limit}. | {values} aren't standard drills. Nearest is {limit}. (one row per nearest drill, since `limit` is in the group key) |
 | pocket_depth | Depth is {measured} the end mill that fits. Over {limit} needs a long tool. | Depths are {values} the end mill that fits. Over {limit} needs a long tool. |
 | every other rule case | the finding's `title` + "." | the `title` of the finding with the largest `measured` + ". Worst of {count}." |
 
@@ -138,6 +138,21 @@ Plainer sentences for the other cases are later work, each shown to Morgan first
 ### Words and marks
 
 Fix (▲, `--high`) for `high`, Review (◆, `--medium`) for `medium`, OK (no mark, `--low`) for passes. The PDF prints the words only (its fonts lack ▲ ◆).
+
+### Builder defaults (final zero-decision check)
+
+- **Words on screen:** `.sev` stays upper case (`style.css:58`), so lists read FIX / REVIEW as the frames' severity labels do; sentences and the overview counts use "Fix" / "Review".
+- **Legend between S1 and S2:** shown only on the Features step (it describes the Features tints). S2 replaces it.
+- **OK and Passed counts:** features with no finding that passed a check, as `main.ts:70` counts them today; never `passed.length`.
+- **Review first before rows (S1):** the first medium finding's word, id and title; S2 swaps both to the first row of that severity.
+- **`cost_total`:** `null` when there are no drivers (the Cost step then shows no total); else `round(sum, 1)` in Python, shown with one decimal.
+- **Before a part is read:** only Part is enabled; other tabs, Next and a hash for another step show Part. After "Change file", Part with the start form.
+- **`limit_text` and `check_name` in S1:** used by the Report step's "Rules run" (check names, in run order) and by `meta`'s "limit:" text in the detail and the PDF finding pages (no decision ids anywhere). The PDF's summary keeps its own "Rules run" line, with check names.
+- **`test_drivers.py`:** its findings get `id`s ("F1"…) in S1; the assertions stay.
+- **Row and selection ids:** a row's `id` is `row:<first F id>` (also its selection id); `Sel.at` is the index of the shown finding in the row's `findings`, 0 when the row is first tapped. Today's string ids (`pass:`, `thread:`, `hf:`, `hfh:`, `setup:`) map to `Sel` kinds of the same names; `stillThere` keeps its rules per kind.
+- **Ratios in sentences:** the service formats a ratio with two decimals when one decimal would show the measured value equal to the limit, as `report.ts:42-46` does today.
+- **Passed row kinds:** the feature's `kind` (hole, bore, groove, profile, pocket, corner, wall), plural with "s" ("Profiles").
+- **Machining placement (S3):** a row appears under every setup that holds one of its findings, counted once per setup ("Sharp corner ×2" under Setup 2 when two of its four corners are there); setup membership is a finding's `feature` in that setup's `setups[].features` (the same as `planWhy`); "In no setup" holds rows with a feature in no setup's `features`. Lathe chips read `setupHead`'s words ("Setup 1 · on the lathe").
 
 ## Slices
 
@@ -172,4 +187,4 @@ Every slice adds `tests/e2e/steps.py` helpers as needed (`open_step(page, name)`
 
 ## Open questions
 
-- Short titles and check names (Design "Rows" table): approve or change with the spec.
+- Short titles and check names (Design "Rows" table): approve or change with the spec. S1 uses the check names, so they are settled at approval.
