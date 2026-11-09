@@ -52,22 +52,30 @@ class Ipt:
         for name in self.names:
             if not name.startswith("RSeStorage/B"):
                 continue
-            raw = self.read(name)
-            k = raw.find(b"x^")
-            if k < 0:
+            data = self.inflate(name, stream_cap)
+            if data is None:
                 continue
-            z = zlib.decompressobj()
-            try:
-                data = z.decompress(raw[k:], stream_cap)
-            except zlib.error:
-                continue  # not a zlib stream after all; such streams carry no model
-            if z.unconsumed_tail:
-                raise ReadError(settings.MSG_IPT_TOO_BIG)
             total += len(data)
             if total > file_cap:
                 raise ReadError(settings.MSG_IPT_TOO_BIG)
             out.append(data)
         return out
+
+    def inflate(self, name: str, stream_cap: int | None = None) -> bytes | None:
+        """One stream inflated from its first zlib header `x^`; None when it has none or isn't zlib after all
+        (such streams carry no model); over the cap -> MSG_IPT_TOO_BIG."""
+        raw = self.read(name)
+        k = raw.find(b"x^")
+        if k < 0:
+            return None
+        z = zlib.decompressobj()
+        try:
+            data = z.decompress(raw[k:], STREAM_CAP if stream_cap is None else stream_cap)
+        except zlib.error:
+            return None
+        if z.unconsumed_tail:
+            raise ReadError(settings.MSG_IPT_TOO_BIG)
+        return data
 
     def close(self) -> None:
         self._f.close()

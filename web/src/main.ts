@@ -3,7 +3,7 @@
 // The review reads as five steps, one shown at a time, named in the address (review-steps spec J1, J2; D-042, D-045).
 
 import { analyze, ApiError, type Analysis, type Material, type Process } from "./api";
-import { collapsePassed, renderFindings, renderHoleFeatures, renderPlan, renderThreads, type Pick } from "./findings";
+import { collapsePassed, renderBlends, renderFindings, renderHoleFeatures, renderPlan, renderThreads, type Pick } from "./findings";
 import { formatSize } from "./format";
 import { buildReport, reportName } from "./report";
 import { STEPS, STEP_NAMES, renderCost, renderOverview, renderReport, stepCounts, type Step } from "./steps";
@@ -117,6 +117,10 @@ function stillThere(result: Analysis, id: string | null): Pick | null {
     const faces = [...new Set(holes.flatMap((h) => result.features.find((x) => x.id === h.hole)?.faces ?? []))];
     return faces.length ? { id, faces } : null;
   }
+  if (id.startsWith("bl:")) { // I3 S3: a blend's STEP faces
+    const b = result.inventor?.blends?.find((x) => `bl:${x.id}` === id);
+    return b?.step_faces.length ? { id, faces: b.step_faces } : null;
+  }
   if (id.startsWith("setup:")) {
     const s = result.setups[Number(id.slice(6))];
     const i = Number(id.slice(6));
@@ -147,6 +151,9 @@ function showFindings(result: Analysis | null, message: string): void {
   renderHoleFeatures(byId("hole-features"), result, select, selected); // I2 S1 (D-040)
   byId("hole-features-panel").hidden = !result?.inventor;
   byId("hole-features-count").textContent = result?.inventor ? String(result.inventor.hole_features?.length ?? 0) : "";
+  renderBlends(byId("blends"), result, select, selected); // I3 S3 (D-043)
+  byId("blends-panel").hidden = !result?.inventor;
+  byId("blends-count").textContent = result?.inventor ? String(result.inventor.blends?.length ?? 0) : "";
   side.scrollTop = keepScroll;
   const counts = stepCounts(byId("step-counts"), result);
   tabs.get("features")!.setAttribute("aria-label", counts ? `2 Features: ${counts}` : "2 Features");
@@ -157,7 +164,10 @@ function showFindings(result: Analysis | null, message: string): void {
   for (const s of STEPS) if (s !== "part") tabs.get(s)!.disabled = !result;
   overview.hidden = !result;
   startForm.hidden = !!result;
-  (result ? byId("settings-slot") : error).insertAdjacentElement(result ? "beforeend" : "beforebegin", settings); // process and material: in the form, then in the overview
+  // Process and material: in the form, then in the overview. Moved only when that changes, so a select keeps focus.
+  if (settings.parentElement !== (result ? byId("settings-slot") : startForm)) {
+    (result ? byId("settings-slot") : error).insertAdjacentElement(result ? "beforeend" : "beforebegin", settings);
+  }
   if (!result) return;
   renderOverview(byId("overview-cards"), byId("fix-first"), result, (s) => showStep(s));
   renderCost(byId("cost"), result);
@@ -249,10 +259,13 @@ async function analyse(): Promise<void> {
     shownIpt = ipt;
     if (!samePart) {
       collapsePassed();
+      byId<HTMLDetailsElement>("report-assumptions").open = false; // folded for each new part (spec J5)
       // D-036: the Threads panel opens when a new part's .ipt has threads; after that it stays as the reader left it
       byId<HTMLDetailsElement>("threads-panel").open = (result.inventor?.threads?.length ?? 0) > 0;
       // D-040: the Hole features panel opens when a hole disagrees or isn't mapped
       byId<HTMLDetailsElement>("hole-features-panel").open = (result.inventor?.hole_features ?? []).some((f) => f.state !== "matched");
+      // I3 S3: likewise the Fillets and chamfers panel, when a blend disagrees or isn't mapped
+      byId<HTMLDetailsElement>("blends-panel").open = (result.inventor?.blends ?? []).some((b) => b.state !== "matched");
     }
     const keep = samePart ? stillThere(result, selected) : null; // a finding, passed feature or setup
     selected = keep?.id ?? null;

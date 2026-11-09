@@ -9,7 +9,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "service"))
 
+from dfma.inventor.blends import Blend  # noqa: E402
 from dfma.inventor.holes import HoleFeature, IptHole  # noqa: E402
+from dfma.inventor.surfaces import Surf  # noqa: E402
 from dfma.inventor.pair import PLAIN_PART, step_corners  # noqa: E402
 from dfma.inventor.part import IptPart  # noqa: E402
 from dfma.inventor.threads import Thread  # noqa: E402
@@ -33,14 +35,67 @@ def hole_feature(start, axis, diameter: float, length: float, *, through: bool, 
     return HoleFeature(feature_id, [h], "simple", diameter, None if through else length, length, through, point_deg)
 
 
-def ipt_from_step(step_path, threads: list[Thread], hole_features=()) -> IptPart:
+def ipt_from_step(step_path, threads: list[Thread], hole_features=(), blends=()) -> IptPart:
     step = read_step(step_path)
     return IptPart(saved_with="2024.1 (Build 281209000, 209)", acis_version="229.6.0.65535", subtype=PLAIN_PART,
                    model_state_names=["[Primary]"], solid_bodies=1, corners_mm=step_corners(step.solid),
-                   face_count=len(step.faces), threads=threads, hole_features=list(hole_features))
+                   face_count=len(step.faces), threads=threads, hole_features=list(hole_features),
+                   blends=list(blends))
 
 
 # box_through_hole.step: hole-1 is Ø6.35 mm, through, on the line x 25.4, y 12.7, z 0 to 12.7 (measured)
 BOX_TOP, DOWN = (25.4, 12.7, 12.7), (0.0, 0.0, -1.0)
 # drill_point_hole.step: hole-1 is Ø6.35 mm, 25.4 mm deep, blind, from z 50.8 down, at x 12.7, y 12.7 (measured)
 DRILL_TOP = (12.7, 12.7, 50.8)
+
+
+# I3 S3 (spec Builder defaults "Built filleted part"): a 40 x 30 x 20 mm block, x 0-40, y 0-30, z 0-20, with a 3 mm
+# fillet on the vertical edge at x 0, y 0 and a 2 x 2 mm chamfer on the top edge at y 30, z 20.
+
+def filleted_block(path) -> Path:
+    """Write the block as a STEP file (mm) with OpenCascade's own fillet and chamfer; returns the path."""
+    from OCC.Core.BRepAdaptor import BRepAdaptor_Curve
+    from OCC.Core.BRepFilletAPI import BRepFilletAPI_MakeChamfer, BRepFilletAPI_MakeFillet
+    from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeBox
+    from OCC.Core.IFSelect import IFSelect_RetDone
+    from OCC.Core.STEPControl import STEPControl_AsIs, STEPControl_Writer
+    from OCC.Core.TopAbs import TopAbs_EDGE
+    from OCC.Core.TopExp import TopExp_Explorer
+    from OCC.Core.TopoDS import topods
+
+    def edge_at(shape, mid):
+        e = TopExp_Explorer(shape, TopAbs_EDGE)
+        while e.More():
+            ed = topods.Edge(e.Current())
+            c = BRepAdaptor_Curve(ed)
+            p = c.Value((c.FirstParameter() + c.LastParameter()) / 2)
+            if max(abs(p.X() - mid[0]), abs(p.Y() - mid[1]), abs(p.Z() - mid[2])) < 1e-6:
+                return ed
+            e.Next()
+        raise ValueError(f"no edge at {mid}")
+
+    box = BRepPrimAPI_MakeBox(40.0, 30.0, 20.0).Shape()
+    f = BRepFilletAPI_MakeFillet(box)
+    f.Add(3.0, edge_at(box, (0.0, 0.0, 10.0)))
+    f.Build()
+    shape = f.Shape()
+    c = BRepFilletAPI_MakeChamfer(shape)
+    c.Add(2.0, edge_at(shape, (20.0, 30.0, 20.0)))
+    c.Build()
+    w = STEPControl_Writer()
+    w.Transfer(c.Shape(), STEPControl_AsIs)
+    if w.Write(str(path)) != IFSelect_RetDone:
+        raise OSError(f"could not write {path}")
+    return Path(path)
+
+
+def block_blends(fillet_r: float = 3.0) -> list[Blend]:
+    """The block's fillet (radius `fillet_r`, placed as the 3 mm one) and chamfer, as read_blends would give them."""
+    fillet = Blend(200, "fillet", radius_mm=fillet_r, faces=[0],
+                   surfs={0: Surf("cyl", (3.0, 3.0, 0.0), (0.0, 0.0, 1.0), fillet_r)},
+                   points={0: [(0.0, 3.0, 0.0), (3.0, 0.0, 0.0), (3.0, 0.0, 20.0), (0.0, 3.0, 20.0)]})
+    n = 2 ** -0.5
+    chamfer = Blend(201, "chamfer", distances_mm=[2.0, 2.0], angle_deg=90.0, faces=[1],
+                    surfs={1: Surf("plane", (0.0, 29.0, 19.0), (0.0, n, n))},
+                    points={1: [(0.0, 30.0, 18.0), (40.0, 30.0, 18.0), (40.0, 28.0, 20.0), (0.0, 28.0, 20.0)]})
+    return [fillet, chamfer]

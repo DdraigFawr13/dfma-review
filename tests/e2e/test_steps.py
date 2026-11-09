@@ -211,6 +211,13 @@ def test_empty_states(page: Page, base_url: str, sample: dict):
     expect(page.get_by_test_id("overview-features")).to_contain_text("No findings. Every feature checked passed its rules.")
     page.unroute("**/api/analyze")
 
+    shuffled = copy.deepcopy(sample)  # Fix first ties: the lowest F id, whatever the order the findings come in
+    shuffled["findings"] = list(reversed(sample["findings"]))
+    f4 = next(f for f in sample["findings"] if f["id"] == "F4")
+    _routed(page, base_url, shuffled)
+    expect(page.get_by_test_id("fix-first")).to_contain_text(f"Fix F4 {f4['title']}")
+    page.unroute("**/api/analyze")
+
     review = copy.deepcopy(sample)
     review["findings"] = [f for f in sample["findings"] if f["severity"] == "medium"]
     first = min(review["findings"], key=lambda f: int(f["id"][1:]))

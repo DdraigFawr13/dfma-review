@@ -12,11 +12,11 @@
     <header class="top">
       <h1>DFMA Review</h1>
       <nav class="steps" id="steps" aria-label="Review steps">
-        <button type="button" class="step" data-step="part" data-testid="step-part"><span class="n" aria-hidden="true">1</span>Part</button>
-        <button type="button" class="step" data-step="features" data-testid="step-features" disabled><span class="n" aria-hidden="true">2</span>Features <span class="c" id="step-counts" aria-hidden="true"></span></button>
-        <button type="button" class="step" data-step="machining" data-testid="step-machining" disabled><span class="n" aria-hidden="true">3</span>Machining</button>
-        <button type="button" class="step" data-step="cost" data-testid="step-cost" disabled><span class="n" aria-hidden="true">4</span>Cost</button>
-        <button type="button" class="step" data-step="report" data-testid="step-report" disabled><span class="n" aria-hidden="true">5</span>Report</button>
+        <button type="button" class="step" data-step="part" data-testid="step-part"><span class="n">1</span>Part</button>
+        <button type="button" class="step" data-step="features" data-testid="step-features" disabled><span class="n">2</span>Features <span class="c" id="step-counts" aria-hidden="true"></span></button>
+        <button type="button" class="step" data-step="machining" data-testid="step-machining" disabled><span class="n">3</span>Machining</button>
+        <button type="button" class="step" data-step="cost" data-testid="step-cost" disabled><span class="n">4</span>Cost</button>
+        <button type="button" class="step" data-step="report" data-testid="step-report" disabled><span class="n">5</span>Report</button>
       </nav>
       <span class="spacer"></span>
       <span class="topfile" id="top-file" data-testid="top-file" hidden></span>
@@ -97,6 +97,10 @@
           <details class="drivers-panel threads-panel" data-testid="hole-features-panel" id="hole-features-panel" hidden>
             <summary><span id="hole-features-title">Hole features</span> <span class="count" id="hole-features-count"></span></summary>
             <div id="hole-features" class="groups"></div>
+          </details>
+          <details class="drivers-panel threads-panel" data-testid="blends-panel" id="blends-panel" hidden>
+            <summary><span id="blends-title">Fillets and chamfers</span> <span class="count" id="blends-count"></span></summary>
+            <div id="blends" class="groups"></div>
           </details>
         </section>
         <section class="page plan" id="page-machining" data-testid="page-machining" aria-labelledby="plan-title" hidden>

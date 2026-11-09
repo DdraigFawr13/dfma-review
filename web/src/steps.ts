@@ -134,14 +134,14 @@ export function renderCost(host: HTMLElement, result: Analysis): void {
     total.append(el("b", undefined, "Total score"), el("span"), el("span", "num", `${result.cost_total.toFixed(1)} points`));
     host.append(total);
   }
-  const sources = [...new Set(result.cost_drivers.map((d) => d.weight_source))].join(", ");
-  host.append(el("p", "note pad", `Score is count × weight. Every weight is an ${sources}. No time or dollars yet.`));
+  const sources = [...new Set(result.cost_drivers.map((d) => d.weight_source))];
+  const weights = sources.length === 1 ? `Every weight is an ${sources[0]}.` : `Weights: ${sources.join(", ")}.`;
+  host.append(el("p", "note pad", `Score is count × weight. ${weights} No time or dollars yet.`));
 }
 
 /** The Report step (frame r3-report): the checks run by name and the assumptions, folded. */
 export function renderReport(rules: HTMLElement, assumptions: HTMLDetailsElement, result: Analysis): void {
   rules.textContent = `${result.checks_run.join(", ")}.`;
-  assumptions.open = false;
   assumptions.querySelector("summary")!.textContent = `Assumptions (${result.assumptions.length})`;
   assumptions.querySelector("ul")!.replaceChildren(...result.assumptions.map((a) => el("li", undefined, a)));
 }

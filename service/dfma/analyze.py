@@ -21,7 +21,7 @@ from .units import mm_to_in
 __all__ = ["ReadError", "analyze"]
 
 TURN_NEEDS_AXIS = ("turn_slender", "turn_offaxis", "bore_depth")
-NEEDS_IPT = ("thread_mismatch", "hole_mismatch")  # runs only when an .ipt was read, so rules_run is unchanged without one
+NEEDS_IPT = ("thread_mismatch", "hole_mismatch", "blend_mismatch")  # runs only when an .ipt was read, so rules_run is unchanged without one
 
 
 def _off_axis(f: dict, faces, turn: dict) -> tuple[float, float]:
@@ -84,12 +84,15 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
         inventor["threads"] = inv.map_threads(ipt.threads, step_holes, part.faces, ipt_transform)
         # I2 S1: Hole features onto the same holes and bores, after the threads
         inventor["hole_features"] = inv.map_holes(ipt.hole_features, step_holes, part.faces, ipt_transform)
+        inventor["hole_names_seen"] = ipt.hole_names_seen  # I2 S2: "<n> Hole features in the browser, <m> read"
+        inventor["blends"] = inv.map_blends(ipt.blends, part.faces, ipt_transform)  # I3: fillets and chamfers
     features = (hole_list + (turn_features or []) + pocket_list + corner_list + number(wall_list, "wall"))
     pocket_faces = {i for f in pocket_list for i in f["faces"]}
     summary = {"units_in_file": part.units_in_file, "frame": frame, "turn": turn, "face_count": len(part.faces)}
     if inventor is not None:
         summary["inventor_threads"] = inventor["threads"]
         summary["inventor_holes"] = inventor["hole_features"]
+        summary["inventor_blends"] = inventor["blends"]
     limits = settings.thresholds(material)
     rules = [rule for rule in RULES if process in rule.PROCESSES
              and not (rule.ID in TURN_NEEDS_AXIS and turn_features is None)

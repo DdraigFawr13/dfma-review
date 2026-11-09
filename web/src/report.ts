@@ -5,7 +5,7 @@
 // Imported up front, not on demand: the view-only demo page inlines one script and has no chunks to load (D-009).
 import { jsPDF } from "jspdf";
 import type { Analysis, Finding } from "./api";
-import { RULE_NAMES, axisText, holeCounts, holeFeatureSize, holeFeatureTitle, checkedLine, driverLine, inMm, meta, notPlanned, planFoot, planWhy, setupHead, stockText, threadCallout, threadCounts, threadSize, toolName } from "./findings";
+import { RULE_NAMES, axisText, blendCounts, blendFaces, blendKinds, blendTitle, holeCopies, holeCounts, holeFeatureSize, holeNamesSeen, holeFeatureTitle, checkedLine, driverLine, inMm, meta, notPlanned, planFoot, planWhy, setupHead, stockText, threadCallout, threadCounts, threadSize, toolName } from "./findings";
 import { formatIn, formatRatio, formatSize } from "./format";
 import { sevWord } from "./words";
 
@@ -146,17 +146,44 @@ function summaryPage(p: Page, input: ReportInput): void {
   }
   if (result.inventor) threadsSection(p, input);
   if (result.inventor) holeFeaturesSection(p, input);
+  if (result.inventor) blendsSection(p, input);
 }
 
 /** One Hole feature as a PDF line (D-040): "hf-7 Countersink · 30 holes: <sizes>. 26 matched, 4 disagree, 0 not
  *  mapped (findings F35, F36, F37, F38)". */
 export function holeFeatureLine(f: NonNullable<NonNullable<Analysis["inventor"]>["hole_features"]>[number], result: Analysis): string {
   const ids = result.findings.filter((x) => x.rule === "hole_mismatch" && x.hole_feature === f.id).map((x) => x.id);
-  let line = `${f.id} ${holeFeatureTitle(f)}: ${holeFeatureSize(f, ", ")}. ${holeCounts(f.holes)}`;
+  let line = `${f.id} ${holeFeatureTitle(f)}${f.name ? ` · ${f.name}` : ""}: ${holeFeatureSize(f, ", ")}. ${holeCounts(f.holes)}`;
   if (ids.length) line += ` (${ids.length === 1 ? "finding" : "findings"} ${ids.join(", ")})`;
   const reasons = [...new Set(f.holes.filter((h) => h.state === "not_mapped").map((h) => h.reason ?? "unknown"))];
   if (reasons.length) line += `; not mapped: ${reasons.join(", ")} (our limit, not a finding)`;
+  const copies = holeCopies(f);
+  if (copies) line += `; ${copies}`;
   return `${line}.`;
+}
+
+/** One blend as a PDF line (D-043): "bl-8 Fillet · R0.197 in [5 mm]: matched; 32 of 36 faces found in the STEP;
+ *  copied by 1 pattern or mirror feature." */
+export function blendLine(b: NonNullable<NonNullable<Analysis["inventor"]>["blends"]>[number], result: Analysis): string {
+  let state: string = b.state === "not_mapped" ? `not mapped: ${b.reason ?? "unknown"} (our limit, not a finding)` : b.state;
+  if (b.state === "disagrees") {
+    const f = result.findings.find((x) => x.rule === "blend_mismatch" && x.blend === b.id);
+    state = `disagrees: ${b.gaps.map((g) => g.text).join("; ")}${f ? `; finding ${f.id}` : ""}`;
+  }
+  const faces = blendFaces(b).replace(" · ", "; ");
+  return `${b.id} ${blendTitle(b)}: ${state}${faces ? `; ${faces}` : ""}.`;
+}
+
+/** The summary page's Fillets and chamfers section, after Hole features (D-043). */
+function blendsSection(p: Page, input: ReportInput): void {
+  const inv = input.result.inventor!, blends = inv.blends ?? [];
+  p.heading(`Fillets and chamfers (from ${inv.name})`);
+  if (!blends.length) {
+    p.text("No fillets or chamfers in this .ipt.");
+    return;
+  }
+  p.text(`${blendKinds(blends)}: ${blendCounts(blends)}. Sizes as designed in the .ipt.`);
+  for (const b of blends) p.text(blendLine(b, input.result), { indent: 12, gap: 1 });
 }
 
 /** The summary page's Hole features section, after Threads (D-040). */
@@ -168,7 +195,8 @@ function holeFeaturesSection(p: Page, input: ReportInput): void {
     return;
   }
   const all = feats.flatMap((f) => f.holes);
-  p.text(`${feats.length} Hole features, ${all.length} holes: ${holeCounts(all)}. Sizes as designed in the .ipt.`);
+  const seen = holeNamesSeen(inv.hole_names_seen, feats.length);
+  p.text(`${feats.length} Hole features, ${all.length} holes: ${holeCounts(all)}.${seen ? ` ${seen}.` : ""} Sizes as designed in the .ipt.`);
   for (const f of feats) p.text(holeFeatureLine(f, input.result), { indent: 12, gap: 1 });
 }
 
@@ -181,7 +209,7 @@ export function threadLine(t: NonNullable<NonNullable<Analysis["inventor"]>["thr
     const gaps = t.gaps.map((g) => (g.what === "axis" ? `${inMm(g.mm, 2)} off the hole's axis` : g.text)).join("; ");
     state = `disagrees: ${gaps}${f ? `; see ${f.id}` : ""}`;
   }
-  return [t.hole ?? t.id, threadCallout(t), size, state].filter(Boolean).join("  ");
+  return [t.hole ?? t.id, threadCallout(t), t.feature_name, size, state].filter(Boolean).join("  ");
 }
 
 /** The summary page's Threads section, after Cost drivers (D-036); a long list runs onto the next page. */
