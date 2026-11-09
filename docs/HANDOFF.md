@@ -18,17 +18,18 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ○ Assemblies and DFA · history and compare · time and $.
 - ▶ Inventor parts (Morgan, 2026-11-08): ✔ research · ✔ own reader (D-031) · ✔ plan (D-032) · ✔ spec I1 (D-033) · ✔ I1 S1 #21, S2 #22, S3 #23 · ✔ spec I2+I3 (D-039) · ✔ I2 S1 hole features #24 (D-041) · ▶ S2 names and copies (new branch) · ○ S3 fillets and chamfers (merge after Morgan's work-pair check).
 - ○ Inventor shape from the `.ipt` alone (D-035; after I1).
-- ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ○ build the step-by-step review screen: `write-spec` after I2+I3 merges ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
+- ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ▶ spec the step-by-step review screen (D-044), then build ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
 
+- 2026-11-09 Review-in-steps spec drafted (D-042, D-044): [docs/specs/review-steps.md](specs/review-steps.md) on branch `ccr-4e2b66d0-emx8eg` from main; 3 fresh checks running (paraphrase, critic, zero decisions). PR #27 (I2 S2 + I3 S3, built) waits for Morgan's work-pair check (D-041); its HANDOFF is on `inventor-i2-s2`.
 - 2026-11-09 Harness upgraded to AI-Master-Instructions `v4.12.0`, merged as #26 (Morgan approved: "Approved"; master D-066, from the master's review of this project): new REP-05; session start lists unmerged branches and an over-cap HANDOFF; `ui-mockups` now does D-024's fit-width tap-to-zoom (`add-zoom.mjs`); `docs/harness/drift/` keeps guard counts. This HANDOFF cut to the cap.
 - 2026-11-09 I2 S1 (hole features) approved by Morgan ("Ok approved") and merged in #24 (D-041): `check.py` all passed (745 service, 36 browser); 85 Holes keyed by position, type and diameter 85/85, depth 43/43. [Status page](https://claude.ai/artifact/5yW8LBj6ZjYb3aA4v3zFy6), [demo](https://claude.ai/artifact/WSwfP6u74iVZ3Rpa5jUNp5). Full entry, fresh-review leftovers: archive "Moved 2026-11-09".
 
 ## Next
 
-0. Now: I2 S2 (names and copies) in a new session on a new branch `inventor-i2-s2` from main (D-041; S3 joins it); its PR merges only after Morgan's hand check of one work pair (from 2026-11-12). Start with the zero-decision re-check of spec S2 against merged main. Then S3 fillets and chamfers (mock-up first).
+0. Now: sort the 3 fresh checks' findings on `docs/specs/review-steps.md` (write-spec steps 6-7), re-check, then the approval form for Morgan (short titles table, build-from-main fork). Then S1 in a new session.
 1. Owed from 2026-11-12 (D-035): one of Morgan's work pairs by Drive share into `tests/inventor/.local/<pair>/`, then `python tests/inventor/local_pairs.py` (now prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
 2. Recognition and stress-test status, scoring commands and the MFCAD++ download: archive "Moved 2026-11-09" (old Next 3 and 3a). Re-run them on every recognition change.
 3. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
