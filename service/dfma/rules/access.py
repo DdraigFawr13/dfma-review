@@ -1,6 +1,7 @@
 """access: a hole or pocket that opens along none of +-X +-Y +-Z of the part frame (within 0.5 deg) needs a 4/5-axis
-mill or a fixture (spec Rules). A pocket is high. A hole is medium, and high when it also enters its flat face more than
-0.5 deg off square (D-050, Morgan 2026-11-09); a hole with no flat face at an open end stays medium. Measured: the angle in degrees between its
+mill or a fixture (spec Rules). It is medium (D-050, Morgan 2026-11-09: holes, then "do the same for pockets"); a hole
+is high when it also enters its flat face more than 0.5 deg off square; a hole with no flat face at an open end, and
+every pocket, stays medium. Measured: the angle in degrees between its
 nearest open vector and the nearest frame axis; limit 0.5. A hole keeps its own axis at every end, also
 on a pocket floor (D-022). A feature with no open end (a void sealed inside the part) is not judged."""
 
@@ -41,7 +42,7 @@ def check(features: list[dict], part: dict, limits: dict) -> list[dict]:
                                       "or line it up with a face of the part."})
             continue
         what = "Hole" if f["kind"] == "hole" else "Pocket"
-        out.append({"rule": ID, "severity": "medium" if f["kind"] == "hole" else "high",  # D-050
+        out.append({"rule": ID, "severity": "medium",  # D-050: holes and pockets alike
                     "title": f"{what} opens {angle:.1f}° off the part's axes: needs a 4/5-axis mill or a fixture",
                     "measured": round(angle, 3), "limit": LIMIT_DEG, "unit": "deg",
                     "faces": f["faces"], "feature": f["id"], "threshold_source": "spec",

@@ -384,6 +384,12 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 
 ## D-050 An angled hole is a Review; a hole not square to its entry face is a Fix
 
-- **Status:** Accepted (2026-11-09; Morgan: "a hole off of one of the main setup planes should not be a fix inherently unless there is more wrong with it. It should be a review or whatever it's called. If the hole is not perpendicular to its surface plane then that could be marked as a fix"; on the follow-up: "Both in this PR", "Keep pockets as Fix").
-- **Decision:** the `access` rule's hole findings drop from Fix (high) to Review (medium). A hole is a Fix when its axis is more than 0.5° off square to the flat face around its opening (the same 0.5° the rule uses for the part's axes; assumption, labelled in the finding). A pocket that opens off the part's axes stays a Fix. Built on `review-steps-s2-s3` with S2 and S3 (D-048). Amends the first-version spec's Rules line for `access` (high for every feature).
+- **Status:** Accepted (2026-11-09; Morgan: "a hole off of one of the main setup planes should not be a fix inherently unless there is more wrong with it. It should be a review or whatever it's called. If the hole is not perpendicular to its surface plane then that could be marked as a fix"; on the follow-up: "Both in this PR", "Keep pockets as Fix"; then, on approving the PR: "Actually do the same for pockets don't keep them fix").
+- **Decision:** the `access` rule's hole findings drop from Fix (high) to Review (medium). A hole is a Fix when its axis is more than 0.5° off square to the flat face around its opening (the same 0.5° the rule uses for the part's axes; assumption, labelled in the finding). A pocket that opens off the part's axes is a Review too; it has no entry-face check (none is measured for pockets), so it is never a Fix on this rule. Built on `review-steps-s2-s3` with S2 and S3 (D-048). Amends the first-version spec's Rules line for `access` (high for every feature).
 - **Why:** a hole drilled square into an angled face is routine with a fixture or a 4/5-axis mill; a hole that enters its face at a slant makes the drill walk, which is worth fixing in the design.
+
+## D-051 Review-steps S2+S3 approved and merged
+
+- **Status:** Accepted (2026-11-09; Morgan: "I approve the demo you can build and merge when ready").
+- **Decision:** PR #30 (review-steps S2 and S3, D-048; groups mock-up D-049; angled holes and pockets D-050) merges with the builder's calls on its [status page](https://claude.ai/artifact/9HhhzKxSxrPjExsFUfPuB7): several findings of a templated case read in the plural; the Passed chip counts features; rows inside an opened .ipt group keep today's look; Machining shows tool names only; a part with no machine plan lists its rows on Features only. The review-steps spec is shipped.
+- **Why:** Morgan tried the demo and approved it.

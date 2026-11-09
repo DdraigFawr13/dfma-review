@@ -152,7 +152,7 @@ def test_countersink_at_each_end_lights_only_its_cone():
 
 def test_access_severity_d050():
     """D-050 (Morgan, 2026-11-09): an angled hole is a Review; a Fix when it enters its flat face off square; a hole
-    with no flat face at an open end stays a Review; an angled pocket stays a Fix."""
+    with no flat face at an open end stays a Review; an angled pocket is a Review too ("do the same for pockets")."""
     from dfma.rules import access
     frame = {"x": [1, 0, 0], "y": [0, 1, 0], "z": [0, 0, 1]}
     tilt = [0.0, 0.5, 0.866025]  # 30 deg off +Z
@@ -166,7 +166,7 @@ def test_access_severity_d050():
     assert one("hole", None)["severity"] == "medium"
     slant = one("hole", 12.0)
     assert (slant["severity"], slant["measured"], slant["threshold_source"]) == ("high", 12.0, "assumption")
-    assert one("pocket", None)["severity"] == "high"
+    assert one("pocket", None)["severity"] == "medium"
 
 
 def test_angled_holes_square_to_their_face_are_review():

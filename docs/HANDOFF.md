@@ -4,7 +4,7 @@ Updated: 2026-11-09. A fresh session must be able to continue from this file alo
 
 ## Phase
 
-Build. First usable version: S1 to S7 merged (#3 to #18). Inventor parts: I1 (#21 to #23), I2 and I3 (#24, #27; D-039 to D-046) merged. Review-steps S1 merged in #29 (D-047). Now: review-steps S2 and S3 together on `review-steps-s2-s3` (D-048), draft PR for Morgan. History and full entries: [docs/archive/handoff-2026-11.md](archive/handoff-2026-11.md) (grep it; "Moved 2026-11-09" holds the long entries cut from here).
+Build. First usable version: S1 to S7 merged (#3 to #18). Inventor parts: I1 (#21 to #23), I2 and I3 (#24, #27; D-039 to D-046) merged. Review-steps S1 merged in #29 (D-047). Review-steps S2+S3 merged in #30 (D-051): the step screen is complete. Now: an audit offer (VER-09), then the work-pair check from 2026-11-12. History and full entries: [docs/archive/handoff-2026-11.md](archive/handoff-2026-11.md) (grep it; "Moved 2026-11-09" holds the long entries cut from here).
 
 ## Plan map
 
@@ -18,12 +18,12 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ○ Assemblies and DFA · history and compare · time and $.
 - ▶ Inventor parts (Morgan, 2026-11-08): ✔ research · ✔ own reader (D-031) · ✔ plan (D-032) · ✔ spec I1 (D-033) · ✔ I1 S1 #21, S2 #22, S3 #23 · ✔ spec I2+I3 (D-039) · ✔ I2 S1 hole features #24 (D-041) · ✔ S2 names and copies and S3 fillets and chamfers, merged in #27 (D-043, D-046) · ▶ work-pair check owed (from 2026-11-12).
 - ○ Inventor shape from the `.ipt` alone (D-035; after I1).
-- ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ✔ spec approved (D-045, #28) · ✔ S1 merged in #29 (D-047) · ▶ S2 + S3 built, PR for approval (D-048, D-049, D-050) ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
+- ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ✔ spec approved (D-045, #28) · ✔ S1 merged in #29 (D-047) · ✔ S2 + S3 merged in #30 (D-048 to D-051) ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
 
-- 2026-11-09 Review-steps S2+S3 built together (D-048) on `review-steps-s2-s3`, draft PR waiting for Morgan: Features rows, .ipt groups (D-049), Machining issues per setup, UI_STYLE rewritten; D-050 (angled holes Review). `check.py`: 918 service, 22 web, 56 browser, all passed. [Status](https://claude.ai/artifact/9HhhzKxSxrPjExsFUfPuB7), [demo](https://claude.ai/artifact/1xtgoWGBPrHdziq4RvAiA5), [PR #30](https://github.com/DdraigFawr13/dfma-review/pull/30).
+- 2026-11-09 Review-steps S2+S3 approved by Morgan ("I approve the demo you can build and merge when ready"; D-051) and merged in #30 (D-048): Features rows, .ipt groups (D-049), Machining issues per setup, UI_STYLE rewritten; D-050 (angled holes and pockets Review). `check.py`: 918 service, 22 web, 56 browser, all passed. [Status](https://claude.ai/artifact/9HhhzKxSxrPjExsFUfPuB7), [demo](https://claude.ai/artifact/1xtgoWGBPrHdziq4RvAiA5), [PR #30](https://github.com/DdraigFawr13/dfma-review/pull/30).
 - 2026-11-09 Review-steps S1 approved ("Approved. Merge please"; D-047) and merged in [PR #29](https://github.com/DdraigFawr13/dfma-review/pull/29). [Status](https://claude.ai/artifact/1DBpmPRjdQ97e1vezTzHUV), [demo](https://claude.ai/artifact/5wbXKMbjt5grbmM9RJ8mqJ). Full entry: archive "Moved 2026-11-09".
 - 2026-11-09 PR #27 merged on Morgan's word ("approve all please merge", D-046, amends D-041): I2 S2 names and copies ([status](https://claude.ai/artifact/DGZmySgSRTSkP9XtrW2hNZ)) and I3 S3 fillets and chamfers ([status](https://claude.ai/artifact/H5YVa33eegML8ziNYsJzo5), D-043): `inventor/names.py`, `inventor/blends.py`, `rules/blend_mismatch.py`, panel and PDF section; NIST blend counts equal the stored names, 499 of 744 fillet faces found. The work-pair check is still owed; a wrong name there switches names off.
 - 2026-11-09 Review-in-steps spec approved by Morgan ("Approved, start building"; D-045) and merged in #28: [docs/specs/review-steps.md](specs/review-steps.md). Checks and outcomes: LESSONS "spec" (review-steps line).
@@ -31,7 +31,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-0. Now: Morgan's approval of the S2+S3 draft PR (D-048). Done: zero-decision re-check, groups mock-up approved (D-049, [page](https://claude.ai/artifact/Cff2Y88mwZ3FaXqUMBLxwq)), checks failed first, build, `check.py` green, fresh review (8 fixed, 3 noted on the status page), demo, status page. On approval (GIT-08): merged state here, PR ready, auto-merge. Then set the spec's Status to Shipped and offer an audit (VER-09): the review-steps spec is complete.
+0. Now: offer Morgan an audit of the step screen (VER-09, `audit` skill; the review-steps spec is shipped). Then plainer sentences for the rule cases that still read as titles, each shown to Morgan first (D-045).
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `python tests/inventor/local_pairs.py` (now prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
 2. Recognition and stress-test status, scoring commands and the MFCAD++ download: archive "Moved 2026-11-09" (old Next 3 and 3a). Re-run them on every recognition change.
 3. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
@@ -45,7 +45,8 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
-- 2026-11-09 D-050: an angled hole is a Review; a Fix when it enters its face off square; angled pockets stay Fix.
+- 2026-11-09 D-051: review-steps S2+S3 approved and merged (#30); spec shipped.
+- 2026-11-09 D-050: an angled hole or pocket is a Review; a hole is a Fix when it enters its face off square.
 - 2026-11-09 D-049: Features groups mock-up approved; a corner sits in its pocket's setup, a thin wall under "Whole part".
 - 2026-11-09 D-048: review-steps S2 and S3 built and merged together, one branch and one PR.
 - 2026-11-09 D-047: review-steps S1 approved and merged (#29); builder calls recorded.
