@@ -359,3 +359,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-09; Morgan: "approve all please merge"). Amends D-041 (the PR merged only after the work-pair check) and D-039's "one PR merged after the work-pair check".
 - **Decision:** PR #27 (Hole names and copies, fillets and chamfers) merges now. Morgan's hand check of one work pair in Inventor, with one Hole renamed, is still owed from 2026-11-12. If it shows a wrong Hole name, Hole names are switched off (Morgan's rule, D-039: "Check, then ship").
 - **Why:** Morgan approved the work; the names come from a rule with 70 of 70 right and 0 wrong on the NIST key, and the risk the hand check guards (two faults cancelling out) is stated in the spec's Risks.
+
+## D-047 Review-steps S1 approved and merged
+
+- **Status:** Accepted (2026-11-09; Morgan: "Approved. Merge please then start a new session for s2").
+- **Decision:** PR #29 (review-steps S1) merges, with the builder's calls listed on its [status page](https://claude.ai/artifact/1DBpmPRjdQ97e1vezTzHUV): once a part is read, process and material are two dropdowns under the file name; id ranges dash for 3 or more ids in a row ("F4–F7"), two stay spaced ("F1 F2"); a limit source missing from `rows.LIMITS` shows as given ("limit: <source>"), and `test_rows.py` fails on any such source in the repo; pins stay on every step. S2 starts in a new session.
+- **Why:** Morgan tried the first demo in the new design and approved it; the frames left these points open (the spec's zero-decision re-check found no gap that needed a question).
