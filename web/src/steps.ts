@@ -47,13 +47,18 @@ function firstSentence(text: string): string {
   return i < 0 ? text : text.slice(0, i + 1);
 }
 
-/** "distinct tools 4.0, sharp or small inside corners 4.0 (weights are estimates)": the first two drivers as the
- *  service orders them. */
+/** "distinct tools 4.0 points, deep pockets 1.0 points (weights are estimates)", or "distinct tools and sharp or
+ *  small inside corners, tied at 4.0 points (…)": the first two drivers as the service orders them (audit F22). */
 export function biggestDrivers(result: Analysis): string {
-  const top = result.cost_drivers.slice(0, 2).map((d) => `${d.label.charAt(0).toLowerCase()}${d.label.slice(1)} ${d.score.toFixed(1)}`);
+  const top = result.cost_drivers.slice(0, 2);
+  const name = (label: string) => `${label.charAt(0).toLowerCase()}${label.slice(1)}`;
+  const pts = (score: number) => `${score.toFixed(1)} points`;
+  const words = top.length === 2 && top[0].score.toFixed(1) === top[1].score.toFixed(1)
+    ? `${name(top[0].label)} and ${name(top[1].label)}, tied at ${pts(top[0].score)}`
+    : top.map((d) => `${name(d.label)} ${pts(d.score)}`).join(", ");
   const sources = [...new Set(result.cost_drivers.map((d) => d.weight_source))];
   const note = sources.length === 1 ? `weights are ${sources[0]}s` : `weights: ${sources.join(", ")}`;
-  return `${top.join(", ")} (${note})`;
+  return `${words} (${note})`;
 }
 
 /** "3-axis mill", "Lathe with live tooling": the plan's machine with a capital. */
@@ -108,7 +113,7 @@ export function renderOverview(cards: HTMLElement, first: HTMLElement, result: A
   if (!result.cost_drivers.length) {
     cost.append(sub("None: one setup and no tools to load."));
   } else {
-    cost.append(sub(el("span", "num", plural(result.cost_drivers.length, "driver")), el("span", undefined, `Biggest: ${biggestDrivers(result)}`)));
+    cost.append(sub(el("span", "num", plural(result.cost_drivers.length, "cost driver")), el("span", undefined, `Biggest: ${biggestDrivers(result)}`)));
   }
 
   const report = card("report", 5, onOpen);
@@ -151,9 +156,12 @@ export function renderCost(host: HTMLElement, result: Analysis): void {
   host.append(el("p", "note pad", `Score is count × weight. ${weights} No time or dollars yet.`));
 }
 
-/** The Report step (frame r3-report): the checks run by name and the assumptions, folded. */
+/** The Report step (frame r3-report): each check run with its finding count (audit F23), and the assumptions, folded. */
 export function renderReport(rules: HTMLElement, assumptions: HTMLDetailsElement, result: Analysis): void {
-  rules.textContent = `${result.checks_run.join(", ")}.`;
+  rules.replaceChildren(...result.checks_run.map((check) => {
+    const n = result.rows.filter((r) => r.check === check).reduce((sum, r) => sum + r.findings.length, 0);
+    return el("li", undefined, `${check}: ${n ? plural(n, "finding") : "none"}`);
+  }));
   assumptions.querySelector("summary")!.textContent = `Assumptions (${result.assumptions.length})`;
   assumptions.querySelector("ul")!.replaceChildren(...result.assumptions.map((a) => el("li", undefined, a)));
 }
@@ -224,7 +232,7 @@ function findingDetail(r: Row, at: number, result: Analysis, h: RowHandlers): HT
   showing.append(el("span", undefined, where));
   if (r.findings.length > 1) showing.append(step("›", "Next finding", "row-next", 1, at === r.findings.length - 1));
   dl.append(el("dt", undefined, "Showing"), showing, el("dt", undefined, "Measured"), el("dd", "num", measured(f, result)),
-    el("dt", undefined, r.severity === "high" ? "Fix" : "Suggestion"), el("dd", undefined, f.suggestion));
+    el("dt", undefined, "What to do"), el("dd", undefined, f.suggestion)); // one label for both severities, as the PDF (D-053)
   return dl;
 }
 
@@ -240,8 +248,12 @@ function passedDetail(r: Row, state: RowState, result: Analysis, h: RowHandlers)
     b.dataset.testid = `passed-${fid}`;
     b.setAttribute("aria-pressed", String(state.pass === fid));
     const feature = result.features.find((x) => x.id === fid);
+    // the size line only when the check's title doesn't already state it (audit F14: a wall said its thickness 3 times)
     const size = feature ? featureLine(feature) : "";
-    b.append(el("span", "pt", size ? `${fid} · ${size}` : fid), el("span", "pt", `✓ ${p.title}`));
+    const lead = /^[^\d]*([\d.]+)/.exec(size)?.[1];
+    const said = !size || (lead !== undefined && p.title.includes(lead));
+    b.append(el("span", "pt", said ? `${fid} · ✓ ${p.title}` : `${fid} · ${size}`));
+    if (!said) b.append(el("span", "pt", `✓ ${p.title}`));
     const thread = holeThreads(feature, result); // I1 S2 (D-036): its callout
     if (thread) b.append(el("span", "pt", thread));
     b.append(el("span", "pmath", `${p.math} · ${p.limit_text}`));

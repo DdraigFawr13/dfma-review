@@ -31,7 +31,7 @@ def _focused_heading(page: Page) -> str | None:
 
 
 def test_part_step(page: Page, base_url: str, sample: dict):
-    """J1: the start form, "Analysing …" over the model, then the overview with its four cards and Fix first."""
+    """J1: the start form, "Analyzing …" over the model, then the overview with its four cards and Fix first."""
     page.goto(base_url)
     form = page.get_by_test_id("start-form")
     expect(form).to_contain_text("Start a review")
@@ -45,7 +45,7 @@ def test_part_step(page: Page, base_url: str, sample: dict):
     held = []
     page.route("**/api/analyze", lambda r: held.append(r))
     page.get_by_test_id("upload-file").set_input_files(SAMPLE)
-    expect(page.get_by_test_id("viewer-note")).to_have_text("Analysing report_sample.step…")
+    expect(page.get_by_test_id("viewer-note")).to_have_text("Analyzing report_sample.step…")
     page.wait_for_timeout(100)  # let the held request register
     assert held, "the analysis request was not sent"
     held[0].fulfill(status=200, content_type="application/json", body=json.dumps(sample))
@@ -71,8 +71,8 @@ def test_part_step(page: Page, base_url: str, sample: dict):
     for text in ("3 · Machining", "3-axis mill", "2 setups", "4 tool loads"):
         expect(mach).to_contain_text(text)
     cost = page.get_by_test_id("overview-cost")
-    expect(cost).to_contain_text("7 drivers")
-    expect(cost).to_contain_text("Biggest: distinct tools 4.0, sharp or small inside corners 4.0 (weights are estimates)")
+    expect(cost).to_contain_text("7 cost drivers")
+    expect(cost).to_contain_text("Biggest: distinct tools and sharp or small inside corners, tied at 4.0 points (weights are estimates)")
     expect(page.get_by_test_id("overview-report")).to_contain_text("PDF of all of the above")
     for name in STEPS[1:]:
         expect(page.get_by_test_id(f"open-{name}")).to_have_text("Open ›")
@@ -91,7 +91,7 @@ def test_refused_in_form(page: Page, base_url: str):
     page.goto(base_url)
     page.get_by_test_id("upload-file").set_input_files(PARTS / "not_step.step")
     error = page.get_by_test_id("start-form").get_by_test_id("error-message")
-    expect(error).to_have_text("This is not a STEP file this tool can read", timeout=30_000)
+    expect(error).to_have_text("This is not a STEP file this tool can read. Export it again as .step or .stp from your CAD.", timeout=30_000)
     assert error.evaluate("e => getComputedStyle(e, '::before').content") == '"Error: "'
     expect(page.get_by_test_id("start-form")).to_contain_text("Choose another file, or try again.")
     expect(page.get_by_test_id("viewer-note")).to_have_text("No part loaded.")
@@ -181,9 +181,10 @@ def test_report_step(page: Page, base_url: str, sample: dict, tmp_path):
     open_step(page, "report")
     report = page.get_by_test_id("page-report")
     expect(report).to_contain_text("The PDF holds")
-    expect(page.get_by_test_id("report-rules")).to_have_text(
-        "Hole depth check, Hole size check, Corner radius check, Pocket depth check, Undercut check, Thin wall check, "
-        "Access check, Process check.")
+    expect(page.get_by_test_id("report-rules").locator("li")).to_have_text([  # each with its finding count (audit F23)
+        "Hole depth check: 2 findings", "Hole size check: 1 finding", "Corner radius check: 4 findings",
+        "Pocket depth check: 1 finding", "Undercut check: none", "Thin wall check: none", "Access check: none",
+        "Process check: none"])
     folded = page.get_by_test_id("report-assumptions")
     expect(folded.locator("summary")).to_have_text(f"Assumptions ({len(sample['assumptions'])})")
     expect(folded).not_to_have_attribute("open", "")
@@ -269,7 +270,7 @@ def test_feature_rows(page: Page, base_url: str, sample: dict):
     expect(rows).to_have_count(4)
     assert [rows.nth(i).get_attribute("data-testid") for i in range(4)] == ["row-F4", "row-F1", "row-F3", "row-F8"]
     row = page.get_by_test_id("row-F4")
-    for text in ("Fix", "Sharp corner ×4", "F4–F7", "Inside corners have no radius. Needs 0.031 in (1/32) or more, or EDM.",
+    for text in ("Fix", "Sharp corner ×4", "F4–F7", "Inside corners have no radius. Needs 0.031 in (1/32) or more, or EDM (spark erosion).",
                  "Corner radius check · limit is an estimate"):
         expect(row).to_contain_text(text)
     expect(page.get_by_test_id("row-F1")).to_contain_text("Review")
@@ -284,7 +285,7 @@ def test_feature_rows(page: Page, base_url: str, sample: dict):
     detail = page.get_by_test_id("row-detail")
     expect(detail).to_contain_text("F4 · corner-1 · 1 of 4")
     expect(detail).to_contain_text("radius 0.000 in, pocket 0.250 in deep")
-    expect(detail).to_contain_text(f"Fix{f4['suggestion']}")
+    expect(detail).to_contain_text(f"What to do{f4['suggestion']}")
     assert sorted(page.evaluate("window.__dfma.highlightedFaces()")) == faces  # all its findings' faces
     expect(page.locator(".viewer .flag.chosen")).to_have_attribute("data-id", "F4")
     page.get_by_test_id("row-next").click()
@@ -302,8 +303,8 @@ def test_feature_rows(page: Page, base_url: str, sample: dict):
     expect(page.get_by_test_id("row-detail")).to_have_count(0)
     expect(row).to_have_attribute("aria-pressed", "false")
     row.click()
-    page.get_by_test_id("row-F1").click()  # a Review row labels its advice "Suggestion" (D-049)
-    expect(page.get_by_test_id("row-detail")).to_contain_text("Suggestion")
+    page.get_by_test_id("row-F1").click()  # a Review row labels its advice "What to do" too (D-053)
+    expect(page.get_by_test_id("row-detail")).to_contain_text("What to do")
 
     # A material change keeps the open row and the shown finding
     page.get_by_test_id("row-next").click()

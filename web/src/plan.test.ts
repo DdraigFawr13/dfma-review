@@ -18,7 +18,7 @@ describe("toolName (S5 plan panel)", () => {
 
 describe("stockText (Morgan, 2026-11-08)", () => {
   it("gives a bar's diameter and length, or a block's three sizes", () => {
-    expect(stockText({ shape: "bar", diameter_in: 0.5, length_in: 4.5 })).toBe("0.500 in round bar, 4.500 in long (the part's size; no allowance added)");
-    expect(stockText({ shape: "block", size_in: [2, 3, 1.5] })).toBe("2.000 × 3.000 × 1.500 in block (the part's size; no allowance added)");
+    expect(stockText({ shape: "bar", diameter_in: 0.5, length_in: 4.5 })).toBe("0.500 in round bar, 4.500 in long (part size, no allowance)");
+    expect(stockText({ shape: "block", size_in: [2, 3, 1.5] })).toBe("2.000 × 3.000 × 1.500 in block (part size, no allowance)");
   });
 });

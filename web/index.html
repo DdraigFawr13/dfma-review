@@ -75,7 +75,7 @@
             </div>
             <p id="error" class="error" data-testid="error-message" role="alert" hidden></p>
             <p id="error-next" class="error-next" hidden>Choose another file, or try again.</p>
-            <p class="privacy">Your files are analysed on this computer and deleted straight after. Nothing is kept.</p>
+            <p class="privacy">Your files are analyzed on this computer and deleted straight after. Nothing is kept.</p>
           </form>
           <div class="overview" id="overview" data-testid="overview" hidden>
             <div class="ohead">
@@ -115,19 +115,21 @@
           <p class="none" id="plan-none" hidden>No machine plan for this part.</p>
         </section>
         <section class="page" id="page-cost" data-testid="page-cost" aria-labelledby="cost-title" hidden>
-          <h2 id="cost-title" tabindex="-1">What drives the cost</h2>
+          <h2 id="cost-title" tabindex="-1">Cost drivers</h2>
           <div id="cost" class="cost"></div>
         </section>
         <section class="page report" id="page-report" data-testid="page-report" aria-labelledby="report-title" hidden>
           <h2 id="report-title" tabindex="-1">Report</h2>
           <div class="block"><span class="label">The PDF holds</span>
             <ul class="plain">
-              <li>Page 1: the counts, part summary, machine plan, tools, cost drivers, and threads and Hole features when an .ipt is given</li>
+              <li>Page 1: the counts and the part summary</li>
+              <li>The machine plan, its tools and the cost drivers</li>
+              <li>With an .ipt: threads, Hole features, and fillets and chamfers</li>
               <li>Then a page for each finding, with a picture of it on the model</li>
               <li>Last: the assumptions</li>
             </ul>
           </div>
-          <div class="block"><span class="label">Rules run</span><p id="report-rules" data-testid="report-rules"></p></div>
+          <div class="block"><span class="label">Checks run</span><ul class="plain" id="report-rules" data-testid="report-rules"></ul></div>
           <details class="assume" id="report-assumptions" data-testid="report-assumptions"><summary>Assumptions</summary><ul></ul></details>
           <button type="button" class="action big" id="report-export-pdf" data-testid="report-export-pdf">Export PDF</button>
         </section>

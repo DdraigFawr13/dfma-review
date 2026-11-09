@@ -305,7 +305,7 @@ window.addEventListener("hashchange", () => {
 });
 showStep(fromHash(), false);
 
-/** The words over the model: what to do, "Analysing …", or "No part loaded." after a refused file. */
+/** The words over the model: what to do, "Analyzing …", or "No part loaded." after a refused file. */
 function viewerNote(text: string | null, busy = false): void {
   note.hidden = text === null;
   byId("viewer-note-text").textContent = text ?? "";
@@ -326,10 +326,10 @@ async function analyse(): Promise<void> {
     return;
   }
   const both = ipt ? ` with ${ipt.name}` : "";
-  status.textContent = `Analysing ${file.name}${both}…`;
+  status.textContent = `Analyzing ${file.name}${both}…`;
   error.hidden = true;
   errorNext.hidden = true;
-  if (!shown) viewerNote(`Analysing ${file.name}${both}…`, true);
+  if (!shown) viewerNote(`Analyzing ${file.name}${both}…`, true);
   try {
     const result = await analyze(file, ipt, processSelect.value as Process, materialSelect.value as Material);
     if (mine !== run) return; // a newer upload replaced this one

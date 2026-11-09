@@ -61,7 +61,7 @@ def test_upload_shows_part(page: Page, base_url: str):
 def test_bad_upload_message(page: Page, base_url: str):
     page.goto(base_url)
     page.get_by_test_id("upload-file").set_input_files(PARTS / "not_step.step")
-    expect(page.get_by_test_id("error-message")).to_have_text("This is not a STEP file this tool can read",
+    expect(page.get_by_test_id("error-message")).to_have_text("This is not a STEP file this tool can read. Export it again as .step or .stp from your CAD.",
                                                               timeout=30_000)
     # The app keeps working: a good file still loads.
     page.get_by_test_id("upload-file").set_input_files(PARTS / "box_inch.step")

@@ -33,7 +33,7 @@ def test_click_highlights_face(page: Page, base_url: str):
     open_step(page, "features")
     row = page.get_by_test_id("row-F1")
     expect(row).to_contain_text("Deep hole")
-    expect(row).to_contain_text("8.0× the diameter deep. Over 6.0× needs peck drilling.")
+    expect(row).to_contain_text("8.0× the diameter deep. Over 6.0× needs peck drilling (drilling in short steps to clear chips).")
     expect(row).to_contain_text("Review")
     assert page.evaluate("window.__dfma.highlightedFaces()") == []
 
