@@ -1,7 +1,7 @@
 # Review in steps: the D-042 screen
 
-- **Status:** Draft
-- **Planned in:** UI direction rounds 1-3 ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers in `docs/research/ui-direction/README.md`; round 3's `ui3` collection: "Approved with the changes I wrote", "The cost section isn't showing any total but otherwise go with what you recommend"). **Decisions:** D-005, D-009, D-012, D-014, D-015, D-016, D-017, D-023, D-024, D-036, D-040, D-042, D-043, D-044.
+- **Status:** Approved 2026-11-09 (D-045)
+- **Planned in:** UI direction rounds 1-3 ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers in `docs/research/ui-direction/README.md`; round 3's `ui3` collection: "Approved with the changes I wrote", "The cost section isn't showing any total but otherwise go with what you recommend"). **Decisions:** D-005, D-009, D-012, D-014, D-015, D-016, D-017, D-023, D-024, D-036, D-040, D-042, D-043, D-044, D-045.
 
 The approved frames are `mockups/ui-direction/round3-frames.html` (ids `r3-start`, `r3-loading`, `r3-error`, `r3-overview`, `r3-features`, `r3-passed`, `r3-mach`, `r3-cost`, `r3-report`, `r3-overview-900`, `r3-features-900`), all drawn on `tests/parts/report_sample.step`, Milling, Aluminum 6061. They are this spec's mock-ups (D-044): a slice builds to them, and only what they don't show gets a new mock-up in the new design.
 
@@ -187,4 +187,4 @@ Every slice adds `tests/e2e/steps.py` helpers as needed (`open_step(page, name)`
 
 ## Open questions
 
-- Short titles and check names (Design "Rows" table): approve or change with the spec. S1 uses the check names, so they are settled at approval.
+None open: short titles, check names, building from main and today's wording for the other rule cases were approved with the spec (D-045).
