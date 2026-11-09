@@ -76,6 +76,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 ## D-012 Review-screen layout picks
 
 - **Status:** Accepted (2026-11-06) as the brief for the review-screen mock-up; the mock-up itself still needs Morgan's approval.
+- **Amended by D-042, built 2026-11-09:** the verdict line is gone; its counts are on the Part step's overview and the checks run on the Report step.
 - **Decision:** Layout 4 leads: controls and part size in a bar on top, a verdict line, the 3D view on the left, findings on the right in severity groups plus a "Passed" list. Style: Drawing office, with the rest of the part faded while a finding is selected. Kept for later: layouts 1 (three columns) and 2 (controls on top); after: 3 (CAD tree); cut: 5 (pins), 6 (table below), 7 (one at a time). Styles kept: Drawing office, Inspection sheet; after: Dark CAD workspace, Light quote portal; cut: Highlight focus (only its ghosting is used). Extras picked for later ("All of these can come later"): a "Rules passed" list, a section view, a draggable split between view and list.
 - **Why:** Morgan's answers on the [options board](https://claude.ai/artifact/EUxCGkamBk28VYfGe2CWD3) (collection `layout1`, 2026-11-06), built from research on 9 tools (HANDOFF 2026-11-06).
 
@@ -88,6 +89,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 ## D-014 Colour legend with a switch per feature kind
 
 - **Status:** Accepted (2026-11-06).
+- **Amended by D-042, built 2026-11-09:** the legend is gone; the Show OK switches (Holes, Pockets, Corners, Walls, each with its swatch) sit at the foot of the model on the Features step only.
 - **Decision:** Under the 3D view, a colour legend names every colour (High, Medium, Selected) and holds one checkbox per feature kind for features checked with no finding: S2 has "Holes checked, no finding", on by default, tinting those holes `--low` green with no label. Holes with a finding keep their severity colour; the selected finding stays accent. Each later slice adds its feature kind to the legend (pockets, corners, walls), each with its own swatch.
 - **Why:** Morgan saw untinted holes on NIST FTC 10 and read them as missed; 31 of its 42 found holes were clean and drawn plain. Morgan: "can we have those as a toggle then to turn certain ok features on to make sure I can like debug and check the work?" and "let's go with a for now but I do still want the highlighting to be a toggle. I will need that toggle for each feature type or like a color legend to show what is what. Whatever you recommend for that goal is fine for me" (2026-11-06).
 
@@ -113,6 +115,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 ## D-017 Findings show as pins on the model; the selected pin in its severity colour
 
 - **Status:** Accepted (2026-11-07).
+- **Amended by D-042, built 2026-11-09:** HIGH / MEDIUM read FIX / REVIEW on screen and in the PDF; the selected pin reads "F4 FIX".
 - **Decision:**
   - Each finding's label is a pin ("F5") on a visible spot of its faces, white and ringed in its severity colour. A pin that would cover one already placed folds into it ("F4 +2"); a pin whose spot is behind the part is hidden. This replaces D-015's labels that moved to the nearest free spot.
   - The selected finding's pin is solid in its severity colour (red for HIGH, orange for MEDIUM), larger, with its severity word ("F5 HIGH"), raised on a stem to a dot on its spot. Its faces still turn the Selected colour (`--accent`); nothing else dims.
@@ -170,6 +173,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 ## D-023 Machine plan panel, Passed list and selectable setups
 
 - **Status:** Accepted (2026-11-08). The Machine plan panel first; the two additions after their [mock-up](https://claude.ai/artifact/ACtTrQnaA8qUkRzZkUgMRX) (Morgan: "Approved, merge when ready").
+- **Amended by D-042, built 2026-11-09:** the Machine plan panel is the Machining step; the Passed list is the Features step's Passed chip (rows by kind and check, each feature's math in the open row).
 - **Decision:**
   - Accepted: the Machine plan panel as on the [mock-up](https://claude.ai/artifact/5Cmq85bG5CPpi7oZ3oZHGW) (`mockups/plan-panel.html`).
   - Accepted: a "Passed" list. For each feature with no finding, the checks it passed, why, and the math to check it, with the same numbers and limits the rules use. It is collapsed by default ("collapsed and off by default... at least for demos").
@@ -377,3 +381,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-09; Morgan, on the mock-up: "I do approve of the design and you can move forward"; on Machining placement: "With their pocket").
 - **Decision:** S2 builds the [Features groups mock-up](https://claude.ai/artifact/Cff2Y88mwZ3FaXqUMBLxwq) (`mockups/review-steps-features.html`): under the Issues rows, "From <.ipt>", then one folding row per group (Threads, Hole features, Fillets and chamfers) with its count and tally in the approved words; an opened group shows today's rows (D-036, D-040, D-043) and its intro without the counts the group row shows; the groups show under every chip; a row's advice is labelled "Fix" on a Fix row and "Suggestion" on a Review row. S3: an inside corner sits in the setup that cuts its pocket (as frame `r3-mach` shows); a thin wall sits under "Whole part". This amends the spec's "Machining placement" default, which read setup membership from `setups[].features` only (holes and pockets, `plan.py:108`).
 - **Why:** the zero-decision re-check found the spec's rule put every corner in "In no setup", against the approved frame; Morgan chose the frame.
+
+## D-050 An angled hole is a Review; a hole not square to its entry face is a Fix
+
+- **Status:** Accepted (2026-11-09; Morgan: "a hole off of one of the main setup planes should not be a fix inherently unless there is more wrong with it. It should be a review or whatever it's called. If the hole is not perpendicular to its surface plane then that could be marked as a fix"; on the follow-up: "Both in this PR", "Keep pockets as Fix").
+- **Decision:** the `access` rule's hole findings drop from Fix (high) to Review (medium). A hole is a Fix when its axis is more than 0.5° off square to the flat face around its opening (the same 0.5° the rule uses for the part's axes; assumption, labelled in the finding). A pocket that opens off the part's axes stays a Fix. Built on `review-steps-s2-s3` with S2 and S3 (D-048). Amends the first-version spec's Rules line for `access` (high for every feature).
+- **Why:** a hole drilled square into an angled face is routine with a fixture or a 4/5-axis mill; a hole that enters its face at a slant makes the drill walk, which is worth fixing in the design.

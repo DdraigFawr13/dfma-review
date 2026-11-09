@@ -101,7 +101,6 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 .viewer canvas { flex: 1; width: 100%; min-height: 20rem; background: var(--view); border: 1px solid var(--line); border-radius: var(--radius); display: block; touch-action: none; }
 .hint { margin: 0; color: var(--muted); font-size: 0.875rem; }
 .viewfoot { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); align-items: center; justify-content: space-between; }
-.legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); align-items: center; font-size: 0.875rem; }
 .key { display: inline-flex; gap: 6px; align-items: center; min-height: 32px; }
 .sw { width: 14px; height: 14px; border-radius: var(--radius); border: 1px solid var(--ink); display: inline-block; }
 .sw.high { background: var(--high); } .sw.medium { background: var(--medium); } .sw.accent { background: var(--accent); } .sw.low { background: var(--low); } .sw.pocket { background: var(--ok-pocket); } .sw.corner { background: var(--ok-corner); } .sw.wall { background: var(--ok-wall); }
@@ -134,7 +133,7 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 .plan .shead { font: 600 0.875rem var(--mono); }
 .plan .op { font-size: 0.875rem; display: flex; justify-content: space-between; gap: var(--space-2); }
 .plan .op .onum { font-family: var(--mono); font-weight: 600; }
-.plan .op .tid, .plan .ofeat { font-family: var(--mono); color: var(--muted); white-space: nowrap; }
+.plan .ofeat { font-family: var(--mono); color: var(--muted); white-space: nowrap; }
 .plan .note { margin: 0; color: var(--muted); font-size: 0.875rem; }
 /* S7: cost drivers and the Export PDF button */
 .drivers-panel { flex: 0 0 auto; max-height: none; }
@@ -145,12 +144,6 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 .drivers-panel[open] > summary { margin-bottom: var(--space-2); }
 .action { font: 600 0.9375rem var(--sans); min-height: 36px; padding: 5px 16px; color: var(--accent-ink); background: var(--accent); border: 1px solid var(--accent); border-radius: var(--radius); cursor: pointer; }
 .action:disabled { color: var(--muted); background: var(--panel); border-color: var(--line); cursor: not-allowed; }
-/* D-023 (proposed): the Passed list, collapsed by default */
-.passed { display: grid; gap: var(--space-2); }
-.passed > summary { cursor: pointer; min-height: 32px; align-items: center; color: var(--low); }
-.passed > summary::marker { content: ""; }
-.passed > summary::before { content: "▸ "; } .passed[open] > summary::before { content: "▾ "; }
-.pkind { margin: var(--space-1) 0 0; font-size: 0.875rem; font-weight: 600; color: var(--muted); }
 .pass-row { border-left-color: var(--low); }
 .sev.ok { color: var(--low); }
 .pcheck { font-size: 0.875rem; }
@@ -176,11 +169,58 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 /* I1 S2 Threads panel (D-036): folds like Cost drivers; a row's left edge and label give its state. */
-.threads-panel { display: flex; flex-direction: column; gap: var(--space-2); }
-.threads-panel[open] { flex: 0 1 auto; min-height: 12rem; overflow-y: auto; }
 .thread-row.medium { border-left-color: var(--medium); }
 .thread-row.nm { border-left-color: var(--line); cursor: default; }
 div.thread-row { text-align: left; }
 .sev.nm { color: var(--muted); }
 .hf-hole { margin-left: var(--space-4); width: calc(100% - var(--space-4)); } /* I2 S1 (D-040): a feature's holes, indented */
 
+/* review-steps S2 (frames r3-features, r3-passed): chips, one row per group of findings, the open row's detail.
+   The step's list scrolls as one; nothing scrolls inside it (D-049). */
+#page-features { padding: 0; gap: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.chip { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); font: 400 0.875rem var(--sans); color: var(--ink); white-space: nowrap; cursor: pointer; }
+.chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.rows { display: grid; }
+.rowbox { border-bottom: 1px solid var(--line); }
+.rowbox.open { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--bg); }
+.srow { display: grid; grid-template-columns: 18px 1fr auto; gap: 3px var(--space-2); padding: 10px var(--space-3); width: 100%; border: 0; background: none; text-align: left; font: inherit; color: inherit; cursor: pointer; align-items: baseline; min-height: 44px; }
+.srow .mk { align-self: center; }
+.srow .t { font-weight: 600; }
+.srow .t .sev { margin-right: 4px; }
+.srow .ids { font-size: 0.875rem; color: var(--muted); }
+.srow .s { grid-column: 2 / 4; font-size: 0.9375rem; }
+.srow .chk { grid-column: 2 / 4; font-size: 0.875rem; color: var(--muted); }
+.more { margin: 0 var(--space-3) 10px calc(18px + var(--space-2) + var(--space-3)); display: grid; grid-template-columns: 80px 1fr; gap: 4px 8px; font-size: 0.875rem; padding-top: 8px; border-top: 1px solid var(--line); }
+.more dt { color: var(--muted); }
+.more dd { margin: 0; overflow-wrap: anywhere; }
+.more .showing { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.stepper { min-width: 32px; min-height: 32px; border: 1px solid var(--accent); border-radius: var(--radius); background: var(--panel); color: var(--accent); font: 700 1rem var(--sans); cursor: pointer; }
+.stepper:disabled { border-color: var(--line); color: var(--muted); cursor: not-allowed; }
+.more.passes { grid-template-columns: 1fr; }
+.pfeat { display: grid; gap: 2px; text-align: left; width: 100%; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); padding: 6px 8px; font: inherit; color: inherit; cursor: pointer; min-height: 32px; }
+.pfeat[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: -1px; }
+.pfeat .pmath { padding-left: 0; }
+/* the .ipt groups (mockups/review-steps-features.html, D-049): one folding row each, rows unchanged inside */
+.iptgroups { display: grid; border-top: 2px solid var(--line); }
+.iptgroups .src { margin: 0; padding: 12px 14px 6px; font-size: 0.875rem; font-weight: 600; color: var(--muted); overflow-wrap: anywhere; }
+.grp { border-bottom: 1px solid var(--line); }
+.grp > summary { cursor: pointer; list-style: none; display: grid; grid-template-columns: 18px 1fr; gap: 3px var(--space-2); padding: 10px var(--space-3); min-height: 44px; align-items: baseline; }
+.grp > summary::-webkit-details-marker { display: none; }
+.grp > summary::before { content: "▸"; color: var(--muted); } .grp[open] > summary::before { content: "▾"; }
+.grp .gname { font-weight: 600; }
+.grp .tw { grid-column: 2; font-size: 0.875rem; color: var(--muted); }
+.grp .tw:empty { display: none; }
+.grp .groups { overflow: visible; margin: 0; padding: 0 var(--space-3) var(--space-3) calc(18px + var(--space-2) + var(--space-3)); }
+/* Show OK at the foot of the model, on Features only (frame r3-features) */
+.showok { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); align-items: center; font-size: 0.875rem; }
+.showok .lbl { font-weight: 600; color: var(--muted); }
+/* review-steps S3 (frame r3-mach): setup chips over the model, "Why n", issues in each setup */
+.setupchips { position: absolute; left: var(--space-3); top: var(--space-3); display: flex; flex-wrap: wrap; gap: var(--space-2); z-index: 4; }
+.plan .why { margin: 0; font-size: 0.875rem; }
+.plan .why b { margin-right: 6px; }
+.issue-in { display: flex; gap: 4px 10px; flex-wrap: wrap; padding: 8px 12px; background: var(--bg); font-size: 0.875rem; align-items: center; border-top: 1px solid var(--line); margin-top: 4px; }
+.placed { display: inline-flex; gap: 5px; align-items: baseline; }
+.placed .sev { font-size: 0.875rem; }
+.nosetup { display: grid; gap: 4px; border-top: 1px solid var(--line); padding-top: var(--space-1); }
+.nosetup .shead { font: 600 0.875rem var(--mono); }

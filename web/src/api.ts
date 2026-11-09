@@ -111,6 +111,8 @@ export interface Analysis {
   rules_run: string[];
   checks_run: string[]; // review-steps S1: the check names of rules_run, in run order, each once
   passed: Passed[]; // D-023 proposed: each check a feature passed, with the math
+  rows: Row[]; // review-steps S2: the findings grouped into the Features step's rows, Fix rows first
+  passed_rows: Row[]; // review-steps S2: features with no finding, grouped by kind and check
   assumptions: string[];
   machine: string | null; // S5
   turn_axis: number[] | null;
@@ -153,6 +155,23 @@ export interface Tool {
 
 export type Severity = "high" | "medium" | "low";
 
+/** A Features step row (review-steps spec Design "Rows"): findings with the same rule, case, severity and limit, or
+ *  the passed features of one kind and check. */
+export interface Row {
+  id: string; // "row:F4", or "row:pass-wall-thin_wall"
+  rule: string;
+  severity: "high" | "medium" | "ok";
+  short: string; // "Sharp corner"
+  count: number;
+  findings: string[]; // F ids; [] for a passed row
+  range: string; // "F4–F7", "F1 F2"
+  sentence: string;
+  check: string; // "Corner radius check"
+  limit: string; // "limit is an estimate"
+  features: string[];
+  kind?: string; // a passed row's feature kind
+}
+
 export interface Feature {
   id: string;
   kind: string;
@@ -166,6 +185,7 @@ export interface Feature {
   thread?: string[]; // I1 S2: ids of the threads mapped to this hole or bore
   hole_feature?: string; // I2 S1: the first Hole feature mapped to this hole or bore
   blind?: boolean; // I2 S1: a bottom closes this hole segment
+  pocket?: string | null; // a corner's pocket (review-steps D-049: Machining shows it in that pocket's setup)
 }
 
 export interface Finding {
@@ -177,7 +197,7 @@ export interface Finding {
   limit: number;
   unit: "in" | "ratio" | "deg" | "%";
   faces: number[];
-  feature: string;
+  feature: string | null; // null for a rule on the whole part (looks_turned, turn_axis)
   threshold_source: string;
   limit_text: string; // review-steps S1: the source in plain words
   check: string; // review-steps S1: "Hole depth check"

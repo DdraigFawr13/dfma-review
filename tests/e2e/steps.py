@@ -26,3 +26,12 @@ def shown(page: Page, name: str, step: str | None = "features", timeout: int = 6
     expect(page.get_by_test_id("overview")).to_be_visible()
     if step:
         open_step(page, step)
+
+
+def show_finding(page: Page, result: dict, fid: str) -> None:
+    """Open the Features row holding finding `fid` and step (›) to it; its detail then shows it."""
+    row = next(r for r in result["rows"] if fid in r["findings"])
+    page.get_by_test_id(f"row-{row['id'].removeprefix('row:')}").click()
+    for _ in range(row["findings"].index(fid)):
+        page.get_by_test_id("row-next").click()
+    expect(page.get_by_test_id("row-detail")).to_contain_text(f"{fid} · ")

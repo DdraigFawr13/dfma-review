@@ -36,8 +36,9 @@ def test_panel(page: Page, base_url: str, tmp_path):
     expect(panel).to_be_visible()
     expect(panel).to_have_attribute("open", "")  # opens: holes disagree (D-040)
     expect(page.locator("#hole-features-count")).to_have_text("9")
-    expect(panel).to_contain_text("From INV_nist_ctc_04_asme1_2021.ipt: 9 Hole features, 54 holes: 40 matched, "
-                                  "13 disagree, 1 not mapped.")
+    # The counts sit on the group's row (D-049)
+    expect(page.locator("#hole-features-tally")).to_have_text(
+        "9 Hole features, 54 holes: disagree 13 · not mapped 1 · matched 40")
     rows = page.get_by_test_id("hole-feature-row")
     expect(rows).to_have_count(9)
     big = rows.nth(6)

@@ -1,9 +1,10 @@
-// The review in steps (review-steps spec, D-042, D-045): the Part step's overview, the Cost step and the Report
-// step, drawn to the approved round 3 frames (mockups/ui-direction/round3-frames.html: r3-overview, r3-cost,
-// r3-report). Features and Machining reuse findings.ts until S2 and S3.
+// The review in steps (review-steps spec, D-042, D-045): the Part step's overview, the Features rows, where each row
+// sits in the machine plan, the Cost step and the Report step, drawn to the approved round 3 frames
+// (mockups/ui-direction/round3-frames.html: r3-overview, r3-features, r3-passed, r3-mach, r3-cost, r3-report) and the
+// Features groups mock-up (mockups/review-steps-features.html, D-049).
 
-import type { Analysis, Finding } from "./api";
-import { checkedCount, okFeatures } from "./findings";
+import type { Analysis, Finding, Row } from "./api";
+import { checkedCount, featureLine, holeThreads, measured, okFeatures } from "./findings";
 import { idRange, plural, sevMark, sevWord } from "./words";
 
 export const STEPS = ["part", "features", "machining", "cost", "report"] as const;
@@ -24,16 +25,26 @@ function sevTag(severity: string): HTMLElement[] {
   return [mark, el("b", `sev ${severity}`, sevWord(severity))];
 }
 
-const byNumber = (a: Finding, b: Finding) => Number(a.id.slice(1)) - Number(b.id.slice(1));
+const fnum = (id: string) => Number(id.replace(/^\D+/, ""));
 
-/** "Fix first" with the first Fix finding (lowest F id), else "Review first" with the first Review one, else null.
- *  S1 shows a finding's word, id and title; S2 swaps in the first row of that severity. */
-export function firstFinding(result: Analysis): Finding | null {
+/** "Fix first" with the first Fix row (lowest first F id), else "Review first" with the first Review row, else null. */
+export function firstRow(result: Analysis): Row | null {
   for (const severity of ["high", "medium"]) {
-    const found = result.findings.filter((f) => f.severity === severity).sort(byNumber);
+    const found = result.rows.filter((r) => r.severity === severity).sort((a, b) => fnum(a.findings[0]) - fnum(b.findings[0]));
     if (found.length) return found[0];
   }
   return null;
+}
+
+/** "Sharp corner ×4", "Drill size" (no "×1"). */
+export function rowTitle(r: Row): string {
+  return r.count > 1 ? `${r.short} ×${r.count}` : r.short;
+}
+
+/** The first sentence of a row's sentence ("Inside corners have no radius."), for Fix first. */
+function firstSentence(text: string): string {
+  const i = text.indexOf(". ");
+  return i < 0 ? text : text.slice(0, i + 1);
 }
 
 /** "distinct tools 4.0, sharp or small inside corners 4.0 (weights are estimates)": the first two drivers as the
@@ -104,13 +115,14 @@ export function renderOverview(cards: HTMLElement, first: HTMLElement, result: A
   report.append(sub("PDF of all of the above"));
   cards.append(features, machining, cost, report);
 
-  const f = firstFinding(result);
-  first.hidden = !f;
+  const r = firstRow(result);
+  first.hidden = !r;
   first.replaceChildren();
-  if (!f) return;
+  if (!r) return;
   const line = el("div", "firstline");
-  line.append(...sevTag(f.severity), document.createTextNode(" "), el("span", "fid", f.id), document.createTextNode(" "), el("span", "ftitle", f.title));
-  first.append(el("span", "label", f.severity === "high" ? "Fix first" : "Review first"), line);
+  line.append(...sevTag(r.severity), document.createTextNode(" "), el("span", "ftitle", rowTitle(r)), document.createTextNode(" "),
+    el("span", "fid", r.range), document.createTextNode(" "), el("span", "muted", firstSentence(r.sentence)));
+  first.append(el("span", "label", r.severity === "high" ? "Fix first" : "Review first"), line);
 }
 
 /** The Cost step (frame r3-cost): each driver's count × weight = score, its findings or "from the machine plan",
@@ -160,4 +172,193 @@ export function stepCounts(host: HTMLElement, result: Analysis | null): string {
     parts.push(`${sevWord(severity)} ${n}`);
   }
   return parts.join(", ");
+}
+
+
+// --- S2: the Features step's rows (spec J3, frames r3-features and r3-passed) ---
+
+export type RowFilter = "issues" | "passed" | "all";
+
+/** What the Features list has open: a row, the finding it shows (`at`) and, in a passed row, one feature alone. */
+export interface RowState { row: string | null; at: number; pass: string | null }
+
+export interface RowHandlers {
+  onRow(row: Row): void; // tap a row: open it (or close it when open)
+  onStep(delta: number): void; // ‹ › in an open finding row
+  onPass(featureId: string): void; // one feature of an open passed row
+}
+
+/** A row as a button: mark and word, short title ×n, ids, sentence, check and limit. */
+function rowButton(r: Row, open: boolean, onRow: (r: Row) => void): HTMLButtonElement {
+  const b = el("button", `srow ${r.severity}`);
+  b.type = "button";
+  b.dataset.testid = `row-${r.id.replace(/^row:/, "")}`;
+  b.setAttribute("aria-pressed", String(open));
+  b.setAttribute("aria-expanded", String(open));
+  const t = el("span", "t");
+  t.append(el("b", `sev ${r.severity}`, sevWord(r.severity)), document.createTextNode(` ${rowTitle(r)}`));
+  const mark = el("span", `mk ${r.severity}`, sevMark(r.severity));
+  mark.setAttribute("aria-hidden", "true");
+  b.append(mark, t, el("span", "ids num", r.range), el("span", "s", r.sentence), el("span", "chk", `${r.check} · ${r.limit}`));
+  b.addEventListener("click", () => onRow(r));
+  return b;
+}
+
+/** The open finding row's detail: "‹ F4 · corner-1 · 1 of 4 ›", what was measured and the advice. */
+function findingDetail(r: Row, at: number, result: Analysis, h: RowHandlers): HTMLElement {
+  const f = result.findings.find((x) => x.id === r.findings[at]) as Finding;
+  const dl = el("dl", "more");
+  dl.dataset.testid = "row-detail";
+  const showing = el("dd", "num showing");
+  const step = (text: string, label: string, testid: string, delta: number, off: boolean) => {
+    const b = el("button", "stepper", text);
+    b.type = "button";
+    b.dataset.testid = testid;
+    b.setAttribute("aria-label", label);
+    b.disabled = off;
+    b.addEventListener("click", () => h.onStep(delta));
+    return b;
+  };
+  const where = [f.id, f.feature, `${at + 1} of ${r.findings.length}`].filter(Boolean).join(" · ");
+  if (r.findings.length > 1) showing.append(step("‹", "Previous finding", "row-prev", -1, at === 0));
+  showing.append(el("span", undefined, where));
+  if (r.findings.length > 1) showing.append(step("›", "Next finding", "row-next", 1, at === r.findings.length - 1));
+  dl.append(el("dt", undefined, "Showing"), showing, el("dt", undefined, "Measured"), el("dd", "num", measured(f, result)),
+    el("dt", undefined, r.severity === "high" ? "Fix" : "Suggestion"), el("dd", undefined, f.suggestion));
+  return dl;
+}
+
+/** The open passed row's detail (D-023): each feature with the check it passed and the math; a feature selects alone. */
+function passedDetail(r: Row, state: RowState, result: Analysis, h: RowHandlers): HTMLElement {
+  const box = el("div", "more passes");
+  box.dataset.testid = "row-detail";
+  for (const fid of r.features) {
+    const p = result.passed.find((x) => x.feature === fid && x.rule === r.rule);
+    if (!p) continue;
+    const b = el("button", "pfeat");
+    b.type = "button";
+    b.dataset.testid = `passed-${fid}`;
+    b.setAttribute("aria-pressed", String(state.pass === fid));
+    const feature = result.features.find((x) => x.id === fid);
+    const size = feature ? featureLine(feature) : "";
+    b.append(el("span", "pt", size ? `${fid} · ${size}` : fid), el("span", "pt", `✓ ${p.title}`));
+    const thread = holeThreads(feature, result); // I1 S2 (D-036): its callout
+    if (thread) b.append(el("span", "pt", thread));
+    b.append(el("span", "pmath", `${p.math} · ${p.limit_text}`));
+    b.addEventListener("click", () => h.onPass(fid));
+    box.append(b);
+  }
+  return box;
+}
+
+/** The chips' counts: findings (not rows) and OK features, as the frames show ("Issues 8 · Passed 9"). */
+export function renderChips(host: HTMLElement, result: Analysis, filter: RowFilter, onFilter: (f: RowFilter) => void): void {
+  host.replaceChildren();
+  const chip = (f: RowFilter, text: string) => {
+    const b = el("button", "chip", text);
+    b.type = "button";
+    b.dataset.testid = `chip-${f}`;
+    b.setAttribute("aria-pressed", String(filter === f));
+    b.addEventListener("click", () => onFilter(f));
+    host.append(b);
+  };
+  chip("issues", `Issues ${result.findings.length}`);
+  chip("passed", `Passed ${okFeatures(result).length}`);
+  chip("all", "All");
+}
+
+/** The Features step's rows: Issues (finding rows), Passed (passed rows) or All, the open row with its detail. */
+export function renderRows(host: HTMLElement, result: Analysis, filter: RowFilter, state: RowState, h: RowHandlers): void {
+  host.replaceChildren();
+  const list = filter === "issues" ? result.rows : filter === "passed" ? result.passed_rows : [...result.rows, ...result.passed_rows];
+  if (!list.length) {
+    host.append(el("p", "none pad", filter === "passed" ? "No feature passed with no finding."
+      : "No findings. Every feature checked passed its rules."));
+    return;
+  }
+  for (const r of list) {
+    const open = state.row === r.id;
+    const box = el("div", open ? "rowbox open" : "rowbox");
+    box.append(rowButton(r, open, h.onRow));
+    if (open) box.append(r.findings.length ? findingDetail(r, Math.min(state.at, r.findings.length - 1), result, h) : passedDetail(r, state, result, h));
+    host.append(box);
+  }
+}
+
+/** The faces a row selects: all its findings' faces, or its passed features' faces. */
+export function rowFaces(r: Row, result: Analysis): number[] {
+  const faces = r.findings.length
+    ? r.findings.flatMap((id) => result.findings.find((f) => f.id === id)?.faces ?? [])
+    : r.features.flatMap((id) => result.features.find((f) => f.id === id)?.faces ?? []);
+  return [...new Set(faces)];
+}
+
+/** A group's tally in the approved words, nonzero states only: "DISAGREES 1 · MATCHED 5" (D-049). */
+export function groupTally(host: HTMLElement, states: string[], lead = ""): void {
+  host.replaceChildren();
+  if (lead) host.append(document.createTextNode(lead));
+  const order: [string, string, string][] = [["disagrees", "disagree", "medium"], ["not_mapped", "not mapped", "nm"], ["matched", "matched", "ok"]];
+  let first = true;
+  for (const [state, many, cls] of order) {
+    const n = states.filter((s) => s === state).length;
+    if (!n) continue;
+    const word = state === "disagrees" && n === 1 ? "disagrees" : many; // "disagrees 1", "disagree 7" (D-036, D-040)
+    if (!first) host.append(document.createTextNode(" · "));
+    first = false;
+    host.append(el("span", `sev ${cls}`, word), document.createTextNode(` ${n}`));
+  }
+}
+
+// --- S3: where each row sits in the machine plan (spec J4, frame r3-mach, D-049) ---
+
+/** A row's findings in one place: "Sharp corner ×2" under Setup 2 when two of its four corners are there. */
+export interface Placed { row: Row; ids: string[] }
+
+/** Each row's findings placed in a setup (by its feature, a corner by its pocket), under "Whole part" (no feature, or
+ *  a thin wall) or "In no setup". Keys: "whole", "none" or the setup's index. Counted once per place. */
+export function placeRows(result: Analysis): Map<string | number, Placed[]> {
+  const out = new Map<string | number, Placed[]>();
+  const feats = new Map(result.features.map((f) => [f.id, f]));
+  for (const r of result.rows) {
+    const here = new Map<string | number, string[]>();
+    for (const id of r.findings) {
+      const f = result.findings.find((x) => x.id === id);
+      const feature = f?.feature ? feats.get(f.feature) : undefined;
+      let at: string | number;
+      if (!feature || feature.kind === "wall") at = "whole";
+      else {
+        const target = feature.kind === "corner" ? feature.pocket ?? null : feature.id;
+        const i = result.setups.findIndex((s) => target !== null && s.features.includes(target));
+        at = i >= 0 ? i : "none";
+      }
+      here.set(at, [...(here.get(at) ?? []), id]);
+    }
+    for (const [at, ids] of here) out.set(at, [...(out.get(at) ?? []), { row: r, ids }]);
+  }
+  return out;
+}
+
+/** "▲ Fix Sharp corner ×2 F4 F5": one placed row as a line. */
+export function placedLine(p: Placed): HTMLElement {
+  const line = el("span", "placed");
+  const mark = el("span", `mk ${p.row.severity}`, sevMark(p.row.severity));
+  mark.setAttribute("aria-hidden", "true");
+  const title = p.ids.length > 1 ? `${p.row.short} ×${p.ids.length}` : p.row.short;
+  line.append(mark, el("b", `sev ${p.row.severity}`, sevWord(p.row.severity)), document.createTextNode(` ${title} `),
+    el("span", "num muted", idRange(p.ids)));
+  return line;
+}
+
+/** The setup chips over the model (frame r3-mach): one per setup; a tap is the setup's selection. */
+export function renderSetupChips(host: HTMLElement, result: Analysis, heads: string[], selected: string | null,
+                                 onPick: (i: number) => void): void {
+  host.replaceChildren();
+  result.setups.forEach((_, i) => {
+    const b = el("button", "chip", heads[i]);
+    b.type = "button";
+    b.dataset.testid = `setup-chip-${i + 1}`;
+    b.setAttribute("aria-pressed", String(selected === `setup:${i}`));
+    b.addEventListener("click", () => onPick(i));
+    host.append(b);
+  });
 }

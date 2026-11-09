@@ -1,4 +1,5 @@
-"""J2 in the browser: the findings list shows the hole finding; clicking it highlights and frames its faces."""
+"""J2 in the browser, on the Features rows (review-steps S2): the row shows the hole finding; tapping it highlights and
+frames its faces."""
 
 from __future__ import annotations
 
@@ -30,8 +31,9 @@ def test_click_highlights_face(page: Page, base_url: str):
     part_shown(page, "deep_hole.step", step=None)
     expect(page.get_by_test_id("overview-features")).to_contain_text("1 hole and 4 walls checked")
     open_step(page, "features")
-    row = page.get_by_test_id("finding-F1")
-    expect(row).to_contain_text("Hole depth 8.0× diameter (limit 6.0×)")
+    row = page.get_by_test_id("row-F1")
+    expect(row).to_contain_text("Deep hole")
+    expect(row).to_contain_text("8.0× the diameter deep. Over 6.0× needs peck drilling.")
     expect(row).to_contain_text("Review")
     assert page.evaluate("window.__dfma.highlightedFaces()") == []
 
@@ -69,7 +71,7 @@ def test_click_highlights_face(page: Page, base_url: str):
     assert page.evaluate("window.__dfma.cameraTarget()") == target
     assert sorted(page.evaluate("window.__dfma.highlightedFaces()")) == sorted(finding["faces"])
 
-    row.click()  # clicking the selected finding again clears it
+    row.click()  # tapping the open row again clears it
     assert page.evaluate("window.__dfma.highlightedFaces()") == []
 
 
@@ -81,10 +83,10 @@ def test_clean_part_shows_clean_verdict(page: Page, base_url: str):
     expect(page.get_by_test_id("overview-features")).to_contain_text("No findings. Every feature checked passed its rules.")
     open_step(page, "features")
 
-    # The legend's "Holes checked, no finding" box (on by default) tints the holes that passed.
+    # The Show OK "Holes" switch (on by default) tints the holes that passed.
     result = analyze(PARTS / "clean_holes.step", "clean_holes.step")
     hole_faces = sorted(i for h in result["features"] if h["kind"] == "hole" for i in h["faces"])
-    expect(page.get_by_test_id("legend")).to_contain_text("Fix")
+    expect(page.get_by_test_id("show-ok")).to_contain_text("Holes")
     assert page.evaluate("window.__dfma.checkedFaces()") == hole_faces
     page.get_by_test_id("show-checked").uncheck()
     assert page.evaluate("window.__dfma.checkedFaces()") == []
@@ -95,13 +97,13 @@ def test_clean_part_shows_clean_verdict(page: Page, base_url: str):
 def test_checked_holes_exclude_holes_with_findings(page: Page, base_url: str):
     page.goto(base_url)
     page.get_by_test_id("upload-file").set_input_files(PARTS / "stepped_hole.step")
-    part_shown(page, "stepped_hole.step", step=None)
+    part_shown(page, "stepped_hole.step")  # OK tints show on the Features step (review-steps J3)
     expect(page.get_by_test_id("overview-features")).to_contain_text("2 holes and 4 walls checked")
     result = analyze(PARTS / "stepped_hole.step", "stepped_hole.step")
     assert page.evaluate("window.__dfma.checkedFaces()") == sorted(i for h in result["features"] if h["kind"] == "hole" for i in h["faces"])
     page.get_by_test_id("upload-file").set_input_files(PARTS / "deep_hole.step")
     part_shown(page, "deep_hole.step")
-    expect(page.get_by_test_id("finding-F1")).to_be_visible()
+    expect(page.get_by_test_id("row-F1")).to_be_visible()
     assert page.evaluate("window.__dfma.checkedFaces()") == []  # its only hole has a finding
 
 
@@ -135,8 +137,11 @@ def test_wall_switch(page: Page, base_url: str):
     part_shown(page, "thin_rib.step", step=None)
     expect(page.get_by_test_id("overview-features")).to_contain_text("6 walls checked")
     open_step(page, "features")
-    expect(page.get_by_test_id("finding-F1")).to_contain_text("Wall 0.040 in thick (limit 0.060 in)")
-    expect(page.get_by_test_id("finding-F1")).to_contain_text("0.040 in thick · limit is an estimate")
+    expect(page.get_by_test_id("row-F1")).to_contain_text("Wall 0.040 in thick (limit 0.060 in)")
+    expect(page.get_by_test_id("row-F1")).to_contain_text("Thin wall check · limit is an estimate")
+    page.get_by_test_id("row-F1").click()
+    expect(page.get_by_test_id("row-detail")).to_contain_text("0.040 in thick")
+    page.get_by_test_id("row-F1").click()
     result = analyze(PARTS / "thin_rib.step", "thin_rib.step", "mill", "plastic")
     flagged = {f["feature"] for f in result["findings"]}
     walls = [f for f in result["features"] if f["kind"] == "wall"]
@@ -166,9 +171,10 @@ def test_sharp_corner_is_drawn_on_its_edge(page: Page, base_url: str):
     page.goto(base_url)
     page.get_by_test_id("upload-file").set_input_files(PARTS / "pocket_sharp.step")
     part_shown(page, "pocket_sharp.step")
-    page.get_by_test_id("finding-F1").click()
+    page.get_by_test_id("row-F1").click()  # the Sharp corner row: all its corners, its pin F1's
     result = analyze(PARTS / "pocket_sharp.step", "pocket_sharp.step")
-    walls = result["findings"][0]["faces"]
+    row = next(r for r in result["rows"] if r["id"] == "row:F1")
+    walls = sorted({i for f in result["findings"] if f["id"] in row["findings"] for i in f["faces"]})
     assert page.evaluate("window.__dfma.paintedFaces()") == []
     opacities = page.evaluate("window.__dfma.opacities()")
     assert all(opacities[str(w)] == 1 for w in walls)
@@ -189,15 +195,15 @@ def test_finding_labels_never_cover_each_other(page: Page, base_url: str):
             (PARTS.parent / "edmr" / "models" / "STEP" / "STI").rglob("daratech.stp"))  # 25 findings on a real part
         page.get_by_test_id("upload-file").set_input_files(path)
         part_shown(page, path.name)
-        expect(page.get_by_test_id("finding-F5")).to_be_visible()
+        expect(page.locator("#rows .srow").first).to_be_visible()
         # Labels are placed on the next drawn frame; a large part takes longer to draw.
         page.wait_for_function("window.__dfma.flagBoxes().length >= 4", timeout=30_000)
         boxes = page.evaluate("window.__dfma.flagBoxes()")
         assert _overlapping(boxes) == [], name
-        page.get_by_test_id("finding-F1").click()
+        page.locator("#rows .srow").first.click()
         page.wait_for_timeout(300)
         assert _overlapping(page.evaluate("window.__dfma.flagBoxes()")) == [], name
-        page.get_by_test_id("finding-F1").click()
+        page.locator("#rows .srow").first.click()
 
 
 def test_pins_sit_on_their_findings(page: Page, base_url: str):
@@ -208,11 +214,11 @@ def test_pins_sit_on_their_findings(page: Page, base_url: str):
     path = next((PARTS.parent / "edmr" / "models" / "STEP" / "STI").rglob("daratech.stp"))
     page.get_by_test_id("upload-file").set_input_files(path)
     part_shown(page, path.name)
-    expect(page.get_by_test_id("finding-F5")).to_be_visible()
+    expect(page.locator("#rows .srow").first).to_be_visible()
     page.wait_for_function("window.__dfma.flagBoxes().length >= 1", timeout=30_000)
     state = page.evaluate("window.__dfma.flagState()")
     shown = {s["id"] for s in state if s["shown"]}
-    count = page.locator("#findings .finding").count()
+    count = int(page.get_by_test_id("chip-issues").inner_text().split()[-1])  # "Issues 23": findings, not rows
     assert len(state) == count
     assert all(s["shown"] or s["mergedInto"] in shown or s["mergedInto"] == "" for s in state)
     assert len(shown) < count  # 23 findings on this part: some pins fold together
@@ -222,10 +228,12 @@ def test_pins_sit_on_their_findings(page: Page, base_url: str):
             more = page.locator(f'.viewer .flag[data-id="{s["id"]}"]').get_attribute("data-more")
             assert more == (f"+{inside}" if inside else ""), s["id"]
 
-    page.get_by_test_id("finding-F1").click()
-    pin = page.locator('.viewer .flag[data-id="F1"]')
+    first = page.locator("#rows .srow").first  # Fix rows first; its pin is its first finding's
+    fid = first.get_attribute("data-testid").removeprefix("row-")
+    first.click()
+    pin = page.locator(f'.viewer .flag[data-id="{fid}"]')
     expect(pin).to_have_class(re.compile(r"\bchosen\b"))
-    severity = page.get_by_test_id("finding-F1").locator(".sev").get_attribute("class").split()[1]  # "sev high"
+    severity = first.locator(".sev").get_attribute("class").split()[1]  # "sev high"
     colour = page.evaluate(f"getComputedStyle(document.documentElement).getPropertyValue('--{severity}').trim()")
     assert pin.evaluate("e => getComputedStyle(e).backgroundColor") == page.evaluate(
         f"(() => {{ const d = document.createElement('i'); d.style.color = '{colour}'; document.body.append(d);"
@@ -242,7 +250,7 @@ def test_pins_behind_the_part_are_hidden(page: Page, base_url: str):
     page.goto(base_url)
     page.get_by_test_id("upload-file").set_input_files(PARTS / "pocket_sharp.step")
     part_shown(page, "pocket_sharp.step")
-    expect(page.get_by_test_id("finding-F5")).to_be_visible()
+    expect(page.get_by_test_id("row-F1")).to_be_visible()
     page.wait_for_function("window.__dfma.flagBoxes().length >= 1", timeout=30_000)
     box = page.get_by_test_id("viewer-canvas").bounding_box()
     cx, cy = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2

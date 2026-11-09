@@ -26,17 +26,18 @@
     <main class="cols">
       <section class="viewer" aria-label="3D view of the part">
         <canvas data-testid="viewer-canvas" id="viewer"></canvas>
+        <!-- review-steps S3 (frame r3-mach): one chip per setup over the model, on the Machining step only -->
+        <div class="setupchips" role="group" aria-label="Setups" id="setup-chips" data-testid="setup-chips" hidden></div>
         <div class="viewer-note" id="viewer-note" data-testid="viewer-note"><span class="spin" id="spin" aria-hidden="true" hidden></span><span id="viewer-note-text">The part shows here once it's read.</span></div>
         <div class="viewfoot">
           <p class="hint">Drag to rotate, scroll to zoom, right-drag to pan.</p>
-          <div class="legend" role="group" aria-label="Colour legend" data-testid="legend" id="legend" hidden>
-            <span class="key"><i class="sw high" aria-hidden="true"></i>Fix</span>
-            <span class="key"><i class="sw medium" aria-hidden="true"></i>Review</span>
-            <span class="key"><i class="sw accent" aria-hidden="true"></i>Selected</span>
-            <label class="key toggle"><input type="checkbox" class="hole" id="show-checked" data-testid="show-checked" checked /><i class="sw low" aria-hidden="true"></i>Holes checked, no finding</label>
-            <label class="key toggle"><input type="checkbox" class="pocket" id="show-checked-pockets" data-testid="show-checked-pockets" checked /><i class="sw pocket" aria-hidden="true"></i>Pockets checked, no finding</label>
-            <label class="key toggle"><input type="checkbox" class="corner" id="show-checked-corners" data-testid="show-checked-corners" checked /><i class="sw corner" aria-hidden="true"></i>Corners checked, no finding</label>
-            <label class="key toggle"><input type="checkbox" class="wall" id="show-checked-walls" data-testid="show-checked-walls" /><i class="sw wall" aria-hidden="true"></i>Walls checked, no finding</label>
+          <!-- review-steps S2 (D-014 amended by D-042): the Show OK switches, on the Features step only -->
+          <div class="showok" role="group" aria-labelledby="show-ok-label" data-testid="show-ok" id="show-ok" hidden>
+            <span class="lbl" id="show-ok-label">Show OK</span>
+            <label class="key toggle"><input type="checkbox" class="hole" id="show-checked" data-testid="show-checked" checked /><i class="sw low" aria-hidden="true"></i>Holes</label>
+            <label class="key toggle"><input type="checkbox" class="pocket" id="show-checked-pockets" data-testid="show-checked-pockets" checked /><i class="sw pocket" aria-hidden="true"></i>Pockets</label>
+            <label class="key toggle"><input type="checkbox" class="corner" id="show-checked-corners" data-testid="show-checked-corners" checked /><i class="sw corner" aria-hidden="true"></i>Corners</label>
+            <label class="key toggle"><input type="checkbox" class="wall" id="show-checked-walls" data-testid="show-checked-walls" /><i class="sw wall" aria-hidden="true"></i>Walls</label>
           </div>
         </div>
       </section>
@@ -88,20 +89,25 @@
           </div>
         </section>
         <section class="page" id="page-features" data-testid="page-features" aria-labelledby="findings-title" hidden>
-          <h2 id="findings-title" tabindex="-1">Features <span class="count" id="findings-count"></span></h2>
-          <div class="groups" id="findings"><p class="none">No findings yet. Choose a STEP file to start.</p></div>
-          <details class="drivers-panel threads-panel" data-testid="threads-panel" id="threads-panel" hidden>
-            <summary><span id="threads-title">Threads</span> <span class="count" id="threads-count"></span></summary>
-            <div id="threads" class="groups"></div>
-          </details>
-          <details class="drivers-panel threads-panel" data-testid="hole-features-panel" id="hole-features-panel" hidden>
-            <summary><span id="hole-features-title">Hole features</span> <span class="count" id="hole-features-count"></span></summary>
-            <div id="hole-features" class="groups"></div>
-          </details>
-          <details class="drivers-panel threads-panel" data-testid="blends-panel" id="blends-panel" hidden>
-            <summary><span id="blends-title">Fillets and chamfers</span> <span class="count" id="blends-count"></span></summary>
-            <div id="blends" class="groups"></div>
-          </details>
+          <h2 id="findings-title" tabindex="-1" class="sr-only">Features</h2>
+          <!-- review-steps S2 (frames r3-features, r3-passed): chips, rows, then the .ipt groups (D-049) -->
+          <div class="chips" role="group" aria-label="Show" id="row-chips"></div>
+          <div class="rows" id="rows"><p class="none pad">No findings yet. Choose a STEP file to start.</p></div>
+          <div class="iptgroups" id="ipt-groups" data-testid="ipt-groups" hidden>
+            <p class="src" id="ipt-source"></p>
+            <details class="grp" data-testid="threads-panel" id="threads-panel">
+              <summary><span class="gname"><span id="threads-title">Threads</span> <span class="count" id="threads-count"></span></span><span class="tw" id="threads-tally"></span></summary>
+              <div id="threads" class="groups"></div>
+            </details>
+            <details class="grp" data-testid="hole-features-panel" id="hole-features-panel">
+              <summary><span class="gname"><span id="hole-features-title">Hole features</span> <span class="count" id="hole-features-count"></span></span><span class="tw" id="hole-features-tally"></span></summary>
+              <div id="hole-features" class="groups"></div>
+            </details>
+            <details class="grp" data-testid="blends-panel" id="blends-panel">
+              <summary><span class="gname"><span id="blends-title">Fillets and chamfers</span> <span class="count" id="blends-count"></span></span><span class="tw" id="blends-tally"></span></summary>
+              <div id="blends" class="groups"></div>
+            </details>
+          </div>
         </section>
         <section class="page plan" id="page-machining" data-testid="page-machining" aria-labelledby="plan-title" hidden>
           <h2 id="plan-title" tabindex="-1">Machining <span class="count" id="plan-count"></span></h2>

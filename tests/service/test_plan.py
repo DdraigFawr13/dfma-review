@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from helpers import PARTS, expected
+from helpers import PARTS, ROOT, expected
 from test_expected import check_plan
 
 from dfma import plan as P
@@ -42,8 +42,10 @@ def test_no_roughing_tool_when_one_tool_does_both():
 def test_access_finding(name, angle):
     r = _run(name)
     (f,) = [f for f in r["findings"] if f["rule"] == "access"]
-    assert (f["severity"], f["unit"], f["limit"]) == ("high", "deg", 0.5)
+    # D-050: both enter their flat top face at a slant (as far off square as off the axes): still a Fix
+    assert (f["severity"], f["unit"], f["limit"], f["threshold_source"]) == ("high", "deg", 0.5, "assumption")
     assert f["measured"] == pytest.approx(angle, abs=0.01)
+    assert f"enters its face {angle:.1f}° off square" in f["title"]
     assert "4/5-axis mill or a fixture" in f["title"]
     assert r["machine"] == "4/5-axis mill or fixture"
     planned = {fid for s in r["setups"] for fid in s["features"]}
@@ -146,3 +148,34 @@ def test_countersink_at_each_end_lights_only_its_cone():
     (op,) = [o for o in r["operations"] if o["setup"] == k]
     assert op["faces"] in [sorted(e) for e in hole["countersink_end_faces"]]
     assert set(op["faces"]).isdisjoint(hole["faces"]) and len(hole["countersink_end_faces"]) == 2
+
+
+def test_access_severity_d050():
+    """D-050 (Morgan, 2026-11-09): an angled hole is a Review; a Fix when it enters its flat face off square; a hole
+    with no flat face at an open end stays a Review; an angled pocket stays a Fix."""
+    from dfma.rules import access
+    frame = {"x": [1, 0, 0], "y": [0, 1, 0], "z": [0, 0, 1]}
+    tilt = [0.0, 0.5, 0.866025]  # 30 deg off +Z
+
+    def one(kind, entry):
+        f = {"id": f"{kind}-1", "kind": kind, "faces": [1], "open_dirs": [], "open_vectors": [tilt], "entry_deg": entry}
+        [found] = access.check([f], {"frame": frame}, {})
+        return found
+    assert one("hole", 0.0)["severity"] == "medium"
+    assert one("hole", 0.5)["severity"] == "medium"  # within the 0.5 deg tolerance
+    assert one("hole", None)["severity"] == "medium"
+    slant = one("hole", 12.0)
+    assert (slant["severity"], slant["measured"], slant["threshold_source"]) == ("high", 12.0, "assumption")
+    assert one("pocket", None)["severity"] == "high"
+
+
+def test_angled_holes_square_to_their_face_are_review():
+    """NIST CTC 04: its 12 holes 22 deg off the axes are drilled square into angled faces: Review, not Fix (D-050)."""
+    import sys
+    sys.path.insert(0, str(ROOT / "tests"))
+    from nist_files import ap242_files
+    path = next(p for p in ap242_files() if p.name == "nist_ctc_04_asme1_ap242-e1.stp")
+    r = analyze(path, path.name)
+    found = [f for f in r["findings"] if f["rule"] == "access"]
+    assert len(found) == 12 and {f["severity"] for f in found} == {"medium"}
+    assert {f["entry_deg"] for f in r["features"] if f["id"] in {x["feature"] for x in found}} == {0.0}

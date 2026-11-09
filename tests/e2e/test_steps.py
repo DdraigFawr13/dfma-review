@@ -77,10 +77,9 @@ def test_part_step(page: Page, base_url: str, sample: dict):
     for name in STEPS[1:]:
         expect(page.get_by_test_id(f"open-{name}")).to_have_text("Open ›")
 
-    f4 = next(f for f in sample["findings"] if f["id"] == "F4")
-    first = page.get_by_test_id("fix-first")
+    first = page.get_by_test_id("fix-first")  # S2: the first Fix row, its short title, ids and first sentence
     expect(first).to_contain_text("Fix first")
-    expect(first).to_contain_text(f"Fix F4 {f4['title']}")
+    expect(first).to_contain_text("Fix Sharp corner ×4 F4–F7 Inside corners have no radius.")
 
     page.get_by_test_id("open-cost").click()
     expect(page.get_by_test_id("page-cost")).to_be_visible()
@@ -205,25 +204,24 @@ def _routed(page: Page, base_url: str, result: dict) -> None:
 def test_empty_states(page: Page, base_url: str, sample: dict):
     """J7: no findings, no Fix findings, no cost drivers and no machine plan, each answered through page.route."""
     clean = copy.deepcopy(sample)
-    clean["findings"] = []
+    clean["findings"], clean["rows"] = [], []
     _routed(page, base_url, clean)
     expect(page.get_by_test_id("fix-first")).to_be_hidden()
     expect(page.get_by_test_id("overview-features")).to_contain_text("No findings. Every feature checked passed its rules.")
     page.unroute("**/api/analyze")
 
-    shuffled = copy.deepcopy(sample)  # Fix first ties: the lowest F id, whatever the order the findings come in
-    shuffled["findings"] = list(reversed(sample["findings"]))
-    f4 = next(f for f in sample["findings"] if f["id"] == "F4")
+    shuffled = copy.deepcopy(sample)  # Fix first ties: the lowest F id, whatever the order the rows come in
+    shuffled["rows"] = list(reversed(sample["rows"]))
     _routed(page, base_url, shuffled)
-    expect(page.get_by_test_id("fix-first")).to_contain_text(f"Fix F4 {f4['title']}")
+    expect(page.get_by_test_id("fix-first")).to_contain_text("Fix Sharp corner ×4 F4–F7")
     page.unroute("**/api/analyze")
 
     review = copy.deepcopy(sample)
     review["findings"] = [f for f in sample["findings"] if f["severity"] == "medium"]
-    first = min(review["findings"], key=lambda f: int(f["id"][1:]))
+    review["rows"] = [r for r in sample["rows"] if r["severity"] == "medium"]
     _routed(page, base_url, review)
     expect(page.get_by_test_id("fix-first")).to_contain_text("Review first")
-    expect(page.get_by_test_id("fix-first")).to_contain_text(f"Review {first['id']} {first['title']}")
+    expect(page.get_by_test_id("fix-first")).to_contain_text("Review Deep hole ×2 F1 F2 9.6× and 7.2× the diameter deep.")
     page.unroute("**/api/analyze")
 
     bare = copy.deepcopy(sample)
@@ -251,3 +249,192 @@ def test_turning_overview(page: Page, base_url: str):
     # Process and material sit in the overview's head once a part is read, keeping the values chosen
     expect(page.get_by_test_id("overview").get_by_test_id("upload-process")).to_have_value("turn")
     expect(page.get_by_test_id("overview").get_by_test_id("upload-material")).to_have_value("steel1018")
+
+
+# --- S2: Features rows (J3) ---
+
+def _features(page: Page, base_url: str) -> None:
+    load(page, base_url, SAMPLE)
+    open_step(page, "features")
+
+
+def test_feature_rows(page: Page, base_url: str, sample: dict):
+    """J3 (frame r3-features): chips, 4 rows Fix first, a row's detail stepping through its findings, Passed rows."""
+    _features(page, base_url)
+    expect(page.get_by_test_id("chip-issues")).to_have_text("Issues 8")
+    expect(page.get_by_test_id("chip-passed")).to_have_text("Passed 9")
+    expect(page.get_by_test_id("chip-all")).to_have_text("All")
+    expect(page.get_by_test_id("chip-issues")).to_have_attribute("aria-pressed", "true")
+    rows = page.locator("#rows .srow")
+    expect(rows).to_have_count(4)
+    assert [rows.nth(i).get_attribute("data-testid") for i in range(4)] == ["row-F4", "row-F1", "row-F3", "row-F8"]
+    row = page.get_by_test_id("row-F4")
+    for text in ("Fix", "Sharp corner ×4", "F4–F7", "Inside corners have no radius. Needs 0.031 in (1/32) or more, or EDM.",
+                 "Corner radius check · limit is an estimate"):
+        expect(row).to_contain_text(text)
+    expect(page.get_by_test_id("row-F1")).to_contain_text("Review")
+    expect(page.get_by_test_id("row-F1")).to_contain_text("F1 F2")
+    expect(page.get_by_test_id("row-F3")).not_to_contain_text("×")  # one finding: no "×1"
+    expect(page.get_by_test_id("legend")).to_have_count(0)  # the 7-entry legend is gone (D-014 amended)
+
+    f4 = next(f for f in sample["findings"] if f["id"] == "F4")
+    faces = sorted({i for f in sample["findings"] if f["rule"] == "corner_radius" for i in f["faces"]})
+    row.click()
+    expect(row).to_have_attribute("aria-pressed", "true")
+    detail = page.get_by_test_id("row-detail")
+    expect(detail).to_contain_text("F4 · corner-1 · 1 of 4")
+    expect(detail).to_contain_text("radius 0.000 in, pocket 0.250 in deep")
+    expect(detail).to_contain_text(f"Fix{f4['suggestion']}")
+    assert sorted(page.evaluate("window.__dfma.highlightedFaces()")) == faces  # all its findings' faces
+    expect(page.locator(".viewer .flag.chosen")).to_have_attribute("data-id", "F4")
+    page.get_by_test_id("row-next").click()
+    expect(detail).to_contain_text("F5 · corner-2 · 2 of 4")
+    expect(page.locator(".viewer .flag.chosen")).to_have_attribute("data-id", "F5")
+    expect(row).to_have_attribute("aria-pressed", "true")
+    assert page.evaluate("document.activeElement.dataset.testid") == "row-next"  # focus survives the redraw (APP-02)
+    page.get_by_test_id("row-prev").click()
+    expect(detail).to_contain_text("F4 · corner-1 · 1 of 4")
+    expect(page.get_by_test_id("row-prev")).to_be_disabled()
+    # A setup's selection replaces the open row (review finding): back on Features no row is open
+    open_step(page, "machining")
+    page.get_by_test_id("setup-chip-1").click()
+    open_step(page, "features")
+    expect(page.get_by_test_id("row-detail")).to_have_count(0)
+    expect(row).to_have_attribute("aria-pressed", "false")
+    row.click()
+    page.get_by_test_id("row-F1").click()  # a Review row labels its advice "Suggestion" (D-049)
+    expect(page.get_by_test_id("row-detail")).to_contain_text("Suggestion")
+
+    # A material change keeps the open row and the shown finding
+    page.get_by_test_id("row-next").click()
+    open_step(page, "part")
+    page.get_by_test_id("upload-material").select_option("plastic")
+    expect(page.locator("#status")).to_have_text("Showing report_sample.step.", timeout=30_000)
+    open_step(page, "features")
+    expect(page.get_by_test_id("row-detail")).to_contain_text("F2 · hole-2 · 2 of 2")
+    page.get_by_test_id("row-F1").click()  # tapping the open row again closes it
+    expect(page.get_by_test_id("row-detail")).to_have_count(0)
+    assert page.evaluate("window.__dfma.highlightedFaces()") == []
+
+    page.get_by_test_id("row-F1").click()
+    page.get_by_test_id("chip-passed").click()  # the open row is hidden: nothing stays selected unseen
+    assert page.evaluate("window.__dfma.highlightedFaces()") == []
+    walls = page.get_by_test_id("row-pass-wall-thin_wall")
+    expect(walls).to_contain_text("OK")
+    expect(walls).to_contain_text("Walls ×9")
+    expect(walls).to_contain_text("Thin wall check")
+    walls.click()
+    plastic = analyze(SAMPLE, "report_sample.step", "mill", "plastic")  # the material changed above
+    wall = next(p for p in plastic["passed"] if p["rule"] == "thin_wall")
+    expect(page.get_by_test_id("row-detail")).to_contain_text(wall["math"])  # D-023: the math stays
+    expect(page.get_by_test_id("row-detail").locator("[data-testid^=passed-]")).to_have_count(9)
+    page.get_by_test_id(f"passed-{wall['feature']}").click()  # one feature alone
+    feature = next(f for f in sample["features"] if f["id"] == wall["feature"])
+    assert sorted(page.evaluate("window.__dfma.highlightedFaces()")) == sorted(feature["faces"])
+    page.get_by_test_id("chip-all").click()
+    expect(page.locator("#rows .srow")).to_have_count(len(plastic["rows"]) + len(plastic["passed_rows"]))
+
+
+def test_rows_in_view(page: Page, base_url: str):
+    """Goal: on report_sample all 4 rows are in view at 1280 × 900."""
+    page.set_viewport_size({"width": 1280, "height": 900})
+    _features(page, base_url)
+    rows = page.locator("#rows .srow")
+    expect(rows).to_have_count(4)
+    for i in range(4):
+        box = rows.nth(i).bounding_box()
+        assert box["y"] >= 0 and box["y"] + box["height"] <= 900, (i, box)
+
+
+def test_show_ok(page: Page, base_url: str, sample: dict):
+    """J3: the Show OK switches sit at the foot of the model on Features only; OK tints only while Features shows."""
+    load(page, base_url, PARTS / "clean_holes.step")
+    switches = page.get_by_test_id("show-ok")
+    expect(switches).to_be_hidden()
+    assert page.evaluate("window.__dfma.checkedFaces()") == []
+    open_step(page, "features")
+    expect(switches).to_be_visible()
+    for label in ("Holes", "Pockets", "Corners", "Walls"):
+        expect(switches).to_contain_text(label)
+    expect(page.get_by_test_id("show-checked")).to_be_checked()  # defaults as before: walls off (D-016)
+    expect(page.get_by_test_id("show-checked-walls")).not_to_be_checked()
+    holes = analyze(PARTS / "clean_holes.step", "clean_holes.step")
+    hole_faces = sorted(i for h in holes["features"] if h["kind"] == "hole" for i in h["faces"])
+    assert page.evaluate("window.__dfma.checkedFaces()") == hole_faces
+    open_step(page, "machining")
+    expect(switches).to_be_hidden()
+    assert page.evaluate("window.__dfma.checkedFaces()") == []
+
+
+def test_change_file_then_back(page: Page, base_url: str):
+    """S1 review: Change file, then the browser's Back, leaves the start form showing and no part on screen."""
+    load(page, base_url, SAMPLE)
+    open_step(page, "features")
+    open_step(page, "part")
+    page.get_by_test_id("change-file").click()
+    expect(page.get_by_test_id("start-form")).to_be_visible()
+    page.go_back()
+    page.wait_for_timeout(300)
+    expect(page.get_by_test_id("start-form")).to_be_visible()
+    expect(page.get_by_test_id("overview")).to_be_hidden()
+    expect(page.get_by_test_id("page-part")).to_be_visible()
+    expect(page.get_by_test_id("step-features")).to_be_disabled()
+    assert page.evaluate("window.__dfma.highlightedFaces()") == []
+    page.get_by_test_id("upload-file").set_input_files(SAMPLE)  # and a part still reads after it
+    expect(page.get_by_test_id("overview")).to_be_visible(timeout=30_000)
+
+
+# --- S3: Machining (J4, frame r3-mach) ---
+
+def test_machining(page: Page, base_url: str, sample: dict):
+    """J4: facts, "Why 2", each setup's operations and "Issues here", setup chips over the model."""
+    load(page, base_url, SAMPLE)
+    chips = page.get_by_test_id("setup-chips")
+    expect(chips).to_be_hidden()
+    open_step(page, "machining")
+    plan = page.get_by_test_id("page-machining")
+    expect(plan).to_contain_text("3-axis mill")
+    expect(plan).to_contain_text("(the first in each setup counts)")
+    expect(page.get_by_test_id("plan-why")).to_contain_text("Why 2")
+    s1, s2 = page.get_by_test_id("plan-setup-1"), page.get_by_test_id("plan-setup-2")
+    expect(s1).to_contain_text("Setup 1 · from +X")
+    issues1, issues2 = page.get_by_test_id("issues-setup-1"), page.get_by_test_id("issues-setup-2")
+    expect(issues1).to_contain_text("Review Deep hole ×2 F1 F2")
+    expect(issues1).to_contain_text("Review Drill size F3")
+    expect(issues2).to_contain_text("Fix Sharp corner ×4 F4–F7")  # corners sit with their pocket (D-049)
+    expect(issues2).to_contain_text("Review Deep pocket F8")
+    expect(page.get_by_test_id("issues-whole-part")).to_have_count(0)
+    expect(page.get_by_test_id("issues-no-setup")).to_have_count(0)
+    expect(plan).not_to_contain_text("em-0.250")  # no tool codes on screen (D-042)
+
+    expect(chips).to_be_visible()
+    chip = page.get_by_test_id("setup-chip-2")
+    expect(chip).to_have_text("Setup 2 · from −X")
+    chip.click()
+    expect(chip).to_have_attribute("aria-pressed", "true")
+    expect(s2).to_have_attribute("aria-pressed", "true")
+    faces = sorted({i for o in sample["operations"] if o["setup"] == 1 for i in o["faces"]})
+    assert sorted(page.evaluate("window.__dfma.highlightedFaces()")) == faces
+    open_step(page, "cost")
+    expect(chips).to_be_hidden()
+
+
+def test_machining_whole_part_and_no_setup(page: Page, base_url: str):
+    """J4: a thin wall sits under "Whole part" (D-049); an angled hole's row under "In no setup"."""
+    page.goto(base_url)
+    page.get_by_test_id("upload-material").select_option("plastic")
+    page.get_by_test_id("upload-file").set_input_files(PARTS / "thin_rib.step")
+    expect(page.get_by_test_id("overview")).to_be_visible(timeout=30_000)
+    open_step(page, "machining")
+    whole = page.get_by_test_id("issues-whole-part")
+    expect(whole).to_contain_text("Thin wall")
+    assert whole.evaluate("e => !!(e.compareDocumentPosition(document.querySelector('[data-testid=plan-setup-1]'))"
+                          " & Node.DOCUMENT_POSITION_FOLLOWING)")  # "Whole part" comes before the setups
+    open_step(page, "part")
+    page.get_by_test_id("change-file").click()
+    page.get_by_test_id("upload-file").set_input_files(PARTS / "angled_hole.step")
+    expect(page.get_by_test_id("overview")).to_be_visible(timeout=30_000)
+    open_step(page, "machining")
+    none = page.get_by_test_id("issues-no-setup")
+    expect(none).to_contain_text("In no setup")
+    expect(none).to_contain_text("Angled feature")
