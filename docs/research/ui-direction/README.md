@@ -26,6 +26,12 @@ Status: **proposals only**. Nothing here changes a decision until Morgan approve
 - Words: "Fix / Review"; "Short title + plain sentence"; ids "Only in the detail". Look: keep Drawing office. Use: check one part fast, and go through every finding.
 - Anything else: "a quick way to walk through the dfma steps of like a design review and observe the issues that come up for each step".
 
+## Round 2 answers (Morgan, 2026-11-09, `ui2` collection, 12 answers)
+
+- Start screen: Like. V1 steps on top: Like. V2 checklist rail: No. V3 overview: Like.
+- Steps: "Part · Features · Machining · Cost · Report", across the top; overview "Yes, open on it after reading"; the finding row as shown: "Yes".
+- Rows vs table, OK switches, shape-only counts, verdict line: "Whatever you recommend" (4 notes). Claude's calls, each overrulable on round 3: rows; a Show OK switch per kind on the Features step only; shape + number in step tabs, words elsewhere; verdict line goes (counts to the overview, rule list to Report).
+
 ## What's wrong today (measured 2026-11-09, demo build, report_sample.step, 1280 × 900)
 
 - The side column holds 4 panels (Findings, Threads, Machine plan, Cost drivers), each scrolling in its own box; 1 of 8 findings is in view.
