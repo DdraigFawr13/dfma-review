@@ -1,0 +1,34 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>ocjs trial</title>
+<script>
+  // Keep the wasm memory so the run can report its size (the module does not expose it).
+  window.__mem = [];
+  const M = WebAssembly.Memory;
+  WebAssembly.Memory = function (d) { const m = new M(d); window.__mem.push(m); return m; };
+  WebAssembly.Memory.prototype = M.prototype;
+  for (const k of ['instantiate', 'instantiateStreaming']) {
+    const f = WebAssembly[k];
+    WebAssembly[k] = async (...a) => { const r = await f(...a); for (const v of Object.values(r.instance?.exports ?? {})) if (v instanceof WebAssembly.Memory) window.__mem.push(v); return r; };
+  }
+</script>
+<script type="importmap">{"imports": {"@taucad/opencascade.js": "/node_modules/@taucad/opencascade.js/dist/opencascade_full.js"}}</script>
+<script type="module">
+  import init from '@taucad/opencascade.js';
+  import { fingerprint } from '/core.mjs';
+  window.run = async (names) => {
+    const t0 = performance.now();
+    const oc = await init({ locateFile: () => '/node_modules/@taucad/opencascade.js/dist/opencascade_full.wasm' });
+    const init_s = (performance.now() - t0) / 1000;
+    const out = {}, mem = {};
+    for (const n of names) {
+      const bytes = new Uint8Array(await (await fetch('/.cache/nist/' + n)).arrayBuffer());
+      oc.FS.writeFile('/in.stp', bytes);
+      try { out[n] = fingerprint(oc, '/in.stp'); } catch (e) { out[n] = { error: String(e) }; }
+      oc.FS.unlink('/in.stp');
+      mem[n] = window.__mem.length ? window.__mem[0].buffer.byteLength : null;
+    }
+    return { init_s, out, mem };
+  };
+  window.ready = true;
+</script>

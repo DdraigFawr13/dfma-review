@@ -1,0 +1,10 @@
+{
+  "name": "ocjs-spike",
+  "private": true,
+  "type": "module",
+  "description": "Trial: can @taucad/opencascade.js replace pythonocc-core for a GitLab Pages build? Not part of the app.",
+  "dependencies": {
+    "@taucad/opencascade.js": "3.0.0-beta.3",
+    "cfb": "1.2.2"
+  }
+}
