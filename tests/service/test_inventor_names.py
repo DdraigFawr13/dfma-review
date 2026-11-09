@@ -1,6 +1,6 @@
-"""I1 S3: the feature-name answer key (tests/inventor/names_key.json, InventorLoader output, D-031) agrees with what
-our reader sees. Names are not decoded yet (S3 time box failed; names move to I2, D-033, D-037); these tests pin the
-key and the measured feature-id field I2 starts from (docs/research/inventor-names-probe/README.md)."""
+"""Feature names. I1 S3: the answer key (tests/inventor/names_key.json, InventorLoader output, D-031) and the
+measured feature-id field of thread records (docs/research/inventor-names-probe/README.md). I2 S2 J4: Hole names
+by the rank rule (spec "Names (measured; the rank rule)", D-039), checked against holes_key.json with 0 misses."""
 
 from __future__ import annotations
 
@@ -116,3 +116,39 @@ def test_names_in_response():
         "Hole8", "Hole10", "Hole11", "Hole12", "Hole13", "Hole19", "Hole20", "Hole21", "Hole22"]
     assert {t["feature_name"] for t in inv["threads"]} == {"Hole8"}
     assert inv["hole_names_seen"] == 9
+
+
+class _FakeIpt:
+    """Streams by name, already inflated (for names.hole_names)."""
+
+    def __init__(self, streams: dict[str, bytes]):
+        self.streams, self.names = streams, list(streams)
+
+    def inflate(self, name, stream_cap=None):
+        return self.streams[name]
+
+
+def _u16(*texts: str) -> bytes:
+    return b"".join(b"\x05\x00\x00\x00" + t.encode("utf-16le") for t in texts)
+
+
+def test_names_stream_choice():
+    """The smallest B stream with an M partner that holds a Hole<n> text; ties to sort order; texts distinct."""
+    from dfma.inventor import names as nm
+    f = _FakeIpt({"RSeStorage/Bbig": _u16("Hole1", "Hole2", "Hole3") + b"x" * 100, "RSeStorage/Mbig": b"",
+                  "RSeStorage/Bsmall": _u16("Hole10", "Hole2", "Hole10"), "RSeStorage/Msmall": b"",
+                  "RSeStorage/Bnone": _u16("Fillet1"), "RSeStorage/Mnone": b"",
+                  "RSeStorage/Blone": _u16("Hole7")})  # no M partner: never read
+    assert nm.hole_names(f) == ["Hole2", "Hole10"]  # by number, not by text
+    g = _FakeIpt({"RSeStorage/Bb": _u16("Hole5"), "RSeStorage/Mb": b"", "RSeStorage/Ba": _u16("Hole4"), "RSeStorage/Ma": b""})
+    assert nm.hole_names(g) == ["Hole4"]  # equal sizes: the first name in sort order
+
+
+def test_thread_of_no_hole_feature():
+    """A thread whose feature id is no Hole feature's gets no name (never a neighbour's)."""
+    import dataclasses
+    from dfma.inventor import names as nm
+    part = _ipt("INV_nist_ctc_04_asme1_2021.ipt")
+    threads = [dataclasses.replace(part.threads[0], feature_id=k, feature_name="stale") for k in (2437, 1, None)]
+    nm.name_threads(threads, part.hole_features)
+    assert [t.feature_name for t in threads] == ["Hole8", None, None]

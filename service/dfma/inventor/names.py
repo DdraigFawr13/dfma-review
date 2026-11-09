@@ -44,3 +44,10 @@ def assign(features: list, names: list[str]) -> None:
         return
     for feat, n in zip(sorted(features, key=lambda x: x.feature_id), names):
         feat.name = n
+
+
+def name_threads(threads: list, features: list) -> None:
+    """A thread's name is its Hole feature's (spec "Names"); a thread whose id is no Hole feature's gets None."""
+    by_id = {x.feature_id: x.name for x in features}
+    for t in threads:
+        t.feature_name = by_id.get(t.feature_id) if t.feature_id is not None else None

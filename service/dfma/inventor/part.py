@@ -123,9 +123,7 @@ def read_ipt(path: str | Path, stream_cap: int | None = None) -> IptPart:
     features = hl.read_hole_features(recs, tg.feature_tags(recs))
     nm.assign(features, names)
     threads = th.read_threads(recs)
-    by_id = {x.feature_id: x.name for x in features}
-    for t in threads:  # a thread's name is its Hole feature's (spec "Names")
-        t.feature_name = by_id.get(t.feature_id)
+    nm.name_threads(threads, features)
     return IptPart(saved_with=_text(props.get(67)) or "unknown", acis_version=version, subtype=sub,
                    model_state_names=states, solid_bodies=_bodies(recs), corners_mm=corners, face_count=n_faces,
                    threads=threads, hole_features=features, hole_names=names, hole_names_seen=len(names))

@@ -719,6 +719,17 @@ def test_hole_mismatch(monkeypatch, tmp_path, case):
     assert f["id"] == f"F{len(result['findings'])}"  # last in RULES: the other findings keep their numbers
 
 
+def test_hole_mismatch_named(monkeypatch, tmp_path):
+    """I2 S2: a named Hole feature's finding starts with its name instead of its id."""
+    from inventor.built import BOX_TOP, DOWN, hole_feature
+    feat = hole_feature(BOX_TOP, DOWN, 6.6, 12.7, through=True)
+    feat.name = "Hole3"
+    result = _with_holes(monkeypatch, tmp_path, "box_through_hole", [feat])
+    [f] = [f for f in result["findings"] if f["rule"] == "hole_mismatch"]
+    assert f["title"].startswith("Hole3 hole on hole-1: Ø0.260 in [6.60 mm] in the .ipt") and f["hole_feature"] == "hf-1"
+    assert result["inventor"]["hole_features"][0]["name"] == "Hole3"
+
+
 def test_hole_mismatch_after_thread(monkeypatch, tmp_path):
     """A STEP hole with a thread_mismatch finding gets no hole_mismatch one; the hole keeps its gaps."""
     from inventor.built import DOWN, hole_feature, thread
