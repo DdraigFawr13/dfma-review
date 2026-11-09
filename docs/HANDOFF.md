@@ -18,7 +18,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ○ Assemblies and DFA · history and compare · time and $.
 - ▶ Inventor parts (Morgan, 2026-11-08): ✔ research · ✔ own reader (D-031) · ✔ plan (D-032) · ✔ spec I1 (D-033) · ✔ I1 S1 #21, S2 #22, S3 #23 · ✔ spec I2+I3 (D-039) · ✔ I2 S1 hole features #24 (D-041) · ✔ S2 names and copies and S3 fillets and chamfers, merged in #27 (D-043, D-046) · ▶ work-pair check owed (from 2026-11-12).
 - ○ Inventor shape from the `.ipt` alone (D-035; after I1).
-- ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ✔ spec approved (D-045, #28) · ✔ S1 merged in #29 (D-047) · ✔ S2 + S3 merged in #30 (D-048 to D-051) ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
+- ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ✔ spec approved (D-045, #28) · ✔ S1 merged in #29 (D-047) · ✔ S2 + S3 merged in #30 (D-048 to D-052) ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
@@ -45,6 +45,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-09 D-052: a deep pocket's advice counts its passes at a safe depth (1× the tool, 0.5× in stainless; estimate).
 - 2026-11-09 D-051: review-steps S2+S3 approved and merged (#30); spec shipped.
 - 2026-11-09 D-050: an angled hole or pocket is a Review; a hole is a Fix when it enters its face off square.
 - 2026-11-09 D-049: Features groups mock-up approved; a corner sits in its pocket's setup, a thin wall under "Whole part".
@@ -56,5 +57,4 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - 2026-11-09 D-041: merge I2 S1 now (#24); S2 and S3 on a new branch, merged after the work-pair check.
 - 2026-11-09 D-040: Hole features panel and PDF section approved (mock-up).
 - 2026-11-09 D-039: I2+I3 spec approved; default names only; no fillet or chamfer names; blend disagreements are findings; one PR merged after the work-pair check; copies as "pattern or mirror".
-- 2026-11-09 D-038: S3 merges now (#23); I2+I3 on a new branch with its own PR.
 - D-001 to D-037: see `docs/DECISIONS.md` (`grep '^## D-'`).

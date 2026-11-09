@@ -137,13 +137,22 @@ def id_range(ids: list[str]) -> str:
     return f"{ids[0]}–{ids[-1]}" if run else " ".join(ids)
 
 
+def _passes(group: list[dict]) -> str:
+    """" Cut in 8 passes of 0.031 in (1/32)." for deep pockets that all take the same passes (D-052), else ""."""
+    found = {(f.get("passes"), round(f.get("pass_in") or 0, 4)) for f in group}
+    if len(found) != 1 or group[0].get("passes") is None:
+        return ""
+    n, step = found.pop()
+    return f" Cut in {n} {'pass' if n == 1 else 'passes'} of {fmt_in(step, True)}."
+
+
 def _one(f: dict) -> str:
     templates = _lookup(SENTENCES, f["rule"], f["severity"])
     if templates is None:
         return f"{f['title']}."
     unit = f.get("unit")
     return templates[0].format(measured=value_text(f["measured"], unit, f["limit"]),
-                               limit=value_text(f["limit"], unit))
+                               limit=value_text(f["limit"], unit)) + _passes([f])
 
 
 def _sentence(group: list[dict]) -> str:
@@ -163,7 +172,7 @@ def _sentence(group: list[dict]) -> str:
     unit = first.get("unit")
     ordered = sorted({f["measured"] for f in group}, reverse=True)
     values = list(dict.fromkeys(value_text(v, unit, first["limit"]) for v in ordered))
-    return templates[1].format(values=join_values(values), limit=value_text(first["limit"], unit))
+    return templates[1].format(values=join_values(values), limit=value_text(first["limit"], unit)) + _passes(group)
 
 
 def finding_rows(findings: list[dict]) -> list[dict]:

@@ -129,8 +129,8 @@ def test_rows_report_sample():
          "Hole depth check", "limit is an estimate"),
         ("Drill size", 1, "F3", "0.260 in isn't a standard drill. Nearest is 0.266 in (17/64).",
          "Hole size check", "drill list, within 0.0005 in"),
-        ("Deep pocket", 1, "F8", "Depth is 8.0× the end mill that fits. Over 3.0× needs a long tool.",
-         "Pocket depth check", "limit is an estimate"),
+        ("Deep pocket", 1, "F8", "Depth is 8.0× the end mill that fits. Over 3.0× needs a long tool. "
+         "Cut in 8 passes of 0.031 in (1/32).", "Pocket depth check", "limit is an estimate"),
     ]
     assert r["rows"][0]["id"] == "row:F4" and r["rows"][0]["features"] == ["corner-1", "corner-2", "corner-3", "corner-4"]
     covers_every_finding_once(r)
@@ -254,3 +254,17 @@ def test_corner_pocket():
         corners = [f for f in feats if f["kind"] == "corner"]
         assert corners and all(f["pocket"] in ids for f in corners), name
     assert pockets == {"pocket-1"}
+
+
+def test_pocket_passes():
+    """Morgan, 2026-11-09 (D-052): a deep pocket says how many passes at a safe depth it takes; the tool still reaches
+    the full depth. report_sample's pocket: 0.250 in deep, 1/32 in end mill, 1× the tool per pass in aluminium."""
+    r = _run("report_sample")
+    [f] = [f for f in r["findings"] if f["rule"] == "pocket_depth"]
+    assert (f["passes"], round(f["pass_in"], 4)) == (8, 0.0312)
+    assert f["suggestion"].startswith("Cut it in 8 passes of 0.031 in (1/32) each (at most 1× the tool per pass, "
+                                      "an estimate); the tool still reaches 0.250 in deep, so it is a long-reach "
+                                      "1/32 in end mill.")
+    stainless = analyze(PARTS / "report_sample.step", "report_sample.step", "mill", "ss304")
+    [g] = [f for f in stainless["findings"] if f["rule"] == "pocket_depth"]
+    assert g["passes"] == 16  # 0.5× the tool per pass in stainless

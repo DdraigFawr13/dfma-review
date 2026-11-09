@@ -26,8 +26,12 @@ min_radius_in = 0.03125
 max_depth_ratio = 4.0
 source = "estimate"
 
+# pass_xd (D-052): the deepest cut per Z pass, × the end mill's diameter, for the passes a deep pocket's advice counts.
+# An estimate from common practice for slotting with solid end mills: up to 1× in aluminium and carbon steel,
+# 0.5× in stainless (Haas speeds-and-feeds sheets; MMC Carbide "Depth of cut"); plastic: as aluminium (assumption).
 [al6061.pocket_depth]    # pocket depth / the end mill that fits: over medium is medium
 medium = 3.0
+pass_xd = 1.0
 source = "estimate"
 
 [al6061.undercut]    # a pocket's undercut reaching more than max_in under its lip is medium (D-021)
@@ -41,6 +45,7 @@ source = "estimate"
 
 [steel1018.pocket_depth]    # pocket depth / the end mill that fits: over medium is medium
 medium = 3.0
+pass_xd = 1.0
 source = "estimate"
 
 [steel1018.undercut]    # a pocket's undercut reaching more than max_in under its lip is medium (D-021)
@@ -54,6 +59,7 @@ source = "estimate"
 
 [ss304.pocket_depth]    # pocket depth / the end mill that fits: over medium is medium
 medium = 3.0
+pass_xd = 0.5
 source = "estimate"
 
 [ss304.undercut]    # a pocket's undercut reaching more than max_in under its lip is medium (D-021)
@@ -67,6 +73,7 @@ source = "estimate"
 
 [plastic.pocket_depth]    # pocket depth / the end mill that fits: over medium is medium
 medium = 3.0
+pass_xd = 1.0
 source = "estimate"
 
 [plastic.undercut]    # a pocket's undercut reaching more than max_in under its lip is medium (D-021)
