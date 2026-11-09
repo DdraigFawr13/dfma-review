@@ -371,3 +371,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-09; Morgan: "in the new session let's just combine s2 and s3 they aren't that big of builds so let's combine those and start them in a new session on merge").
 - **Decision:** review-steps S2 (Features rows) and S3 (Machining and the style guide) are built in one session on one branch, `review-steps-s2-s3`, cut from main after #29, and merge in one PR. S2's groups mock-up (`mockups/review-steps-features.html`) is still approved by Morgan before code; S3 builds to frame `r3-mach` (D-044). Both slices' checks must fail before the build and pass before the PR.
 - **Why:** Morgan judged both slices small enough for one session; S3 waited only on S2.
+
+## D-049 Features groups mock-up approved; corners go with their pocket's setup
+
+- **Status:** Accepted (2026-11-09; Morgan, on the mock-up: "I do approve of the design and you can move forward"; on Machining placement: "With their pocket").
+- **Decision:** S2 builds the [Features groups mock-up](https://claude.ai/artifact/Cff2Y88mwZ3FaXqUMBLxwq) (`mockups/review-steps-features.html`): under the Issues rows, "From <.ipt>", then one folding row per group (Threads, Hole features, Fillets and chamfers) with its count and tally in the approved words; an opened group shows today's rows (D-036, D-040, D-043) and its intro without the counts the group row shows; the groups show under every chip; a row's advice is labelled "Fix" on a Fix row and "Suggestion" on a Review row. S3: an inside corner sits in the setup that cuts its pocket (as frame `r3-mach` shows); a thin wall sits under "Whole part". This amends the spec's "Machining placement" default, which read setup membership from `setups[].features` only (holes and pockets, `plan.py:108`).
+- **Why:** the zero-decision re-check found the spec's rule put every corner in "In no setup", against the approved frame; Morgan chose the frame.

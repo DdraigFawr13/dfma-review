@@ -31,15 +31,13 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-0. Now: review-steps S2 + S3 together (D-048) on branch `review-steps-s2-s3` from main, one PR: [docs/specs/review-steps.md](specs/review-steps.md) S2 and S3. Steps: zero-decision re-check of both against merged S1; the groups mock-up (`mockups/review-steps-features.html`, `ui-mockups`) for Morgan's approval before code (S3 builds to `r3-mach`, no mock-up); checks fail first; build; `check.py`; fresh review; demo and status page; draft PR. Open from S1's review: add a browser test for Change file followed by browser Back.
+0. Now: review-steps S2 + S3 together (D-048) on branch `review-steps-s2-s3` from main, one PR: [docs/specs/review-steps.md](specs/review-steps.md) S2 and S3. Steps: ✔ zero-decision re-check; ✔ groups mock-up approved (D-049, [page](https://claude.ai/artifact/Cff2Y88mwZ3FaXqUMBLxwq)); checks fail first; build; `check.py`; fresh review; demo and status page; draft PR. Open from S1's review: add a browser test for Change file followed by browser Back.
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `python tests/inventor/local_pairs.py` (now prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
 2. Recognition and stress-test status, scoring commands and the MFCAD++ download: archive "Moved 2026-11-09" (old Next 3 and 3a). Re-run them on every recognition change.
 3. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
 
 ## Open questions
 
-- S3 gap from the zero-decision re-check (2026-11-09): the planner puts only holes and pockets in a setup (`plan.py:108`), so by the spec's rule corners and walls fall in "In no setup", but frame `r3-mach` shows Sharp corner ×4 under Setup 2. Recommended: a corner sits with its pocket's setup (corner gains a `pocket` field); a thin wall goes under "Whole part". Asked Morgan with the mock-up.
-- S2 groups mock-up published for approval: [Features groups](https://claude.ai/artifact/Cff2Y88mwZ3FaXqUMBLxwq) (`mockups/review-steps-features.html`). No code before Morgan approves.
 - Shape from the `.ipt` alone: its own phase after I1 (D-035); test-run numbers in the archive.
 - `test_nist.py` ctc_02 took 5.8-7.07 s here and once 10.4 s in a busier container, against a 10 s limit; limit unchanged (VER-04); detail in the archive.
 - Backlog and after-project ideas (hole types, ring-face threads, G-code view, waivers, shop profiles): archive "Moved 2026-11-09".
@@ -47,6 +45,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-09 D-049: Features groups mock-up approved; a corner sits in its pocket's setup, a thin wall under "Whole part".
 - 2026-11-09 D-048: review-steps S2 and S3 built and merged together, one branch and one PR.
 - 2026-11-09 D-047: review-steps S1 approved and merged (#29); builder calls recorded.
 - 2026-11-09 D-046: merge #27 now; the work-pair check follows the merge (amends D-041).
