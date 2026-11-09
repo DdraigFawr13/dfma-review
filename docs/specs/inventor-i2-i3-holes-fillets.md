@@ -220,7 +220,7 @@ Holes gain `"hole_feature": "hf-1"` when matched or disagreeing. On screen lengt
 
 ### S3 Fillets and chamfers (I3)
 
-- **First:** the `ui-mockups` mock-up of the Fillets and chamfers panel, approved by Morgan.
+- **First:** the `ui-mockups` mock-up of the Fillets and chamfers panel, approved by Morgan: done, [mock-up](https://claude.ai/artifact/9AedyRhGSNr5Md5Pzj9VxZ) (`mockups/blends-panel.html`), D-043. No demo for S3 (D-044).
 - **Morgan tries:** the demo's CTC 04 lists 7 fillets (25, 13, 5, 5, 5, 4, 2.5 mm) and 1 chamfer 5 x 5 mm; tapping one highlights its faces; the PDF lists them.
 - **Checks that fail now:** J5 (counts and sizes pinned in `tests/inventor/blend_counts.toml`: `[file.<ipt name>] fillets = [radii], chamfers = [[d1, d2]]`, and `[pair.<ipt name>] faces, faces_mapped` per harness pair), J6 (blend part), J7 (blend part).
 - **Files:** `inventor/blends.py`, `part.py`, `analyze.py`; if Open question 3 is yes, `rules/blend_mismatch.py`, `rules/__init__.py`, `analyze.NEEDS_IPT`, `settings.py`, `test_rules.py::test_blend_mismatch` (the built block's r 3.5 case); `web/src/{findings,report,api}.ts`, `web/index.html`; `tests/inventor/blend_counts.toml`; `tests/service/test_inventor_blends.py`, `test_inventor_safety.py`; `tests/e2e/test_blends.py`, `test_pdf.py`; demo.

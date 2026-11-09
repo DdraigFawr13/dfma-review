@@ -5,7 +5,7 @@
 // Imported up front, not on demand: the view-only demo page inlines one script and has no chunks to load (D-009).
 import { jsPDF } from "jspdf";
 import type { Analysis, Finding } from "./api";
-import { RULE_NAMES, axisText, holeCopies, holeCounts, holeFeatureSize, holeNamesSeen, holeFeatureTitle, checkedLine, driverLine, inMm, meta, notPlanned, planFoot, planWhy, setupHead, stockText, threadCallout, threadCounts, threadSize, toolName } from "./findings";
+import { RULE_NAMES, axisText, blendCounts, blendFaces, blendKinds, blendTitle, holeCopies, holeCounts, holeFeatureSize, holeNamesSeen, holeFeatureTitle, checkedLine, driverLine, inMm, meta, notPlanned, planFoot, planWhy, setupHead, stockText, threadCallout, threadCounts, threadSize, toolName } from "./findings";
 import { formatIn, formatRatio, formatSize } from "./format";
 
 /** What the report needs besides the analysis: the labels the reader chose, today's date, and a picture per finding. */
@@ -145,6 +145,7 @@ function summaryPage(p: Page, input: ReportInput): void {
   }
   if (result.inventor) threadsSection(p, input);
   if (result.inventor) holeFeaturesSection(p, input);
+  if (result.inventor) blendsSection(p, input);
 }
 
 /** One Hole feature as a PDF line (D-040): "hf-7 Countersink · 30 holes: <sizes>. 26 matched, 4 disagree, 0 not
@@ -158,6 +159,30 @@ export function holeFeatureLine(f: NonNullable<NonNullable<Analysis["inventor"]>
   const copies = holeCopies(f);
   if (copies) line += `; ${copies}`;
   return `${line}.`;
+}
+
+/** One blend as a PDF line (D-043): "bl-8 Fillet · R0.197 in [5 mm]: matched; 32 of 36 faces found in the STEP;
+ *  copied by 1 pattern or mirror feature." */
+export function blendLine(b: NonNullable<NonNullable<Analysis["inventor"]>["blends"]>[number], result: Analysis): string {
+  let state: string = b.state === "not_mapped" ? `not mapped: ${b.reason ?? "unknown"} (our limit, not a finding)` : b.state;
+  if (b.state === "disagrees") {
+    const f = result.findings.find((x) => x.rule === "blend_mismatch" && x.blend === b.id);
+    state = `disagrees: ${b.gaps.map((g) => g.text).join("; ")}${f ? `; finding ${f.id}` : ""}`;
+  }
+  const faces = blendFaces(b).replace(" · ", "; ");
+  return `${b.id} ${blendTitle(b)}: ${state}${faces ? `; ${faces}` : ""}.`;
+}
+
+/** The summary page's Fillets and chamfers section, after Hole features (D-043). */
+function blendsSection(p: Page, input: ReportInput): void {
+  const inv = input.result.inventor!, blends = inv.blends ?? [];
+  p.heading(`Fillets and chamfers (from ${inv.name})`);
+  if (!blends.length) {
+    p.text("No fillets or chamfers in this .ipt.");
+    return;
+  }
+  p.text(`${blendKinds(blends)}: ${blendCounts(blends)}. Sizes as designed in the .ipt.`);
+  for (const b of blends) p.text(blendLine(b, input.result), { indent: 12, gap: 1 });
 }
 
 /** The summary page's Hole features section, after Threads (D-040). */

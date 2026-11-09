@@ -16,14 +16,14 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ✔ Spec the first usable version (D-007, 6 fresh checks, $1.49).
 - ✔ Build slice by slice: S1 to S7, grading spike, recognition rounds, stress-test, undercut and turning sets (#3 to #18).
 - ○ Assemblies and DFA · history and compare · time and $.
-- ▶ Inventor parts (Morgan, 2026-11-08): ✔ research · ✔ own reader (D-031) · ✔ plan (D-032) · ✔ spec I1 (D-033) · ✔ I1 S1 #21, S2 #22, S3 #23 · ✔ spec I2+I3 (D-039) · ✔ I2 S1 hole features #24 (D-041) · ✔ S2 names and copies built (#27) · ▶ S3 fillets and chamfers: service built, mock-up sent (merge after Morgan's work-pair check).
+- ▶ Inventor parts (Morgan, 2026-11-08): ✔ research · ✔ own reader (D-031) · ✔ plan (D-032) · ✔ spec I1 (D-033) · ✔ I1 S1 #21, S2 #22, S3 #23 · ✔ spec I2+I3 (D-039) · ✔ I2 S1 hole features #24 (D-041) · ✔ S2 names and copies built (#27) · ✔ S3 fillets and chamfers built (#27; merges after Morgan's work-pair check).
 - ○ Inventor shape from the `.ipt` alone (D-035; after I1).
-- ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ○ build the step-by-step review screen: `write-spec` after I2+I3 merges ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
+- ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ▶ build the step-by-step review screen next (D-044): `write-spec` first ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
 
-- 2026-11-09 I3 S3 service built on `inventor-i2-s2`: `inventor/blends.py` (read and map fillets and chamfers), `rules/blend_mismatch.py`, `tests/inventor/blend_counts.toml`, `test_inventor_blends.py`, safety and rule tests, built filleted block. NIST: blend counts equal the Fillet/Chamfer names; 499 of 744 fillet faces mapped, none disagrees. Spec corrections measured (copies, not corner patches; FTC 11 is a place gap): spec S3 "Settled at build". Panel drafted in `web/src` for the [mock-up](https://claude.ai/artifact/9AedyRhGSNr5Md5Pzj9VxZ) (`mockups/blends-panel.html`; fresh check 8 findings, 6 fixed; lint 0); `check.py` all passed (810 service, 38 browser). e2e and PDF wait on Morgan's approval.
+- 2026-11-09 I3 S3 (fillets and chamfers) built on `inventor-i2-s2` (PR #27): `inventor/blends.py`, `rules/blend_mismatch.py`, panel and PDF section as the approved [mock-up](https://claude.ai/artifact/9AedyRhGSNr5Md5Pzj9VxZ) (D-043). NIST: blend counts equal the stored Fillet/Chamfer names; 499 of 744 fillet faces found, none disagrees. Spec corrections measured (spec S3 "Settled at build"; LESSONS read ×3). `check.py` all passed (810 service, 21 unit, 42 browser). [Status page](https://claude.ai/artifact/H5YVa33eegML8ziNYsJzo5); no demo (D-044).
 - 2026-11-09 Main (#25 UI direction D-042, #26 harness v4.12.0) merged into `inventor-i2-s2` (PR #27); only HANDOFF and its archive conflicted (main's archive already held every branch line).
 - 2026-11-09 I2 S2 (names and copies) built, draft PR [#27](https://github.com/DdraigFawr13/dfma-review/pull/27). `inventor/names.py` rank rule: NIST 70/70 checkable Holes right, 0 wrong; FTC 06 2024 and STC 10 no names; CTC 04 threads `Hole8`. Copy text, "n in the browser, m read" note, names in small print on rows and PDF. Fresh review fixes committed; `check.py` all passed (771 service, 38 browser) before the main merge. Left: stream size as the probe measured it, the count-coincidence risk (spec Risks). [Status page](https://claude.ai/artifact/DGZmySgSRTSkP9XtrW2hNZ); [demo](https://claude.ai/artifact/WSwfP6u74iVZ3Rpa5jUNp5).
 - 2026-11-09 Harness upgraded to AI-Master-Instructions `v4.12.0`, merged as #26 (Morgan approved: "Approved"; master D-066, from the master's review of this project): new REP-05; session start lists unmerged branches and an over-cap HANDOFF; `ui-mockups` now does D-024's fit-width tap-to-zoom (`add-zoom.mjs`); `docs/harness/drift/` keeps guard counts. This HANDOFF cut to the cap.
@@ -31,7 +31,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-0. Now: Morgan's answer on the S3 [mock-up](https://claude.ai/artifact/9AedyRhGSNr5Md5Pzj9VxZ) (Approve / Change / Rethink). On approve: record D-043, then `tests/e2e/test_blends.py`, PDF section (`report.ts`, `test_pdf.py`), demo rebuild, status page. PR #27 merges only after Morgan's work-pair check, including one renamed Hole (from 2026-11-12, D-041).
+0. Now: the new step-by-step review screen (D-042, D-044): `write-spec` from the round 3 frames (`mockups/ui-direction/`, answers in `docs/research/ui-direction/README.md`), on a new branch from main; mock-ups in the new design from now on; its demo is the first in the new UI. PR #27 (I2 S2 + I3 S3, all built) merges only after Morgan's work-pair check, including one renamed Hole (from 2026-11-12, D-041); it stays draft till then.
 1. Owed from 2026-11-12 (D-035): one of Morgan's work pairs by Drive share into `tests/inventor/.local/<pair>/`, then `python tests/inventor/local_pairs.py` (now prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
 2. Recognition and stress-test status, scoring commands and the MFCAD++ download: archive "Moved 2026-11-09" (old Next 3 and 3a). Re-run them on every recognition change.
 3. Morgan: S1 device check on their PC is still owed (VER-07): build the environment, `python -m dfma start`, upload `tests/parts/box_through_hole.step`, rotate. Steps on the [S1 status page](https://claude.ai/artifact/Psqfsq9d3oL7641H1Hmggu).
@@ -45,6 +45,8 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-09 D-044: mock-ups in the new design from now on; S3 finishes on today's screen with no demo; the D-042 screen is specced and built next, and demos come from it.
+- 2026-11-09 D-043: Fillets and chamfers panel and PDF section approved (mock-up).
 - 2026-11-09 D-042: review screen redesign approved (steps Part · Features · Machining · Cost · Report, overview after reading, Fix / Review, plain-sentence rows, Show OK per kind, cost total); not built. Found on that branch: `test_nist` ctc_02 took 10.5 s and 11.1 s (limit 10 s) in 2 of 3 full runs in a cloud container under load, 9.19 s alone; limit unchanged (VER-04).
 - 2026-11-09 D-041: merge I2 S1 now (#24); S2 and S3 on a new branch, merged after the work-pair check.
 - 2026-11-09 D-040: Hole features panel and PDF section approved (mock-up).
