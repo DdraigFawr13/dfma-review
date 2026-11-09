@@ -298,6 +298,16 @@ function showStep(name: Step, focus = true): void {
 }
 
 for (const [s, tab] of tabs) tab.addEventListener("click", () => showStep(s));
+
+// audit F18: below 900 px the model sits above the list, so Show OK moves under the chips; back at the model's foot when wide
+const narrow = window.matchMedia("(max-width: 900px)");
+function placeShowOk(): void {
+  const showOk = byId("show-ok");
+  if (narrow.matches) byId("row-chips").insertAdjacentElement("afterend", showOk);
+  else document.querySelector(".viewfoot")!.append(showOk);
+}
+narrow.addEventListener("change", placeShowOk);
+placeShowOk();
 back.addEventListener("click", () => showStep(STEPS[STEPS.indexOf(step) - 1]));
 next.addEventListener("click", () => showStep(STEPS[STEPS.indexOf(step) + 1]));
 window.addEventListener("hashchange", () => {

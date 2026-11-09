@@ -228,9 +228,12 @@ function findingDetail(r: Row, at: number, result: Analysis, h: RowHandlers): HT
     return b;
   };
   const where = [f.id, f.feature, `${at + 1} of ${r.findings.length}`].filter(Boolean).join(" · ");
-  if (r.findings.length > 1) showing.append(step("‹", "Previous finding", "row-prev", -1, at === 0));
   showing.append(el("span", undefined, where));
-  if (r.findings.length > 1) showing.append(step("›", "Next finding", "row-next", 1, at === r.findings.length - 1));
+  if (r.findings.length > 1) { // ‹ › together on one line, never split by a wrap (audit F4)
+    const nav = el("span", "nav");
+    nav.append(step("‹", "Previous finding", "row-prev", -1, at === 0), step("›", "Next finding", "row-next", 1, at === r.findings.length - 1));
+    showing.append(nav);
+  }
   dl.append(el("dt", undefined, "Showing"), showing, el("dt", undefined, "Measured"), el("dd", "num", measured(f, result)),
     el("dt", undefined, "What to do"), el("dd", undefined, f.suggestion)); // one label for both severities, as the PDF (D-053)
   return dl;
