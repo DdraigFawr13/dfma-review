@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 // Not global, so callers can use .test() safely; the lint builds its own global copy.
 export const EMOJI_RE = /[\u{1F000}-\u{1FAFF}]/u;
 
-export const KINDS = ['emoji', 'small-text', 'default-font', 'placeholder'];
+export const KINDS = ['emoji', 'small-text', 'default-font', 'placeholder', 'body-color'];
 const DEFAULT_FACES = ['inter', 'space grotesk', 'roboto'];
 const USAGE = 'usage: mockup-lint.mjs <file.html> --min-text <px> [--allow-font <name>]... [--allow-emoji]';
 
@@ -76,6 +76,12 @@ export function lint(html, { minText, allowFonts = [], allowEmoji = false }) {
 
   for (const m of text.matchAll(/lorem\s+ipsum/gi)) add('placeholder', m.index, m[0]);
   for (const m of text.matchAll(/\bTODO\b/g)) add('placeholder', m.index, m[0]);
+
+  // Text colour set on body, so dark tokens reach the text when the page is published (dfma-review LESSONS "pages").
+  const bodyColor = cssRegions(html).some(({ css }) =>
+    [...css.matchAll(/(^|[},;\s])body\s*(?:,[^{]*)?\{([^}]*)\}/gi)].some((m) => /(?<![\w-])color\s*:/i.test(m[2])),
+  );
+  if (!bodyColor) add('body-color', html.length, 'no color on body');
 
   return found.sort((a, b) => KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind) || a.pos - b.pos);
 }
