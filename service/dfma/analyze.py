@@ -11,7 +11,7 @@ from .frame import extents_mm, face_info, part_frame, turning_axis
 from .mesh import mesh_faces
 from .plan import plan
 from .errors import ReadError
-from .features import (coaxial, grooves, hole_walls, holes, number, pocket_on_axis, pockets, profile_feature,
+from .features import (coaxial, grooves, hole_walls, holes, link_corners, number, pocket_on_axis, pockets, profile_feature,
                        split_bores, turned_profile, walls)
 from . import turning
 from .rules import RULES
@@ -62,6 +62,7 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
     pocket_list, corner_list = pockets(part.solid, part.faces, frame, hole_faces)
     wall_list = walls(part.solid, part.faces) + hole_walls(part.solid, part.faces, hole_list)
     pocket_list, corner_list = number(pocket_list, "pocket"), number(corner_list, "corner")
+    link_corners(pocket_list, corner_list)
     turn_features = None
     # The turning axis: for Turning (S6) and, on Milling, for looks_turned (D-028)
     turn = turned_profile(part.faces, [f.area for f in infos], vertices, turning_axis(infos, vertices))
@@ -136,6 +137,8 @@ def analyze(path: str | Path, name: str, process: str = "mill", material: str = 
         "rules_run": [rule.ID for rule in rules],
         "checks_run": rows.checks_run([rule.ID for rule in rules]),  # review-steps S1: the Report step's "Rules run"
         "passed": passed,  # D-023 proposed: the checks each feature passed, with the math
+        "rows": rows.finding_rows(findings),  # review-steps S2: the Features step's rows
+        "passed_rows": rows.passed_rows(features, findings, passed),
         "machine": milled["machine"],
         "turn_axis": list(turn["axis"]) if turn_features is not None else None,
         "stock": stock,

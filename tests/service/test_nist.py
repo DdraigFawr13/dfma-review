@@ -10,6 +10,7 @@ import pytest
 from nist_files import NIST_DIR, SHA256, ap242_files, zip_sha256
 
 from dfma.analyze import analyze
+from test_rows import covers_every_finding_once
 
 SCORECARD = {f["name"]: f for f in tomllib.loads((NIST_DIR / "scorecard.toml").read_text(encoding="utf-8"))["file"]}
 FILES = ap242_files()
@@ -35,3 +36,4 @@ def test_nist_file(path):
     # The map may only get better: fewer faces left unanalysed, at least as many features found.
     assert len(result["part"]["not_analysed_faces"]) <= score["not_analysed"]
     assert len(result["features"]) >= score["features"]
+    covers_every_finding_once(result)  # review-steps S2: rows cover every finding once

@@ -26,8 +26,9 @@ def test_panel(page: Page, base_url: str, tmp_path):
     expect(panel).not_to_have_attribute("open", "")  # all matched (D-043)
     expect(page.locator("#blends-count")).to_have_text("8")
     page.locator("#blends-panel > summary").click()
-    expect(panel).to_contain_text("From INV_nist_ctc_04_asme1_2021.ipt: 7 fillets, 1 chamfer: 8 matched, 0 disagree, "
-                                  "0 not mapped. Sizes as designed in the .ipt.")
+    # The counts sit on the group's row (D-049); the panel keeps what the row can't hold
+    expect(page.locator("#blends-tally")).to_have_text("7 fillets, 1 chamfer: matched 8")
+    expect(panel).to_contain_text("Sizes as designed in the .ipt. Tap one to show its faces.")
     rows = page.get_by_test_id("blend-row")
     expect(rows).to_have_count(8)
     expect(rows.nth(1)).to_contain_text("Chamfer · 0.197 in [5 mm] × 0.197 in [5 mm], 90°")

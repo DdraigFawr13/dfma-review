@@ -1,8 +1,7 @@
-// The findings list in severity groups, the machine plan and the .ipt panels (spec "Web page", D-012), shown in the
-// Features and Machining steps (review-steps S1, D-045).
+// Words for findings, the machine plan and the .ipt groups (spec "Web page", D-012), shown in the Features and
+// Machining steps (review-steps S1-S3, D-045); the rows themselves are in steps.ts.
 
-import type { Analysis, Blend, CostDriver, Feature, Finding, HoleFeature, IptHole, Severity, Thread, Tool } from "./api";
-import { sevMark, sevWord } from "./words";
+import type { Analysis, Blend, CostDriver, Feature, Finding, HoleFeature, IptHole, Thread, Tool } from "./api";
 
 export const RULE_NAMES: Record<string, string> = {
   hole_depth: "hole depth", hole_size: "hole size", corner_radius: "corner radius", pocket_depth: "pocket depth",
@@ -14,17 +13,12 @@ export const RULE_NAMES: Record<string, string> = {
 };
 const KIND_NAMES: [string, string, string][] = [["profile", "turned profile", "turned profiles"], ["hole", "hole", "holes"], ["bore", "bore", "bores"], ["groove", "groove", "grooves"],
   ["pocket", "pocket", "pockets"], ["corner", "corner", "corners"], ["wall", "wall", "walls"]];
-const GROUPS: Severity[] = ["high", "medium"];
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
   if (cls) node.className = cls;
   if (text !== undefined) node.textContent = text;
   return node;
-}
-
-function sevLabel(severity: Severity): HTMLElement {
-  return el("span", `sev ${severity}`, sevWord(severity));
 }
 
 /** "2 holes checked", or "1 pocket and 4 corners checked": the kinds the part has; a part with none of them still
@@ -50,9 +44,14 @@ export function okFeatures(result: Analysis): Feature[] {
   return result.features.filter((f) => !flagged.has(f.id) && result.passed.some((p) => p.feature === f.id));
 }
 
-export function meta(f: Finding, result: Analysis): string {
+/** The detail's Measured line (review-steps S2): `meta` without the feature id and the limit's source. */
+export function measured(f: Finding, result: Analysis): string {
+  return meta(f, result, false);
+}
+
+export function meta(f: Finding, result: Analysis, full = true): string {
   const feature = result.features.find((x) => x.id === f.feature);
-  const parts: string[] = f.feature ? [f.feature] : []; // turn_axis judges the whole part: no feature
+  const parts: string[] = f.feature && full ? [f.feature] : []; // turn_axis judges the whole part: no feature
   if (feature?.kind === "profile") {
     parts.push(`${diameterText(feature.dims_mm.diameter / 25.4)} diameter, ${(feature.dims_mm.length / 25.4).toFixed(3)} in long`);
   } else if (feature?.kind === "pocket") {
@@ -65,7 +64,7 @@ export function meta(f: Finding, result: Analysis): string {
     const d = feature.dims_mm.diameter / 25.4;
     parts.push(f.rule === "hole_size" ? `${d.toFixed(3)} in diameter` : `${diameterText(d)} diameter, ${(feature.dims_mm.depth / 25.4).toFixed(3)} in deep`);
   }
-  parts.push(f.limit_text); // "limit is an estimate": plain words, no decision ids (review-steps S1)
+  if (full) parts.push(f.limit_text); // "limit is an estimate": plain words, no decision ids (review-steps S1)
   const thread = holeThreads(feature, result); // I1 S2 (D-036)
   if (thread) parts.push(thread);
   return parts.join(" · ");
@@ -90,49 +89,8 @@ function diameterText(inches: number): string {
   return `${inches.toFixed(3)} in`;
 }
 
-/** Something a row selects on the model: a finding, a passed feature or a setup. */
-export interface Pick { id: string; faces: number[] }
-
-export function renderFindings(host: HTMLElement, result: Analysis | null, message: string,
-                               onSelect: (f: Pick) => void, selected: string | null): void {
-  host.replaceChildren();
-  if (!result) {
-    host.append(el("p", "none", message));
-    return;
-  }
-  for (const severity of GROUPS) {
-    const items = result.findings.filter((f) => f.severity === severity);
-    const head = el("p", `ghead ${severity}`);
-    head.append(el("span", undefined, `${sevMark(severity)} ${sevWord(severity)}`), el("span", undefined, String(items.length)));
-    host.append(head);
-    if (items.length === 0) host.append(el("p", "none", "None."));
-    for (const f of items) {
-      const row = el("button", `finding ${f.severity}`);
-      row.type = "button";
-      row.dataset.testid = `finding-${f.id}`;
-      row.setAttribute("aria-pressed", String(selected === f.id));
-      const line = el("span", "row1");
-      line.append(sevLabel(f.severity), el("span", "ftitle", f.title), el("span", "fid", f.id));
-      row.append(line, el("span", "fmeta", meta(f, result)), el("span", "fsug", f.suggestion));
-      row.addEventListener("click", () => onSelect(f));
-      host.append(row);
-    }
-  }
-  renderPassed(host, result, onSelect, selected);
-}
-
-let passedOpen = false;
-
-/** A new file starts with the Passed list collapsed again (D-023: collapsed by default). */
-export function collapsePassed(): void {
-  passedOpen = false;
-}
-
-const PASS_KINDS: [string, string][] = [["profile", "Turned profile"], ["hole", "Holes"], ["bore", "Bores"], ["pocket", "Pockets"],
-  ["corner", "Corners"], ["wall", "Walls"]];
-
-/** One line on what a feature is, for the Passed list. */
-function featureLine(f: Feature): string {
+/** One line on what a feature is, for a passed feature (D-023): "0.250 in (1/4) diameter, 0.500 in deep". */
+export function featureLine(f: Feature): string {
   const d = f.dims_mm, inch = (mm: number) => `${(mm / 25.4).toFixed(3)} in`;
   if (f.kind === "hole" || f.kind === "bore") return `${diameterText(d.diameter / 25.4)} diameter, ${inch(d.depth)} deep`;
   if (f.kind === "profile") return `${diameterText(d.diameter / 25.4)} diameter, ${inch(d.length)} long`;
@@ -142,47 +100,8 @@ function featureLine(f: Feature): string {
   return "";
 }
 
-/** D-023 (accepted): the features with no finding, each with the checks it passed and the math.
- *  Collapsed by default; a row selects its faces like a finding and opens its math. */
-function renderPassed(host: HTMLElement, result: Analysis, onSelect: (f: Pick) => void, selected: string | null): void {
-  const flagged = new Set<string | null>(result.findings.map((f) => f.feature));
-  const ok = okFeatures(result);
-  const box = el("details", "passed");
-  box.dataset.testid = "passed";
-  box.open = passedOpen; // collapsed by default; stays as the reader left it while they select rows
-  box.addEventListener("toggle", () => { passedOpen = box.open; });
-  const checks = result.passed.filter((p) => !flagged.has(p.feature)).length;
-  const summary = el("summary", "ghead ok");
-  summary.append(el("span", undefined, "passed"), el("span", undefined, `${ok.length} ${ok.length === 1 ? "feature" : "features"} · ${checks} ${checks === 1 ? "check" : "checks"}`));
-  box.append(summary);
-  for (const [kind, label] of PASS_KINDS) {
-    const items = ok.filter((f) => f.kind === kind);
-    if (!items.length) continue;
-    box.append(el("p", "pkind", `${label} (${items.length})`));
-    for (const f of items) {
-      const id = `pass:${f.id}`;
-      const row = el("button", "pass-row");
-      row.type = "button";
-      row.dataset.testid = `passed-${f.id}`;
-      row.setAttribute("aria-pressed", String(selected === id));
-      const line = el("span", "row1");
-      line.append(el("span", "sev ok", "ok"), el("span", "ftitle", featureLine(f)), el("span", "fid", f.id));
-      row.append(line);
-      const thread = holeThreads(f, result); // I1 S2 (D-036)
-      if (thread) row.append(el("span", "pcheck", thread));
-      for (const p of result.passed.filter((x) => x.feature === f.id)) {
-        const check = el("span", "pcheck");
-        check.append(el("span", "prule", `✓ ${RULE_NAMES[p.rule] ?? p.rule}: `), document.createTextNode(p.title));
-        const math = el("span", "pmath", `${p.math} · ${p.limit_text}`);
-        math.hidden = selected !== id;
-        row.append(check, math);
-      }
-      row.addEventListener("click", () => onSelect({ id, faces: f.faces }));
-      box.append(row);
-    }
-  }
-  host.append(box);
-}
+/** Something a row selects on the model: a finding, a passed feature or a setup. */
+export interface Pick { id: string; faces: number[] }
 
 /** "1/4 in end mill", "0.250 in (1/4) drill", "6.5 mm drill", "82° countersink" (S5). */
 export function toolName(t: Tool): string {
@@ -229,8 +148,21 @@ function toolWhy(f: Feature, result: Analysis, setup: number, only?: string): st
   }).join(" ");
 }
 
+/** Where each row sits (review-steps S3): its lines for a place ("whole", "none" or a setup's index), or none. */
+export type PlacedLines = (at: string | number) => HTMLElement[];
+
+/** "Issues here:" with the rows placed in one setup or block (frame r3-mach), or null when none are. */
+function issuesBlock(lines: HTMLElement[], label: string, testid: string): HTMLElement | null {
+  if (!lines.length) return null;
+  const box = el("div", "issue-in");
+  box.dataset.testid = testid;
+  box.append(el("span", "muted", label), ...lines);
+  return box;
+}
+
 export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analysis | null,
-                           onSelect: (p: Pick) => void = () => {}, selected: string | null = null): void {
+                           onSelect: (p: Pick) => void = () => {}, selected: string | null = null,
+                           placed: PlacedLines = () => []): void {
   host.replaceChildren();
   count.textContent = "";
   if (!result || !result.machine) return;
@@ -246,17 +178,19 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
   if (result.stock) row("Stock", stockText(result.stock), "plan-stock");
   const lathe = result.setups.length === 1 && result.setups[0].direction === "turn";
   if (lathe && result.turn_axis) row("Turning axis", axisText(result.turn_axis, result), "plan-turn-axis");
-  row("Tool loads", `${result.tool_changes} (including the first in each setup)`, "plan-loads");
+  row("Tool loads", `${result.tool_changes} (the first in each setup counts)`, "plan-loads"); // frame r3-mach
   host.append(dl);
   const tools = new Map(result.tools.map((t) => [t.id, t]));
   const byId = new Map(result.features.map((f) => [f.id, f]));
   const whyText = planWhy(result);
-  if (whyText) {
-    const why = el("p", "note");
+  if (whyText) { // frame r3-mach: "Why 2" (the number of setups) and the plan's reason
+    const why = el("p", "why");
     why.dataset.testid = "plan-why";
-    why.textContent = whyText;
+    why.append(el("b", undefined, `Why ${n}`), document.createTextNode(` ${whyText}`));
     host.append(why);
   }
+  const whole = issuesBlock(placed("whole"), "Whole part:", "issues-whole-part");
+  if (whole) host.append(whole);
   result.setups.forEach((s, i) => {
     const id = `setup:${i}`;
     // The faces this setup's tools cut: a countersink lights its own cone, not the bore it was drilled through.
@@ -274,8 +208,9 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
       const t = tools.get(o.tool);
       const name = el("span");
       // Operations numbered in the order they run, across all setups (Morgan, 2026-11-08)
+      // No tool codes on screen (D-042): the tool's name only
       name.append(el("span", "onum", `${result.operations.indexOf(o) + 1}.`), document.createTextNode(" "),
-        document.createTextNode(t ? toolName(t) : o.tool), document.createTextNode(" "), el("span", "tid", o.tool));
+        document.createTextNode(t ? toolName(t) : o.tool));
       line.append(name, el("span", "ofeat", o.features.join(", ")));
       box.append(line);
     }
@@ -304,13 +239,24 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
       }
       box.append(why);
     }
+    const issues = issuesBlock(placed(i), "Issues here:", `issues-setup-${i + 1}`);
+    if (issues) box.append(issues);
     host.append(box);
   });
   const away = notPlanned(result);
-  if (away) {
-    const note = el("p", "note", away);
-    note.dataset.testid = "plan-not-planned";
-    host.append(note);
+  const noSetup = placed("none");
+  if (away || noSetup.length) {
+    const block = el("div", "nosetup");
+    block.dataset.testid = "issues-no-setup";
+    block.append(el("span", "shead", "In no setup"));
+    if (away) {
+      const note = el("p", "note", away);
+      note.dataset.testid = "plan-not-planned";
+      block.append(note);
+    }
+    const issues = issuesBlock(noSetup, "Issues here:", "issues-none");
+    if (issues) block.append(issues);
+    host.append(block);
   }
   host.append(el("p", "note", planFoot(result)));
 }
@@ -434,7 +380,7 @@ export function renderThreads(host: HTMLElement, result: Analysis | null, onSele
     host.append(el("p", "none", "No threads in this .ipt."));
     return;
   }
-  host.append(el("p", "none", `From ${inv.name}: ${threadCounts(threads)}. Tap a thread to show its hole.`));
+  host.append(el("p", "none", "Tap a thread to show its hole.")); // the counts sit on the group row (D-049)
   const holes = new Map(result.features.map((f) => [f.id, f]));
   for (const t of threads) {
     const hole = t.hole ? holes.get(t.hole) : undefined;
@@ -516,9 +462,9 @@ export function renderHoleFeatures(host: HTMLElement, result: Analysis | null, o
     host.append(el("p", "none", "No Hole features in this .ipt."));
     return;
   }
-  const all = feats.flatMap((f) => f.holes);
   const seen = holeNamesSeen(inv.hole_names_seen, feats.length);
-  host.append(el("p", "none", `From ${inv.name}: ${feats.length} Hole features, ${holeCount(all.length)}: ${holeCounts(all)}.${seen ? ` ${seen}.` : ""} Tap a feature to show its holes; tap a hole to show it alone.`));
+  // The counts sit on the group row (D-049); what the row can't hold stays here
+  host.append(el("p", "none", `${seen ? `${seen}. ` : ""}Tap a feature to show its holes; tap a hole to show it alone.`));
   const steps = new Map(result.features.map((f) => [f.id, f]));
   for (const f of feats) {
     const cls = f.state === "matched" ? "ok" : f.state === "disagrees" ? "medium" : "nm";
@@ -626,7 +572,7 @@ export function renderBlends(host: HTMLElement, result: Analysis | null, onSelec
     host.append(el("p", "none", "No fillets or chamfers in this .ipt."));
     return;
   }
-  host.append(el("p", "none", `From ${inv.name}: ${blendKinds(blends)}: ${blendCounts(blends)}. Sizes as designed in the .ipt. Tap one to show its faces.`));
+  host.append(el("p", "none", "Sizes as designed in the .ipt. Tap one to show its faces.")); // counts: the group row (D-049)
   for (const b of blends) {
     const cls = b.state === "matched" ? "ok" : b.state === "disagrees" ? "medium" : "nm";
     const id = `bl:${b.id}`;

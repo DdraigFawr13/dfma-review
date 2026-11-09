@@ -66,6 +66,7 @@ class Segment:
     countersinks: list = field(default_factory=list)  # (end, cone face ids, diameter, included deg) per open end (D-022)
     full_lo: float | None = None  # where the hole is round all the way, when an end leaves through a slope (D-022)
     full_hi: float | None = None
+    mouths: list = field(default_factory=list)  # (end, face id) round each open end, through a countersink (D-050)
 
 
 def _sub(a: Vec, b: Vec) -> Vec:
@@ -402,8 +403,12 @@ def _classify_ends(topo: Topology, segs: list[Segment]) -> None:
                     continue
                 # Anything else is an open end, with the hole's own axis also on a pocket floor (D-022).
                 ends.setdefault(end, "open")
+                seg.mouths.append((end, nb))
                 if (csk := _countersink(topo, seg, nb)) and not any(c[0] == end for c in seg.countersinks):
                     seg.countersinks.append((end, *csk))
+                    # D-050: a countersunk hole enters the face round its cone
+                    seg.mouths.extend((end, j) for k in csk[0] for j in topo.neighbours(k)
+                                      if j not in seg.faces and j not in csk[0])
             for end, es in (by_end.items() if not seg.cut else ()):  # where it is round all the way (D-022)
                 for e in es:
                     along = [dot(v, seg.axis) for v in _points(e)]
@@ -585,6 +590,23 @@ def _frame_dir(v: Vec, frame: dict[str, Vec]) -> str | None:
     return None
 
 
+def _entry_deg(topo: Topology, chain: list[Segment]) -> float | None:
+    """Degrees off square between a hole and the flat face round an open end, at its squarest open end (a hole can
+    be drilled from either open end; D-050). None when no open end meets a flat face (a round shaft, say)."""
+    best = None
+    for s in chain:
+        for end, fid in s.mouths:
+            if end not in s.open_ends:
+                continue
+            surf = BRepAdaptor_Surface(topo.faces[fid], True)
+            if surf.GetType() != GeomAbs_Plane:
+                continue
+            d = surf.Plane().Axis().Direction()
+            deg = math.degrees(math.acos(min(1.0, abs(dot(s.axis, (d.X(), d.Y(), d.Z()))))))
+            best = deg if best is None else min(best, deg)
+    return None if best is None else round(best, 3)
+
+
 def holes(solid, faces, frame: dict[str, Vec]) -> list[dict]:
     topo = Topology(solid, faces)
     cyls = {i: c for i, f in enumerate(faces) if (c := _cylinder(i, f, tapers=True))}
@@ -597,6 +619,7 @@ def holes(solid, faces, frame: dict[str, Vec]) -> list[dict]:
         _classify_ends(topo, segs)
     features = []
     for n_chain, chain in enumerate(_chains(segs), 1):
+        entry = _entry_deg(topo, [segs[i] for i in chain])
         vectors: list[Vec] = []
         for i in chain:
             s = segs[i]
@@ -639,6 +662,7 @@ def holes(solid, faces, frame: dict[str, Vec]) -> list[dict]:
                 "blind": bool(s.bottom),  # a bottom closes this segment (I2; open_vectors are the whole chain's)
                 "dims_mm": dims,
                 "chain": n_chain,  # the same for every segment of one stepped hole (renumbered below)
+                "entry_deg": entry,  # D-050: how far off square it enters its flat face, the squarest end; None: no flat face
                 **csk,
             })
     features.sort(key=lambda f: min(f["faces"]))
@@ -1299,11 +1323,20 @@ def pockets(solid, faces, frame: dict[str, Vec], hole_faces: set[int]) -> tuple[
         for cfaces, r, edge in corners:
             ctool, _ = pick_end_mill(r, width)
             corner = {"kind": "corner", "faces": cfaces, "axis": list(n), "open_dirs": [], "open_vectors": [],
-                      "dims_mm": {"radius": r, "depth": depth, "end_mill_mm": ctool}}
+                      "dims_mm": {"radius": r, "depth": depth, "end_mill_mm": ctool},
+                      "pocket": min(pocket_faces)}  # its pocket's lowest face; link_corners makes it the pocket's id
             if edge:
                 corner["edge_mm"] = edge  # a sharp corner has no face of its own: the viewer draws this edge
             found_c.append(corner)
     return found_p, found_c
+
+
+def link_corners(pockets: list[dict], corners: list[dict]) -> None:
+    """Each corner's `pocket`: the id of the pocket it sits in (review-steps D-049: Machining shows a corner in its
+    pocket's setup). Run after both are numbered."""
+    by_face = {min(p["faces"]): p["id"] for p in pockets}
+    for c in corners:
+        c["pocket"] = by_face.get(c["pocket"])
 
 
 def number(features: list[dict], kind: str) -> list[dict]:

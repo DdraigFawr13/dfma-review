@@ -48,6 +48,7 @@ export class Viewer {
   private readonly edgeMaterial = new THREE.LineBasicMaterial({ color: token("--ink") }); // one for every part
   private checked = new Map<number, CheckedKind>(); // faces of features checked with no finding
   private readonly showChecked: Record<CheckedKind, boolean> = { hole: false, pocket: false, corner: false, wall: false };
+  private okStep = false; // review-steps S2: OK tints only while the Features step shows
   private selected: Selection | null = null;
   private frame = 0;
 
@@ -163,6 +164,14 @@ export class Viewer {
     this.render();
   }
 
+  /** Whether the Features step shows, the only step with OK tints (review-steps J3). */
+  setOkStep(on: boolean): void {
+    if (this.okStep === on) return;
+    this.okStep = on;
+    this.paint();
+    this.render();
+  }
+
   /** Faces drawn in a kind's "checked" colour, read from the materials themselves. */
   checkedFaces(kind: CheckedKind = "hole"): number[] {
     const colour = token(CHECKED_TOKEN[kind]);
@@ -206,6 +215,10 @@ export class Viewer {
     this.camera.updateProjectionMatrix();
     this.controls.target.copy(keep.target);
     this.controls.update();
+    // update() rebuilds the position from angles and re-clamps the target about its cursor, which can round both:
+    // put the reader's own back exactly
+    this.camera.position.copy(keep.position);
+    this.controls.target.copy(keep.target);
     this.paint();
     this.render();
     return { url, width: this.canvas.width, height: this.canvas.height, spot };
@@ -260,7 +273,7 @@ export class Viewer {
       const material = mesh.material as THREE.MeshStandardMaterial;
       const sev = severity.get(id);
       const kind = this.checked.get(id);
-      const ok = kind !== undefined && this.showChecked[kind];
+      const ok = kind !== undefined && this.showChecked[kind] && this.okStep;
       material.color.copy(chosen.has(id) ? accent : sev ? token(`--${sev}`) : ok ? token(CHECKED_TOKEN[kind]) : part);
       const ghost = this.selected !== null && !chosen.has(id) && !kept.has(id);
       material.transparent = ghost;

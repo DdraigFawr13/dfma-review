@@ -10,7 +10,7 @@ from playwright.sync_api import Page, expect
 from pypdf import PdfReader
 
 from helpers import PARTS
-from steps import open_step, shown
+from steps import open_step, shown, show_finding
 
 from dfma.analyze import analyze
 
@@ -33,16 +33,19 @@ def test_export_pdf(page: Page, base_url: str, tmp_path):
     expect(button).to_be_enabled()
     open_step(page, "features")
 
-    page.get_by_test_id("finding-F2").click()  # the reader's own selection must survive the export
+    show_finding(page, result, "F2")  # the reader's own selection (row F1 F2, at F2) must survive the export
     camera = page.evaluate("window.__dfma.cameraTarget()")
     with page.expect_download() as download:
         button.click()
     path = tmp_path / "report.pdf"
     download.value.save_as(path)
     assert download.value.suggested_filename == "report_sample-dfma-review.pdf"
-    assert page.evaluate("window.__dfma.highlightedFaces()") == sorted(result["findings"][1]["faces"])
+    row = next(r for r in result["rows"] if "F2" in r["findings"])
+    assert page.evaluate("window.__dfma.highlightedFaces()") == sorted(
+        {i for f in result["findings"] if f["id"] in row["findings"] for i in f["faces"]})
     assert page.evaluate("window.__dfma.cameraTarget()") == camera
-    expect(page.get_by_test_id("finding-F2")).to_have_attribute("aria-pressed", "true")
+    expect(page.get_by_test_id("row-F1")).to_have_attribute("aria-pressed", "true")
+    expect(page.get_by_test_id("row-detail")).to_contain_text("F2 · hole-2 · 2 of 2")
 
     pdf = PdfReader(path)
     first = pdf.pages[0].extract_text()

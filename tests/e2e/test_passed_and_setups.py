@@ -1,5 +1,6 @@
-"""D-023 (proposed) in the browser: the Passed list is collapsed by default and a row shows its math and selects
-its faces; a setup in the Machine plan selects its features and shows why."""
+"""D-023 in the browser, moved to the Features rows (review-steps S2, frame r3-passed): the Passed chip groups the
+features with no finding by kind and check; an open passed row shows each feature's math and a feature selects its
+faces. A setup in the Machining step selects its features and shows why."""
 
 from __future__ import annotations
 
@@ -20,36 +21,40 @@ def test_passed_list(page: Page, base_url: str):
     page.goto(base_url)
     page.get_by_test_id("upload-file").set_input_files(PARTS / "clean_one_setup.step")
     shown(page, "clean_one_setup.step")
-    passed = page.get_by_test_id("passed")
-    expect(passed).to_contain_text("16 features · 22 checks")
-    expect(passed).not_to_have_attribute("open", "")  # collapsed by default
-    expect(page.get_by_test_id("passed-hole-2")).to_be_hidden()
-    passed.locator("summary").click()
+    expect(page.get_by_test_id("chip-passed")).to_have_text("Passed 16")  # 16 features, as before
+    expect(page.get_by_test_id("chip-issues")).to_have_attribute("aria-pressed", "true")  # issues first
+    expect(page.get_by_test_id("passed-hole-2")).to_have_count(0)  # passed rows wait behind their chip
+    page.get_by_test_id("chip-passed").click()
+    holes = page.get_by_test_id("row-pass-hole-hole_depth")
+    expect(holes).to_contain_text("Holes ×")
+    expect(holes).to_contain_text("Hole depth check")
+    holes.click()
     row = page.get_by_test_id("passed-hole-2")
-    expect(row).to_contain_text("hole depth: Depth 2.0× diameter, at most 6.0×")
-    expect(row.locator(".pmath").first).to_be_hidden()
+    expect(row).to_contain_text("hole-2 · 0.250 in (1/4) diameter, 0.500 in deep")  # what the feature is (D-023)
+    expect(row).to_contain_text("✓ Depth 2.0× diameter, at most 6.0×")
+    expect(row.locator(".pmath")).to_contain_text(
+        "0.5000 in deep ÷ 0.2500 in diameter = 2.00× ≤ 6.0× · limit is an estimate")
     row.click()
     expect(page.get_by_test_id("passed-hole-2")).to_have_attribute("aria-pressed", "true")
-    expect(page.get_by_test_id("passed-hole-2").locator(".pmath").first).to_contain_text(
-        "0.5000 in deep ÷ 0.2500 in diameter = 2.00× ≤ 6.0× · limit is an estimate")
     assert page.evaluate("window.__dfma.highlightedFaces()") == sorted(hole["faces"])
-    expect(page.get_by_test_id("passed")).to_have_attribute("open", "")  # stays open while selecting
-    # A material change re-analyses the same file: the list stays open and the selection is kept.
+    # A material change re-analyses the same file: the chip, the open row and the selection are kept.
     open_step(page, "part")  # process and material sit in the overview once a part is read
     with page.expect_response(lambda r: r.url.endswith("/api/analyze"), timeout=30_000):
         page.select_option("#material", "plastic")
     expect(page.locator("#status")).to_have_text("Showing clean_one_setup.step.", timeout=30_000)
     open_step(page, "features")
-    expect(page.get_by_test_id("passed")).to_have_attribute("open", "")
+    expect(page.get_by_test_id("chip-passed")).to_have_attribute("aria-pressed", "true")
     expect(page.get_by_test_id("passed-hole-2")).to_have_attribute("aria-pressed", "true")
     assert page.evaluate("window.__dfma.highlightedFaces()") == sorted(hole["faces"])
-    page.get_by_test_id("passed-hole-2").click()  # again: clears it
+    page.get_by_test_id("passed-hole-2").click()  # again: back to the whole row
+    expect(page.get_by_test_id("passed-hole-2")).to_have_attribute("aria-pressed", "false")
+    page.get_by_test_id("row-pass-hole-hole_depth").click()  # the open row again: closes it, clears the selection
     assert page.evaluate("window.__dfma.highlightedFaces()") == []
-    expect(page.get_by_test_id("passed-hole-2").locator(".pmath").first).to_be_hidden()
-    # A new file starts collapsed again (D-023: collapsed by default).
+    expect(page.get_by_test_id("passed-hole-2")).to_have_count(0)
+    # A new file starts on its issues again, no row open (D-023: passed detail folded by default).
     page.get_by_test_id("upload-file").set_input_files(PARTS / "two_sided_block.step")
-    expect(page.get_by_test_id("passed")).to_contain_text("25 features", timeout=30_000)
-    expect(page.get_by_test_id("passed")).not_to_have_attribute("open", "")
+    expect(page.get_by_test_id("chip-passed")).to_have_text("Passed 25", timeout=30_000)
+    expect(page.get_by_test_id("chip-issues")).to_have_attribute("aria-pressed", "true")
 
 
 def test_passed_open_at_200_percent_text_has_no_sideways_scroll(page: Page, base_url: str):
@@ -58,8 +63,8 @@ def test_passed_open_at_200_percent_text_has_no_sideways_scroll(page: Page, base
     page.add_style_tag(content="html { font-size: 200% !important; }")
     page.get_by_test_id("upload-file").set_input_files(PARTS / "clean_one_setup.step")
     shown(page, "clean_one_setup.step")
-    expect(page.get_by_test_id("passed")).to_be_visible()
-    page.get_by_test_id("passed").locator("summary").click()
+    page.get_by_test_id("chip-passed").click()
+    page.get_by_test_id("row-pass-hole-hole_depth").click()
     page.get_by_test_id("passed-hole-2").click()
     assert page.evaluate("document.documentElement.scrollWidth") <= 1280
     open_step(page, "machining")

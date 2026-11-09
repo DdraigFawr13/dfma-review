@@ -61,21 +61,24 @@ Contrast (WCAG ratio, measured with a script in the S2 session; S3 swatches: `--
 
 - **Selects and file input:** `--panel` fill, 1px `--line` border, `--radius`, at least 32 px tall, label above.
 - **Primary button** (Export PDF, from S7): `--accent` fill, `--accent-ink` text.
-- **Finding row:** a button the full width of the list. Severity label (text and colour), then the title, then a muted line with the feature, the value and the limit source. Clicking it selects the finding: 2px `--accent` border, its faces turn `--accent` in the 3D view and the camera frames them. Clicking the selected finding again clears the selection.
-- **Selected finding:** its faces turn `--accent`, every other face is drawn at opacity 0.35, and the camera frames the faces, never tighter than 40% of the part's size. A sharp inside corner is a bar along its edge, accent when selected, with its walls kept solid (D-015). Faces with a finding and nothing selected are drawn in their severity colour, each with a pin (D-017): "F1" on a white pill ringed in the severity colour, on a visible spot of its faces; pins that would overlap fold into one ("F4 +2"); pins behind the part hide. The selected pin is solid in its severity colour with white text and ring, "F1 MEDIUM", raised on a stem to a dot on its spot.
-- **Colour legend:** under the 3D view (D-014): a 14 px swatch and its word for High, Medium and Selected, then one checkbox per feature kind for features checked with no finding (S2: "Holes checked, no finding", `--low`; S3: "Pockets checked, no finding", `--ok-pocket`, and "Corners checked, no finding", `--ok-corner`; all on by default, D-015; S4: "Walls checked, no finding", `--ok-wall`, painted first so other kinds win, and off by default, D-016). Each later feature kind adds its own row and swatch.
-- **Verdict line:** severity words with counts ("HIGH 1 · MEDIUM 2"; a zero count in `--muted`), then "N holes checked · Rules run: …". A part with no findings shows "CLEAN no findings" in `--low`.
-- **Waiting:** while a file is analysed, the status line says "Analysing <name>…" and the findings list keeps its space.
+- **Step bar** (D-042, review-steps spec): five step buttons across the top, Part · Features · Machining · Cost · Report, each a number in a circle and its name; the current one has `aria-current="step"`, a 3px `--accent` underline and a filled circle. The Features step adds "▲ n ◆ n" (findings, not rows). Steps before a part is read are disabled with a dashed circle. Back / Next sit at the foot of the side column.
+- **Severity words and shapes:** Fix (▲, `--high`) and Review (◆, `--medium`) for findings, OK (no shape, `--low`) for passed features. Words are Plex Mono 700 upper case on screen ("FIX"); sentences and counts write "Fix" / "Review". The PDF prints the words only.
+- **Row** (Features step, frames `r3-features`, `r3-passed`): a button the full width of the list: shape, word and short title with "×n" (none for one), F ids on the right ("F4–F7", "F1 F2"), one sentence, then "<check> · <limit in words>" muted. Tapping opens it in place (2px `--accent` outline, `--bg` fill) with its detail: "‹ F4 · corner-1 · 1 of 4 ›", Measured, and "Fix" (Fix rows) or "Suggestion" (Review rows) with the advice; ‹ › step through the row's findings. A passed row opens to its features, each a button with the check's words and the math (D-023). Tapping the open row closes it.
+- **Chips:** Issues n · Passed n · All above the rows (32 px pills; the chosen one `--accent` border and text, `aria-pressed`). The setup chips over the model on the Machining step look the same.
+- **.ipt groups** (D-049, `mockups/review-steps-features.html`): under the rows, "From <.ipt>" then one folding row per group (Threads, Hole features, Fillets and chamfers): name, count, and its tally in the approved state words ("disagrees 1 · matched 5"); opened, its rows as approved in D-036, D-040, D-043. Nothing scrolls inside the step's list.
+- **Selected finding:** its faces turn `--accent`, every other face is drawn at opacity 0.35, and the camera frames the faces, never tighter than 40% of the part's size. A row selects all its findings' faces; its pin is the shown finding's. A sharp inside corner is a bar along its edge, accent when selected, with its walls kept solid (D-015). Faces with a finding and nothing selected are drawn in their severity colour, each with a pin (D-017): "F1" on a white pill ringed in the severity colour, on a visible spot of its faces; pins that would overlap fold into one ("F4 +2"); pins behind the part hide. The selected pin is solid in its severity colour with white text and ring, "F1 FIX", raised on a stem to a dot on its spot.
+- **Show OK switches** (D-014 amended by D-042): at the foot of the model on the Features step only: "Show OK" then Holes (`--low`), Pockets (`--ok-pocket`), Corners (`--ok-corner`), Walls (`--ok-wall`, off by default, painted first so other kinds win, D-016), each a checkbox with its 14 px swatch. OK tints show only while the Features step shows.
+- **Machining step** (frame `r3-mach`): Machine, Stock, Tool loads ("n (the first in each setup counts)"), "Why n" with the plan's reason; "Whole part" for rows with no feature and thin walls (D-049); each setup a button with its numbered operations (tool names, no tool codes) and "Issues here:" with the rows placed there (a corner with its pocket's setup); "In no setup" last.
+- **Waiting:** while a file is analysed, "Analysing <name>…" with a spinner shows over the model, and in the status line.
 - **Refused:** errors show in the error box with the reason (J7 messages), in `--high` on `--panel` with a left stripe and the word "Error:".
 - **Focus:** 3px `--accent` outline, 2px offset, on every control.
 
 ## Layout and sizes
 <!-- Columns, gutters and spacing at each target width; what moves or hides at each width. -->
 
-- Next layout, approved and not built yet (D-042): a step-by-step review, [round 3 mock-ups](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8) (`mockups/ui-direction/round3-frames.html`). The lines below describe the screen as built until that slice lands; it then rewrites Controls, Layout and checklist item 9.
-
-- Review screen: the [approved mock-up](https://claude.ai/artifact/2upjSXCWKez2VVsedPVZbH) (`mockups/review-screen.html`, D-012). Top bar: file, process, material, then part size, faces and units on the right. Verdict line under it. At 1280 px: 3D view (flexible) and findings panel (400 px). Below 900 px the findings stack under the view and the bar wraps.
-- The status row under the bar keeps a fixed 34 px height, so an error message never moves the view.
+- Review screen: the step screen (D-042, built in review-steps S1 to S3; frames `mockups/ui-direction/round3-frames.html`). At 1280 px: the 3D view (flexible) and the side column (460 px) with one step at a time, Back / Next fixed at its foot. Below 900 px the side column stacks under the model (420 px tall) and the step bar wraps; at 200% text the step bar wraps to two lines.
+- Part step: the start form until a part is read, then the overview (file, size, process and material dropdowns, the four step cards with "Open ›", Fix first).
+- The status line under the step bar keeps its height, so a message never moves the view.
 - Page gutter `--space-4`; gaps between panels `--space-4`; inside panels `--space-3`.
 
 ## Avoid
@@ -99,6 +102,7 @@ Master list: `../.claude/skills/ui-style/references/avoid.md`.
 <!-- The files that hold the names, numbers and options screens show (content files, schemas, rules), plus docs/DECISIONS.md. Mock-ups take facts only from these. -->
 
 - `docs/specs/first-version.md`: response schema, rules and their titles, units, test parts, the `data-testid` hooks.
+- `docs/specs/review-steps.md` and `service/dfma/rows.py`: the step screen, row words, check names and limit words.
 - `service/dfma/settings.py`: processes, materials, error messages, the 50 MB limit.
 - `web/index.html`: control labels ("Milling", "Aluminum 6061", …) and the privacy line.
 - `web/src/format.ts`: how inches, fractions and ratios are written.
@@ -116,4 +120,4 @@ Master list: `../.claude/skills/ui-style/references/avoid.md`.
 6. Buttons, alerts and empty states worded on purpose; no Avoid-list copy.
 7. The built screen screenshotted at the same width beside its approved mock-up; differences listed for Morgan.
 8. Checked at 1280 px with text at 200%: nothing clipped, findings still readable.
-9. Every severity colour on screen has its severity word beside it.
+9. Every severity colour on screen has its word beside it, and on screen its shape too (▲ Fix, ◆ Review).

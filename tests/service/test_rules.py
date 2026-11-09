@@ -326,8 +326,10 @@ def test_long_thin_tool_corner_and_depth():
     assert c["title"] == "Corner radius 0.050 in: the end mill that fits cuts 5.3× its diameter deep (limit 4.0×)"
     assert c["suggestion"] == "Make the corner radius or the gap larger, or the pocket shallower, if the design allows."
     assert p["title"] == "Pocket depth 5.3× the end mill that fits (limit 3.0×)"
-    assert p["suggestion"] == ("Needs a long 3/32 in end mill. Make the pocket shallower, or its corners and gaps "
-                               "larger, if the design allows.")
+    assert p["suggestion"] == ("Cut it in 6 passes of 0.083 in each (at most 1× the tool per pass, an estimate); the "
+                               "tool still reaches 0.500 in deep, so it is a long-reach 3/32 in end mill. Or make the "
+                               "pocket shallower, or its corners and gaps larger, if the design allows.")  # D-052
+    assert (p["passes"], round(p["pass_in"], 4)) == (6, 0.0833)
 
 
 def test_both_medium_corner_reasons_join(tmp_path):
@@ -375,7 +377,8 @@ def test_s3_thresholds_per_material():
     for m in ("al6061", "steel1018", "ss304", "plastic"):
         t = settings.thresholds(m)
         assert t["corner_radius"] == {"min_radius_in": 0.03125, "max_depth_ratio": 4.0, "source": "estimate"}
-        assert t["pocket_depth"] == {"medium": 3.0, "source": "estimate"}
+        # D-052: the deepest cut per pass, 0.5× the tool in stainless
+        assert t["pocket_depth"] == {"medium": 3.0, "pass_xd": 0.5 if m == "ss304" else 1.0, "source": "estimate"}
 
 
 def test_pocket_rules_run_for_mill_only():

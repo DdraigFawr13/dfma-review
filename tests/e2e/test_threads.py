@@ -9,7 +9,7 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from helpers import PARTS
-from steps import open_step
+from steps import open_step, show_finding
 
 pytestmark = pytest.mark.e2e
 FIXTURES = PARTS.parent / "inventor" / "fixtures"
@@ -44,7 +44,10 @@ def test_threads_panel(page: Page, base_url: str, tmp_path):
     expect(page.locator("#threads-count")).to_have_text("4")
     rows = page.get_by_test_id("thread-row")
     expect(rows).to_have_count(4)
-    expect(panel).to_contain_text("From INV_nist_ctc_04_asme1_2021.ipt: 4 matched, 0 disagrees, 0 not mapped.")
+    # The counts sit on the group's row (D-049); the source once above the groups
+    expect(page.get_by_test_id("ipt-groups")).to_contain_text("From INV_nist_ctc_04_asme1_2021.ipt")
+    expect(page.locator("#threads-tally")).to_have_text("matched 4")
+    expect(panel).to_contain_text("Tap a thread to show its hole.")
     for n, hole in enumerate(("hole-37", "hole-38", "hole-39", "hole-40")):
         row = rows.nth(n)
         expect(row).to_contain_text("matched")
@@ -59,11 +62,15 @@ def test_threads_panel(page: Page, base_url: str, tmp_path):
     rows.nth(1).click()
     expect(rows.nth(1)).to_have_attribute("aria-pressed", "false")
     assert page.evaluate("window.__dfma.highlightedFaces()") == []
-    # The hole itself shows its callout (J1): its Passed row, or a finding on it
-    page.get_by_test_id("passed").locator("summary").click()
-    passed = page.get_by_test_id("passed-hole-37")
+    # The hole itself shows its callout (J1): in a finding's detail, or its passed feature
     findings = [f for f in result["findings"] if f["feature"] == "hole-37"]
-    target = page.get_by_test_id(f"finding-{findings[0]['id']}") if findings else passed
+    if findings:
+        show_finding(page, result, findings[0]["id"])
+        target = page.get_by_test_id("row-detail")
+    else:
+        page.get_by_test_id("chip-passed").click()
+        page.get_by_test_id("row-pass-hole-hole_depth").click()
+        target = page.get_by_test_id("passed-hole-37")
     expect(target).to_contain_text("Thread: M12x1.75 - 6H (from the .ipt)")
 
 
@@ -78,7 +85,8 @@ def test_thread_disagrees_and_states(page: Page, base_url: str, tmp_path):
     expect(rows.nth(0)).to_contain_text("0.004 in [0.10 mm] off the hole's axis · finding F26")
     expect(rows.nth(1)).to_contain_text("Not mapped: external thread: not on a hole. Our limit, not a finding.")
     assert rows.nth(1).evaluate("e => e.tagName") == "DIV"  # no hole: plain text, not a button
-    expect(page.get_by_test_id("finding-F26")).to_contain_text("M3x0.5 thread on hole-38: 0.10 mm off the hole's axis")
+    expect(page.get_by_test_id("row-F26")).to_contain_text("M3x0.5 thread on hole-38: 0.10 mm off the hole's axis")
+    expect(page.locator("#threads-tally")).to_have_text("disagrees 1 · not mapped 1 · matched 4")
 
 
 def test_no_threads_and_no_ipt(page: Page, base_url: str, tmp_path):
