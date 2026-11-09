@@ -89,7 +89,15 @@ a { color: var(--accent); }
   <h2>Anything else</h2>
   <section class="card"><h3>Anything missing, wrong, or still too wordy?</h3><textarea id="t_else" data-id="else" rows="4" aria-label="Anything else"></textarea></section>
   <p class="small muted">When done, say <b>"round 3 done"</b> in chat.</p>
-  %%RECORD%%
+  <details class="card" id="check-record"><summary><b>Check record</b></summary>
+    <div class="small" style="display:grid;gap:6px">
+      <p>Files checked: the app's output for report_sample.step, web/index.html, web/src/main.ts, web/src/report.ts, service/dfma/settings.py, docs/UI_STYLE.md, docs/DECISIONS.md.</p>
+      <p>Facts: counts, sizes, setups, tools and drivers match the app; status and error lines are the app's own; "Assumptions (8)" is the count the app shows for this part. Which issue sits in which setup is an inference, labelled.</p>
+      <p>Fixes after the fresh check: every row keeps its limit source (estimate, or the drill list within 0.0005 in); sharp corners keep the EDM option; the PDF list adds the threads section and the assumptions page; Passed drawn closed (D-023); Machining gets the brief why (D-023) and the tool-load note; no colour-only pins on Cost and Report; ticks on the Show OK switches; one status line while reading. Newly named as proposals: the spinner, the error inside the form, the 460 px panel and stacking at 900 px, Fix / Review in the PDF.</p>
+      <p>Left as is: this approval page loads IBM Plex from Google Fonts (a review page, not the app; the frames use the app's own font files).</p>
+      <p>Lint: 0 warnings (frames and page, minimum 14 px). Frames at 1280 and 900 px. Fresh check: 1 reviewer, 66,215 tokens.</p>
+    </div>
+  </details>
 </main>
 
 <script>
@@ -98,25 +106,26 @@ const _unused = `<div class="specimen"><div><span class="sev h">▲ Fix</span> <
 const SECTIONS = [
   { h: "1 · Part", items: [
     { pic: "r3-start", cap: "Start: file, .ipt, process, material, and the privacy line in full." },
-    { pic: "r3-loading", cap: "Reading: the app's own status line, \"Analysing report_sample.step…\"." },
-    { pic: "r3-error", cap: "Refused: the app's own message with \"Error:\" and the red stripe, and what to do next. (Example: a file that isn't STEP.)" },
+    { pic: "r3-loading", cap: "Reading: the app's own status line, \"Analysing report_sample.step…\", over the model, with a spinner (new)." },
+    { pic: "r3-error", cap: "Refused: the app's own message with \"Error:\" and the red stripe, and what to do next. (Example: a file that isn't STEP.) New: the message sits in the form, where the file was chosen, instead of the fixed status row under the top bar." },
     { pic: "r3-overview", cap: "Overview, straight after reading. \"Change file\" goes back to the start form. F2 is on the far side in this view; \"+1\" pins fold F3 into F1 and F8 into F7, as the app does." } ] },
   { h: "2 · Features", items: [
     { pic: "r3-features", cap: "Issues, F4 selected: its faces light, its pin stands up, its row opens one level. Show OK switches at the foot of the model." },
-    { pic: "r3-passed", cap: "Passed: the same row style with OK; tap to see every wall. (The picture is the plain render; in the app the walls switch tints the walls brown.)" } ] },
+    { pic: "r3-passed", cap: "Passed: the same row style with OK, closed until you open it (D-023). Every row keeps its check, its limit and whether the limit is an estimate. (The picture is the plain render; in the app the walls switch tints the walls brown.)" } ] },
   { h: "3 · Machining", items: [
-    { pic: "r3-mach", cap: "Setups with their operations and, under each, the issues it holds. Setup chips on the model pick one. Which issue sits in which setup is my reading; the app doesn't link them yet." } ] },
+    { pic: "r3-mach", cap: "Setups with their operations and, under each, the issues it holds. Setup chips on the model pick one and show its features; \"Why 2\" gives the brief why (D-023). Which issue sits in which setup is my reading; the app doesn't link them yet." } ] },
   { h: "4 · Cost and 5 · Report", items: [
     { pic: "r3-cost", cap: "Cost drivers, count × weight, with the findings that feed each one. Weights are estimates; no time or dollars yet." },
     { pic: "r3-report", cap: "Report: what the PDF holds, the rules run (moved off the verdict line), the assumptions, and Export PDF." } ] },
   { h: "900 px", items: [
-    { pic: "r3-overview-900", cap: "Below 1280 px the panel moves under the model, as today below 900 px." },
+    { pic: "r3-overview-900", cap: "At 900 px the panel moves under the model. Today it stacks only below 900 px; the side panel also grows from 400 to 460 px at 1280 for the sentences. Both are proposals." },
     { pic: "r3-features-900", cap: "Features at 900 px." } ] },
   { h: "Overrule any call", items: [
     { id: "o_rows", q: "Rows, not a table", opts: ["Agree", "Table instead"] },
     { id: "o_ok", q: "Show OK switch per kind, Features step only", opts: ["Agree", "One switch for all", "Keep today's legend"] },
     { id: "o_marks", q: "Step tabs: shape + number, words everywhere else", opts: ["Agree", "Words in the tabs too"] },
-    { id: "o_verdict", q: "Verdict line goes; counts to the overview, rules to Report", opts: ["Agree", "Keep a verdict line"] } ] },
+    { id: "o_verdict", q: "Verdict line goes; counts to the overview, rules to Report", opts: ["Agree", "Keep a verdict line"] },
+    { id: "o_pdf", q: "The PDF says Fix / Review too (today: high / medium)", opts: ["Agree", "Keep high / medium in the PDF"] } ] },
   { h: "Not drawn yet (my proposal)", items: [
     { id: "o_more", q: "Turning parts, and threads from an .ipt", why: "Turning uses the same steps; Machining shows the lathe plan (turning axis, support) instead of setups. Threads become a group in the Features step, next to the holes they belong to.", opts: ["Agree", "Show me first"] } ] },
   { h: "Approval", items: [

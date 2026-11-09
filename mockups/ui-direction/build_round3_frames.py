@@ -25,6 +25,7 @@ EXTRA = """<style>
 .err { border-left: 4px solid var(--high); background: var(--panel); padding: 10px 12px; color: var(--high); font-weight: 600; }
 .driver { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 14px; padding: 10px 14px; border-bottom: 1px solid var(--line); align-items: baseline; }
 .driver .f { grid-column: 1 / 4; font-size: .875rem; color: var(--muted); }
+.chip.on .box { position: relative; } .chip.on .box::after { content: ""; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid var(--accent-ink); border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .spin { width: 28px; height: 28px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; }
 ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 </style>
@@ -69,6 +70,7 @@ PINS_ALL = """<span class="pin m" style="left:60.9%;top:40.2%"><b>F1 +1</b><i></
 <span class="pin h" style="left:46.4%;top:29.2%"><b>F7 +1</b><i></i></span>"""
 
 VIEW_ALL = f'<div class="view"><div class="stage"><img src="img/model-wide.png" alt="">{PINS_ALL}</div></div>'
+VIEW_PLAIN = '<div class="view"><div class="stage"><img src="img/model-wide.png" alt=""></div></div>'
 VIEW_SEL = '<div class="view"><div class="stage"><img src="img/model-wide-sel.png" alt=""><span class="pin h sel" style="left:50%;top:45%"><b>F4 FIX</b><i></i></span></div>%s</div>'
 
 OKROW = """<div class="viewtools" style="right:12px"><div class="panel okrow" style="padding:6px 10px">
@@ -100,16 +102,16 @@ OVERVIEW_PANEL = """<div class="panel" style="display:flex;flex-direction:column
 </div>"""
 
 ROWS = """<div class="srow sel"><span class="mk high"></span><span class="t"><span class="sev high">Fix</span> Sharp corner ×4</span><span class="ids">F4–F7</span>
-  <span class="s">Inside corners have no radius. Needs 0.031 in (1/32) or more.</span>
+  <span class="s">Inside corners have no radius. Needs 0.031 in (1/32) or more, or EDM.</span>
   <span class="chk">Corner radius check · limit is an estimate</span>
   <dl class="more"><dt>Showing</dt><dd class="num">F4 · corner-1 · 1 of 4</dd><dt>Measured</dt><dd class="num">radius 0.000 in, pocket 0.250 in deep</dd><dt>Fix</dt><dd>A larger radius also lets a larger end mill cut the pocket.</dd></dl>
 </div>
 <div class="srow"><span class="mk medium"></span><span class="t"><span class="sev medium">Review</span> Deep hole ×2</span><span class="ids">F1 F2</span>
-  <span class="s">9.6× and 7.2× the diameter deep. Over 6.0× needs peck drilling.</span><span class="chk">Hole depth check</span></div>
+  <span class="s">9.6× and 7.2× the diameter deep. Over 6.0× needs peck drilling.</span><span class="chk">Hole depth check · limit is an estimate</span></div>
 <div class="srow"><span class="mk medium"></span><span class="t"><span class="sev medium">Review</span> Drill size</span><span class="ids">F3</span>
-  <span class="s">0.260 in isn't a standard drill. Nearest is 0.266 in (17/64).</span><span class="chk">Hole size check</span></div>
+  <span class="s">0.260 in isn't a standard drill. Nearest is 0.266 in (17/64).</span><span class="chk">Hole size check · drill list, within 0.0005 in</span></div>
 <div class="srow"><span class="mk medium"></span><span class="t"><span class="sev medium">Review</span> Deep pocket</span><span class="ids">F8</span>
-  <span class="s">Depth is 8.0× the end mill that fits. Over 3.0× needs a long tool.</span><span class="chk">Pocket depth check</span></div>"""
+  <span class="s">Depth is 8.0× the end mill that fits. Over 3.0× needs a long tool.</span><span class="chk">Pocket depth check · limit is an estimate</span></div>"""
 
 
 def features_panel(passed: bool) -> str:
@@ -120,7 +122,7 @@ def features_panel(passed: bool) -> str:
                  ("wall-6", "0.700"), ("wall-7", "0.500"), ("wall-8", "2.250"), ("wall-9", "1.000")]
         rows = ('<div class="srow"><span class="mk ok"></span><span class="t"><span class="sev ok">OK</span> Walls ×9</span><span class="ids"></span>'
                 '<span class="s">Thinnest is 0.500 in. At least 0.030 in is needed.</span><span class="chk">Thin wall check</span>'
-                '<dl class="more">' + "".join(f'<dt class="num">{w}</dt><dd class="num">{t} in thick</dd>' for w, t in walls) + "</dl></div>")
+                '<span class="chk" style="color:var(--accent);font-weight:600">Show all 9 ›</span></div>')
     else:
         rows = ROWS
     return (f'<div class="panel" style="display:flex;flex-direction:column;min-height:0"><div style="display:flex;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)">{chips}</div>'
@@ -143,7 +145,7 @@ COST = """<div class="panel" style="display:flex;flex-direction:column;min-heigh
 REPORT = """<div class="panel" style="display:flex;flex-direction:column;min-height:0;padding:16px;gap:14px">
   <h2>Report</h2>
   <div style="display:grid;gap:6px"><span class="label">The PDF holds</span>
-    <ul class="plain"><li>Page 1: the counts, part summary, machine plan, tools and cost drivers</li><li>Then a page for each finding, with a picture of it on the model</li></ul></div>
+    <ul class="plain"><li>Page 1: the counts, part summary, machine plan, tools, cost drivers, and threads when an .ipt is given</li><li>Then a page for each finding, with a picture of it on the model</li><li>Last: the assumptions</li></ul></div>
   <div style="display:grid;gap:6px"><span class="label">Rules run</span>
     <p style="margin:0">Hole depth, hole size, corner radius, pocket depth, undercut, thin wall, access, looks turned.</p></div>
   <div style="display:flex;gap:8px;align-items:center;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 0"><b>Assumptions (8)</b><span class="spacer"></span><span style="color:var(--accent);font-weight:600">Show ›</span></div>
@@ -154,19 +156,21 @@ REPORT = """<div class="panel" style="display:flex;flex-direction:column;min-hei
 MACH = R2[R2.index('<!-- ============ V1: Machining'): R2.index("</section>", R2.index('<!-- ============ V1: Machining')) + 10]
 MACH = MACH.replace('id="frame-m"', 'id="r3-mach"').replace("V1 · STEPS · MACHINING", "3 · MACHINING")
 MACH = MACH.replace(MACH[MACH.index("<header"): MACH.index("</header>") + 9], top(3))
+MACH = MACH.replace('<span class="muted">Tool loads</span><span class="num">4</span>', '<span class="muted">Tool loads</span><span class="num">4 <span class="muted" style="font-family:var(--sans)">(the first in each setup counts)</span></span><span class="muted">Why 2</span><span>The holes can be cut from +X; the pocket only from −X.</span>')
+assert "Why 2" in MACH
 
 frames = [
     frame("r3-start", "1 · PART · START", 1, '<div class="view"><p class="muted" style="font-size:1rem">The part shows here once it\'s read.</p></div>' + FORM % "", loaded=False, cols="1fr 440px"),
     frame("r3-loading", "1 · PART · READING", 1, '<div class="view" style="flex-direction:column;gap:12px"><span class="spin"></span><p style="font-size:1rem;margin:0">Analysing report_sample.step…</p></div>'
-          + (FORM % '<p class="muted" style="margin:0">Analysing report_sample.step…</p>').replace('class="drop"', 'class="drop" style="opacity:1"'), loaded=False, cols="1fr 440px"),
+          + FORM % "", loaded=False, cols="1fr 440px"),
     frame("r3-error", "1 · PART · REFUSED", 1, '<div class="view"><p class="muted" style="font-size:1rem">No part loaded.</p></div>'
           + FORM % '<p class="err" style="margin:0">Error: This is not a STEP file this tool can read</p><p style="margin:0">Choose another file, or try again.</p>', loaded=False, cols="1fr 440px"),
     frame("r3-overview", "1 · PART · OVERVIEW", 1, VIEW_ALL + OVERVIEW_PANEL),
     frame("r3-features", "2 · FEATURES · ISSUES", 2, VIEW_SEL.replace("%s", OKROW) + features_panel(False)),
     frame("r3-passed", "2 · FEATURES · PASSED", 2, (VIEW_SEL.replace("model-wide-sel", "model-wide").replace('<span class="pin h sel" style="left:50%;top:45%"><b>F4 FIX</b><i></i></span>', "").replace("%s", OKROW.replace('<span class="chip"><span class="box"></span><span class="sw" style="background:#6b5d4f"></span>Walls', '<span class="chip on"><span class="box"></span><span class="sw" style="background:#6b5d4f"></span>Walls'))) + features_panel(True)),
     MACH,
-    frame("r3-cost", "4 · COST", 4, VIEW_ALL + COST),
-    frame("r3-report", "5 · REPORT", 5, VIEW_ALL + REPORT),
+    frame("r3-cost", "4 · COST", 4, VIEW_PLAIN + COST),
+    frame("r3-report", "5 · REPORT", 5, VIEW_PLAIN + REPORT),
     frame("r3-overview-900", "900 PX · OVERVIEW", 1, VIEW_ALL + OVERVIEW_PANEL, cls="w900"),
     frame("r3-features-900", "900 PX · FEATURES", 2, VIEW_SEL.replace("%s", OKROW) + features_panel(False), cls="w900"),
 ]
