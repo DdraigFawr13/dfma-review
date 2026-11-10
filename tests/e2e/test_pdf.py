@@ -56,6 +56,7 @@ def test_export_pdf(page: Page, base_url: str, tmp_path):
                  "3. 3/4 in end mill (em-0.750)  pocket-1", "4. 1/32 in end mill (smallest; nothing fits) (em-0.031)  pocket-1", "Tool loads: 4 (the first in each setup counts)", "Tools (4)",
                  "Cost drivers", "Distinct tools: 4 × 1.0 = 4.0", "Sharp or small inside corners: 4 × 1.0 = 4.0",
                  "Undersized or sub-1/8 in tools: 1 × 1.0 = 1.0", "Deep pockets: 1 × 1.0 = 1.0", "estimate",
+                 "Total score: 14.0 points Score is",  # D-061: the total, with no "(partial)" in the Python app
                  "Checks run: Hole depth check, Hole size check, Corner radius check"):  # check names (review-steps S1)
         assert text in first.replace("\n", " "), f"{text!r} is not on page 1"
 

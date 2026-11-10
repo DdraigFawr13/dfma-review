@@ -13,21 +13,28 @@ import { SLICE } from "./slice.ts"; // the last slice merged; each slice raises 
 export { SLICE };
 
 /** Keys compared at this slice (S1: the part summary, the faces, the assumptions and the rule lists; S2: holes and
- *  the findings, rows and passed checks of the hole rules). */
+ *  the findings, rows and passed checks of the hole rules; S3: the machine plan and the cost drivers). */
 export const PORTED_KEYS: Record<number, string[]> = {
   1: ["part", "faces", "assumptions", "rules_run", "checks_run"],
   2: ["features", "findings", "rows", "passed", "passed_rows"],
+  3: ["machine", "stock", "setups", "operations", "tools", "tool_changes", "cost_drivers", "cost_total"],
 };
 /** Rules ported by slice, with their check names (rows.py CHECKS); rules_run and checks_run compare on these only. */
 export const PORTED_RULES: Record<number, Record<string, string>> = {
   1: {},
   2: { hole_depth: "Hole depth check", hole_size: "Hole size check", access: "Access check" },
+  3: {},
 };
 /** Feature kinds ported by slice: a list key compares only its items on these kinds (port spec Parity). */
 export const PORTED_KINDS: Record<number, string[]> = {
   1: [],
   2: ["hole"],
+  3: [],
 };
+/** The plan and cost keys (S3) compare only on files whose key has no feature of these kinds while they are not
+ *  ported, and no finding from a rule not ported: the plan reads holes and pockets and the findings on them
+ *  (plan.py), and every finding can feed a cost driver (drivers.toml). */
+const PLAN_KINDS = ["pocket", "corner"];
 /** Until S6 a turned file (its key ran turn_axis) compares the S1 keys only: holes on a turned part are split into
  *  holes and bores there (analyze.py split_bores), and the browser copy runs no hole rule on it yet. */
 const TURN_SLICE = 6;
@@ -138,8 +145,18 @@ export function compare(result: Json, key: Json, slice: number = SLICE): Outcome
   const rules = Object.assign({}, ...Object.entries(PORTED_RULES).filter(([s]) => Number(s) <= upTo).map(([, m]) => m)) as Record<string, string>;
   const kinds = Object.entries(PORTED_KINDS).filter(([s]) => Number(s) <= upTo).flatMap(([, ks]) => ks);
   const [pr, pk] = [ported(r, rules, kinds), ported(k, rules, kinds)];
+  const planKeys = PORTED_KEYS[3];
+  const keyFeatures = (k.features as { kind: string }[]) ?? [];
+  const planOk = !keyFeatures.some((f) => PLAN_KINDS.includes(f.kind) && !kinds.includes(f.kind))
+    && !((k.findings as { rule: string }[]) ?? []).some((f) => !(f.rule in rules));
+  if (!planOk && keys.some((name) => planKeys.includes(name))) leftOut.push("plan and cost");
   for (const name of keys) {
-    if (name === "faces") sameFaces(r.faces, k.faces, diffs);
+    if (planKeys.includes(name) && !planOk) continue;
+    if (name === "cost_drivers") {
+      const drivers = (side: Record<string, Json>, p: Ported) => ((side.cost_drivers as { findings: string[] }[]) ?? [])
+        .map((d) => ({ ...d, findings: d.findings.map((id) => p.ids.get(id) ?? `${id} (not ported)`) }));
+      same("cost_drivers", drivers(r, pr), drivers(k, pk), diffs);
+    } else if (name === "faces") sameFaces(r.faces, k.faces, diffs);
     else if (name === "part") {
       const strip = (p: Json) => Object.fromEntries(Object.entries(p as object).filter(([f]) => !SKIP_PART_FIELDS.includes(f)));
       same("part", strip(r.part), strip(k.part), diffs);

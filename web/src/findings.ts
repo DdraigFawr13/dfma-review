@@ -192,9 +192,12 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
     box.dataset.testid = `plan-setup-${i + 1}`;
     box.setAttribute("aria-pressed", String(selected === id));
     box.addEventListener("click", () => onSelect({ id, faces }));
-    box.append(el("span", "shead", setupHead(s, i)));
+    // D-061: the head is a band that says what a tap does, and that it is done
+    const head = el("span", "shead");
+    head.append(el("span", undefined, setupHead(s, i)), el("span", "shint", selected === id ? "Shown on model" : "Show on model ›"));
+    box.append(head);
     const ops = result.operations.filter((o) => o.setup === i);
-    if (ops.length === 0) box.append(el("p", "note", "Nothing to cut from this side."));
+    if (ops.length === 0) box.append(el("span", "note", "Nothing to cut from this side.")); // a button holds no <p>
     for (const o of ops) {
       const line = el("span", "op");
       const t = tools.get(o.tool);

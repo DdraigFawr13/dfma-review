@@ -1,0 +1,18 @@
+# The work copy on the company GitLab Pages (port spec Hosting, J7, J8; D-055). The same browser-engine build as the
+# public test copy, without the "Test copy" mark, from the default branch only. Not run before the move: if the work
+# runners can't download packages, committing the built `public/` is Morgan's call then (D-055).
+pages:
+  image: node:22
+  timeout: 15m
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - npm --prefix web ci && npm --prefix web run build:pages -- --mode work
+    - mv web/dist-pages public
+    # J7: the work copy does not say "Test copy"
+    - if grep -qF ">Test copy<" public/index.html; then echo "the work build says Test copy"; exit 1; fi
+    # Served compressed to browsers that accept it (assumption, not checked: GitLab Pages serves the .gz copies)
+    - find public -name '*.wasm' -o -name '*.js' -o -name '*.html' | xargs gzip -k
+  artifacts:
+    paths:
+      - public

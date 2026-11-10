@@ -126,8 +126,20 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 .plan dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: var(--space-1) var(--space-3); font-size: 0.875rem; }
 .plan dt { color: var(--muted); }
 .plan dd { margin: 0; font-variant-numeric: tabular-nums; }
-.plan .setup { border: 0; border-top: 1px solid var(--line); padding: var(--space-1) 2px 2px; display: grid; gap: 2px; width: 100%; text-align: left; background: none; font: inherit; color: inherit; cursor: pointer; min-height: 32px; }
-.plan .setup[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: -1px; }
+/* D-061 (mock-up port-s3-setups, option A): each setup a card; its head a band saying what a tap does */
+.plan .setupbox { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); margin-top: var(--space-2); overflow: hidden; }
+.plan .setupbox:has(.setup[aria-pressed="true"]) { border: 2px solid var(--accent); }
+.plan .setup { border: 0; padding: 0 0 var(--space-2); display: grid; gap: 2px; width: 100%; text-align: left; background: none; font: inherit; color: inherit; cursor: pointer; min-height: 32px; }
+.plan .setup .shead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0 var(--space-2); min-height: 36px; padding: 0 var(--space-3); background: var(--bg); border-bottom: 1px solid var(--line); margin-bottom: var(--space-1); }
+.plan .setup:hover .shead { background: var(--view); }
+.plan .setup .shint { font: 600 0.875rem var(--sans); color: var(--accent); }
+.plan .setup[aria-pressed="true"] .shead { background: var(--accent); color: var(--accent-ink); }
+.plan .setup[aria-pressed="true"] .shint { color: var(--accent-ink); }
+.plan .setup .op, .plan .setup > .note { margin: 0 var(--space-3); } /* margin, not padding: a wrapped name keeps the whole line (audit F30) */
+.plan .setup .swhy { margin: var(--space-1) var(--space-3) 0; }
+.plan .setupbox .issue-in { margin-top: 0; }
+.plan .setupbox .setup:focus-visible { outline-offset: -3px; } /* inside the card, which clips what overflows it */
+.plan .setup .note { display: block; }
 .plan .setup:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .plan .swhy { display: grid; gap: 2px; font-size: 0.875rem; color: var(--ink); border-left: 2px solid var(--accent); padding-left: var(--space-2); margin-top: 2px; }
 .plan .shead { font: 600 0.875rem var(--mono); }
@@ -243,6 +255,7 @@ div.thread-row { text-align: left; }
   .stepper, .chip, .pfeat { min-height: 44px; } .stepper { min-width: 44px; }
   #page-features .showok { padding: 8px 12px; border-bottom: 1px solid var(--line); }
   .setupchips { position: static; order: -1; } /* above the model, not over it (audit F33) */
+  .plan .setup .shead { min-height: 44px; } /* a touch-sized band (D-061, audit F16) */
 }
 
 /* The browser copy (port spec "Not checked yet"; S1 mock-up, D-057) */

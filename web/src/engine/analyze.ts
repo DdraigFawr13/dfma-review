@@ -2,22 +2,31 @@
 // a key not ported yet holds what Python returns for a part with none of that kind, and `checks_not_run` names,
 // in check-name wording, every rule not ported yet. S1 ported the read, the face kinds, the frame, the mesh, the part
 // summary and the assumptions; S2 the holes and the hole rules (hole_depth, hole_size, access) with their rows, on
-// Milling only (a turned part's holes split into holes and bores first: S6).
+// Milling only (a turned part's holes split into holes and bores first: S6); S3 the mill plan and the cost drivers
+// (a turned part's plan is turning.plan: S6).
 import type { Analysis, Material, Process } from "../api";
 import { extentsMm, faceInfo, partFrame, type Vec } from "./frame";
 import { meshFaces } from "./mesh";
 import type { OC } from "./oc";
 import { readStep } from "./read";
 import { holes } from "./features/holes";
-import { checkName, checksRun, findingRows, limitText, passedRows } from "./rows";
+import { checkName, checksRun, costTotal, findingRows, limitText, passedRows } from "./rows";
+import { costDrivers, driverRules } from "./drivers";
+import { plan, type Plan } from "./plan";
 import { RULES } from "./rules/index";
 import type { Feature, PartSummary } from "./rules/types";
 import { ASSUMPTIONS, MATERIALS, MSG_NO_UNIT, MSG_OPEN_SHELL, PROCESSES, thresholds, TURN_ASSUMPTIONS } from "./settings";
 import { mmToIn, round } from "./units";
 
-export type BrowserAnalysis = Analysis & { checks_not_run: string[] };
+export type BrowserAnalysis = Analysis & { checks_not_run: string[]; cost_partial: boolean };
 
 const IN_FILE = "/in.step";
+
+/** A rule config/drivers.toml maps to a driver is not ported yet for this process: the cost total is partial (D-061). */
+export function costPartial(process: Process): boolean {
+  const feeds = driverRules();
+  return RULES.some((r) => !r.ported.includes(process) && r.PROCESSES.includes(process) && feeds.includes(r.ID));
+}
 
 /** The check names of the rules not ported yet for this process, in RULES order, each once. */
 export function checksNotRun(process: Process): string[] {
@@ -48,6 +57,10 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
     const passed = rules.flatMap((r) => (r.module!.passes ? r.module!.passes(features, summary, limits) : []))
       .map((p) => ({ ...p, limit_text: limitText(p.threshold_source) }));
     const rulesRun = rules.map((r) => r.ID);
+    const milled: Plan | { machine: null; setups: []; operations: []; tools: []; tool_changes: 0 } = process === "mill"
+      ? plan(features, findings as { rule: string; feature?: string | null }[], frame, part.unitsInFile)
+      : { machine: null, setups: [], operations: [], tools: [], tool_changes: 0 }; // turning.plan: S6
+    const drivers = costDrivers(findings as unknown as { id: string; rule: string }[], milled.setups, milled.tools);
     const assumptions = [...ASSUMPTIONS, ...(process === "turn" ? TURN_ASSUMPTIONS : [])];
     if (part.freeEdges) assumptions.push(MSG_OPEN_SHELL.replace("{n}", String(part.freeEdges)));
     if (part.unitsInFile === "none") assumptions.push(MSG_NO_UNIT);
@@ -72,17 +85,18 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
       passed: passed as unknown as Analysis["passed"],
       rows: findingRows(findings) as unknown as Analysis["rows"],
       passed_rows: passedRows(features, findings, passed) as unknown as Analysis["passed_rows"],
-      machine: null,
-      turn_axis: null,
-      stock: { shape: "block", size_in: bboxIn }, // S3 (and S6 for a bar)
-      setups: [],
-      operations: [],
-      tools: [],
-      tool_changes: 0,
-      cost_drivers: [],
-      cost_total: null,
+      machine: milled.machine,
+      turn_axis: null, // S6
+      stock: { shape: "block", size_in: bboxIn }, // the part's own size, no allowance (a bar: S6)
+      setups: milled.setups,
+      operations: milled.operations,
+      tools: milled.tools as Analysis["tools"],
+      tool_changes: milled.tool_changes,
+      cost_drivers: drivers,
+      cost_total: costTotal(drivers),
       assumptions,
       checks_not_run: checksNotRun(process),
+      cost_partial: costPartial(process),
     };
   } finally {
     oc.FS.unlink(IN_FILE);

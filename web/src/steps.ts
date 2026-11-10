@@ -3,7 +3,7 @@
 // (mockups/ui-direction/round3-frames.html: r3-overview, r3-features, r3-passed, r3-mach, r3-cost, r3-report) and the
 // Features groups mock-up (mockups/review-steps-features.html, D-049).
 
-import { NOT_WORKED_OUT, noChecksRun, notCheckedLine, planNotWorkedOut } from "./notrun";
+import { NOT_WORKED_OUT, noChecksRun, notCheckedLine, partial, planNotWorkedOut } from "./notrun";
 import type { Analysis, Finding, Row } from "./api";
 import { checkedCount, featureLine, holeThreads, measured, okFeatures } from "./findings";
 import { idRange, plural, sevMark, sevWord } from "./words";
@@ -126,7 +126,8 @@ export function renderOverview(cards: HTMLElement, first: HTMLElement, result: A
   } else if (!result.cost_drivers.length) {
     cost.append(sub("None: one setup and no tools to load."));
   } else {
-    cost.append(sub(el("span", "num", plural(result.cost_drivers.length, "cost driver")), el("span", undefined, `Biggest: ${biggestDrivers(result)}`)));
+    cost.append(sub(el("span", "num", `${plural(result.cost_drivers.length, "cost driver")}${partial(result)}`), // D-061
+      el("span", undefined, `Biggest: ${biggestDrivers(result)}`)));
   }
 
   const report = card("report", 5, onOpen);
@@ -151,6 +152,9 @@ export function renderCost(host: HTMLElement, result: Analysis): void {
     host.append(el("p", "notrun", NOT_WORKED_OUT)); // no drivers and no total in this copy yet (D-057)
     return;
   }
+  // The browser copy (D-061): which checks the drivers can't count yet, above them
+  const notChecked = result.cost_partial ? notCheckedLine(result) : null;
+  if (notChecked) host.append(el("p", "notrun", notChecked));
   if (!result.cost_drivers.length) {
     host.append(el("p", "none pad", "None: one setup and no tools to load."));
     return;
@@ -165,7 +169,7 @@ export function renderCost(host: HTMLElement, result: Analysis): void {
   if (result.cost_total !== null) {
     const total = el("div", "driver total");
     total.dataset.testid = "cost-total";
-    total.append(el("b", undefined, "Total score"), el("span"), el("span", "num", `${result.cost_total.toFixed(1)} points`));
+    total.append(el("b", undefined, "Total score"), el("span"), el("span", "num", `${result.cost_total.toFixed(1)} points${partial(result)}`));
     host.append(total);
   }
   const sources = [...new Set(result.cost_drivers.map((d) => d.weight_source))];

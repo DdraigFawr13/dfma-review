@@ -21,6 +21,8 @@ def test_plan_panel_two_sided_block(page: Page, base_url: str):
     expect(page.get_by_test_id("plan-loads")).to_have_text("5 (the first in each setup counts)")  # D-029; frame r3-mach words
     expect(page.locator("#plan-count")).to_have_text("3 setups")
     expect(page.get_by_test_id("plan-setup-1")).to_contain_text("Setup 1 · from +Z")
+    expect(page.get_by_test_id("plan-setup-1").locator(".shint")).to_have_text("Show on model ›")  # D-061, both copies
+    expect(page.get_by_test_id("plan-notrun")).to_be_hidden()  # no pocket line in the Python app
     expect(page.get_by_test_id("plan-setup-1")).to_contain_text("1. 1/2 in end mill")  # roughs
     expect(page.get_by_test_id("plan-setup-1")).to_contain_text("2. 1/4 in end mill")  # finishes
     expect(page.get_by_test_id("plan-setup-1")).not_to_contain_text("em-0.500")  # no tool codes on screen
@@ -45,3 +47,22 @@ def test_plan_panel_angled_hole(page: Page, base_url: str):
     open_step(page, "features")
     expect(page.get_by_test_id("row-F1")).to_contain_text("needs a 4/5-axis mill or a fixture")
     expect(page.get_by_test_id("row-F1")).to_contain_text("Fix")
+
+
+def test_setup_card_focus_and_size(page: Page, base_url: str):
+    """D-061 (S3 review): the setup card's focus ring sits inside the card, which clips what overflows it, and its
+    head band is at least 32 px tall, 44 px below 900 px (docs/UI_STYLE.md, audit F16). Both copies."""
+    page.goto(base_url)
+    page.get_by_test_id("upload-file").set_input_files(PARTS / "clean_holes.step")
+    shown(page, "clean_holes.step", "machining")
+    setup = page.get_by_test_id("plan-setup-1")
+    assert setup.locator(".shead").bounding_box()["height"] >= 32
+    setup.focus()
+    page.keyboard.press("Tab")
+    page.keyboard.press("Shift+Tab")  # focus by keyboard, so :focus-visible applies
+    style = setup.evaluate("e => [e.matches(':focus-visible'), getComputedStyle(e).outlineStyle, getComputedStyle(e).outlineOffset,"
+                           " getComputedStyle(e).outlineWidth]")
+    assert style[0] and style[1] == "solid", style
+    assert float(style[2].rstrip("px")) + float(style[3].rstrip("px")) <= 0, style  # drawn inside the card
+    page.set_viewport_size({"width": 412, "height": 915})
+    assert setup.locator(".shead").bounding_box()["height"] >= 44

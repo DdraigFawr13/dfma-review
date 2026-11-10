@@ -1,7 +1,7 @@
 # GitLab Pages port: the whole app in the browser
 
 - **Status:** Approved 2026-11-10 (Morgan on [Port Spec Approval](https://claude.ai/artifact/AjZQkdVY7ATByDULSNBfmQ), collection `final`: "Approved, start building"; D-056)
-- **Planned in:** [Port Round 1](https://claude.ai/artifact/GsFh2jKiaVwTGoDRxyRE4z) (collection `round1`), [Port Review 1](https://claude.ai/artifact/LB487Hw6uY7NAmwZHLERKk) (Morgan, 2026-11-09: "Ok approved with your recommendations"). Trial: `spikes/ocjs/README.md`. **Decisions:** D-001, D-004, D-006, D-009, D-011, D-030, D-054, D-055, D-056, D-057, D-058. **S1 mock-up:** [approved 2026-11-10](https://claude.ai/artifact/EDnCkkdnccX7jjsjrP3ZJa) (D-057).
+- **Planned in:** [Port Round 1](https://claude.ai/artifact/GsFh2jKiaVwTGoDRxyRE4z) (collection `round1`), [Port Review 1](https://claude.ai/artifact/LB487Hw6uY7NAmwZHLERKk) (Morgan, 2026-11-09: "Ok approved with your recommendations"). Trial: `spikes/ocjs/README.md`. **Decisions:** D-001, D-004, D-006, D-009, D-011, D-030, D-054, D-055, D-056, D-057, D-058. **S1 mock-up:** [approved 2026-11-10](https://claude.ai/artifact/EDnCkkdnccX7jjsjrP3ZJa) (D-057). **S3 mock-up:** [approved 2026-11-10](https://claude.ai/artifact/8JNZWyfhEctah8fm9jzDzh) (D-061).
 - **Approving this spec** also accepts D-054 (the engine and the static site), which replaces D-004's stack and D-006's package gate for the app.
 
 ## Problem
@@ -216,6 +216,16 @@ Settled after the zero-decision re-check of S2 against merged S1 (a fresh review
 - **Files beyond the list:** `tools.ts` (the drills of `tools.py`; end mills in S3), `units.ts` gains `past_limit`, `fraction`, `fmt_in`, `METRIC` and Python's number formats (`pyFixed`: an exact tie rounds to even, as Python's `f"{x:.3f}"`; `pyG` for `:g`), `rules/types.ts`. `number()` is ported but unused until S4.
 - **Compare (S2):** `features` of kind `hole`; `findings` on ported rules whose feature is of a ported kind, renumbered F1, F2… on each side, with `rows` (`id`, `findings`, `range`) mapped the same way; `passed` and `passed_rows` on ported rules and kinds. A key row of a ported rule that holds a finding not ported (an `access` row mixing a pocket's finding) leaves that rule's rows out of the file on both sides, counted in the summary. `compare.test.ts` plants 8 S2 changes.
 - **Tests:** the three `# S2` tests in `browser_pending.txt` pass the hole rows but assert the wall count ("1 hole and 4 walls checked"), so they move to `# S5`; `test_browser_engine.py::test_hole_rows` checks the hole rows word for word against Python on `report_sample`, `countersunk_hole`, `deep_hole` and `clean_holes`. `test_not_checked_notice` now expects the chips, Show OK and "Checks run" on a milled part and S1's states on a turned one.
+
+## Builder defaults (S3, 2026-11-10)
+
+Settled after the zero-decision re-check of S3 against merged S2 and Morgan's answers on the S3 mock-up (D-061).
+
+- **Screens (D-061):** each Machining setup is a card whose head band says "Show on model ›", or "Shown on model" in `--accent` when picked (both copies). Until S4 a milled part's Machining step and PDF say "Pockets are not in this plan yet in this copy, so it may need more setups and tools." (`POCKET_SLICE` in `notrun.ts`). The browser engine returns `cost_partial` (a rule `drivers.toml` maps to a driver is not ported for the process); while it is true the screen total, the Cost card's count and the PDF total read " (partial)", and the Cost step shows the not-checked line above the drivers. The PDF's Cost drivers section ends with "Total score: <n> points" in both copies.
+- **Turned parts:** Machining and Cost keep "Not worked out yet in this copy." until S6 (the browser copy returns no machine for them), as the hole checks did in S2.
+- **Compare (S3):** the plan keys compare on files whose key has no `pocket` or `corner` feature and no finding from an unported rule (`PLAN_KINDS`); the others count as "plan and cost" left out. `cost_drivers[].findings` map through the same renumbering as rows. `compare.test.ts` plants 12 S3 changes; `plan.test.ts` checks the pocket tools (unreached by parity until S4) and the setup cover against Python's own output.
+- **Files beyond the list:** `tools.ts` (end mills), `api.ts` (`cost_partial`), `notrun.ts`, `findings.ts` and `style.css` (the setup card), `main.ts`, `steps.ts`.
+- **`.gitlab-ci.yml`:** the spec's job plus a 15-minute timeout and a J7 guard that fails if the work build says "Test copy"; its script ran here on Node 22, not on GitLab (J8 stays Morgan's).
 
 ## Verification
 

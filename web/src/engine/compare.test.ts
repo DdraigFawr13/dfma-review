@@ -134,3 +134,71 @@ test("S2: an access row that mixes a pocket's finding is left out on both sides;
   expect(t.status).toBe("same");
   expect(t.leftOut).toEqual(["features", "findings", "rows", "passed", "passed_rows"]);
 });
+
+// S3: a hole-only key with a plan and cost drivers; the plan keys compare only where the key has no pocket or corner
+// and no finding from a rule not ported (port spec Parity S3).
+const planKeys = () => ({
+  machine: "3-axis mill",
+  stock: { shape: "block", size_in: [1, 2, 3] },
+  setups: [{ direction: "+Z", features: ["hole-1"] }],
+  operations: [{ setup: 0, tool: "dr-0.2500", features: ["hole-1"], faces: [3, 4] }],
+  tools: [{ id: "dr-0.2500", kind: "drill", diameter_in: 0.25, undersized: false }],
+  tool_changes: 1,
+  cost_drivers: [
+    { driver: "deep_holes", label: "Deep holes and bores", count: 1, weight: 1.0, score: 1.0, weight_source: "estimate", findings: ["F1"] },
+    { driver: "distinct_tools", label: "Distinct tools", count: 1, weight: 1.0, score: 1.0, weight_source: "estimate", findings: [] },
+  ],
+  cost_total: 2.0,
+});
+const s3key = () => {
+  const k = s2key();
+  return { ...k, ...planKeys(), features: [structuredClone(hole)], findings: [k.findings[0], { ...k.findings[2], id: "F2" }],
+    rows: [k.rows[0], { ...k.rows[2], id: "row:F2", findings: ["F2"], range: "F2" }],
+    rules_run: ["hole_depth", "hole_size", "access"], checks_run: ["Hole depth check", "Hole size check", "Access check"],
+    passed: [k.passed[0]], passed_rows: [] };
+};
+
+test("S3: the plan and cost keys compare on a hole-only file, and every planted change is caught", () => {
+  expect(compare(s3key(), s3key(), 3)).toEqual({ status: "same", diffs: [], leftOut: [] });
+  const cases: [string, (r: ReturnType<typeof s3key>) => void][] = [
+    ["machine", (r) => { r.machine = "4/5-axis mill or fixture"; }],
+    ["stock", (r) => { r.stock.size_in[2] = 3.001; }],
+    ["setup direction", (r) => { r.setups[0].direction = "-Z"; }],
+    ["operation faces", (r) => { r.operations[0].faces = [3]; }],
+    ["tool id", (r) => { r.tools[0].id = "dr-0.2510"; }],
+    ["tool changes", (r) => { r.tool_changes = 2; }],
+    ["driver order", (r) => { r.cost_drivers.reverse(); }],
+    ["driver findings", (r) => { r.cost_drivers[0].findings = ["F2"]; }],
+    ["cost total", (r) => { r.cost_total = 2.1; }],
+    ["operation order", (r) => { r.operations.push({ setup: 0, tool: "cs-90", features: ["hole-1"], faces: [5] }); }],
+    ["setup features", (r) => { r.setups[0].features = []; }],
+    ["tool undersized", (r) => { r.tools[0].undersized = true; }],
+  ];
+  for (const [what, plant] of cases) {
+    const r = s3key();
+    plant(r);
+    expect(compare(r, s3key(), 3).status, what).toBe("different");
+    expect(compare(r, s3key(), 2).status, `${what} at S2`).toBe("same"); // S2 did not compare the plan
+  }
+});
+
+test("S3: a key with a pocket or an unported finding leaves the plan and cost out; its driver ids map like rows", () => {
+  const withPocket = { ...s3key(), features: [structuredClone(hole), { id: "pocket-1", kind: "pocket", faces: [7] }] };
+  const r = { ...s3key(), machine: "other", cost_total: 9 };
+  expect(compare(r, withPocket, 3)).toEqual({ status: "same", diffs: [], leftOut: ["plan and cost"] });
+  const withWall = s3key();
+  withWall.findings.push({ id: "F3", rule: "thin_wall", severity: "high", feature: "wall-1", measured: 0.5, limit: 1, title: "thin" });
+  expect(compare(r, withWall, 3).leftOut).toEqual(["plan and cost"]);
+});
+
+test("S3: driver finding ids compare after renumbering, so an unported rule's finding ahead of them changes nothing", () => {
+  // Python numbers findings across all rules: with an unported rule's finding first (a turned file's turn_axis, say)
+  // its ids shift. Here a qualifying file's two sides number the same findings differently and still agree.
+  const k = s3key();
+  k.findings = [{ ...k.findings[0], id: "F7" }, { ...k.findings[1], id: "F9" }];
+  k.rows = [{ ...k.rows[0], id: "row:F7", findings: ["F7"], range: "F7" }, { ...k.rows[1], id: "row:F9", findings: ["F9"], range: "F9" }];
+  k.cost_drivers[0].findings = ["F7"];
+  expect(compare(s3key(), k, 3).status).toBe("same");
+  k.cost_drivers[0].findings = ["F9"];
+  expect(compare(s3key(), k, 3).status).toBe("different");
+});

@@ -80,31 +80,35 @@ def test_view_part(page: Page, base_url: str):
 
 def test_not_checked_notice(page: Page, base_url: str):
     """J1 and D-057: the Not-checked-yet line on the Features card and step and on Report, naming only the checks not
-    ported; Machining and Cost not worked out yet. From S2 the hole checks run on a milled part, so its chips, Show OK
-    and "Checks run" show; a turned part runs none yet (S6), so it keeps S1's states: no chips, Show OK or checks."""
+    ported. From S2 the hole checks run on a milled part, so its chips, Show OK and "Checks run" show; from S3 its
+    Machining and Cost show the plan and the drivers. A turned part runs no check and has no plan yet (S6), so it keeps
+    S1's states: no chips, Show OK or checks, and Machining and Cost not worked out yet."""
     page.goto(base_url)
     read(page, PARTS / "report_sample.step")
     line = not_checked()
     later = "Not worked out yet in this copy."
     expect(page.get_by_test_id("overview-features")).to_contain_text(line)
-    expect(page.get_by_test_id("overview-machining")).to_contain_text(later)
-    expect(page.get_by_test_id("overview-cost")).to_contain_text(later)
+    expect(page.get_by_test_id("overview-machining")).to_contain_text("3-axis mill")
+    expect(page.get_by_test_id("overview-cost")).not_to_contain_text(later)
     page.get_by_test_id("step-features").click()
     expect(page.get_by_test_id("features-notrun")).to_have_text(line)
     expect(page.locator("#row-chips button").first).to_be_visible()
     expect(page.get_by_test_id("show-ok")).to_be_visible()
     page.get_by_test_id("step-machining").click()
-    expect(page.get_by_test_id("plan-notrun")).to_have_text(later)
+    expect(page.get_by_test_id("plan-notrun")).to_have_text(POCKETS_LATER)  # a milled plan holds holes only until S4 (D-061)
+    expect(page.get_by_test_id("plan-machine")).to_have_text("3-axis mill")
     expect(page.locator("#plan-none")).to_be_hidden()
     page.get_by_test_id("step-cost").click()
-    expect(page.locator("#cost")).to_have_text(later)
+    expect(page.get_by_test_id("cost-total")).to_be_visible()
+    expect(page.locator("#cost")).not_to_contain_text(later)
     page.get_by_test_id("step-report").click()
     expect(page.get_by_test_id("report-notrun")).to_have_text(line)
     expect(page.locator("#report-checks")).to_be_visible()
     for name in ("Hole depth check", "Hole size check", "Access check"):
         expect(page.locator("#report-checks")).to_contain_text(name)
-    expect(page.locator("#page-report [data-pdf]:visible")).to_have_count(1)  # the findings pages; no plan, no .ipt
+    expect(page.locator("#page-report [data-pdf]:visible")).to_have_count(2)  # the findings and the plan; no .ipt
     expect(page.locator('#page-report [data-pdf="findings"]')).to_be_visible()
+    expect(page.locator('#page-report [data-pdf="plan"]')).to_be_visible()
     # A turned part names every turning check and keeps S1's states (the Process select sits on the Part step)
     page.get_by_test_id("step-part").click()
     page.get_by_test_id("upload-process").select_option("turn")
@@ -116,6 +120,10 @@ def test_not_checked_notice(page: Page, base_url: str):
     expect(page.locator("#row-chips button")).to_have_count(0)
     expect(page.get_by_test_id("show-ok")).to_be_hidden()
     expect(page.locator("#rows")).not_to_contain_text("No findings")
+    page.get_by_test_id("step-machining").click()
+    expect(page.get_by_test_id("plan-notrun")).to_have_text(later)
+    page.get_by_test_id("step-cost").click()
+    expect(page.locator("#cost")).to_have_text(later)
 
 
 def test_ui_responsive(page: Page, base_url: str):
@@ -268,3 +276,39 @@ def test_hole_rows(page: Page, base_url: str, name: str):
     faces = sorted({i for f in findings if f["id"] in first["findings"] for i in f["faces"]})
     page.get_by_test_id(f"row-{ids[first['findings'][0]]}").click()
     assert sorted(page.evaluate("window.__dfma.highlightedFaces()")) == faces
+
+
+POCKETS_LATER = "Pockets are not in this plan yet in this copy, so it may need more setups and tools."
+
+
+def test_plan_and_cost(page: Page, base_url: str, tmp_path):
+    """S3 (D-061): clean_holes.step's plan and drivers as Python gives them; the pocket line on Machining and in the
+    PDF; the setup card says what a tap does and that it is done; the total, the Cost card and the PDF read
+    "(partial)" while a check that feeds a driver has not run, and the Cost step names those checks."""
+    from pypdf import PdfReader
+    key = analyze(PARTS / "clean_holes.step", "clean_holes.step")
+    page.goto(base_url)
+    shown = read(page, PARTS / "clean_holes.step")
+    for name in ("machine", "setups", "operations", "tools", "tool_changes", "cost_drivers", "cost_total"):
+        assert shown[name] == key[name], name
+    assert shown["cost_partial"] is True
+    total = f"{key['cost_total']:.1f} points (partial)"
+    expect(page.get_by_test_id("overview-cost")).to_contain_text("1 cost driver (partial)")
+    page.get_by_test_id("step-machining").click()
+    expect(page.get_by_test_id("plan-notrun")).to_have_text(POCKETS_LATER)
+    setup = page.get_by_test_id("plan-setup-1")
+    expect(setup).to_contain_text("Setup 1 · from +Z")
+    expect(setup.locator(".shint")).to_have_text("Show on model ›")
+    setup.click()
+    expect(setup).to_have_attribute("aria-pressed", "true")
+    expect(setup.locator(".shint")).to_have_text("Shown on model")
+    page.get_by_test_id("step-cost").click()
+    expect(page.get_by_test_id("cost-total")).to_contain_text(total)
+    expect(page.locator("#cost .notrun")).to_have_text(not_checked())
+    with page.expect_download() as download:
+        page.get_by_test_id("export-pdf").click()
+    path = tmp_path / "report.pdf"
+    download.value.save_as(path)
+    first = PdfReader(path).pages[0].extract_text().replace("\n", " ")
+    for text in (POCKETS_LATER, "Machine: 3-axis mill", f"Total score: {total}", not_checked()):
+        assert text in first, f"{text!r} is not on page 1"
