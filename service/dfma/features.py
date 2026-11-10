@@ -111,6 +111,13 @@ def _ref_frame(axis: Vec) -> tuple[Vec, Vec]:
     return x, cross(a, x)
 
 
+def _whole_degree(a: float) -> int:
+    """The whole-degree bin of an angle in [0, 360] deg, snapped to 9 decimals first (D-063): a sample at a whole
+    degree (a seam at 270) lands in the same bin whatever 1-ulp noise atan2 carries; glibc's atan2 and the browser's
+    differ by one step there (NIST linkage_arm_42: 270.0 here, 269.99999999999994 in the browser)."""
+    return int(round(a, 9)) % 360
+
+
 def _angle_bins(face, surface, origin: Vec, axis: Vec) -> set[int]:
     """Whole degrees around the axis covered by the face's u range (sampled every 0.5 deg)."""
     umin, umax, vmin, vmax = breptools.UVBounds(face)
@@ -121,7 +128,7 @@ def _angle_bins(face, surface, origin: Vec, axis: Vec) -> set[int]:
         p = _pt(surface.Value(umin + (umax - umin) * i / steps, (vmin + vmax) / 2))
         r = _sub(p, origin)
         angles.append(math.degrees(math.atan2(dot(r, y), dot(r, x))) % 360)
-    return {int(a) % 360 for a in angles}
+    return {_whole_degree(a) for a in angles}
 
 
 def _outward_normal(face) -> tuple[Vec, Vec]:

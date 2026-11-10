@@ -2,12 +2,15 @@
 // its module here and the processes it is ported for; checks_not_run names every rule not ported yet for the process
 // (port spec Design). S2's hole rules are ported for Milling only: on a turned part Python splits the holes into
 // holes and bores first (split_bores, S6), so the browser copy runs no hole rule there until S6. S4's pocket rules
-// (corner_radius, pocket_depth, undercut) run on Milling only, as in Python.
+// (corner_radius, pocket_depth, undercut) run on Milling only, as in Python. S5's thin_wall is ported for Milling only:
+// on a turned part a wall at a hole names the hole by its split_bores id (analyze.py), and the browser copy finds no
+// holes there until S6.
 import type { Process } from "../../api";
 import * as access from "./access";
 import * as cornerRadius from "./corner_radius";
 import * as pocketDepth from "./pocket_depth";
 import * as undercut from "./undercut";
+import * as thinWall from "./thin_wall";
 import * as holeDepth from "./hole_depth";
 import * as holeSize from "./hole_size";
 import type { Feature, Finding, Limits, PartSummary, Pass } from "./types";
@@ -24,7 +27,7 @@ export const RULES: RuleEntry[] = [
   { ID: "corner_radius", PROCESSES: ["mill"], ported: ["mill"], module: cornerRadius },
   { ID: "pocket_depth", PROCESSES: ["mill"], ported: ["mill"], module: pocketDepth },
   { ID: "undercut", PROCESSES: ["mill"], ported: ["mill"], module: undercut },
-  { ID: "thin_wall", PROCESSES: ["mill", "turn"], ported: [] },
+  { ID: "thin_wall", PROCESSES: ["mill", "turn"], ported: ["mill"], module: thinWall },
   { ID: "access", PROCESSES: ["mill"], ported: ["mill"], module: access },
   { ID: "looks_turned", PROCESSES: ["mill"], ported: [] },
   { ID: "turn_axis", PROCESSES: ["turn"], ported: [] },

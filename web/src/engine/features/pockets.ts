@@ -1,5 +1,5 @@
 // Port of service/dfma/features.py lines 678 to 1341 (pockets and corners), `_inner_points`, `_Rays` and `_box`
-// (port spec S4; `_area` goes with the walls, S5). Read it beside the Python: the same names in camelCase, the same
+// (port spec S4; `_area` is in walls.ts, S5). Read it beside the Python: the same names in camelCase, the same
 // order of every loop and every stack pop, so walls, corners and pockets come out in the same order. Each function takes face ids where the
 // Python takes `topo.faces[k]`.
 import { ANGLE_TOL, cross, dot, unit, type Vec } from "../frame";
@@ -360,7 +360,7 @@ function undercut(topo: Topology, walls: number[], n: Vec, skip: Set<number>, ov
 }
 
 /** BRepExtrema_DistShapeShape(a, b).Value(), and IsDone(). */
-function distShapes(oc: OC, a: OC, b: OC): [number, boolean] {
+export function distShapes(oc: OC, a: OC, b: OC): [number, boolean] {
   const range = new oc.Message_ProgressRange();
   const d = new oc.BRepExtrema_DistShapeShape(a, b, oc.Extrema_ExtFlag.Extrema_ExtFlag_MINMAX, oc.Extrema_ExtAlgo.Extrema_ExtAlgo_Grad, range);
   const out: [number, boolean] = [d.IsDone() ? d.Value() : NaN, d.IsDone()];

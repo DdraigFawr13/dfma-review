@@ -14,12 +14,14 @@ export { SLICE };
 
 /** Keys compared at this slice (S1: the part summary, the faces, the assumptions and the rule lists; S2: holes and
  *  the findings, rows and passed checks of the hole rules; S3: the machine plan and the cost drivers; S4: no new key,
- *  but pockets, corners and their rules in the keys above, and part.not_analysed_faces on milled files). */
+ *  but pockets, corners and their rules in the keys above, and part.not_analysed_faces on milled files; S5: no new
+ *  key, but the walls and thin_wall in the keys above). */
 export const PORTED_KEYS: Record<number, string[]> = {
   1: ["part", "faces", "assumptions", "rules_run", "checks_run"],
   2: ["features", "findings", "rows", "passed", "passed_rows"],
   3: ["machine", "stock", "setups", "operations", "tools", "tool_changes", "cost_drivers", "cost_total"],
   4: [], // S4 adds kinds and rules to the keys above, and part.not_analysed_faces on milled files
+  5: [], // S5 adds the walls and thin_wall to the keys above
 };
 /** Rules ported by slice, with their check names (rows.py CHECKS); rules_run and checks_run compare on these only. */
 export const PORTED_RULES: Record<number, Record<string, string>> = {
@@ -27,6 +29,7 @@ export const PORTED_RULES: Record<number, Record<string, string>> = {
   2: { hole_depth: "Hole depth check", hole_size: "Hole size check", access: "Access check" },
   3: {},
   4: { corner_radius: "Corner radius check", pocket_depth: "Pocket depth check", undercut: "Undercut check" },
+  5: { thin_wall: "Thin wall check" },
 };
 /** Feature kinds ported by slice: a list key compares only its items on these kinds (port spec Parity). */
 export const PORTED_KINDS: Record<number, string[]> = {
@@ -34,6 +37,7 @@ export const PORTED_KINDS: Record<number, string[]> = {
   2: ["hole"],
   3: [],
   4: ["pocket", "corner"],
+  5: ["wall"],
 };
 /** The plan and cost keys (S3) compare only on files whose key has no feature of these kinds while they are not
  *  ported, and no finding from a rule not ported: the plan reads holes and pockets and the findings on them

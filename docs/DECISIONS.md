@@ -462,3 +462,15 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-10). Morgan, in chat during the S4 build: "Ok when you are done merge and then start s5 in a new session".
 - **Decision:** merge S4 (PR #37) once its checks pass, the fresh reviewer's findings are settled, the full-set parity is recorded and the status page and demo are published (D-009), without waiting for another approval. S5 (walls) starts in a new session, with its **First** step: port the wall finders as they are and run parity on walls over the full set; any wall finding that differs stops the slice and goes to Morgan (spec Risks).
 - **Why:** Morgan approved the slice and delegated the merge. S4's stop test did not trigger: every pocket, corner and pocket finding on the full set equals Python's.
+
+## D-063 Port S5: whole-degree bins snap to 9 decimals first, in Python and the port
+
+- **Status:** Accepted (2026-11-10). Morgan, on the S5 stop question: "Snap in both (Recommended)".
+- **Decision:** `features.py` `_angle_bins` takes each sample's whole-degree bin as `int(round(a, 9)) % 360` (`_whole_degree`), and `holes.ts` `wholeDegree` does the same. S5 then goes on.
+- **Why:** S5's first full-set parity found 4 NIST linkage arms whose `thin_wall` findings named other walls than Python's. The cause was not the mesh: V8's `Math.atan2` is one step off glibc's at a hole's seam (-1.5707963267948972 vs -1.570796326794897), so the browser read 269.99999999999994 deg where Python read 270.0, dropped bin 270, and credited a wall to the hole's other half-face. A browser-only copy of glibc's atan2 can't be guaranteed on every input. With the snap in both, full parity is 282/290 the same (the 2 mesh-only files differ, 6 crash Python). Python's own results change on 7 of 290 files: the same findings, titles and cost totals; holes, pockets, setups and tools unchanged; only which hole face a wall at a hole names, 3 passing wall thicknesses, and 1 extra passing wall on `nasty_cheese.stp`.
+
+## D-064 Port S5 approved; merge when CI is done; S6 in a new session
+
+- **Status:** Accepted (2026-11-10). Morgan, in chat during the S5 build: "Ok I approve of everything when you are done. Please go ahead and begin to once this slice is complete and start a new session for the next slice. Merge when ci is completed".
+- **Decision:** merge S5 once its checks and CI pass, the fresh reviewer's findings are settled, the full-set parity is recorded and the status page and demo are published (D-009), without waiting for another approval. S6 (turned parts) then starts in a new session.
+- **Why:** Morgan approved the slice and delegated the merge.

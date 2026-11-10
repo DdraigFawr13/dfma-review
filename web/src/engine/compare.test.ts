@@ -256,3 +256,46 @@ test("S4: a turned file still leaves not_analysed_faces out (Python's turned poc
   const r = { ...key(), rules_run: [], checks_run: [], part: { ...key().part, not_analysed_faces: [] } };
   expect(compare(r, turned, 4).status).toBe("same");
 });
+
+// S5: walls (between planar faces and at holes) and thin_wall; the plan and cost now compare on a thin-wall file.
+const wall = { id: "wall-1", kind: "wall", faces: [11, 12], axis: [0, 0, -1], open_dirs: [], open_vectors: [],
+  dims_mm: { thickness: 0.5, overlap_mm2: 120 } };
+const holeWall = { id: "wall-2", kind: "wall", faces: [3, 12], axis: null, open_dirs: [], open_vectors: [],
+  dims_mm: { thickness: 1.2 }, hole: "hole-1", at: "side" };
+const s5key = () => {
+  const k = s4key();
+  return { ...k, features: [...k.features, structuredClone(wall), structuredClone(holeWall)],
+    findings: [...k.findings, { id: "F4", rule: "thin_wall", severity: "high", feature: "wall-1", measured: 0.01969, limit: 0.03,
+      title: "Wall 0.020 in thick (limit 0.030 in)" }],
+    rows: [...k.rows, { id: "row:F4", rule: "thin_wall", findings: ["F4"], range: "F4", count: 1, sentence: "thin." }],
+    rules_run: ["hole_depth", "hole_size", "corner_radius", "pocket_depth", "undercut", "thin_wall", "access"],
+    checks_run: ["Hole depth check", "Hole size check", "Corner radius check", "Pocket depth check", "Undercut check",
+      "Thin wall check", "Access check"],
+    passed: [...k.passed, { rule: "thin_wall", feature: "wall-2", title: "0.047 in thick, at least 0.030 in" }],
+    passed_rows: [...k.passed_rows, { rule: "thin_wall", kind: "wall", features: ["wall-2"], title: "Walls ×1" }],
+    cost_drivers: [...k.cost_drivers, { driver: "thin_walls", label: "Thin walls", count: 1, weight: 2, score: 2, weight_source: "drivers.toml", findings: ["F4"] }] };
+};
+
+test("S5: walls and thin_wall compare, the plan compares on a thin-wall file, and every planted change is caught", () => {
+  expect(compare(s5key(), s5key(), 5)).toEqual({ status: "same", diffs: [], leftOut: [] });
+  const cases: [string, (r: ReturnType<typeof s5key>) => void][] = [
+    ["wall thickness", (r) => { (r.features[3].dims_mm as Record<string, number>).thickness = 0.50001; }],
+    ["wall overlap", (r) => { (r.features[3].dims_mm as Record<string, number>).overlap_mm2 = 121; }],
+    ["hole wall's hole", (r) => { (r.features[4] as typeof holeWall).hole = "hole-2"; }],
+    ["hole wall's place", (r) => { (r.features[4] as typeof holeWall).at = "tip"; }],
+    ["wall dropped", (r) => { r.features.pop(); }],
+    ["thin_wall finding", (r) => { r.findings[3].title = "Wall 0.0197 in thick (limit 0.030 in)"; }],
+    ["thin_wall row", (r) => { r.rows[3].sentence = "Thin."; }],
+    ["thin_wall pass", (r) => { r.passed.pop(); }],
+    ["rules_run", (r) => { r.rules_run = r.rules_run.filter((id) => id !== "thin_wall"); }],
+    ["thin walls driver", (r) => { r.cost_drivers[r.cost_drivers.length - 1].score = 3; }],
+    ["wall passed row", (r) => { r.passed_rows.pop(); }],
+  ];
+  for (const [what, plant] of cases) {
+    const r = s5key();
+    plant(r);
+    expect(compare(r, s5key(), 5).status, what).toBe("different");
+  }
+  // S4 left the walls, thin_wall and the plan on a thin-wall file out
+  expect(compare(s4key(), s5key(), 4)).toEqual({ status: "same", diffs: [], leftOut: ["plan and cost"] });
+});
