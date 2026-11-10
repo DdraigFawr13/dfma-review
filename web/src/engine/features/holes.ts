@@ -66,7 +66,7 @@ export const sub = (a: Vec, b: Vec): Vec => [a[0] - b[0], a[1] - b[1], a[2] - b[
 const scale = (k: number, a: Vec): Vec => [k * a[0], k * a[1], k * a[2]];
 const neg = (a: Vec): Vec => [-a[0], -a[1], -a[2]];
 const norm = (a: Vec) => Math.sqrt(dot(a, a));
-const degrees = (rad: number) => (rad * 180) / Math.PI;
+const degrees = (rad: number) => rad * (180 / Math.PI); // math.degrees: x * (180 / pi)
 
 /** Python's float `%`: the result takes the divisor's sign. */
 function pyMod(a: number, b: number): number {
@@ -250,6 +250,12 @@ export function uvBounds(oc: OC, face: OC): [number, number, number, number] {
   return [b.UMin, b.UMax, b.VMin, b.VMax];
 }
 
+/** The whole-degree bin of an angle in [0, 360] deg, snapped to 9 decimals first (D-063, features.py _whole_degree):
+ *  V8's Math.atan2 is one step off glibc's at a seam, so 270 deg reads 269.99999999999994 here and 270.0 in Python. */
+export function wholeDegree(a: number): number {
+  return pyMod(Math.trunc(round(a, 9)), 360);
+}
+
 /** Whole degrees around the axis covered by the face's u range (sampled every 0.5 deg). */
 function angleBins(oc: OC, face: OC, surface: OC, origin: Vec, axis: Vec): Set<number> {
   const [umin, umax, vmin, vmax] = uvBounds(oc, face);
@@ -261,7 +267,7 @@ function angleBins(oc: OC, face: OC, surface: OC, origin: Vec, axis: Vec): Set<n
     const r = sub(pt(p), origin);
     p.delete();
     const a = pyMod(degrees(Math.atan2(dot(r, y), dot(r, x))), 360);
-    out.add(pyMod(Math.trunc(a), 360));
+    out.add(wholeDegree(a));
   }
   return out;
 }

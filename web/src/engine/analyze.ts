@@ -4,7 +4,8 @@
 // summary and the assumptions; S2 the holes and the hole rules (hole_depth, hole_size, access) with their rows, on
 // Milling only (a turned part's holes split into holes and bores first: S6); S3 the mill plan and the cost drivers
 // (a turned part's plan is turning.plan: S6); S4 the pockets, corners and undercuts with their rules, on Milling
-// (a turned part's pockets feed its profile and off-axis checks: S6).
+// (a turned part's pockets feed its profile and off-axis checks: S6); S5 the walls and thin_wall, on Milling (a wall at a
+// hole names the hole by its split_bores id on a turned part: S6).
 import type { Analysis, Material, Process } from "../api";
 import { extentsMm, faceInfo, partFrame, type Vec } from "./frame";
 import { meshFaces } from "./mesh";
@@ -12,6 +13,7 @@ import type { OC } from "./oc";
 import { readStep } from "./read";
 import { holes, number } from "./features/holes";
 import { linkCorners, pockets } from "./features/pockets";
+import { holeWalls, walls } from "./features/walls";
 import { checkName, checksRun, costTotal, findingRows, limitText, passedRows } from "./rows";
 import { costDrivers, driverRules } from "./drivers";
 import { plan, type Plan } from "./plan";
@@ -51,13 +53,15 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
     const bboxIn = extentsMm(frame, vertices).map((e) => round(mmToIn(e), 6)) as [number, number, number];
     // S2: holes and the hole rules, on Milling (rules_run lists the ported rules that ran, in RULES order)
     const holeList = process === "mill" ? holes(oc, part.solid, part.faces, frame) : [];
-    // S4: pockets and corners, after the holes whose faces they skip (analyze.py); walls follow in S5
+    // S4: pockets and corners, after the holes whose faces they skip (analyze.py)
     const holeFaces = new Set(holeList.flatMap((f) => f.faces));
     const [rawPockets, rawCorners] = process === "mill" ? pockets(oc, part.solid, part.faces, frame, holeFaces) : [[], []];
+    // S5: walls between planar faces, then walls at holes, numbered together and placed last (analyze.py)
+    const wallList = process === "mill" ? [...walls(oc, part.solid, part.faces), ...holeWalls(oc, part.solid, part.faces, holeList)] : [];
     const pocketList = number(rawPockets, "pocket");
     const cornerList = number(rawCorners, "corner");
     linkCorners(pocketList, cornerList);
-    const features = [...holeList, ...pocketList, ...cornerList] as unknown as Feature[];
+    const features = [...holeList, ...pocketList, ...cornerList, ...number(wallList, "wall")] as unknown as Feature[];
     const pocketFaces = new Set(pocketList.flatMap((f) => f.faces));
     const summary: PartSummary = { units_in_file: part.unitsInFile, frame, face_count: part.faces.length };
     const limits = thresholds(material);
