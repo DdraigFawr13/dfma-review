@@ -25,7 +25,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-10 Port S6 (turned parts; D-066): `features/turned.ts`, `turning.ts`, the five turning rules, `looks_turned` on Milling; holes, pockets and walls now run on Turning too. Quick parity 77/77 (6 turned); full set 282/290 the same (2 mesh-only, 6 crash Python), as S5; 8 `# S6` browser tests pass and leave `browser_pending.txt`; `compare.test.ts` plants 16 S6 changes. Research on steps, slots and open pockets: `docs/research/feature-recognition.html` (5 proposals, 4 questions, all Proposed).
+- 2026-11-10 Port S6 (turned parts; D-066): `features/turned.ts`, `turning.ts`, the five turning rules, `looks_turned` on Milling; holes, pockets and walls now run on Turning too. Quick parity 77/77 (6 turned); full set 282/290 the same (2 mesh-only, 6 crash Python), as S5; 8 `# S6` browser tests pass and leave `browser_pending.txt`; `compare.test.ts` plants 16 S6 changes. Research on steps, slots and open pockets: `docs/research/feature-recognition.html` (5 proposals, 4 questions, all Proposed). PR #40 (draft); [status](https://claude.ai/artifact/PGbkaqYiMGpvTdQEF2qKV2), [demo](https://claude.ai/artifact/DFZLQhvGaxFJ6pzCwtmYs7), [research](https://claude.ai/artifact/2WMDy9UUPaeon9UHcjvXmY). Fresh review: 0 high, 4 low (2 fixed). Olefile 0.47 and pytest-xdist were missing again; installed with micromamba.
 
 
 ## Next
