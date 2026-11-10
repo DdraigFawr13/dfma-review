@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Licenses · DFMA Review</title>
+<!-- Mock-up of web/public/licences.html (port spec J6, S1). Names, versions and licences: npm view and
+     web/node_modules/*/package.json, 2026-11-10. Fonts: web/public/fonts/SOURCE.md and OFL.txt. -->
+<style>
+:root { --bg: #eef2f6; --panel: #ffffff; --ink: #16263d; --muted: #55657a; --line: #c4cfdc; --accent: #1f5fa8;
+  --radius: 2px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --sans: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1rem/1.5 var(--sans); }
+header { padding: var(--space-3) var(--space-4); background: var(--panel); border-bottom: 1px solid var(--line); display: flex; gap: var(--space-3); align-items: center; }
+header h1 { margin: 0; font-size: 1rem; font-weight: 700; }
+header a { color: var(--accent); font-size: 0.875rem; display: inline-flex; align-items: center; min-height: 32px; }
+main { max-width: 760px; margin: var(--space-4) auto; padding: 0 var(--space-4); }
+h2 { font-size: 1.125rem; margin: var(--space-4) 0 var(--space-2); }
+p { margin: 0 0 var(--space-3); }
+table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); }
+th, td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--line); vertical-align: top; font-size: 0.875rem; }
+th { color: var(--muted); font-weight: 600; }
+td.num { font-family: var(--mono); font-weight: 500; white-space: nowrap; }
+a { color: var(--accent); }
+.note { color: var(--muted); font-size: 0.875rem; }
+</style>
+</head>
+<body>
+<header><h1>DFMA Review · Licenses</h1><a href="./">Back to the review</a></header>
+<main>
+  <p>This page runs on the code below. Each part keeps its own license; the full texts ship with the page.</p>
+  <h2>Geometry engine</h2>
+  <table>
+    <tr><th>Part</th><th>Version</th><th>License</th><th>Source</th></tr>
+    <tr><td>OpenCascade Technology, built for the browser as <span class="num">@taucad/opencascade.js</span></td><td class="num">3.0.0-beta.3 (OCCT 8.0.0)</td>
+      <td>LGPL-2.1 with the Open CASCADE exception 1.0 · <a href="licences/opencascade.txt">full text</a></td>
+      <td><a href="https://registry.npmjs.org/@taucad/opencascade.js/-/opencascade.js-3.0.0-beta.3.tgz">package as shipped</a> · <a href="https://github.com/taucad/opencascade.js">build recipe</a></td></tr>
+  </table>
+  <p class="note">The engine file ships unchanged. You may replace it with your own build of the same source.</p>
+  <h2>Other packages in the page</h2>
+  <table>
+    <tr><th>Package</th><th>Version</th><th>License</th></tr>
+    <tr><td class="num">three</td><td class="num">0.187.0</td><td>MIT</td></tr>
+    <tr><td class="num">jspdf</td><td class="num">4.2.1</td><td>MIT</td></tr>
+    <tr><td class="num">smol-toml</td><td class="num">1.9.1</td><td>BSD-3-Clause</td></tr>
+    <tr><td class="num">fflate</td><td class="num">0.8.3</td><td>MIT</td></tr>
+    <tr><td class="num">fast-png</td><td class="num">6.4.0</td><td>MIT</td></tr>
+    <tr><td class="num">@babel/runtime</td><td class="num">7.29.13</td><td>MIT</td></tr>
+  </table>
+  <h2>Fonts</h2>
+  <table>
+    <tr><th>Font</th><th>License</th></tr>
+    <tr><td>IBM Plex Sans, IBM Plex Mono</td><td>SIL Open Font License 1.1 · <a href="fonts/OFL.txt">full text</a></td></tr>
+  </table>
+</main>
+</body>
+</html>

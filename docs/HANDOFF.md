@@ -1,6 +1,6 @@
 # Handoff
 
-Updated: 2026-11-09. A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
+Updated: 2026-11-10. A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
 
 ## Phase
 
@@ -24,12 +24,12 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
+- 2026-11-10 Port S1 mock-up published for Morgan ([page](https://claude.ai/artifact/EDnCkkdnccX7jjsjrP3ZJa); `mockups/port-s1-browser-copy.html`, built by `mockups/build_port_s1.py`): real app with the S1 changes added in the page; 1 fresh check (3 high, 5 medium, 2 low; 8 fixed, 2 kept). Branch `port-s1-site-viewer`. olefile 0.47 was missing from the cloud env again; installed with micromamba.
 - 2026-11-10 Port spec approved by Morgan ("Approved, start building"; D-056) and merged with the trial in #33: [docs/specs/gitlab-pages-port.md](specs/gitlab-pages-port.md), 8 slices; all 5 additions approved. [Approval page](https://claude.ai/artifact/AjZQkdVY7ATByDULSNBfmQ), [PR #33](https://github.com/DdraigFawr13/dfma-review/pull/33).
-- 2026-11-09 opencascade.js trial (Morgan: run "on Gitlab pages completely"): the fork reads all 33 NIST files the same as the app, 8,137 of 8,137 faces, in Node and Chromium; recognizer engine calls identical except 214 meshed faces; 512 of 512 `.ipt` streams. `spikes/ocjs/README.md`, D-054. [Status](https://claude.ai/artifact/Xi214RHUBM5P85dq69PbE9).
 
 ## Next
 
-00. Now: port S1 (site, viewer and parity harness) of [docs/specs/gitlab-pages-port.md](specs/gitlab-pages-port.md) (D-056), in a new session from `main` after PR #33 merges: mock-up first with `ui-mockups` ("Test copy" header, start-form line, Not-checked-yet lines), Morgan approves it, then build.
+00. Now: port S1 of [docs/specs/gitlab-pages-port.md](specs/gitlab-pages-port.md) (D-056) on branch `port-s1-site-viewer`. Waiting on Morgan: Approve / Change / Rethink on the [S1 mock-up](https://claude.ai/artifact/EDnCkkdnccX7jjsjrP3ZJa); it adds choices beyond the spec (Features chips and Show OK hidden while no check ran, "Licenses" in American spelling, the trimmed "The PDF holds" list, no new wording for the first engine download). No S1 code before approval. Then write-spec step 8: zero-decision re-check of S1 against main, checks fail first, build, reviewer, status page and browser-engine demo.
 0. Now: plainer sentences for the rule cases that still read as titles, each shown to Morgan first (D-045). Follow-up from the audit fixes: Hole feature rows still carry aria-pressed and aria-expanded (F15's pattern, out of its scope).
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `python tests/inventor/local_pairs.py` (now prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
 2. Recognition and stress-test status, scoring commands and the MFCAD++ download: archive "Moved 2026-11-09" (old Next 3 and 3a). Re-run them on every recognition change.
