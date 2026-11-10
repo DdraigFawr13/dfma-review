@@ -170,6 +170,9 @@ test("S3: the plan and cost keys compare on a hole-only file, and every planted 
     ["driver order", (r) => { r.cost_drivers.reverse(); }],
     ["driver findings", (r) => { r.cost_drivers[0].findings = ["F2"]; }],
     ["cost total", (r) => { r.cost_total = 2.1; }],
+    ["operation order", (r) => { r.operations.push({ setup: 0, tool: "cs-90", features: ["hole-1"], faces: [5] }); }],
+    ["setup features", (r) => { r.setups[0].features = []; }],
+    ["tool undersized", (r) => { r.tools[0].undersized = true; }],
   ];
   for (const [what, plant] of cases) {
     const r = s3key();
@@ -186,4 +189,16 @@ test("S3: a key with a pocket or an unported finding leaves the plan and cost ou
   const withWall = s3key();
   withWall.findings.push({ id: "F3", rule: "thin_wall", severity: "high", feature: "wall-1", measured: 0.5, limit: 1, title: "thin" });
   expect(compare(r, withWall, 3).leftOut).toEqual(["plan and cost"]);
+});
+
+test("S3: driver finding ids compare after renumbering, so an unported rule's finding ahead of them changes nothing", () => {
+  // Python numbers findings across all rules: with an unported rule's finding first (a turned file's turn_axis, say)
+  // its ids shift. Here a qualifying file's two sides number the same findings differently and still agree.
+  const k = s3key();
+  k.findings = [{ ...k.findings[0], id: "F7" }, { ...k.findings[1], id: "F9" }];
+  k.rows = [{ ...k.rows[0], id: "row:F7", findings: ["F7"], range: "F7" }, { ...k.rows[1], id: "row:F9", findings: ["F9"], range: "F9" }];
+  k.cost_drivers[0].findings = ["F7"];
+  expect(compare(s3key(), k, 3).status).toBe("same");
+  k.cost_drivers[0].findings = ["F9"];
+  expect(compare(s3key(), k, 3).status).toBe("different");
 });
