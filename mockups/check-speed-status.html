@@ -1,0 +1,91 @@
+<title>Faster check.py</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one narrow reading column; a timing bar chart, then the decision */
+:root {
+  --bg: #f6f7f8; --fg: #1d2329; --muted: #5b6672; --line: #d5dbe1; --accent: #1f6f8b; --old: #a9b4bf;
+  --card: #ffffff;
+  --sans: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #14181c; --fg: #e4e8ec; --muted: #9aa6b2; --line: #2c343c; --accent: #5fb3cf; --old: #4a5560; --card: #1b2126; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #14181c; --fg: #e4e8ec; --muted: #9aa6b2; --line: #2c343c; --accent: #5fb3cf; --old: #4a5560; --card: #1b2126; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 16px/1.55 var(--sans);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 48px; }
+main { max-width: 40rem; margin: 0 auto; display: grid; gap: 28px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; }
+h2 { font-size: 1.1rem; margin: 0 0 8px; }
+p, ul { margin: 0; } ul { padding-left: 1.2em; display: grid; gap: 6px; }
+.lead { color: var(--muted); }
+.big { font: 600 2rem/1.1 var(--sans); font-variant-numeric: tabular-nums; }
+.big span { color: var(--muted); font-weight: 400; font-size: 1rem; }
+.bars { display: grid; gap: 10px; }
+.row { display: grid; grid-template-columns: 5.5rem 1fr 4.5rem; gap: 10px; align-items: center; font-variant-numeric: tabular-nums; }
+.row b { font-weight: 400; color: var(--muted); font-size: .9rem; }
+.track { height: 18px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.fill { height: 100%; }
+.old .fill { background: var(--old); } .new .fill { background: var(--accent); }
+.num { text-align: right; font-family: var(--mono); font-size: .9rem; }
+.note { font-size: .9rem; color: var(--muted); }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: grid; gap: 10px; }
+.opt { display: grid; gap: 2px; }
+.tag { font: 500 .75rem var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--accent); }
+a { color: var(--accent); }
+code { font-family: var(--mono); font-size: .9em; }
+</style>
+<main>
+  <header style="display:grid;gap:8px">
+    <h1>Faster local checks</h1>
+    <p class="lead">Every test still runs, with the same limits. They now run side by side instead of one after another. <a href="https://github.com/DdraigFawr13/dfma-review/pull/39">PR #39</a> (draft).</p>
+  </header>
+
+  <section>
+    <p class="big">12:40 → 7:07 <span>min:s, all of <code>check.py</code></span></p>
+  </section>
+
+  <section>
+    <h2>Measured in this session (4 cores)</h2>
+    <div class="bars" role="img" aria-label="Before 760 seconds, after 427 seconds, fresh clone 435 seconds">
+      <div class="row old"><b>Before</b><div class="track"><div class="fill" style="width:100%"></div></div><span class="num">12:40</span></div>
+      <div class="row new"><b>After</b><div class="track"><div class="fill" style="width:56.2%"></div></div><span class="num">7:07</span></div>
+      <div class="row new"><b>Fresh clone</b><div class="track"><div class="fill" style="width:57.2%"></div></div><span class="num">7:15</span></div>
+    </div>
+    <p class="note" style="margin-top:8px">Same tests, all passed: 926 service, 79 against the Python app, 56 in the browser copy, parity 77 of 77 files. CI took 13:24 before, against a 20-minute limit; I haven't measured it after the change, because draft PRs skip CI.</p>
+  </section>
+
+  <section>
+    <h2>Where the time went before</h2>
+    <ul>
+      <li>Service tests: 6 min 41 s, over half the total</li>
+      <li>Browser-copy tests: 2 min 21 s</li>
+      <li>Tests against the Python app: 1 min 57 s</li>
+      <li>Parity (Python's answers, then the compare): 1 min 25 s</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>What changed</h2>
+    <ul>
+      <li>The service tests, the app tests and the parity plus browser tests run at the same time.</li>
+      <li>The three tests that time something (NIST files under 10 s, our parts under 10 s, the page staying responsive) run alone at the end, so the other work can't slow them.</li>
+      <li>If one group fails, everything stops within seconds, with nothing left running.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Also found</h2>
+    <ul>
+      <li>S4's last commit ran CI twice at the same moment, about 16 min each. A LESSONS line now says not to start a manual run when the PR's own run is due.</li>
+      <li><code>olefile</code> was missing again, the third time it's been recorded. This container's environment predates it. I installed it by hand; the setup script is unchanged for now.</li>
+    </ul>
+  </section>
+
+  <section class="ask">
+    <h2 style="margin:0">Your call: the service tests, now the slowest group at 5:47</h2>
+    <div class="opt"><span class="tag">Recommended</span><strong>Add pytest-xdist</strong><span class="note">A standard pytest add-on that spreads tests across all 4 cores. About 4 to 5 min in total (an estimate, not measured). It adds one test-only package to <code>environment.yml</code>.</span></div>
+    <div class="opt"><strong>Leave it at about 7 min</strong><span class="note">No new package.</span></div>
+    <p class="note">Reply in chat with your choice.</p>
+  </section>
+</main>
