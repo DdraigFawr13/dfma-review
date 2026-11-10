@@ -118,6 +118,16 @@ test("S2: an access row that mixes a pocket's finding is left out on both sides;
   const outcome = compare(s2result(), k, 2);
   expect(outcome.status).toBe("same");
   expect(outcome.leftOut).toEqual(["rows (access)"]);
+  // Only the mixed row is left out: a changed hole-only row of the same rule is still caught
+  const k2 = structuredClone(k);
+  k2.findings.push({ id: "F5", rule: "access", severity: "high", feature: "hole-1", measured: 2, limit: 0.5, title: "slant" });
+  k2.rows.push({ id: "row:F5", rule: "access", findings: ["F5"], range: "F5", count: 1, sentence: "slant." });
+  const r2 = s2result();
+  r2.findings.push({ id: "F3", rule: "access", severity: "high", feature: "hole-1", measured: 2, limit: 0.5, title: "slant" });
+  r2.rows.push({ id: "row:F3", rule: "access", findings: ["F3"], range: "F3", count: 1, sentence: "slant." });
+  expect(compare(r2, k2, 2).status).toBe("same");
+  r2.rows[2].sentence = "Slant.";
+  expect(compare(r2, k2, 2).status).toBe("different");
   const turned = { ...s2key(), rules_run: ["hole_depth", "hole_size", "turn_axis"] };
   const r = { ...key(), rules_run: [], checks_run: [] };
   const t = compare(r, turned, 2);

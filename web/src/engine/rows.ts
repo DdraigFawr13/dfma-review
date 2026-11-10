@@ -1,5 +1,5 @@
 // Port of service/dfma/rows.py (whole, S2): plain words for the review screen (review-steps spec "Rows", D-045).
-import { fmtIn, pastLimit, pyFixed, pyG, round } from "./units";
+import { fmtIn, pastLimit, pyFixed, pyG, pySum, round } from "./units";
 
 /** Check names by rule (rows.py CHECKS). */
 export const CHECKS: Record<string, string> = {
@@ -51,7 +51,7 @@ export function limitText(source: string): string {
 
 /** The sum of the drivers' scores to one decimal, or null when there are no drivers. */
 export function costTotal(drivers: { score: number }[]): number | null {
-  return drivers.length ? round(drivers.reduce((s, d) => s + d.score, 0), 1) : null;
+  return drivers.length ? round(pySum(drivers.map((d) => d.score)), 1) : null;
 }
 
 // --- the Features step's rows (spec Design "Rows") ---

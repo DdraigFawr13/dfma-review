@@ -46,7 +46,8 @@ export function pyFixed(x: number, places: number): string {
   return x < 0 || Object.is(x, -0) ? `-${text}` : text;
 }
 
-/** Python's f"{x:g}" (6 significant digits, trailing zeros dropped). */
+/** Python's f"{x:g}" (6 significant digits, trailing zeros dropped). Limit: toPrecision rounds an exact tie at the 6th
+ *  digit up where Python rounds it to even (1000005); no drill label reaches 6 digits. */
 export function pyG(x: number): string {
   if (x === 0) return "0";
   const exp = Math.floor(Math.log10(Math.abs(Number(x.toPrecision(6)))));
@@ -85,4 +86,15 @@ export function fmtIn(inches: number, withFraction = false): string {
   if (Number(text) === 0) text = pyFixed(0, 3);
   const frac = withFraction ? fraction(inches) : null;
   return frac ? `${text} in (${frac})` : `${text} in`;
+}
+
+/** Python 3.12's sum() of floats: Neumaier compensated summation, starting from the int 0. */
+export function pySum(xs: number[]): number {
+  let total = 0, c = 0;
+  for (const x of xs) {
+    const t = total + x;
+    c += Math.abs(total) >= Math.abs(x) ? (total - t) + x : (x - t) + total;
+    total = t;
+  }
+  return c && Number.isFinite(c) ? total + c : total;
 }

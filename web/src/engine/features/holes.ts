@@ -74,6 +74,25 @@ function pyMod(a: number, b: number): number {
   return m !== 0 && (b < 0) !== (m < 0) ? m + b : m + 0;
 }
 
+/** The order CPython iterates a set of small non-negative ints built by add() in this order: slot hash & 7 of its
+ *  8-slot table, a taken slot probing on to (i * 5 + 1 + perturb) & 7 (setobject.c, 3.12). A set of 5 or more grows
+ *  its table; that never happens where this is used (BRIDGE_MAX_FACES), so it falls back to ascending order. */
+export function pySetOrder(added: Iterable<number>): number[] {
+  const items = [...new Set(added)];
+  if (items.length > 4 || items.some((j) => j < 0)) return items.sort((a, b) => a - b);
+  const slots: (number | undefined)[] = new Array(8);
+  for (const j of items) {
+    let i = j & 7;
+    let perturb = j;
+    while (slots[i] !== undefined) {
+      perturb >>>= 5;
+      i = (i * 5 + 1 + perturb) & 7;
+    }
+    slots[i] = j;
+  }
+  return slots.filter((j): j is number => j !== undefined);
+}
+
 /** Python's `x in list` for numbers, so the code below reads like features.py. */
 const has = (list: readonly number[] | Set<number>, x: number) => (list instanceof Set ? list.has(x) : list.includes(x));
 
@@ -564,8 +583,9 @@ function bridge(topo: Topology, segs: Segment[], owner: Map<number, number>, i: 
     }
   }
   if (!linked.size) return null;
-  const candidates = [seg, ...[...linked].map((j) => segs[j])];
-  const wide = candidates.reduce((a, b) => (b.radius > a.radius ? b : a)); // Python's max keeps the first on a tie
+  // Python's max over [seg, *linked] keeps the first on a tie, in the set's own iteration order
+  const candidates = [seg, ...pySetOrder(linked).map((j) => segs[j])];
+  const wide = candidates.reduce((a, b) => (b.radius > a.radius ? b : a));
   if (!group.every((k) => within(topo, k, wide))) return null;
   const sortedLinked = [...linked].sort((a, b) => a - b);
   if (group.length === 1) return [sortedLinked, group];

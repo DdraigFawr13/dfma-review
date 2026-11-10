@@ -149,11 +149,15 @@ export function compare(result: Json, key: Json, slice: number = SLICE): Outcome
       same(name, r[name], want, diffs);
     } else if (name === "rows") {
       // A row groups one rule's findings; a key row holding a finding not ported yet (access on a pocket, S4) can't
-      // be built by the browser engine, so that rule's rows are left out of this file on both sides.
-      const mixed = new Set((k.rows as Row[]).filter((row) => row.rule in rules && row.findings.some((id) => !pk.ids.has(id))).map((row) => row.rule));
-      if (mixed.size) leftOut.push(...[...mixed].map((rule) => `rows (${rule})`));
-      const keep = (rows: Row[], side: Ported) => rows.filter((row) => row.rule in rules && !mixed.has(row.rule)).map((row) => side.row(row));
-      same("rows", keep(r.rows as Row[], pr), keep(k.rows as Row[], pk), diffs);
+      // be built by the browser engine, so that row is left out on both sides: on the browser's side, the row that
+      // holds its ported findings.
+      const mixed = (k.rows as Row[]).filter((row) => row.rule in rules && row.findings.some((id) => !pk.ids.has(id)));
+      if (mixed.length) leftOut.push(...[...new Set(mixed.map((row) => `rows (${row.rule})`))]);
+      const mixedIds = new Set(mixed.flatMap((row) => row.findings.filter((id) => pk.ids.has(id)).map((id) => pk.ids.get(id)!)));
+      const keep = (rows: Row[], side: Ported, isKey: boolean) => rows
+        .filter((row) => row.rule in rules && !(isKey ? mixed.includes(row) : row.findings.some((id) => mixedIds.has(side.ids.get(id) ?? id))))
+        .map((row) => side.row(row));
+      same("rows", keep(r.rows as Row[], pr, false), keep(k.rows as Row[], pk, true), diffs);
     } else if (name in pk.keys) same(name, pr.keys[name], pk.keys[name], diffs);
     else same(name, r[name], k[name], diffs);
   }

@@ -242,8 +242,11 @@ def test_hole_rows(page: Page, base_url: str, name: str):
     key = analyze(file, file.name)
     holes = [f for f in key["features"] if f["kind"] == "hole"]
     ported = PORTED["mill"]
-    findings = [f for f in key["findings"] if f["rule"] in ported]
-    rows = [r for r in key["rows"] if r["rule"] in ported]
+    on_holes = {f["id"] for f in holes}
+    findings = [f for f in key["findings"] if f["rule"] in ported and f.get("feature") in on_holes]
+    kept = {f["id"] for f in findings}
+    # A row mixing a pocket's access finding can't be built until S4 (port spec Parity): left out, as compare.ts does
+    rows = [r for r in key["rows"] if r["rule"] in ported and set(r["findings"]) <= kept]
     assert holes, f"{name} has no hole"
     page.goto(base_url)
     result = read(page, file)

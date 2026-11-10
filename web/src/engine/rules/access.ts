@@ -3,7 +3,7 @@
 // its flat face more than 0.5 deg off square. Measured: the angle between its nearest open vector and the nearest
 // frame axis; limit 0.5. A feature with no open end is not judged. Its pocket branch has nothing to judge until S4.
 import type { Vec } from "../frame";
-import { pyFixed, round } from "../units";
+import { pyFixed, pySum, round } from "../units";
 import type { Feature, Finding, Limits, PartSummary, Pass } from "./types";
 
 export const ID = "access";
@@ -14,7 +14,7 @@ const KINDS = ["hole", "pocket"];
 
 /** Degrees between a vector and the nearest of +-X +-Y +-Z of the frame. */
 function angleToAxes(v: number[], frame: PartSummary["frame"]): number {
-  const best = Math.max(...(["x", "y", "z"] as const).map((k) => Math.abs((frame[k] as Vec).reduce((s, a, i) => s + v[i] * a, 0))));
+  const best = Math.max(...(["x", "y", "z"] as const).map((k) => Math.abs(pySum((frame[k] as Vec).map((a, i) => v[i] * a)))));
   return (Math.acos(Math.min(1.0, best)) * 180) / Math.PI;
 }
 
