@@ -19,7 +19,8 @@ from test_view import canvas, changed
 pytestmark = [pytest.mark.e2e, pytest.mark.browser_only]
 
 sys.path.insert(0, str(ROOT / "service"))
-from dfma import settings  # noqa: E402  the messages and limits the browser copy must keep
+from dfma import settings  # noqa: E402
+from dfma.analyze import analyze  # noqa: E402  the answer key for the hole rows (S2)  the messages and limits the browser copy must keep
 from dfma.rows import checks_run  # noqa: E402
 from dfma.rules import RULES  # noqa: E402
 
@@ -35,8 +36,12 @@ def nist(name: str):
     return NIST / name
 
 
+# The rules the browser copy has ported, by process (web/src/engine/rules/index.ts `ported`); each slice adds its own.
+PORTED = {"mill": {"hole_depth", "hole_size", "access"}, "turn": set()}  # S2: holes, Milling only until S6
+
+
 def not_checked(process: str = "mill") -> str:
-    names = checks_run([r.ID for r in RULES if process in r.PROCESSES])
+    names = checks_run([r.ID for r in RULES if process in r.PROCESSES and r.ID not in PORTED[process]])
     return f"Not checked yet in this copy: {', '.join(names)}."
 
 
@@ -74,21 +79,20 @@ def test_view_part(page: Page, base_url: str):
 
 
 def test_not_checked_notice(page: Page, base_url: str):
-    """J1 and D-057: the Not-checked-yet line on the Features card and step and on Report; Machining and Cost not
-    worked out yet; no chips, Show OK, "No findings" or empty "Checks run"."""
+    """J1 and D-057: the Not-checked-yet line on the Features card and step and on Report, naming only the checks not
+    ported; Machining and Cost not worked out yet. From S2 the hole checks run on a milled part, so its chips, Show OK
+    and "Checks run" show; a turned part runs none yet (S6), so it keeps S1's states: no chips, Show OK or checks."""
     page.goto(base_url)
     read(page, PARTS / "report_sample.step")
     line = not_checked()
     later = "Not worked out yet in this copy."
     expect(page.get_by_test_id("overview-features")).to_contain_text(line)
-    expect(page.get_by_test_id("overview-features")).not_to_contain_text("No findings")
     expect(page.get_by_test_id("overview-machining")).to_contain_text(later)
     expect(page.get_by_test_id("overview-cost")).to_contain_text(later)
     page.get_by_test_id("step-features").click()
     expect(page.get_by_test_id("features-notrun")).to_have_text(line)
-    expect(page.locator("#row-chips button")).to_have_count(0)
-    expect(page.get_by_test_id("show-ok")).to_be_hidden()
-    expect(page.locator("#rows")).not_to_contain_text("No findings")
+    expect(page.locator("#row-chips button").first).to_be_visible()
+    expect(page.get_by_test_id("show-ok")).to_be_visible()
     page.get_by_test_id("step-machining").click()
     expect(page.get_by_test_id("plan-notrun")).to_have_text(later)
     expect(page.locator("#plan-none")).to_be_hidden()
@@ -96,13 +100,22 @@ def test_not_checked_notice(page: Page, base_url: str):
     expect(page.locator("#cost")).to_have_text(later)
     page.get_by_test_id("step-report").click()
     expect(page.get_by_test_id("report-notrun")).to_have_text(line)
-    expect(page.locator("#report-checks")).to_be_hidden()
-    expect(page.locator("#page-report [data-pdf]:visible")).to_have_count(0)
-    # A turned part names the turning checks (the Process select sits on the Part step)
+    expect(page.locator("#report-checks")).to_be_visible()
+    for name in ("Hole depth check", "Hole size check", "Access check"):
+        expect(page.locator("#report-checks")).to_contain_text(name)
+    expect(page.locator("#page-report [data-pdf]:visible")).to_have_count(1)  # the findings pages; no plan, no .ipt
+    expect(page.locator('#page-report [data-pdf="findings"]')).to_be_visible()
+    # A turned part names every turning check and keeps S1's states (the Process select sits on the Part step)
     page.get_by_test_id("step-part").click()
     page.get_by_test_id("upload-process").select_option("turn")
     page.get_by_test_id("step-report").click()
     expect(page.get_by_test_id("report-notrun")).to_have_text(not_checked("turn"), timeout=60_000)
+    expect(page.locator("#report-checks")).to_be_hidden()
+    expect(page.locator("#page-report [data-pdf]:visible")).to_have_count(0)
+    page.get_by_test_id("step-features").click()
+    expect(page.locator("#row-chips button")).to_have_count(0)
+    expect(page.get_by_test_id("show-ok")).to_be_hidden()
+    expect(page.locator("#rows")).not_to_contain_text("No findings")
 
 
 def test_ui_responsive(page: Page, base_url: str):
@@ -219,3 +232,36 @@ def test_worker_parity(page: Page, base_url: str, path: str, tmp_path):
     run = subprocess.run([npm, "--prefix", "web", "run", "-s", "compare", "--", str(out), str(key)], cwd=ROOT,
                          capture_output=True, text=True)
     assert run.returncode == 0, run.stdout + run.stderr
+
+
+@pytest.mark.parametrize("name", ["report_sample", "countersunk_hole", "deep_hole", "clean_holes"])
+def test_hole_rows(page: Page, base_url: str, name: str):
+    """S2 ("Morgan tries"): the hole rows on the Features step are Python's, word for word; a row's tap lights its
+    faces; a part with no hole finding says so above the Not-checked-yet line."""
+    file = PARTS / f"{name}.step"
+    key = analyze(file, file.name)
+    holes = [f for f in key["features"] if f["kind"] == "hole"]
+    ported = PORTED["mill"]
+    findings = [f for f in key["findings"] if f["rule"] in ported]
+    rows = [r for r in key["rows"] if r["rule"] in ported]
+    assert holes, f"{name} has no hole"
+    page.goto(base_url)
+    result = read(page, file)
+    assert len([f for f in result["features"] if f["kind"] == "hole"]) == len(holes)
+    card = page.get_by_test_id("overview-features")
+    expect(card).to_contain_text(f"{len(holes)} hole{'s' if len(holes) != 1 else ''} checked")
+    expect(card).to_contain_text(not_checked())
+    page.get_by_test_id("step-features").click()
+    if not rows:
+        expect(card).to_contain_text("No findings. Every feature checked passed its rules.")
+        return
+    # Python numbers the findings across every rule; the browser copy across the ported ones (port spec Parity)
+    ids = {f["id"]: f"F{n}" for n, f in enumerate(findings, 1)}
+    for r in rows:
+        row = page.get_by_test_id(f"row-{ids[r['findings'][0]]}")
+        expect(row).to_contain_text(r["short"])
+        expect(row).to_contain_text(r["sentence"])
+    first = rows[0]
+    faces = sorted({i for f in findings if f["id"] in first["findings"] for i in f["faces"]})
+    page.get_by_test_id(f"row-{ids[first['findings'][0]]}").click()
+    assert sorted(page.evaluate("window.__dfma.highlightedFaces()")) == faces

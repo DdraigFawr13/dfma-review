@@ -4,9 +4,6 @@
 # slice it needs. S7 empties it (the tests that fake the service's /api/analyze are rewritten or marked service-only
 # there); S8 deletes it.
 
-tests/e2e/test_findings.py::test_checked_holes_exclude_holes_with_findings[chromium] # S2
-tests/e2e/test_findings.py::test_clean_part_shows_clean_verdict[chromium] # S2
-tests/e2e/test_findings.py::test_click_highlights_face[chromium] # S2
 tests/e2e/test_passed_and_setups.py::test_setup_select_lights_the_countersink[chromium] # S3
 tests/e2e/test_plan_panel.py::test_plan_panel_angled_hole[chromium] # S3
 tests/e2e/test_audit_2026_11_09.py::test_f15_rows_announce_one_state_and_point_at_their_detail[chromium] # S4
@@ -34,6 +31,11 @@ tests/e2e/test_steps.py::test_feature_rows[chromium] # S4
 tests/e2e/test_steps.py::test_machining[chromium] # S4
 tests/e2e/test_steps.py::test_machining_whole_part_and_no_setup[chromium] # S4
 tests/e2e/test_steps.py::test_rows_in_view[chromium] # S4
+# Moved from S2 (2026-11-10): they pass the hole rows but assert the wall count ("1 hole and 4 walls checked"); S2 checks
+# the hole rows in test_browser_engine.py::test_hole_rows instead.
+tests/e2e/test_findings.py::test_checked_holes_exclude_holes_with_findings[chromium] # S5
+tests/e2e/test_findings.py::test_clean_part_shows_clean_verdict[chromium] # S5
+tests/e2e/test_findings.py::test_click_highlights_face[chromium] # S5
 tests/e2e/test_audit_2026_11_09.py::test_f14_passed_feature_states_its_measurement_once[chromium] # S5
 tests/e2e/test_audit_2026_11_09.py::test_f18_show_ok_sits_under_the_chips_below_900px[chromium] # S5
 tests/e2e/test_findings.py::test_wall_switch[chromium] # S5
