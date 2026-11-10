@@ -4,7 +4,8 @@ import type { Analysis } from "./api";
 import { SLICE } from "./engine/slice";
 
 export const NOT_WORKED_OUT = "Not worked out yet in this copy.";
-const PLAN_SLICE = 3; // the machine plan and the cost drivers are ported in S3
+const PLAN_SLICE = 3; // the mill plan and the cost drivers are ported in S3
+const TURN_SLICE = 6; // the lathe plan in S6: until then the browser copy plans no turned part (machine null)
 
 /** "Not checked yet in this copy: <names>.", or null when every check runs. */
 export function notCheckedLine(result: Analysis): string | null {
@@ -17,9 +18,10 @@ export function noChecksRun(result: Analysis): boolean {
   return !!result.checks_not_run?.length && result.checks_run.length === 0;
 }
 
-/** The machine plan and the cost drivers are not ported yet: Machining and Cost show NOT_WORKED_OUT, with no total. */
+/** The machine plan and the cost drivers are not ported yet for this part: Machining and Cost show NOT_WORKED_OUT,
+ *  with no total. From S3 a milled part has its plan; a turned part (no machine in this copy) waits for S6. */
 export function planNotWorkedOut(result: Analysis): boolean {
-  return result.checks_not_run !== undefined && SLICE < PLAN_SLICE;
+  return result.checks_not_run !== undefined && (SLICE < PLAN_SLICE || (result.machine === null && SLICE < TURN_SLICE));
 }
 
 /** The status line before a part is read; the browser copy has no .ipt field until S7. */

@@ -668,7 +668,7 @@ function chains(segs: Segment[]): number[][] {
   return out;
 }
 
-function frameDir(v: Vec, frame: Frame): string | null {
+export function frameDir(v: Vec, frame: Frame): string | null {
   for (const [name, [key, sign]] of Object.entries(DIRS)) if (dot(v, scale(sign, frame[key])) >= Math.cos(ANGLE_TOL)) return name;
   return null;
 }

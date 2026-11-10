@@ -4,8 +4,6 @@
 # slice it needs. S7 empties it (the tests that fake the service's /api/analyze are rewritten or marked service-only
 # there); S8 deletes it.
 
-tests/e2e/test_passed_and_setups.py::test_setup_select_lights_the_countersink[chromium] # S3
-tests/e2e/test_plan_panel.py::test_plan_panel_angled_hole[chromium] # S3
 tests/e2e/test_audit_2026_11_09.py::test_f15_rows_announce_one_state_and_point_at_their_detail[chromium] # S4
 tests/e2e/test_audit_2026_11_09.py::test_f16_small_targets_are_44px_below_900px[chromium] # S4
 tests/e2e/test_audit_2026_11_09.py::test_f1_f12_no_internal_ids_and_american_spelling_on_screen_or_in_the_pdf[chromium] # S4
