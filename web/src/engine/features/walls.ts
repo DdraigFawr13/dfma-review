@@ -111,21 +111,25 @@ export function walls(oc: OC, solid: OC, faces: OC[]): Wall[] {
           turn.delete(); ax.delete(); p.delete(); d.delete();
         }
         const t0 = -dot(sub(pb, pa), nA); // how far b lies behind a, into a's material side
-        if (t0 <= 1e-6) continue; // facing each other (a slot's sides) or in one plane
+        if (t0 <= 1e-6) { // facing each other (a slot's sides) or in one plane
+          if (drafted) faceA.delete();
+          continue;
+        }
         let t = t0;
         const move = new oc.gp_Trsf();
         const shift = new oc.gp_Vec(nA[0] * -t, nA[1] * -t, nA[2] * -t);
         move.SetTranslation(shift);
         const aOnB = transformed(oc, faceA, move);
         move.delete(); shift.delete();
+        if (drafted) faceA.delete(); // the turned copy (faces[ia] itself otherwise)
         const bOnB = box(oc, aOnB);
         const apart = bOnB.IsOut(bb);
         bOnB.delete();
-        if (apart) continue; // only pairs whose boxes overlap, a moved onto b's plane
-        const both = common(oc, aOnB, faces[ib]); // a failed boolean skips this pair, not the whole analysis
-        if (both === null) continue;
+        const both = apart ? null : common(oc, aOnB, faces[ib]); // a failed boolean skips this pair, not the whole analysis
+        aOnB.delete();
+        if (both === null) continue; // only pairs whose boxes overlap, a moved onto b's plane
         const [shape, overlap] = both;
-        if (overlap < MIN_OVERLAP_MM2) continue;
+        if (overlap < MIN_OVERLAP_MM2) { shape.delete(); continue; }
         // Solid material between them: a ray from a point inside the overlap on b, along -nb (into the material),
         // first meets face a, at distance t. Air between (two bosses) or another face in the way (a slot or
         // pocket) fails; one clear ray of the sampled points is enough.
@@ -138,6 +142,7 @@ export function walls(oc: OC, solid: OC, faces: OC[]): Wall[] {
             break;
           }
         }
+        shape.delete(); // the boolean's result and the mesh innerPoints put on it
         if (!solidBetween) continue;
         if (drafted) { // its thickness is at its thinnest place (D-020)
           const [value, done] = distShapes(oc, faces[ia], faces[ib]);

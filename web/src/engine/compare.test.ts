@@ -272,6 +272,7 @@ const s5key = () => {
     checks_run: ["Hole depth check", "Hole size check", "Corner radius check", "Pocket depth check", "Undercut check",
       "Thin wall check", "Access check"],
     passed: [...k.passed, { rule: "thin_wall", feature: "wall-2", title: "0.047 in thick, at least 0.030 in" }],
+    passed_rows: [...k.passed_rows, { rule: "thin_wall", kind: "wall", features: ["wall-2"], title: "Walls ×1" }],
     cost_drivers: [...k.cost_drivers, { driver: "thin_walls", label: "Thin walls", count: 1, weight: 2, score: 2, weight_source: "drivers.toml", findings: ["F4"] }] };
 };
 
@@ -288,6 +289,7 @@ test("S5: walls and thin_wall compare, the plan compares on a thin-wall file, an
     ["thin_wall pass", (r) => { r.passed.pop(); }],
     ["rules_run", (r) => { r.rules_run = r.rules_run.filter((id) => id !== "thin_wall"); }],
     ["thin walls driver", (r) => { r.cost_drivers[r.cost_drivers.length - 1].score = 3; }],
+    ["wall passed row", (r) => { r.passed_rows.pop(); }],
   ];
   for (const [what, plant] of cases) {
     const r = s5key();

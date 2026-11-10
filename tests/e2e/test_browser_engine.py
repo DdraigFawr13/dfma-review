@@ -329,6 +329,8 @@ def test_wall_rows(page: Page, base_url: str, name: str):
     ported = PORTED["mill"]
     findings = [f for f in key["findings"] if f["rule"] in ported]  # every mill rule but looks_turned is ported
     rows = [r for r in key["rows"] if r["rule"] == "thin_wall"]
+    if name in ("thin_floor", "thin_drill_point"):  # expected.toml: each has a thin_wall finding in aluminium
+        assert rows, f"{name} has no thin-wall row"
     ids = {f["id"]: f"F{n}" for n, f in enumerate(findings, 1)}  # renumbered over the ported rules (port spec Parity)
     page.get_by_test_id("step-features").click()
     for r in rows:
