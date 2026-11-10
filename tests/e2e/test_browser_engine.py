@@ -252,8 +252,10 @@ def test_hole_rows(page: Page, base_url: str, name: str):
     holes = [f for f in key["features"] if f["kind"] == "hole"]
     ported = PORTED["mill"]
     on_holes = {f["id"] for f in holes}
-    findings = [f for f in key["findings"] if f["rule"] in ported and f.get("feature") in on_holes]
-    kept = {f["id"] for f in findings}
+    kinds = {f["id"]: f["kind"] for f in key["features"]}
+    # the browser copy numbers its findings over every ported rule and kind (holes, pockets, corners from S4)
+    findings = [f for f in key["findings"] if f["rule"] in ported and kinds.get(f.get("feature")) in ("hole", "pocket", "corner")]
+    kept = {f["id"] for f in findings if f.get("feature") in on_holes}
     rows = [r for r in key["rows"] if r["rule"] in ported and set(r["findings"]) <= kept]  # the rows on holes only
     assert holes, f"{name} has no hole"
     page.goto(base_url)

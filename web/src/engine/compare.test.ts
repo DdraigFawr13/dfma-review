@@ -232,6 +232,11 @@ test("S4: pockets, corners and their rules compare, the plan compares on a pocke
     ["not_analysed_faces", (r) => { r.part.not_analysed_faces = []; }],
     ["plan on a pocket file", (r) => { r.setups[0].features = ["hole-1", "pocket-1"]; }],
   ];
+  // walls are S5: a wall, its finding and its pass on the key alone are left out at S4
+  const withWall = s4key() as ReturnType<typeof s4key> & { features: unknown[] };
+  withWall.features.push({ id: "wall-1", kind: "wall", faces: [11], dims_mm: { thickness: 0.5 } });
+  withWall.passed.push({ rule: "thin_wall", feature: "wall-1", title: "w" });
+  expect(compare(s4key(), withWall, 4).status, "a wall at S4").toBe("same");
   for (const [what, plant] of cases) {
     const r = s4key();
     plant(r);

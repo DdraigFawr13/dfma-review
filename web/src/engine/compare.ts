@@ -13,7 +13,8 @@ import { SLICE } from "./slice.ts"; // the last slice merged; each slice raises 
 export { SLICE };
 
 /** Keys compared at this slice (S1: the part summary, the faces, the assumptions and the rule lists; S2: holes and
- *  the findings, rows and passed checks of the hole rules; S3: the machine plan and the cost drivers). */
+ *  the findings, rows and passed checks of the hole rules; S3: the machine plan and the cost drivers; S4: no new key,
+ *  but pockets, corners and their rules in the keys above, and part.not_analysed_faces on milled files). */
 export const PORTED_KEYS: Record<number, string[]> = {
   1: ["part", "faces", "assumptions", "rules_run", "checks_run"],
   2: ["features", "findings", "rows", "passed", "passed_rows"],
@@ -37,7 +38,7 @@ export const PORTED_KINDS: Record<number, string[]> = {
 /** The plan and cost keys (S3) compare only on files whose key has no feature of these kinds while they are not
  *  ported, and no finding from a rule not ported: the plan reads holes and pockets and the findings on them
  *  (plan.py), and every finding can feed a cost driver (drivers.toml). */
-const PLAN_KINDS = ["pocket", "corner"];
+const PLAN_KINDS = ["pocket", "corner"]; // both ported from S4, so this filters only at S3 and below
 /** Until S6 a turned file (its key ran turn_axis) compares the S1 keys only: holes on a turned part are split into
  *  holes and bores there (analyze.py split_bores), and the browser copy runs no hole rule on it yet. */
 const TURN_SLICE = 6;

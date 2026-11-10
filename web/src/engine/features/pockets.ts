@@ -11,7 +11,11 @@ import {
   vertices, type Cyl, type Frame,
 } from "./holes";
 
-const DEG = Math.PI / 180;
+const degrees = (rad: number) => rad * (180 / Math.PI); // math.degrees: x * (180 / pi)
+const radians = (deg: number) => deg * (Math.PI / 180); // math.radians: x * (pi / 180)
+/** max() and min() of a list, without spreading it into arguments (a spread of 100k+ values throws in V8). */
+const maxOf = (xs: number[]) => xs.reduce((a, b) => (b > a ? b : a), -Infinity);
+const minOf = (xs: number[]) => xs.reduce((a, b) => (b < a ? b : a), Infinity);
 const scale = (k: number, a: Vec): Vec => [k * a[0], k * a[1], k * a[2]];
 const neg = (a: Vec): Vec => [-a[0], -a[1], -a[2]];
 const norm = (a: Vec) => Math.sqrt(dot(a, a));
@@ -102,7 +106,7 @@ function wallKind(topo: Topology, faceId: number, n: Vec): string | null {
     if (Math.abs(dot(axisDir(surface.Cone().Axis()), n)) < Math.cos(ANGLE_TOL)) return null;
   } else if (kind !== "GeomAbs_Plane") return null;
   const lean = dot(outwardNormal(topo.oc, topo.faces[faceId])[1], n);
-  if (-Math.sin(ANGLE_TOL) <= lean && lean <= Math.sin(DRAFT_MAX_DEG * DEG)) return kind === "GeomAbs_Plane" ? "plane" : "cone";
+  if (-Math.sin(ANGLE_TOL) <= lean && lean <= Math.sin(radians(DRAFT_MAX_DEG))) return kind === "GeomAbs_Plane" ? "plane" : "cone";
   return null;
 }
 
@@ -142,7 +146,10 @@ function sealedFaces(oc: OC, solid: OC, faces: OC[]): Set<number> {
     const shell = exp.Current();
     if (shell.IsSame(outer)) continue;
     const fexp = new oc.TopExp_Explorer(shell, oc.TopAbs_ShapeEnum.TopAbs_FACE);
-    for (; fexp.More(); fexp.Next()) faces.forEach((f, i) => { if (f.IsSame(fexp.Current())) out.add(i); });
+    for (; fexp.More(); fexp.Next()) {
+      const cur = fexp.Current();
+      faces.forEach((f, i) => { if (f.IsSame(cur)) out.add(i); });
+    }
     fexp.delete();
   }
   exp.delete();
@@ -252,7 +259,7 @@ function blendWalls(topo: Topology, floor: number, nb: number, n: Vec, edge: OC)
   }
   const [p] = edgeMid(topo.oc, edge);
   // The fillet must curve up from the floor and run into a wall tangentially, as a cutter's corner leaves it.
-  if (!tangent || Math.max(...topo.facePoints(nb).map((q) => dot(q, n))) <= dot(p, n) + 1e-6) return null;
+  if (!tangent || maxOf(topo.facePoints(nb).map((q) => dot(q, n))) <= dot(p, n) + 1e-6) return null;
   return [blend, walls];
 }
 
@@ -306,8 +313,8 @@ function overFloor(topo: Topology, pieces: number[], n: Vec): (faceId: number) =
   const [a, b] = refFrame(n);
   const pts = pieces.flatMap((k) => topo.facePoints(k));
   const [us, vs] = [pts.map((p) => dot(p, a)), pts.map((p) => dot(p, b))];
-  const [loU, hiU, loV, hiV] = [Math.min(...us) - OVER_TOL, Math.max(...us) + OVER_TOL, Math.min(...vs) - OVER_TOL, Math.max(...vs) + OVER_TOL];
-  const floorH = Math.max(...pts.map((p) => dot(p, n)));
+  const [loU, hiU, loV, hiV] = [minOf(us) - OVER_TOL, maxOf(us) + OVER_TOL, minOf(vs) - OVER_TOL, maxOf(vs) + OVER_TOL];
+  const floorH = maxOf(pts.map((p) => dot(p, n)));
   return (faceId) => topo.facePoints(faceId).every((p) => {
     const [u, v] = [dot(p, a), dot(p, b)];
     return loU <= u && u <= hiU && loV <= v && v <= hiV && dot(p, n) > floorH + OVER_TOL;
@@ -354,9 +361,10 @@ function undercut(topo: Topology, walls: number[], n: Vec, skip: Set<number>, ov
 
 /** BRepExtrema_DistShapeShape(a, b).Value(), and IsDone(). */
 function distShapes(oc: OC, a: OC, b: OC): [number, boolean] {
-  const d = new oc.BRepExtrema_DistShapeShape(a, b, oc.Extrema_ExtFlag.Extrema_ExtFlag_MINMAX, oc.Extrema_ExtAlgo.Extrema_ExtAlgo_Grad, new oc.Message_ProgressRange());
+  const range = new oc.Message_ProgressRange();
+  const d = new oc.BRepExtrema_DistShapeShape(a, b, oc.Extrema_ExtFlag.Extrema_ExtFlag_MINMAX, oc.Extrema_ExtAlgo.Extrema_ExtAlgo_Grad, range);
   const out: [number, boolean] = [d.IsDone() ? d.Value() : NaN, d.IsDone()];
-  d.delete();
+  d.delete(); range.delete();
   return out;
 }
 
@@ -374,7 +382,7 @@ function overhang(topo: Topology, ceilings: number[], walls: number[], upper: nu
       const mv = new oc.BRepBuilderAPI_MakeVertex(pnt);
       const v = mv.Vertex();
       // Python's .Value() reads whatever the extrema hold; on an undone run pythonocc raises, which never happens here
-      const d = above.length ? Math.min(...above.map((a) => distShapes(oc, v, a)[0])) : 0.0;
+      const d = above.length ? minOf(above.map((a) => distShapes(oc, v, a)[0])) : 0.0;
       best = Math.max(best, d);
       mv.delete(); pnt.delete();
     }
@@ -390,7 +398,7 @@ function knifeEdge(topo: Topology, floor: number, w: number, walls: number[]): b
     if (k === floor || walls.includes(k)) continue;
     for (const e of edges) {
       const [p] = edgeMid(topo.oc, e);
-      if (dot(normalAt(topo, w, p), normalAt(topo, k, p)) < -Math.cos(KNIFE_DEG * DEG) && !concave(topo, w, k, e)) return true;
+      if (dot(normalAt(topo, w, p), normalAt(topo, k, p)) < -Math.cos(radians(KNIFE_DEG)) && !concave(topo, w, k, e)) return true;
     }
   }
   return false;
@@ -422,7 +430,7 @@ function floorChamferWalls(topo: Topology, floor: number, nb: number, n: Vec, ed
   return out;
 }
 
-export const CHAMFER_MAX_TURN_DEG = 60 - ANGLE_TOL / DEG; // a regular hexagon pocket turns 60 deg at each wall
+export const CHAMFER_MAX_TURN_DEG = 60 - degrees(ANGLE_TOL); // a regular hexagon pocket turns 60 deg at each wall
 
 /** How long a wall runs across the floor: the widest spread of its points square to n. */
 function span(topo: Topology, faceId: number, n: Vec): number {
@@ -442,7 +450,7 @@ function cornerChamfers(topo: Topology, walls: number[], n: Vec): Set<number> {
   const like = new Map<number, number[]>();
   for (const [w, m] of normals) {
     const nbs = [...topo.neighbours(w).keys()].filter((k) => normals.has(k) && k !== w);
-    const turns = nbs.map((k) => Math.acos(Math.max(-1.0, Math.min(1.0, dot(m, normals.get(k)!)))) / DEG);
+    const turns = nbs.map((k) => degrees(Math.acos(Math.max(-1.0, Math.min(1.0, dot(m, normals.get(k)!))))));
     if (turns.length === 2 && Math.abs(turns[0] - turns[1]) <= 0.05 && turns[0] < CHAMFER_MAX_TURN_DEG) like.set(w, nbs);
   }
   const spans = new Map([...like.keys()].map((w) => [w, span(topo, w, n)]));
@@ -500,7 +508,7 @@ function rimTop(topo: Topology, walls: number[], own: Set<number>, n: Vec, top: 
         if (!(0.17 < c && c < 0.98)) continue; // 10 to 80 deg
       } else if (!["GeomAbs_Cone", "GeomAbs_Cylinder", "GeomAbs_Torus"].includes(kind)) continue;
       const h = topo.facePoints(k).map((p) => dot(p, n));
-      const [lo, hi] = [Math.min(...h), Math.max(...h)];
+      const [lo, hi] = [minOf(h), maxOf(h)];
       if (lo >= top - 0.01 && hi - lo <= RIM_BREAK_MAX_SHARE * depth) best = Math.max(best, hi);
     }
   }
@@ -674,7 +682,7 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
     const alone = walls;
     if (walls && walls.length) [walls, reached] = floorChecks(topo, cyls, walls, pieces, n, enclosure);
     let group: number[] | null = null;
-    if ((!(alone && alone.length) || reached === false) && (group = floorPieces(topo, fid, n, holeFaces)) && Math.min(...group) === fid) {
+    if ((!(alone && alone.length) || reached === false) && (group = floorPieces(topo, fid, n, holeFaces)) && minOf(group) === fid) {
       // A floor in several flat pieces: its outline is the pieces' edges that no other piece shares.
       pieces = group;
       const g = group;
@@ -709,11 +717,11 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
       exp.delete();
     }
     const floorH = dot(outwardNormal(oc, face)[0], n);
-    const top = Math.max(...walls.flatMap((w) => topo.facePoints(w).map((p) => dot(p, n))));
+    const top = maxOf(walls.flatMap((w) => topo.facePoints(w).map((p) => dot(p, n))));
     const own = new Set([...pieces, ...walls, ...islands, ...blends, ...ceilings]);
     const depth = rimTop(topo, walls, own, n, top, top - floorH) - floorH;
     const found = corners(topo, walls, cyls);
-    const minR = found.length ? Math.min(...found.map(([, r]) => r)) : Infinity;
+    const minR = found.length ? minOf(found.map(([, r]) => r)) : Infinity;
     const width = narrowest(topo, [...walls, ...islands], islands);
     const [tool, undersized] = pickEndMill(minR, width);
     const pocketFaces = [...own].sort((a, b) => a - b);
@@ -727,7 +735,7 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
       const [ctool] = pickEndMill(r, width);
       const corner: CornerFeature = { kind: "corner", faces: cfaces, axis: [...n], open_dirs: [], open_vectors: [],
         dims_mm: { radius: r, depth, end_mill_mm: ctool },
-        pocket: Math.min(...pocketFaces) }; // its pocket's lowest face; linkCorners makes it the pocket's id
+        pocket: minOf(pocketFaces) }; // its pocket's lowest face; linkCorners makes it the pocket's id
       if (edge) corner.edge_mm = edge; // a sharp corner has no face of its own: the viewer draws this edge
       foundC.push(corner);
     }
@@ -737,7 +745,7 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
 
 /** Each corner's `pocket`: the id of the pocket it sits in (D-049). Run after both are numbered. */
 export function linkCorners(pocketList: { id: string; faces: number[] }[], cornerList: { pocket: number | string | null }[]): void {
-  const byFace = new Map(pocketList.map((p) => [Math.min(...p.faces), p.id]));
+  const byFace = new Map(pocketList.map((p) => [minOf(p.faces), p.id]));
   for (const c of cornerList) c.pocket = byFace.get(c.pocket as number) ?? null;
 }
 
@@ -755,7 +763,9 @@ export function innerPoints(oc: OC, shape: OC, grid = 9): Vec[] {
     const tri = oc.BRep_Tool.Triangulation(face, location, 0);
     if (tri && !(tri.IsNull?.() ?? false)) {
       for (let i = 1; i <= tri.NbTriangles(); i++) {
-        const t = tri.Triangle(i).Get();
+        const tr = tri.Triangle(i);
+        const t = tr.Get();
+        tr.delete();
         const [a, b, c] = [t.theN1, t.theN2, t.theN3].map((k: number) => {
           const p = tri.Node(k);
           const v = pt(p);
