@@ -102,8 +102,18 @@ code { font-family: var(--mono); font-size: .9em; }
     </ul>
   </section>
 
+  <section>
+    <h2>First CI run: one test timed out, now fixed</h2>
+    <ul>
+      <li><code>test_pdf_hole_features</code> waited 30 s, Playwright's default, for the PDF download and gave up. No result was wrong; the PDF took too long to build.</li>
+      <li>Cause: CI's runner has less real CPU than this container. Its parallel steps ran about 2× slower than here, although its old serial run had matched. The service tests were using every core and starved the two browser groups.</li>
+      <li>Fix: the service tests now use the core count minus 2, which is 2 workers on CI. That leaves one core for each browser group. No timeout or test was changed. All passed here in 7:21, which includes S5's new tests.</li>
+      <li>On CI the gain may be smaller than here. I'll record the real time against the old 13:24 when the run finishes.</li>
+    </ul>
+  </section>
+
   <section class="ask">
     <h2 style="margin:0">Next</h2>
-    <p>The change is in draft <a href="https://github.com/DdraigFawr13/dfma-review/pull/39">PR #39</a>. Say "approved" in chat and I'll mark it ready; CI then runs on it, and I merge when it's green.</p>
+    <p>You approved the merge. <a href="https://github.com/DdraigFawr13/dfma-review/pull/39">PR #39</a> merges once its new CI run is green; I check it at 18:54 UTC.</p>
   </section>
 </main>
