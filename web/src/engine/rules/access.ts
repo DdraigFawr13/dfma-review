@@ -1,7 +1,7 @@
 // Port of service/dfma/rules/access.py: a hole or pocket that opens along none of +-X +-Y +-Z of the part frame
 // (within 0.5 deg) needs a 4/5-axis mill or a fixture (spec Rules). Medium (D-050); a hole is high when it also enters
 // its flat face more than 0.5 deg off square. Measured: the angle between its nearest open vector and the nearest
-// frame axis; limit 0.5. A feature with no open end is not judged. Its pocket branch has nothing to judge until S4.
+// frame axis; limit 0.5. A feature with no open end is not judged. Pockets are judged from S4.
 import type { Vec } from "../frame";
 import { pyFixed, pySum, round } from "../units";
 import type { Feature, Finding, Limits, PartSummary, Pass } from "./types";

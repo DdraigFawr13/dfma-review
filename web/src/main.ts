@@ -2,7 +2,7 @@
 // changes while a file is loaded. No submit button (spec S1, settled at build).
 // The review reads as five steps, one shown at a time, named in the address (review-steps spec J1, J2; D-042, D-045).
 
-import { NOT_WORKED_OUT, POCKETS_LATER, START_STATUS, noChecksRun, notCheckedLine, planNotWorkedOut, pocketsLater } from "./notrun";
+import { NOT_WORKED_OUT, START_STATUS, noChecksRun, notCheckedLine, planNotWorkedOut } from "./notrun";
 import { analyze, ApiError, type Analysis, type Material, type Process } from "./api";
 import { blendKinds, renderBlends, renderHoleFeatures, renderPlan, renderThreads, setupHead, type Pick } from "./findings";
 import { formatSize } from "./format";
@@ -244,9 +244,8 @@ function showFindings(result: Analysis | null, message: string): void {
   renderPlan(byId("plan"), byId("plan-count"), result, select, selected,
     (where) => (placed.get(where) ?? []).map((p: Placed) => placedLine(p, openPlaced)));
   const later = !!result && planNotWorkedOut(result); // the browser copy until S3 (D-057)
-  const pockets = !!result && pocketsLater(result); // a milled part's plan before S4 holds holes only (D-061)
-  byId("plan-notrun").hidden = !later && !pockets;
-  byId("plan-notrun").textContent = later ? NOT_WORKED_OUT : pockets ? POCKETS_LATER : "";
+  byId("plan-notrun").hidden = !later;
+  byId("plan-notrun").textContent = later ? NOT_WORKED_OUT : "";
   byId("plan-panel").hidden = later || !result?.machine;
   byId("plan-none").hidden = later || !result || !!result.machine;
   if (result) renderSetupChips(byId("setup-chips"), result, result.setups.map((s, i) => setupHead(s, i).replace(", about the turning axis", "")),

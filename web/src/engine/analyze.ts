@@ -3,13 +3,15 @@
 // in check-name wording, every rule not ported yet. S1 ported the read, the face kinds, the frame, the mesh, the part
 // summary and the assumptions; S2 the holes and the hole rules (hole_depth, hole_size, access) with their rows, on
 // Milling only (a turned part's holes split into holes and bores first: S6); S3 the mill plan and the cost drivers
-// (a turned part's plan is turning.plan: S6).
+// (a turned part's plan is turning.plan: S6); S4 the pockets, corners and undercuts with their rules, on Milling
+// (a turned part's pockets feed its profile and off-axis checks: S6).
 import type { Analysis, Material, Process } from "../api";
 import { extentsMm, faceInfo, partFrame, type Vec } from "./frame";
 import { meshFaces } from "./mesh";
 import type { OC } from "./oc";
 import { readStep } from "./read";
-import { holes } from "./features/holes";
+import { holes, number } from "./features/holes";
+import { linkCorners, pockets } from "./features/pockets";
 import { checkName, checksRun, costTotal, findingRows, limitText, passedRows } from "./rows";
 import { costDrivers, driverRules } from "./drivers";
 import { plan, type Plan } from "./plan";
@@ -48,7 +50,15 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
     const frame = partFrame(infos, vertices);
     const bboxIn = extentsMm(frame, vertices).map((e) => round(mmToIn(e), 6)) as [number, number, number];
     // S2: holes and the hole rules, on Milling (rules_run lists the ported rules that ran, in RULES order)
-    const features = (process === "mill" ? holes(oc, part.solid, part.faces, frame) : []) as unknown as Feature[];
+    const holeList = process === "mill" ? holes(oc, part.solid, part.faces, frame) : [];
+    // S4: pockets and corners, after the holes whose faces they skip (analyze.py); walls follow in S5
+    const holeFaces = new Set(holeList.flatMap((f) => f.faces));
+    const [rawPockets, rawCorners] = process === "mill" ? pockets(oc, part.solid, part.faces, frame, holeFaces) : [[], []];
+    const pocketList = number(rawPockets, "pocket");
+    const cornerList = number(rawCorners, "corner");
+    linkCorners(pocketList, cornerList);
+    const features = [...holeList, ...pocketList, ...cornerList] as unknown as Feature[];
+    const pocketFaces = new Set(pocketList.flatMap((f) => f.faces));
     const summary: PartSummary = { units_in_file: part.unitsInFile, frame, face_count: part.faces.length };
     const limits = thresholds(material);
     const rules = RULES.filter((r) => r.module && r.ported.includes(process) && r.PROCESSES.includes(process));
@@ -72,8 +82,8 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
         face_count: part.faces.length,
         volume_mm3: part.volumeMm3,
         ignored_solids: part.ignoredSolids,
-        // Torus and other faces; S4 leaves out those that belong to a pocket, as Python does.
-        not_analysed_faces: infos.filter((f) => f.kind === "torus" || f.kind === "other").map((f) => f.id),
+        // Torus and other faces, except those that belong to a pocket (S4, as Python; a turned part's pockets: S6).
+        not_analysed_faces: infos.filter((f) => (f.kind === "torus" || f.kind === "other") && !pocketFaces.has(f.id)).map((f) => f.id),
         frame: { x: [...frame.x], y: [...frame.y], z: [...frame.z] },
       },
       faces: infos.map((f, i) => ({ id: f.id, kind: f.kind, ...meshes[i] })),

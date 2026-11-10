@@ -1,9 +1,13 @@
 // The rule order of service/dfma/rules/__init__.py RULES, with each rule's PROCESSES. A slice that ports a rule adds
 // its module here and the processes it is ported for; checks_not_run names every rule not ported yet for the process
 // (port spec Design). S2's hole rules are ported for Milling only: on a turned part Python splits the holes into
-// holes and bores first (split_bores, S6), so the browser copy runs no hole rule there until S6.
+// holes and bores first (split_bores, S6), so the browser copy runs no hole rule there until S6. S4's pocket rules
+// (corner_radius, pocket_depth, undercut) run on Milling only, as in Python.
 import type { Process } from "../../api";
 import * as access from "./access";
+import * as cornerRadius from "./corner_radius";
+import * as pocketDepth from "./pocket_depth";
+import * as undercut from "./undercut";
 import * as holeDepth from "./hole_depth";
 import * as holeSize from "./hole_size";
 import type { Feature, Finding, Limits, PartSummary, Pass } from "./types";
@@ -17,9 +21,9 @@ export interface RuleEntry { ID: string; PROCESSES: readonly Process[]; ported: 
 export const RULES: RuleEntry[] = [
   { ID: "hole_depth", PROCESSES: ["mill", "turn"], ported: ["mill"], module: holeDepth },
   { ID: "hole_size", PROCESSES: ["mill", "turn"], ported: ["mill"], module: holeSize },
-  { ID: "corner_radius", PROCESSES: ["mill"], ported: [] },
-  { ID: "pocket_depth", PROCESSES: ["mill"], ported: [] },
-  { ID: "undercut", PROCESSES: ["mill"], ported: [] },
+  { ID: "corner_radius", PROCESSES: ["mill"], ported: ["mill"], module: cornerRadius },
+  { ID: "pocket_depth", PROCESSES: ["mill"], ported: ["mill"], module: pocketDepth },
+  { ID: "undercut", PROCESSES: ["mill"], ported: ["mill"], module: undercut },
   { ID: "thin_wall", PROCESSES: ["mill", "turn"], ported: [] },
   { ID: "access", PROCESSES: ["mill"], ported: ["mill"], module: access },
   { ID: "looks_turned", PROCESSES: ["mill"], ported: [] },

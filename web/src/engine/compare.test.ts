@@ -202,3 +202,52 @@ test("S3: driver finding ids compare after renumbering, so an unported rule's fi
   k.cost_drivers[0].findings = ["F9"];
   expect(compare(s3key(), k, 3).status).toBe("different");
 });
+
+// S4: pockets and corners, the pocket rules and part.not_analysed_faces (on milled files; turned files from S6).
+const pocket = { id: "pocket-1", kind: "pocket", faces: [7, 9], axis: [0, 0, 1], open_dirs: ["+Z"], open_vectors: [[0, 0, 1]],
+  dims_mm: { depth: 12.7, min_corner_radius: 3.175, end_mill_mm: 6.35, undersized: 0, narrowest_width: 30 } };
+const corner = { id: "corner-1", kind: "corner", faces: [10], axis: [0, 0, 1], open_dirs: [], open_vectors: [],
+  dims_mm: { radius: 3.175, depth: 12.7, end_mill_mm: 6.35 }, pocket: "pocket-1" };
+const s4key = () => {
+  const k = s3key();
+  return { ...k, features: [structuredClone(hole), structuredClone(pocket), structuredClone(corner)],
+    findings: [...k.findings, { id: "F3", rule: "pocket_depth", severity: "medium", feature: "pocket-1", measured: 2, limit: 3, title: "deep pocket" }],
+    rows: [...k.rows, { id: "row:F3", rule: "pocket_depth", findings: ["F3"], range: "F3", count: 1, sentence: "deep." }],
+    rules_run: ["hole_depth", "hole_size", "corner_radius", "pocket_depth", "undercut", "access"],
+    checks_run: ["Hole depth check", "Hole size check", "Corner radius check", "Pocket depth check", "Undercut check", "Access check"],
+    passed: [k.passed[0], { rule: "undercut", feature: "pocket-1", title: "No undercut" }] };
+};
+
+test("S4: pockets, corners and their rules compare, the plan compares on a pocket file, and every planted change is caught", () => {
+  expect(compare(s4key(), s4key(), 4)).toEqual({ status: "same", diffs: [], leftOut: [] });
+  const cases: [string, (r: ReturnType<typeof s4key>) => void][] = [
+    ["pocket depth", (r) => { r.features[1].dims_mm.depth = 12.71; }],
+    ["undercut key", (r) => { (r.features[1].dims_mm as Record<string, number>).undercut_mm = 2; }],
+    ["corner dropped", (r) => { r.features.pop(); }],
+    ["corner's pocket", (r) => { (r.features[2] as typeof corner).pocket = "pocket-2"; }],
+    ["pocket finding", (r) => { r.findings[2].measured = 2.1; }],
+    ["pocket row", (r) => { r.rows[2].sentence = "Deep."; }],
+    ["pocket pass", (r) => { r.passed.pop(); }],
+    ["rules_run", (r) => { r.rules_run = r.rules_run.filter((id) => id !== "undercut"); }],
+    ["not_analysed_faces", (r) => { r.part.not_analysed_faces = []; }],
+    ["plan on a pocket file", (r) => { r.setups[0].features = ["hole-1", "pocket-1"]; }],
+  ];
+  for (const [what, plant] of cases) {
+    const r = s4key();
+    plant(r);
+    expect(compare(r, s4key(), 4).status, what).toBe("different");
+  }
+  // S3 left pockets, their rules, the plan on this file and not_analysed_faces out
+  const r = s4key();
+  r.features[1].dims_mm.depth = 99;
+  r.part.not_analysed_faces = [];
+  r.rules_run = ["hole_depth", "hole_size", "access"]; // what the S3 browser copy ran
+  r.checks_run = ["Hole depth check", "Hole size check", "Access check"];
+  expect(compare(r, s4key(), 3).diffs).toEqual([]);
+});
+
+test("S4: a turned file still leaves not_analysed_faces out (Python's turned pockets: S6)", () => {
+  const turned = { ...key(), rules_run: ["hole_depth", "hole_size", "turn_axis"] };
+  const r = { ...key(), rules_run: [], checks_run: [], part: { ...key().part, not_analysed_faces: [] } };
+  expect(compare(r, turned, 4).status).toBe("same");
+});

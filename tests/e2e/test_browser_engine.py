@@ -37,7 +37,8 @@ def nist(name: str):
 
 
 # The rules the browser copy has ported, by process (web/src/engine/rules/index.ts `ported`); each slice adds its own.
-PORTED = {"mill": {"hole_depth", "hole_size", "access"}, "turn": set()}  # S2: holes, Milling only until S6
+PORTED = {"mill": {"hole_depth", "hole_size", "access", "corner_radius", "pocket_depth", "undercut"},
+          "turn": set()}  # S2: holes; S4: pockets, corners, undercuts; Milling only until S6
 
 
 def not_checked(process: str = "mill") -> str:
@@ -95,7 +96,7 @@ def test_not_checked_notice(page: Page, base_url: str):
     expect(page.locator("#row-chips button").first).to_be_visible()
     expect(page.get_by_test_id("show-ok")).to_be_visible()
     page.get_by_test_id("step-machining").click()
-    expect(page.get_by_test_id("plan-notrun")).to_have_text(POCKETS_LATER)  # a milled plan holds holes only until S4 (D-061)
+    expect(page.get_by_test_id("plan-notrun")).to_be_hidden()  # S4: the plan holds pockets too, so no pocket line (D-061)
     expect(page.get_by_test_id("plan-machine")).to_have_text("3-axis mill")
     expect(page.locator("#plan-none")).to_be_hidden()
     page.get_by_test_id("step-cost").click()
@@ -253,14 +254,13 @@ def test_hole_rows(page: Page, base_url: str, name: str):
     on_holes = {f["id"] for f in holes}
     findings = [f for f in key["findings"] if f["rule"] in ported and f.get("feature") in on_holes]
     kept = {f["id"] for f in findings}
-    # A row mixing a pocket's access finding can't be built until S4 (port spec Parity): left out, as compare.ts does
-    rows = [r for r in key["rows"] if r["rule"] in ported and set(r["findings"]) <= kept]
+    rows = [r for r in key["rows"] if r["rule"] in ported and set(r["findings"]) <= kept]  # the rows on holes only
     assert holes, f"{name} has no hole"
     page.goto(base_url)
     result = read(page, file)
     assert len([f for f in result["features"] if f["kind"] == "hole"]) == len(holes)
     card = page.get_by_test_id("overview-features")
-    expect(card).to_contain_text(f"{len(holes)} hole{'s' if len(holes) != 1 else ''} checked")
+    expect(card).to_contain_text(f"{len(holes)} hole{'s' if len(holes) != 1 else ''}")  # S4: "…, 1 pocket and 4 corners checked"
     expect(card).to_contain_text(not_checked())
     page.get_by_test_id("step-features").click()
     if not rows:
@@ -278,12 +278,43 @@ def test_hole_rows(page: Page, base_url: str, name: str):
     assert sorted(page.evaluate("window.__dfma.highlightedFaces()")) == faces
 
 
-POCKETS_LATER = "Pockets are not in this plan yet in this copy, so it may need more setups and tools."
+POCKETS_LATER = "Pockets are not in this plan yet in this copy, so it may need more setups and tools."  # gone in S4
+
+
+@pytest.mark.parametrize("name", ["clean_pocket", "pocket_sharp", "pocket_deep", "pocket_island", "report_sample"])
+def test_pocket_rows(page: Page, base_url: str, name: str):
+    """S4: the pocket and corner rows on the Features step are Python's, word for word, and a row's tap lights its
+    faces; the pockets and corners are Python's, ids and faces (the parity compare checks every number)."""
+    file = PARTS / f"{name}.step"
+    key = analyze(file, file.name)
+    kinds = ("pocket", "corner")
+    mine = [f for f in key["features"] if f["kind"] in kinds]
+    assert any(f["kind"] == "pocket" for f in mine), f"{name} has no pocket"
+    page.goto(base_url)
+    result = read(page, file)
+    shown = [(f["id"], f["faces"]) for f in result["features"] if f["kind"] in kinds]
+    assert shown == [(f["id"], f["faces"]) for f in mine]
+    ported = PORTED["mill"]
+    kind_of = {f["id"]: f["kind"] for f in key["features"]}
+    findings = [f for f in key["findings"] if f["rule"] in ported and kind_of.get(f.get("feature")) in ("hole", *kinds)]
+    on = {f["id"] for f in findings if kind_of.get(f.get("feature")) in kinds}
+    rows = [r for r in key["rows"] if r["rule"] in ported and set(r["findings"]) & on]
+    page.get_by_test_id("step-features").click()
+    ids = {f["id"]: f"F{n}" for n, f in enumerate(findings, 1)}  # renumbered over the ported rules (port spec Parity)
+    for r in rows:
+        row = page.get_by_test_id(f"row-{ids[r['findings'][0]]}")
+        expect(row).to_contain_text(r["short"])
+        expect(row).to_contain_text(r["sentence"])
+    if rows:
+        first = rows[0]
+        faces = sorted({i for f in findings if f["id"] in first["findings"] for i in f["faces"]})
+        page.get_by_test_id(f"row-{ids[first['findings'][0]]}").click()
+        assert sorted(page.evaluate("window.__dfma.highlightedFaces()")) == faces
 
 
 def test_plan_and_cost(page: Page, base_url: str, tmp_path):
-    """S3 (D-061): clean_holes.step's plan and drivers as Python gives them; the pocket line on Machining and in the
-    PDF; the setup card says what a tap does and that it is done; the total, the Cost card and the PDF read
+    """S3 (D-061): clean_holes.step's plan and drivers as Python gives them; no pocket line on Machining or in the PDF
+    from S4; the setup card says what a tap does and that it is done; the total, the Cost card and the PDF read
     "(partial)" while a check that feeds a driver has not run, and the Cost step names those checks."""
     from pypdf import PdfReader
     key = analyze(PARTS / "clean_holes.step", "clean_holes.step")
@@ -295,7 +326,7 @@ def test_plan_and_cost(page: Page, base_url: str, tmp_path):
     total = f"{key['cost_total']:.1f} points (partial)"
     expect(page.get_by_test_id("overview-cost")).to_contain_text("1 cost driver (partial)")
     page.get_by_test_id("step-machining").click()
-    expect(page.get_by_test_id("plan-notrun")).to_have_text(POCKETS_LATER)
+    expect(page.get_by_test_id("plan-notrun")).to_be_hidden()  # S4: no pocket line
     setup = page.get_by_test_id("plan-setup-1")
     expect(setup).to_contain_text("Setup 1 · from +Z")
     expect(setup.locator(".shint")).to_have_text("Show on model ›")
@@ -310,5 +341,6 @@ def test_plan_and_cost(page: Page, base_url: str, tmp_path):
     path = tmp_path / "report.pdf"
     download.value.save_as(path)
     first = PdfReader(path).pages[0].extract_text().replace("\n", " ")
-    for text in (POCKETS_LATER, "Machine: 3-axis mill", f"Total score: {total}", not_checked()):
+    for text in ("Machine: 3-axis mill", f"Total score: {total}", not_checked()):
         assert text in first, f"{text!r} is not on page 1"
+    assert POCKETS_LATER not in first  # S4: the plan holds pockets

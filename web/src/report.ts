@@ -3,7 +3,7 @@
 // finding highlighted; the assumptions come last. Built in the browser with jsPDF, so the file never leaves the computer (APP-01).
 
 // Imported up front, not on demand: the view-only demo page inlines one script and has no chunks to load (D-009).
-import { NOT_WORKED_OUT, POCKETS_LATER, noChecksRun, notCheckedLine, partial, planNotWorkedOut, pocketsLater } from "./notrun";
+import { NOT_WORKED_OUT, noChecksRun, notCheckedLine, partial, planNotWorkedOut } from "./notrun";
 import { jsPDF } from "jspdf";
 import type { Analysis, Finding } from "./api";
 import { axisText, blendCounts, blendFaces, blendKinds, blendTitle, holeCopies, holeCounts, holeFeatureSize, holeNamesSeen, holeFeatureTitle, checkedLine, driverLine, inMm, meta, notPlanned, planFoot, planWhy, setupHead, stockText, threadCallout, threadCounts, threadSize, toolName } from "./findings";
@@ -118,7 +118,6 @@ function summaryPage(p: Page, input: ReportInput): void {
   } else if (!result.machine) {
     p.text("No machine could be chosen for this part, so nothing is planned.");
   } else {
-    if (pocketsLater(result)) p.text(POCKETS_LATER); // the browser copy before S4 (D-061)
     p.text(`Machine: ${result.machine}`, { bold: true });
     const lathe = result.setups.length === 1 && result.setups[0].direction === "turn";
     if (lathe && result.turn_axis) p.text(`Turning axis: ${axisText(result.turn_axis, result)}`);

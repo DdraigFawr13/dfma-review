@@ -2,7 +2,7 @@
 // Setups are the smallest set of directions (+-X +-Y +-Z of the part frame) that reaches every hole and pocket the
 // `access` rule did not flag, by brute force over the 63 non-empty subsets; ties go to the subset whose directions
 // come first in the order +Z -Z +X -X +Y -Y. A countersink (D-022) is cut from its own end, so each countersunk end is
-// one more thing to reach, in that end's direction only. Pockets reach the plan in S4; their tools are ported here.
+// one more thing to reach, in that end's direction only. Pockets reach the plan from S4 (pocketTools).
 import { frameDir, type Frame } from "./features/holes";
 import type { Feature } from "./rules/types";
 import { toolsConfig } from "./settings";

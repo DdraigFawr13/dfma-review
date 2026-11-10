@@ -70,9 +70,9 @@ LINED_UP = " (lined up)"
 NOTE_SERVICE = "<b>View-only demo</b> of the real app, with these test parts analyzed in advance. Tap a part (a turning part opens on Turning): it opens on its overview; walk the five steps with the tabs, the card headings, Next and Back, or the phone's Back. Process and material sit under the file name and work as in the app. Your files can't be uploaded here; the first two I1 pairs show the app's refusals; the two marked \"lined up\" were lined up by the test harness so their threads show (the app itself refuses them); a matching pair needs your own files in the app. Export PDF builds the file only in the app on a computer: this viewer blocks downloads, so here it saves nothing (the S7 mock-up shows the PDF pages)."
 NOTE_BROWSER = ("<b>View-only demo</b> of the test copy that runs in the browser, with these test parts analyzed in advance by "
                 "its own engine. Tap a part (a turning part opens on Turning): it opens on its overview; walk the five "
-                "steps with the tabs, Next and Back. On milled parts it runs the hole checks (depth, size and access) and "
-                "works out the machine plan and cost drivers for the holes; pockets, every other check and turned parts "
-                "come in later slices, and each step names what is not done yet. Your files can't be uploaded here. Export PDF saves nothing in this viewer, "
+                "steps with the tabs, Next and Back. On milled parts it runs the hole and pocket checks (hole depth and size, "
+                "corner radius, pocket depth, undercut and access) and works out the machine plan and cost drivers; thin "
+                "walls, the other checks and turned parts come in later slices, and each step names what is not done yet. Your files can't be uploaded here. Export PDF saves nothing in this viewer, "
                 "which blocks downloads; it works in the app.")
 
 
