@@ -235,6 +235,7 @@ def test_parts_collected():
     assert len(STEP_PARTS) >= 4
 
 
+@pytest.mark.timed
 @pytest.mark.parametrize("path", STEP_PARTS, ids=[p.stem for p in STEP_PARTS])
 def test_runtime(path):
     """Every committed part finishes in under 10 s, including worker start."""

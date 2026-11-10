@@ -127,6 +127,7 @@ def test_not_checked_notice(page: Page, base_url: str):
     expect(page.locator("#cost")).to_have_text(later)
 
 
+@pytest.mark.timed
 def test_ui_responsive(page: Page, base_url: str):
     """J3: while the slowest NIST file is analysed, "Analyzing" shows, the page's main thread never stalls for 200 ms
     (a 10 ms heartbeat records its longest gap from the upload to the worker's reply), and a tap on the Part tab,

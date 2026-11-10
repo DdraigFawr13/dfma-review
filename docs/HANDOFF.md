@@ -24,7 +24,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-10 Port S4 (pockets, corners, undercuts) merged (PR #37; D-062): `features/pockets.ts` (a direct port, `_inner_points` and `_reachable` as they are), `rules/{corner_radius,pocket_depth,undercut}.ts`; SLICE 4. The **First** step's stop did not trigger: full set 282/290 the same, 6 crash Python, 2 differ in the same 3 mesh faces as S1 (bn_ball6 14, 18; nasty_cheese 202); 103 milled files with pockets, 292 pockets, 1,154 corners, 819 pocket findings, 3 undercuts, all equal to Python. Quick set 77/77 (43/77 differed with the S3 engine). Plan and cost now compare on pocket files (62 of 290 still left out on thin-wall findings: S5). The pocket line is gone; no new wording. 19 of 24 `# S4` tests pass in the browser; 5 moved to S5 (walls). Fresh zero-decision re-check: no gap for Morgan; defaults in the spec's "Builder defaults (S4)". Build review: 0 high, 3 medium, 7 low; 8 fixed (temporaries freed in hot loops, no spread into Math.max/min, Python's degree formula, test numbering), 2 recorded; parity unchanged after the fixes. [Status](https://claude.ai/artifact/VkNFFXAeofj9FVqxpNjW8b), [demo](https://claude.ai/artifact/NmVTShbqSsWTTfwpkLKngu). Olefile 0.47 was missing again; installed with micromamba.
+- 2026-11-10 Faster `check.py` (Morgan: testing takes too long): three lanes at once, then the `timed` tests (`test_nist_file`, `test_runtime`, `test_ui_responsive`) alone; 12 min 40 s → 7 min 7 s here, same 926 service, 79 e2e, 56 browser tests, parity 77/77. Service tests (5 min 47 s) are now the long lane. Proposed, not approved: pytest-xdist for them (a new test package, SAFE-01).
 
 ## Next
 
