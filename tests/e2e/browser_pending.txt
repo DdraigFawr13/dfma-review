@@ -4,30 +4,6 @@
 # slice it needs. S7 empties it (the tests that fake the service's /api/analyze are rewritten or marked service-only
 # there); S8 deletes it.
 
-# The next three moved from S2 (2026-11-10): they pass the hole rows but assert the wall count ("1 hole and 4 walls
-# checked"); S2 checks the hole rows in test_browser_engine.py::test_hole_rows instead.
-tests/e2e/test_findings.py::test_checked_holes_exclude_holes_with_findings[chromium] # S5
-tests/e2e/test_findings.py::test_clean_part_shows_clean_verdict[chromium] # S5
-tests/e2e/test_findings.py::test_click_highlights_face[chromium] # S5
-
-# Moved from S4 (2026-11-10, S4 run): they pass the pockets and corners but need walls: "8 walls checked", a cost
-# total with no " (partial)" (thin_wall feeds a driver), and the Passed list, which on report_sample is its 9 walls
-# (the browser copy shows "Passed 0", so test_f16 and test_feature_rows find no passed row to open).
-tests/e2e/test_audit_2026_11_09.py::test_f16_small_targets_are_44px_below_900px[chromium] # S5
-tests/e2e/test_findings.py::test_pocket_and_corner_switches[chromium] # S5
-tests/e2e/test_pdf.py::test_export_pdf[chromium] # S5
-tests/e2e/test_steps.py::test_cost_total[chromium] # S5
-tests/e2e/test_steps.py::test_feature_rows[chromium] # S5
-
-# Moved from S4 (2026-11-10, S3 review): it asserts a thin wall's row under "Whole part" (thin_wall: S5).
-tests/e2e/test_steps.py::test_machining_whole_part_and_no_setup[chromium] # S5
-# Listed at S1 for walls (S5):
-tests/e2e/test_audit_2026_11_09.py::test_f14_passed_feature_states_its_measurement_once[chromium] # S5
-tests/e2e/test_audit_2026_11_09.py::test_f18_show_ok_sits_under_the_chips_below_900px[chromium] # S5
-tests/e2e/test_findings.py::test_wall_switch[chromium] # S5
-tests/e2e/test_passed_and_setups.py::test_passed_list[chromium] # S5
-tests/e2e/test_passed_and_setups.py::test_passed_open_at_200_percent_text_has_no_sideways_scroll[chromium] # S5
-tests/e2e/test_steps.py::test_show_ok[chromium] # S5
 tests/e2e/test_lathe_plan.py::test_block_as_turn_shows_no_plan[chromium] # S6
 tests/e2e/test_lathe_plan.py::test_clean_shaft_passed_list[chromium] # S6
 tests/e2e/test_lathe_plan.py::test_flange_bolt_hole[chromium] # S6
@@ -36,6 +12,10 @@ tests/e2e/test_lathe_plan.py::test_part_wide_pin_does_not_hide_the_cross_hole[ch
 tests/e2e/test_lathe_plan.py::test_slender_shaft_for_milling[chromium] # S6
 tests/e2e/test_lathe_plan.py::test_slender_shaft_on_the_lathe[chromium] # S6
 tests/e2e/test_steps.py::test_turning_overview[chromium] # S6
+# Moved from S5 (2026-11-10, S5 run): they pass the walls, then wait for the service's /api/analyze reply to a
+# material change, which the browser copy never sends (S7 rewrites the tests that wait on the service).
+tests/e2e/test_findings.py::test_click_highlights_face[chromium] # S7
+tests/e2e/test_passed_and_setups.py::test_passed_list[chromium] # S7
 tests/e2e/test_audit_2026_11_09.py::test_f3_error_says_how_to_fix_it_beside_the_file_field[chromium] # S7
 tests/e2e/test_blends.py::test_panel[chromium] # S7
 tests/e2e/test_blends.py::test_panel_hidden_without_ipt[chromium] # S7

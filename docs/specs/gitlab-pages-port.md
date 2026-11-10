@@ -84,6 +84,7 @@ Each journey's check fails at the starting commit, because `web/src/engine/`, th
 - The engine runs in a module Web Worker, one worker per analysis (D-055).
 - Python stays as the answer key until S8 (D-055).
 - Hosting: `.github/workflows/pages.yml` deploys from `main` only (CI-05); `.gitlab-ci.yml` holds the same build for work (D-055).
+- Whole-degree bins on a hole face snap to 9 decimals before the whole degree, in Python and the port, so atan2's 1-step noise between engines can't move a bin (D-063, S5).
 
 ## Alternatives rejected
 
@@ -236,6 +237,16 @@ Settled after the zero-decision re-check of S4 against merged S3 (a fresh review
 - **Compare (S4):** `PORTED_KINDS[4]` is `pocket`, `corner`; `PORTED_RULES[4]` the three pocket rules; `PORTED_KEYS[4]` adds no key. `part.not_analysed_faces` compares on milled files from S4 and on turned files from S6 (Python leaves a turned part's pocket faces out too). The S2 "mixed rows" code stays for older slices; at S4 every `access` row is ported.
 - **Mesh and memory (build review):** `box()` reads the triangulation (`BRepBndLib.Add(..., true)`, as pythonocc's default), a second mesh dependency beside `innerPoints`; the full-set parity covers both. Temporaries in hot loops are deleted where the engine returns a copy; handles and references the engine owns (surfaces, axes, casts) are left as `holes.ts` leaves them, and the worker is new for each file. Not measured: J4 is dropped (D-059).
 - **Screens:** the pocket line goes (D-061 said "until pockets are ported"); no new wording. The cost total keeps " (partial)" until S5 (`thin_wall` feeds a driver). `test_browser_engine.py::test_pocket_rows` checks the pocket and corner rows word for word on five parts.
+
+## Builder defaults (S5, 2026-11-10)
+
+Settled after the zero-decision re-check of S5 against merged S4 (a fresh reviewer: no gap for Morgan) and Morgan's answer on the S5 stop (D-063).
+
+- **Stop (D-063):** the first full-set parity on walls differed on 4 NIST linkage arms (V8's atan2 one step off glibc's at a seam, not the mesh); Morgan chose to snap the whole-degree bins in both engines (`_whole_degree`, `wholeDegree`). `holes.ts` `degrees` is now `x * (180 / pi)`, as `math.degrees`.
+- **Files:** `features/walls.ts` holds `area` (`_area`), `touching`, `walls`, `onFace`, `NearRays` and `holeWalls`; `pockets.ts` exports `distShapes` for it. The boolean's failure (any exception from the engine) skips the pair, as Python's `except RuntimeError`; the constructor builds and `Build()` runs again, as the Python.
+- **Milling only:** walls and `thin_wall` run on Milling only until S6 (on a turned part a wall at a hole names the hole by its `split_bores` id); Turning keeps `thin_wall` in `checks_not_run` and its cost stays partial. `features` is holes, pockets, corners, then `number(walls + hole walls, "wall")`, as `analyze.py`.
+- **Compare (S5):** `PORTED_KINDS[5]` is `wall`, `PORTED_RULES[5]` `thin_wall`, `PORTED_KEYS[5]` adds no key. `PLAN_KINDS` is unchanged (the plan reads no wall). A file whose key holds a `looks_turned` finding still leaves the plan and cost out until S6, as the S3 rule says ("no finding from a rule not ported").
+- **Screens:** no new wording. On Milling every rule that feeds a driver now runs, so " (partial)" and the Cost step's not-checked line go (D-061's rule); the Features step and the PDF summary still name Looks turned and the `.ipt` checks. `test_browser_engine.py::test_wall_rows` checks the walls and thin-wall rows on five parts; `test_plan_and_cost` now expects no " (partial)".
 
 ## Verification
 
