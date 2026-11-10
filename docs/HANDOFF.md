@@ -1,6 +1,6 @@
 # Handoff
 
-Updated: 2026-11-10 (port S4 merged). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
+Updated: 2026-11-10 (faster check.py merged; port S4 merged). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
 
 ## Phase
 
@@ -24,7 +24,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-10 Faster `check.py` (Morgan: testing takes too long): three lanes at once, then the `timed` tests (`test_nist_file`, `test_runtime`, `test_ui_responsive`) alone; 12 min 40 s → 7 min 7 s here, same 926 service, 79 e2e, 56 browser tests, parity 77/77. Service tests (5 min 47 s) are now the long lane. Proposed, not approved: pytest-xdist for them (a new test package, SAFE-01).
+- 2026-11-10 Faster `check.py` merged (PR #39; D-065; Morgan: testing takes too long, keep accuracy): three lanes at once, then the `timed` tests (`test_nist_file`, `test_runtime`, `test_ui_responsive`) alone; service tests on pytest-xdist 3.8.0 (approved). 12 min 40 s → 7 min 7 s (lanes) → 6 min 15 s (xdist; all 4 cores busy now). Same tests by name; serial and 3 parallel orders gave identical outcomes on all 865 untimed service tests. NIST unpack made race-safe; `check.py` first checks the environment against `environment.yml` and prints the fix (cached containers missed olefile, would miss xdist). Morgan approved ("Approved. Merge when ready"); merged in PR #39. Next session: if `check.py` names missing packages, run the fix it prints.
 
 ## Next
 
@@ -43,6 +43,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-10 D-065: faster `check.py` (lanes, timed tests alone, pytest-xdist); approved and merged in PR #39.
 - 2026-11-10 D-062: S4 approved; merge when done; S5 in a new session.
 - 2026-11-10 D-061: S3 mock-up approved with its recommendations (setup cards in both copies, pocket line, PDF total); merge when done; S4 in a new session.
 - 2026-11-10 D-060: S2 approved; merge when ready; S3 in a new session.
@@ -56,5 +57,4 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - 2026-11-09 D-052: a deep pocket's advice counts its passes at a safe depth (1× the tool, 0.5× in stainless; estimate).
 - 2026-11-09 D-051: review-steps S2+S3 approved and merged (#30); spec shipped.
 - 2026-11-09 D-050: an angled hole or pocket is a Review; a hole is a Fix when it enters its face off square.
-- 2026-11-09 D-049: Features groups mock-up approved; a corner sits in its pocket's setup, a thin wall under "Whole part".
 - D-001 to D-037: see `docs/DECISIONS.md` (`grep '^## D-'`).

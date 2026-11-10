@@ -42,16 +42,17 @@ code { font-family: var(--mono); font-size: .9em; }
   </header>
 
   <section>
-    <p class="big">12:40 → 7:07 <span>min:s, all of <code>check.py</code></span></p>
+    <p class="big">12:40 → 6:15 <span>min:s, all of <code>check.py</code></span></p>
   </section>
 
   <section>
     <h2>Measured in this session (4 cores)</h2>
-    <div class="bars" role="img" aria-label="Before 760 seconds, after 427 seconds, fresh clone 435 seconds">
+    <div class="bars" role="img" aria-label="Before 760 seconds, lanes 427 seconds, lanes plus xdist 375 seconds">
       <div class="row old"><b>Before</b><div class="track"><div class="fill" style="width:100%"></div></div><span class="num">12:40</span></div>
-      <div class="row new"><b>After</b><div class="track"><div class="fill" style="width:56.2%"></div></div><span class="num">7:07</span></div>
-      <div class="row new"><b>Fresh clone</b><div class="track"><div class="fill" style="width:57.2%"></div></div><span class="num">7:15</span></div>
+      <div class="row new"><b>Lanes</b><div class="track"><div class="fill" style="width:56.2%"></div></div><span class="num">7:07</span></div>
+      <div class="row new"><b>+ xdist</b><div class="track"><div class="fill" style="width:49.3%"></div></div><span class="num">6:15</span></div>
     </div>
+    <p class="note" style="margin-top:8px">xdist saved less than I estimated (4 to 5 min). All 4 cores are now busy, so the three lanes slow each other down. A further cut would mean running fewer tests.</p>
     <p class="note" style="margin-top:8px">Same tests, all passed: 926 service, 79 against the Python app, 56 in the browser copy, parity 77 of 77 files. CI took 13:24 before, against a 20-minute limit; I haven't measured it after the change, because draft PRs skip CI.</p>
   </section>
 
@@ -91,10 +92,18 @@ code { font-family: var(--mono); font-size: .9em; }
     </ul>
   </section>
 
+  <section>
+    <h2>pytest-xdist: the accuracy test (you approved it)</h2>
+    <ul>
+      <li>One serial run of the 865 untimed service tests, then three parallel runs, each handing out tests differently. In each run, 864 or 865 tests ran at a different position.</li>
+      <li>All three parallel runs gave the same outcome as the serial run for every test, by name: 865 passed each time.</li>
+      <li>One race fixed first: workers could unpack the NIST zip at the same time. It now unpacks into a private folder and moves into place in one step. Six processes unpacking at once all read the same 17 files, which match the zip byte for byte.</li>
+      <li>Service tests alone on 4 cores: 316 s serial, 113 to 136 s parallel.</li>
+    </ul>
+  </section>
+
   <section class="ask">
-    <h2 style="margin:0">Your call: the service tests, now the slowest group at 5:47</h2>
-    <div class="opt"><span class="tag">Recommended</span><strong>Add pytest-xdist</strong><span class="note">A standard pytest add-on that spreads tests across all 4 cores. About 4 to 5 min in total (an estimate, not measured). It adds one test-only package to <code>environment.yml</code>. Adopted only if the parallel run passes exactly the same named tests as the serial run, three runs in a row in different orders, with the timed tests still alone. Otherwise I fix the test that depended on order, or drop it.</span></div>
-    <div class="opt"><strong>Leave it at about 7 min</strong><span class="note">No new package.</span></div>
-    <p class="note">Reply in chat with your choice.</p>
+    <h2 style="margin:0">Next</h2>
+    <p>The change is in draft <a href="https://github.com/DdraigFawr13/dfma-review/pull/39">PR #39</a>. Say "approved" in chat and I'll mark it ready; CI then runs on it, and I merge when it's green.</p>
   </section>
 </main>

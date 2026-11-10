@@ -7,7 +7,7 @@ Run it inside the dfma environment. Cross-platform; Python only.
 Three stages:
 1. Setup, one step at a time: the drift check, the settings dump and the web check and builds (about 20 s).
 2. Three lanes at once, each step in its own process, its output held until it ends so the lanes don't mix:
-   the service tests; the e2e tests against the service; the parity key, then parity and the browser e2e tests.
+   the service tests (on every core, pytest-xdist); the e2e tests against the service; the parity key, then parity and the browser e2e tests.
    The lanes share no files or ports (8765 for the service, 8766 for the browser build).
 3. The tests that assert a wall-clock limit (marker `timed`), alone, after the lanes, so other work can't slow them.
 """
@@ -97,6 +97,30 @@ class Lane(threading.Thread):
                 pass
 
 
+def environment_matches() -> bool:
+    """Every conda package pinned in environment.yml is installed at its pinned version. A cached container can hold an
+    environment built before a package was added (olefile, then pytest-xdist), which fails later with an import error."""
+    meta = Path(sys.prefix) / "conda-meta"
+    if not meta.is_dir():
+        print("check: not a conda environment; activate it: conda activate dfma", flush=True)
+        return False
+    installed = {}
+    for f in meta.glob("*.json"):
+        name, version, _build = f.stem.rsplit("-", 2)
+        installed[name] = version
+    missing = []
+    for line in (ROOT / "environment.yml").read_text(encoding="utf-8").splitlines():
+        spec = line.split("#")[0].strip()
+        if spec.startswith("- ") and "=" in spec:
+            name, _, version = spec[2:].strip().partition("=")
+            if installed.get(name) != version:
+                missing.append(f"{name}={version} (installed: {installed.get(name, 'none')})")
+    if missing:
+        print("check: the environment differs from environment.yml: " + ", ".join(missing) + "\n"
+              "  fix: micromamba install -y -n dfma -c conda-forge " + " ".join(m.split(" ")[0] for m in missing), flush=True)
+    return not missing
+
+
 def main() -> int:
     node, npm, py = tool("node"), tool("npm"), sys.executable
     # Lanes run pytest side by side: no shared .pytest_cache (-p no:cacheprovider).
@@ -113,7 +137,8 @@ def main() -> int:
     if not (ROOT / "web" / "node_modules").is_dir():  # a fresh checkout (CI): install the web packages first
         setup.insert(2, ("web install", [npm, "--prefix", "web", "ci"]))
     lanes = {
-        "service": [("service tests", [*pytest, "tests/service", "-m", NOT_TIMED])],
+        # pytest-xdist on every core (D-065): same tests, same outcomes as a serial run, by name
+        "service": [("service tests", [*pytest, "tests/service", "-m", NOT_TIMED, "-n", "auto", "--dist", "worksteal"])],
         "e2e": [("e2e tests", [*pytest, "-m", f"e2e and {NOT_TIMED}"])],
         "browser": [
             # Port spec J2: the Python key, then the browser engine in Node against it (quick set);
@@ -130,6 +155,8 @@ def main() -> int:
     ]
 
     total = time.perf_counter()
+    if not environment_matches():
+        return 1
     for name, cmd in setup:
         if code := run_step(name, cmd):
             return code
