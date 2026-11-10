@@ -1,0 +1,176 @@
+<title>Steps, Slots, Open Pockets</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one reading column. The answer first, then one panel per topic with its sources, then the proposals. */
+:root{--bg:#eef2f6;--panel:#ffffff;--ink:#16263d;--muted:#55657a;--line:#c4cfdc;--accent:#1f5fa8;--good:#3f6b2a;--warn:#a35a00;
+--sans:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1824;--panel:#172334;--ink:#e3eaf2;--muted:#9fb0c4;--line:#2c3c52;--accent:#7fb0ea;--good:#8cc47a;--warn:#e0a050;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1824;--panel:#172334;--ink:#e3eaf2;--muted:#9fb0c4;--line:#2c3c52;--accent:#7fb0ea;--good:#8cc47a;--warn:#e0a050;color-scheme:dark}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+<style>
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--sans);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+main{max-width:44rem;margin:0 auto;display:grid;gap:20px}
+h1{font-size:1.5rem;margin:0;text-wrap:balance}h2{font-size:1.125rem;margin:0 0 8px;text-wrap:balance}
+p,ul,ol{margin:0}ul,ol{padding-left:1.2em;display:grid;gap:6px}
+.muted{color:var(--muted);font-size:.875rem}
+a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.85em;overflow-wrap:anywhere}
+.lead{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:2px;padding:14px;display:grid;gap:8px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:12px 14px;display:grid;gap:8px;min-width:0}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font-size:.9rem;font-variant-numeric:tabular-nums;width:100%}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{font-weight:600}
+.num{font-family:var(--mono);font-weight:600}
+.tag{font-family:var(--mono);font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;border:1px solid currentColor;border-radius:2px;padding:0 5px;white-space:nowrap}
+.est{color:var(--warn)}.ok{color:var(--good)}
+.prop{border-left:4px solid var(--warn)}
+</style>
+<main>
+<header style="display:grid;gap:6px">
+<h1>Steps, slots and open pockets</h1>
+<p class="muted">2026-11-10 · for Morgan · how CAD/CAM and DFM tools find, name and machine these features, and how the app could add them</p>
+</header>
+
+<div class="lead">
+<p><b>The answer:</b> the tools agree on what the features are. A <b>step</b> is a floor with one wall (a shoulder): open on two sides. A <b>slot</b> is a channel: two walls that face each other, a floor, and ends that are open, flat or round. A <b>pocket</b> has walls all round (closed) or is missing some walls (open). The STEP machining-feature standard, Cimatron, CAD Exchanger and Fusion use these same words.</p>
+<p>What separates them is countable on our model: how many of the floor's edges have a wall, and whether the open edges lead out of the part. Our pocket finder already does the hard part (it finds floors, walls and the open-to-outside test). Today it throws away every floor that has an open side. The proposals keep those floors and name them step, slot or open pocket.</p>
+<p>The shop effect is real: an open side lets the cutter enter from outside (no ramp or pre-drilled hole), a narrow slot means full-width slotting (lower depth per pass, chip packing), and T-slots, keyseats and dovetails need special cutters. 5 proposals at the bottom. None is decided.</p>
+</div>
+
+<section>
+<h2>What the app does today (read in this repo)</h2>
+<ul>
+<li>A pocket needs a wall on every outer edge of its floor, or an edge "cut by another feature inside the part"; otherwise the floor is dropped (<code>service/dfma/features.py:895-929</code>, <code>_pocket_walls</code>: <code>else: return None</code>).</li>
+<li>The "break" probe (<code>features.py:813-839</code>, <code>_Enclosure.inside</code>) casts 5 rays in the floor's plane from just past a wall-less edge. All must hit the part again. Its docstring: "A slot or step that opens to the outside, or a through slot that runs out of the part, lets a ray escape." So the app already <i>detects</i> the open side; it uses it only to reject.</li>
+<li>A found pocket gets one open direction, its floor normal (<code>features.py:1319-1321</code>); the plan groups jobs by <code>open_dirs</code> (<code>service/dfma/plan.py:108</code>).</li>
+<li>The end mill is the largest that fits the corner radius and the narrowest width (<code>service/dfma/tools.py:58-63</code>, <code>pick_end_mill</code>). For a slot, that is a cutter as wide as the slot: full slotting.</li>
+<li>Scoring: MFCAD++ slots (classes 5-7 through, 17-19 blind) and steps (8-10 through, 20-22 blind) are not scored; any call on them counts against "0 wrong" (<code>tests/grading/grade.py:35-45</code>, D-018). D-019 lets slot faces shaped like a pocket beside a step count as pockets (20 of 40 at the time). LESSONS "recognition" ×1: a slot rule fitted MFCAD++ labels and removed 5 real pockets on EDMR parts.</li>
+<li>D-021 already finds T-slot-like undercuts in pockets (rule <code>undercut</code>); set 2 has T-slots and dovetails, labelled 6, 17, 18 (D-018).</li>
+</ul>
+</section>
+
+<section>
+<h2>1. Names and taxonomies</h2>
+<div class="tbl"><table>
+<tr><th>Source</th><th>Step</th><th>Slot</th><th>Pocket</th></tr>
+<tr><td>STEP machining features (ISO/TS 10303-1814, the AP224 / ISO 14649 lineage)</td><td>a linear sweep of two lines meeting at under 180 deg</td><td>"a channel or depression with continuous direction of travel"; <code>Open_slot</code> (open at both ends) or <code>Closed_slot</code>; end types flat, radiused, woodruff, open, loop; profiles include square-U, tee and vee</td><td>"a volume with a specific shape, removed from the part"; <code>Rectangular_open_pocket</code>: one side "does not touch the part"; closed pocket</td></tr>
+<tr><td>ISO 14649-10 (STEP-NC)</td><td colspan="3">Feature catalogue 4.5 lists pocket (4.5.5), slot (4.5.6), step and profile (4.5.18) and general outside profile. Full text is paid; only the contents list was read.</td></tr>
+<tr><td>CAD Exchanger MTK</td><td>none</td><td>none (one DFM check: "Non Symmetrical Axial Slot")</td><td>Closed, Open and Through pocket; stepped pocket; L-, C-, S-shaped pockets (2026.6.0)</td></tr>
+<tr><td>Cimatron</td><td>–</td><td>–</td><td>closed: "All pocket walls must be connected to a horizontal floor face"; open: "Some walls may be absent"</td></tr>
+<tr><td>Fusion CAM</td><td>–</td><td>–</td><td>closed pocket vs open pocket ("starts from the outside of the stock whenever possible")</td></tr>
+<tr><td>hyperMILL</td><td>–</td><td>T-slots (since 2017.2)</td><td>pockets, "even for pockets without bottoms"</td></tr>
+<tr><td>aPriori (search summary only)</td><td>–</td><td>slot ends "bathtub, cylindrical, or open"; others read as pockets; half and full dovetails</td><td>pocket</td></tr>
+<tr><td>MFCAD++ (24 classes)</td><td>through: rectangular, 2-sided, slanted; blind: triangular, circular, rectangular</td><td>through: triangular, rectangular, circular; blind: rectangular, vertical and horizontal circular end</td><td>closed only: triangular, rectangular, 6-sided, circular end</td></tr>
+<tr><td>UMD (EDMR, in <code>tests/edmr</code>)</td><td><code>step</code></td><td><code>slot</code></td><td><code>Pocket</code>, <code>Opened Pocket</code></td></tr>
+</table></div>
+<p class="muted">Sources: <a href="https://steptools.com/stds/smrl/data/modules/machining_features/sys/4_info_reqs.htm">STEP Tools, machining_features module 4</a> (read in three parts); <a href="https://www.iso.org/standard/40895.html">ISO 14649-10</a> and a <a href="https://www.din.de/de/mitwirken/normenausschuesse/nwm/veroeffentlichungen/wdc-beuth:din21:77798595/toc-9611735/download">DIN contents list</a> (search snippets); <a href="https://docs.cadexsoft.com/mtk/machining_2feature_recognizer_2_program_8cs-example">MTK sample</a>, <a href="https://docs.cadexsoft.com/mtk/mtk_news">MTK news</a>; <a href="https://help.cimatron.com/en/2026/pocket_manager_pocket_recognition_rules.htm">Cimatron pocket rules</a>; <a href="https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/GUIDE54328F8-4F1E-4838-8E3F-76D81F7B524F.htm">Fusion closed and open pockets</a>; <a href="https://www.openmind-tech.com/en/cam/automated-programming/features">hyperMILL features</a>; aPriori: <a href="https://docs.apriori.com/en/Pro/current/app/rn/22-1-x-x/22-1-0-0/2-model-mach-cm-enhanc-22R1.htm">release notes</a> (403 to the fetcher; content from a search summary, unverified); MFCAD++: <code>tests/grading/grade.py:36-45</code>.</p>
+<ul>
+<li>MFCAD++ has <b>no open-pocket class</b>: an open pocket there is a step or a slot. MTK and UMD do. So MFCAD++ alone can't score an open-pocket call. <span class="tag">inference</span></li>
+<li>Commercial tools name pockets much more than steps and slots. Steps and slots are mostly named in standards, datasets and research. <span class="tag">inference</span> from the lists above.</li>
+</ul>
+</section>
+
+<section>
+<h2>2. How tools find them (methods that suit deterministic code)</h2>
+<ul>
+<li><b>Attributed adjacency graph (AAG)</b>: faces are nodes, shared edges are arcs marked convex or concave; a feature is a matching subgraph. Joshi and Chang (1988) list pockets, slots, steps and blind steps; their version handled plane faces only. Weakness: "The intersection of features causes an explosion in the number of possible feature patterns." <a href="https://pure.psu.edu/en/publications/graph-based-heuristics-for-recognition-of-machined-features-from-/">Joshi &amp; Chang, CAD 20(2)</a>; <a href="https://en.wikipedia.org/wiki/Feature_recognition">Wikipedia, Feature recognition</a>.</li>
+<li><b>Convex-only pruning</b>: a face whose edges are all convex is not part of a pocket or slot; Analysis Situs removes those first, and its author calls the AAG "a supplementary data structure". <a href="https://quaoar.su/blog/archive/2020/06">Quaoar blog</a> (search snippet).</li>
+<li><b>Hints</b>: look for the trace a feature leaves even after another cuts it. "Presence of two opposing planar faces is a hint for potential existence of a slot feature." Better with interacting features; weakness: "a huge number of traces that won't lead to valid features." <a href="https://en.wikipedia.org/wiki/Feature_recognition">Wikipedia</a> (Vandenbrande and Requicha; Han and Requicha).</li>
+<li><b>Volume decomposition</b>: take stock minus part (the delta volume), split it into cells by extending faces, and join cells into "maximal volumes" with no concave edge. Weaknesses: face extension has global effects and joining cells is heavy. <a href="https://unpaywall.org/10.1016%2FS0010-4485%2801%2900080-X">Woo 2002 (DOI)</a> (search summary).</li>
+<li><b>Open side, by tools</b>: Cimatron calls a pocket open when "some walls may be absent", and a through pocket open only "if a pocket with an area is created when connecting its open ends". Fusion needs the open edge declared, and chains of an open pocket with an island "extend to the stock boundary". <a href="https://help.cimatron.com/en/2026/pocket_manager_pocket_recognition_rules.htm">Cimatron</a>; <a href="https://forums.autodesk.com/t5/fusion-manufacture/open-pocket-toolpath/m-p/10076817">Autodesk forum</a> (search snippet); <a href="https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/GUID67DC60DE-EE42-4BC4-B50D-B28D938D146E.htm">Fusion 2D Pocket</a>.</li>
+<li><b>Learning methods</b> (context only; runtime AI is excluded by D-001): UV-Net, Hierarchical CADNet (made MFCAD++), AAGNet (made MFInstSeg, 62,495 parts, 24 classes), BRepFormer (99.62% on MFInstSeg, its own table). <a href="https://arxiv.org/html/2504.07378v3">BRepFormer</a>. They need labelled training data and give no measured evidence per call, which D-001 asks for. <span class="tag">inference</span></li>
+</ul>
+</section>
+
+<section>
+<h2>Telling a step from a slot from an open pocket</h2>
+<p>No source found gives one full decision table. The rules below follow the STEP definitions and the hint idea; they are <span class="tag">inference</span>, to be tested on the sets before use.</p>
+<div class="tbl"><table>
+<tr><th>Floor edges with a wall</th><th>Open edges lead outside?</th><th>Walls</th><th>Call</th></tr>
+<tr><td>all</td><td>–</td><td>any</td><td>closed pocket (today)</td></tr>
+<tr><td>1 run of wall(s), the rest open</td><td>yes</td><td>one wall, or an L of two (corner step)</td><td><b>step</b> (a blind step also has a closing end wall)</td></tr>
+<tr><td>2 opposing walls, the 2 ends open</td><td>yes, both ends</td><td>parallel, width = gap</td><td><b>through slot</b></td></tr>
+<tr><td>2 opposing walls + 1 end (flat or round)</td><td>yes, one end</td><td>parallel</td><td><b>blind slot</b> (open at one end); end flat = end mill or side cutter; end round = end mill of the slot width</td></tr>
+<tr><td>3 or more walls, no two parallel and close, 1+ open sides</td><td>yes</td><td>outline wider than long, or many walls</td><td><b>open pocket</b></td></tr>
+<tr><td>walls over the floor that face it (ceilings)</td><td>–</td><td>neck narrower than head</td><td><b>T-slot / dovetail</b> (D-021 overhang; dovetail: walls lean in 45 or 60 deg)</td></tr>
+</table></div>
+<ul>
+<li>A slot vs a narrow open pocket: one cut-off is length ÷ width. No source gave a number. <span class="tag est">assumption needed</span></li>
+<li>Interacting features are the known weak spot (Wikipedia, above). MFCAD++ misses in our own scores are mostly "pocket outline cut by another feature": 483 of 606 missed faces (<code>docs/grading/2026-11-07-recognition-scores.md</code>, "Misses by cause"). Steps and slots will hit the same problem.</li>
+<li>D-019's shape (blind slot closed by one short wall beside a step floor) stays ambiguous by shape; a step call would not settle it.</li>
+</ul>
+</section>
+
+<section>
+<h2>3. Machining each type</h2>
+<div class="tbl"><table>
+<tr><th>Feature</th><th>Tool</th><th>Notes and numbers</th></tr>
+<tr><td>Step (shoulder)</td><td>shoulder face mill, end mill, long-edge cutter; side-and-face cutter for narrow deep or hidden shoulders</td><td>"Shoulder milling generates two faces simultaneously." Deep shoulders in repeated passes; under 75% of the edge length needs no extra finish. Edging: radial depth about 0.5 × cutter diameter. <a href="https://www.sandvik.coromant.com/en-us/knowledge/milling/shoulder-milling">Sandvik shoulder milling</a></td></tr>
+<tr><td>Slot, open ends</td><td>side-and-face cutter (horizontal), end mill or long-edge (vertical)</td><td>"Side and face cutters offer the most efficient method for milling large volumes of long, deep grooves." <a href="https://www.sandvik.coromant.com/en-us/knowledge/milling/groove-or-slot-milling">Sandvik groove or slot milling</a></td></tr>
+<tr><td>Slot, closed or one closed end</td><td>end mill only</td><td>"End mills are the only tools that can mill closed slots." Full slotting "is a demanding operation"; axial depth about 70% of edge length; blow chips out with air. Best: an undersized end mill, rough the slot, then finish the sides. Trochoidal: cutter at most 70% of slot width. Sandvik (same page)</td></tr>
+<tr><td>Full slotting depth</td><td>solid end mill</td><td>Limited to about 1 × diameter deep per pass, chips hard to clear (Widia, search summary). D-052 already uses 1.0 D (0.5 D stainless) per pass.</td></tr>
+<tr><td>T-slot</td><td>end mill, then T-slot cutter</td><td>"T-slot milling usually begins with a standard end mill that machines the initial slot opening"; "consider cutter head diameter and neck clearance"; DIN 650 sizes. <a href="https://jlccnc.com/blog/t-slot-milling">JLC CNC</a>. Width 3-40 mm; standard sizes preferred. <a href="https://www.hubs.com/knowledge-base/how-design-parts-cnc-machining/">Hubs</a></td></tr>
+<tr><td>Dovetail</td><td>dovetail cutter</td><td>"Both 45- and 60-degree dovetail tools are considered standard." Hubs</td></tr>
+<tr><td>Keyway / keyseat</td><td>end mill (closed-end keyway), keyseat or Woodruff cutter</td><td>Radiused keyway ends that a slotting cutter can cut speed up machining (DFMPro, search snippet); design so "standard cutters can produce both sides and ends in one operation" (<a href="https://archive.nptel.ac.in/content/storage2/courses/107103012/module3/lec4.pdf">NPTEL, after Bralla</a>, search snippet).</td></tr>
+<tr><td>Open pocket</td><td>end mill, enters from the side</td><td>Closed pocket: the cutter "must enter through ramping, helical interpolation, or pre-drilled entry"; open pocket: "the tool can often enter from the side". <a href="https://jlccnc.com/blog/cnc-pocket-milling-guide">JLC CNC</a>. Fusion: open pockets start "from the outside of the stock whenever possible"; 2D adaptive is Autodesk's choice. <a href="https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/GUID9B6D0D98-0A7B-4A77-9E3C-D7DC6119FA85.htm">Fusion open pocket</a> (search snippet). Pilot hole at least 50% of tool diameter. <a href="http://www.cimco.com/documentation/online/cncbook/en/Ch07_Pocketing.html">CIMCO</a></td></tr>
+</table></div>
+<ul>
+<li>Time models: aPriori picks one roughing tool for a slot, one or two for a pocket, and computes rough-milling time from the number of passes at a set axial depth (search summary of its release notes; page refused the fetcher). That matches D-052's pass count. No public feed-rate model per feature type was found.</li>
+<li>Corners: a closed side's inside corner is radiused by the tool; an open side has no inside corner at its open end. <span class="tag">inference</span> from "Sharp inside corners on a part will be radiused" (<a href="https://www.protolabs.com/services/cnc-machining/cnc-milling/design-guidelines/">Protolabs</a>).</li>
+</ul>
+</section>
+
+<section>
+<h2>DFM rules with numbers</h2>
+<div class="tbl"><table>
+<tr><th>Rule</th><th>Value</th><th>Source</th></tr>
+<tr><td>Pocket depth ÷ width</td><td class="num">4</td><td><a href="https://docs.cadexsoft.com/mtkcsharp/classcadex_1_1_d_f_m_machining___milling_analyzer_parameters">CAD Exchanger</a> default; Hubs "4 times cavity width"</td></tr>
+<tr><td>Inside corner depth ÷ radius</td><td class="num">3</td><td>CAD Exchanger default; Hubs: radius ⅓ × depth or more</td></tr>
+<tr><td>Narrow region in pocket</td><td class="num">16</td><td>CAD Exchanger default (unit not stated on the page)</td></tr>
+<tr><td>Floor fillet radii</td><td class="num">0.5–4 mm</td><td>CAD Exchanger standard list (9 sizes); Hubs: 0.5 mm, 1 mm or none</td></tr>
+<tr><td>Slot or slot-like depth</td><td class="num">under 6 × width</td><td><a href="https://www.protolabs.com/resources/design-tips/mastering-complex-features-on-machined-parts/">Protolabs</a></td></tr>
+<tr><td>Slot width (high-speed milling)</td><td class="num">min 0.75 mm; 1.25 mm for depth</td><td>Protolabs high-speed milling (search snippet)</td></tr>
+<tr><td>Deep pockets and slots</td><td class="num">tool L:D ≤ 3</td><td><a href="https://help.solidworks.com/2019/English/SolidWorks/dfmxpress/c_rules_mill_deep_pockets_slots.htm">DFMXpress</a> (search snippet)</td></tr>
+<tr><td>Undercut clearance</td><td class="num">4 × undercut depth</td><td>Hubs (to any other inside wall)</td></tr>
+<tr><td>T-slot width</td><td class="num">3–40 mm</td><td>Hubs</td></tr>
+<tr><td>Dovetail angle</td><td class="num">45° or 60°</td><td>Hubs</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2>4. Test data</h2>
+<ul>
+<li><b>MFCAD++</b>: 59,655 parts, 24 classes, 3-10 features each, made by a generator in 5 groups (steps, slots, through, non-through, transition). <a href="https://arxiv.org/pdf/2402.17695">CAD deep-learning survey</a>. Labels are per face; we already read them (<code>grade.py</code>). Steps 8-10 and 20-22, slots 5-7 and 17-19. No open pocket. Labels come from the generator, not the shape (LESSONS "recognition").</li>
+<li><b>MFInstSeg</b> (AAGNet): over 60,000 STEP files with instance labels, 24 classes. Class list not confirmed on an opened page. <a href="https://arxiv.org/html/2504.07378v3">BRepFormer</a>.</li>
+<li><b>Fusion 360 Gallery segmentation</b>: 35,858 bodies labelled by the modelling operation (extrude, cut, fillet, chamfer, …), not by machining feature. Not useful here. <a href="https://www.github.com/AutodeskAILab/Fusion360GalleryDataset">GitHub</a> (search snippet).</li>
+<li><b>UMD parts already in the repo</b> (<code>tests/edmr/models/UMD</code>, real labels from <code>.fts</code> files, counted in base files only): <span class="num">35</span> steps in 10 parts, <span class="num">27</span> slots in 12, <span class="num">15</span> opened pockets in 6, <span class="num">9</span> pockets in 3. Caution: bracket1-4, castle and ex1 crash OpenCascade's reader (<code>docs/nist/CATALOG.md:40</code>), so the usable open-pocket parts are only AES94 (count by part not checked).</li>
+<li><b>NIST PMI parts</b>: not checked feature by feature this session. The milled CTC/FTC parts likely hold steps and open slots <span class="tag">inference, unchecked</span>; confirm by running a finder and looking, not from memory.</li>
+<li><b>Our own sets</b>: <code>undercuts</code> (T-slots, dovetails) and <code>bullnose_draft</code> (slots, steps, a passage that are not pockets). A new labelled set of steps, slots and open pockets would follow D-018's pattern.</li>
+</ul>
+</section>
+
+<section class="prop">
+<h2>5. Proposals (not decided; for Morgan)</h2>
+<ol>
+<li><b>Keep open floors instead of dropping them.</b> Where <code>_pocket_walls</code> returns None because an edge has no wall and the break probe's rays escape, record the floor with its walls and its open edges. Name it by the table above: step, through slot, blind slot, open pocket. Gives each a depth, width and open directions (the floor normal plus each open side's outward direction). Risk: new calls on MFCAD++ faces now scored as "wrong" (D-018 target of 0); it needs D-018 amended so step and slot calls are scored against classes 5-10 and 17-22, with their own target.</li>
+<li><b>Plan effect: side entry.</b> An open pocket or step adds the open sides to <code>open_dirs</code>, so the plan can reach it from the side or the top, and a closed pocket gets a note that it needs a ramp, helix or pilot hole (JLC, CIMCO). Gives fewer forced setups. Risk: a tool that enters from the side still needs reach to the far wall.</li>
+<li><b>Slot cutter and passes.</b> For a slot, choose an end mill smaller than the slot (Sandvik: undersized, rough then finish; trochoidal ≤ 70% of width) instead of <code>pick_end_mill</code>'s full width, or keep full width and count passes at D-052's per-pass depth. New finding: a slot deeper than 6 × its width (Protolabs) or with a tool L:D over 3 (DFMXpress). Risk: two sources, two limits; pick one with Morgan.</li>
+<li><b>Special cutters.</b> Reuse D-021's undercut to name T-slot (neck under a head) and dovetail (walls leaning in) and add a tool load (<code>tslot-&lt;w&gt;</code>, <code>dovetail-&lt;deg&gt;</code>, as D-022 did for countersinks). Findings: a non-standard dovetail angle (not 45° or 60°, Hubs); undercut clearance under 4 × depth (Hubs). A keyway on a turned part: end mill for a closed end, keyseat cutter for an open one. Risk: keyways sit with S6 turning work, which is paused.</li>
+<li><b>Test set and scoring first.</b> Before any rule: add <code>tests/grading/sets/steps_slots</code> (through and blind steps, open and closed slots with flat and round ends, open pockets on 1, 2 and 3 sides, a slot beside a step as D-019's guard), score all three tools through <code>grade.py</code>, and run NIST and EDMR first (LESSONS "recognition"). Use the UMD <code>.fts</code> labels on AES94 and the parts that read. Risk: MFCAD++ has no open-pocket label, so the UMD parts and our set are the only answer key for that call.</li>
+</ol>
+</section>
+
+<section>
+<h2>Questions for Morgan (one at a time when asked)</h2>
+<ol>
+<li>Should a step, slot or open pocket get its own finding, or only change the plan and tools (no finding)? <b>Recommended:</b> plan and tools first; findings only for the special cutters and the depth limit.</li>
+<li>How long must a channel be before it is a slot rather than an open pocket (length ÷ width)? No source found; a shop rule from you would beat a guess.</li>
+<li>For slots, does your shop rough with an undersized end mill and finish, or cut full width? This decides proposal 3.</li>
+<li>Amend D-018 so step and slot calls are scored against MFCAD++ classes 5-10 and 17-22?</li>
+</ol>
+</section>
+
+<p class="muted">Not reached: <code>dfmpro.geometricglobal.com</code> (not on this session's network allowlist; DFMPro keyway rule from a search snippet only); aPriori docs (HTTP 403; used a search summary, marked); Seco and ISCAR trochoidal pages (blank or menus only); Hubs' older design-guide URL (404; the current guide was read); ISO 14649-10 full text (paid). Search snippets are marked; every other figure comes from a page opened this session. Repo counts (UMD features) come from a grep of the base <code>.fts</code> files run this session.</p>
+</main>

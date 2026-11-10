@@ -481,3 +481,25 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Decision:** `scripts/check.py` runs its setup steps in series, then three lanes at once (service tests; e2e against the service; parity key, parity, browser e2e), then every test marked `timed` (it asserts a wall-clock limit) alone. The service lane runs on pytest-xdist 3.8.0 with cores − 2 workers, so each browser lane keeps a core (with every core, PR #39's first CI run starved a PDF download past Playwright's 30 s wait) (MIT, conda-forge; with execnet 2.1.2, MIT), a new test-only package. It stays only while a parallel run passes exactly the tests a serial run passes, by name, run after run; no assertion, tolerance or limit changes for it.
 - **Why:** `check.py` took 12 min 40 s here and 13 min 24 s in CI against a 20-minute limit, one step after another. Measured results are on the [status page](https://claude.ai/artifact/He8bThHsaFfvnDt1MB8XS8) and in PR #39.
 
+
+## D-066 Port S6 resumed; steps, slots and open pockets added to the plan
+
+- **Status:** Accepted (2026-11-10). Morgan, in chat: "Ok please continue with the next slice here. Also to add to the plan, we will need to add feature recognition for things like steps, slots, and open pockets (like open on one side). Ensure you do research into finding, classifying, and machining features like that".
+- **Decision:** the pause after S5 ends; port S6 (turned parts) is built in this session. A new plan item, feature recognition for steps, slots and open pockets, is added after the port; its research is [docs/research/feature-recognition.html](research/feature-recognition.html). Its 5 proposals and 4 questions there are Proposed, not decided; it is planned with the `planning-interview` skill before any code (WS-03).
+- **Why:** Morgan's instruction. Today the pocket finder drops every floor with an open side (`service/dfma/features.py` `_pocket_walls`), so steps, slots and open pockets get no plan, tool or finding.
+
+## D-067 Port S6 approved; merge when CI is done
+
+- **Status:** Accepted (2026-11-10). Morgan, in chat: "S6 is approved. Merge whenever available".
+- **Decision:** mark PR #40 ready and merge it once CI passes (auto-merge where the repo allows). S7 (Inventor) starts in a new session.
+- **Why:** Morgan approved the slice and delegated the merge.
+
+## D-068 Steps and slots: MFCAD++'s classes are the gold standard; no "open pocket" kind
+
+- **Status:** Accepted (2026-11-10). Morgan, in chat: "do we need an open pocket? Does that count as anything or is it just a different feature by another name? I'd like to use the mfcad++ database as our test golden standard for things like this. Otherwise go with your recommendations". Amends D-018 (steps and slots are now scored) and D-066 (the proposals).
+- **Decision:**
+  - **Kinds and names:** an open-sided floor is named with MFCAD++'s classes, so the app has no "open pocket" kind. A floor open to the outside on its far end (or both ends) with two facing walls is a slot (classes 5-7 through, 17-19 blind); one with a single wall run is a step (classes 8-10 through, 20-22 blind). Pockets stay closed (13-16).
+  - **Scoring:** steps and slots are scored on MFCAD++ like pockets (D-018: target 0 wrong calls). Classes 17-22 leave `EXCLUDED` in `tests/grading/grade.py` once a finder for them exists. D-019's shape stays a pocket.
+  - **Plan first:** steps and slots change the plan and tools first. Their open sides join `open_dirs`, so a cutter can enter from the side, and a slot gets a roughing end mill under its width before the finish. Findings only for a slot deeper than 6× its width (Protolabs) and, later, for the special cutters (T-slot, dovetail).
+  - **Order:** a labelled `steps_slots` test set, then NIST and EDMR runs, before the MFCAD++ score (LESSONS "recognition"). Planned and specced after the port (S8), unless Morgan moves it up.
+- **Why:** MFCAD++ has no open-pocket class: what the UMD labels "Opened Pocket" and CAD Exchanger calls an "Open pocket", MFCAD++ labels a step or a slot ([research](research/feature-recognition.html)). So, against Morgan's chosen gold standard, an open pocket is the same feature under another name, and a third kind would be a call MFCAD++ can never score. The rest are the research page's recommendations, which Morgan accepted.

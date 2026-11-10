@@ -299,3 +299,71 @@ test("S5: walls and thin_wall compare, the plan compares on a thin-wall file, an
   // S4 left the walls, thin_wall and the plan on a thin-wall file out
   expect(compare(s4key(), s5key(), 4)).toEqual({ status: "same", diffs: [], leftOut: ["plan and cost"] });
 });
+
+// S6: a turned file compares every key above, with bores, grooves, the profile, the turn rules, turn_axis and a bar.
+const bore = { id: "bore-1", kind: "bore", faces: [2, 3], axis: [0, 0, 1], open_dirs: ["+Z"], open_vectors: [[0, 0, 1]],
+  dims_mm: { diameter: 15, depth: 40 }, off_axis_deg: 0, off_axis_mm: 0 };
+const groove = { id: "groove-1", kind: "groove", faces: [4, 5, 6], axis: [0, 0, 1], open_dirs: [], open_vectors: [], outside: true,
+  dims_mm: { width: 3.2, depth: 1.5, diameter: 22 } };
+const profile = { id: "profile-1", kind: "profile", faces: [0, 1, 7], axis: [0, 0, 1], open_dirs: [], open_vectors: [],
+  dims_mm: { diameter: 25, min_diameter: 22, length: 120, share_pct: 81.5 } };
+const s6key = () => {
+  const k = s5key();
+  return { ...k, features: [{ ...structuredClone(hole), off_axis_deg: 90, off_axis_mm: 0 }, structuredClone(bore),
+    structuredClone(groove), structuredClone(profile)],
+    findings: [{ id: "F1", rule: "turn_slender", severity: "medium", feature: "profile-1", measured: 5.45, limit: 4, title: "slender" },
+      { id: "F2", rule: "turn_offaxis", severity: "medium", feature: "hole-1", measured: 90, limit: 0.5, title: "off axis" },
+      { id: "F3", rule: "bore_depth", severity: "medium", feature: "bore-1", measured: 2.67, limit: 4, title: "deep bore" }],
+    rows: [{ id: "row:F1", rule: "turn_slender", findings: ["F1"], range: "F1", count: 1, sentence: "slender." },
+      { id: "row:F2", rule: "turn_offaxis", findings: ["F2"], range: "F2", count: 1, sentence: "off." },
+      { id: "row:F3", rule: "bore_depth", findings: ["F3"], range: "F3", count: 1, sentence: "deep." }],
+    rules_run: ["hole_depth", "hole_size", "thin_wall", "turn_axis", "turn_slender", "turn_offaxis", "bore_depth"],
+    checks_run: ["Hole depth check", "Hole size check", "Thin wall check", "Turning axis check", "Length to diameter check", "Bore depth check"],
+    passed: [{ rule: "turn_axis", feature: "profile-1", title: "Round faces on one axis: a lathe part" }],
+    passed_rows: [{ rule: "turn_axis", kind: "profile", features: ["profile-1"], title: "Profile ×1" }],
+    machine: "lathe with live tooling", turn_axis: [0, 0, 1],
+    stock: { shape: "bar", diameter_in: 0.984252, length_in: 4.724409 },
+    setups: [{ direction: "turn", features: ["profile-1", "hole-1", "bore-1", "groove-1"] }],
+    cost_drivers: [{ driver: "off_axis", label: "Features off the turning axis", count: 1, weight: 2, score: 2, weight_source: "drivers.toml", findings: ["F2"] }] };
+};
+
+test("S6: a turned file compares every key, and every planted change is caught", () => {
+  expect(compare(s6key(), s6key(), 6)).toEqual({ status: "same", diffs: [], leftOut: [] });
+  const cases: [string, (r: ReturnType<typeof s6key>) => void][] = [
+    ["bore depth", (r) => { (r.features[1].dims_mm as Record<string, number>).depth = 40.01; }],
+    ["bore renamed", (r) => { r.features[1].id = "bore-2"; }],
+    ["hole off-axis angle", (r) => { (r.features[0] as { off_axis_deg: number }).off_axis_deg = 89; }],
+    ["groove width", (r) => { (r.features[2].dims_mm as Record<string, number>).width = 3.3; }],
+    ["groove outside", (r) => { (r.features[2] as typeof groove).outside = false; }],
+    ["profile smallest diameter", (r) => { (r.features[3].dims_mm as Record<string, number>).min_diameter = 25; }],
+    ["profile faces", (r) => { r.features[3].faces = [0, 1]; }],
+    ["slender finding", (r) => { r.findings[0].measured = 5.5; }],
+    ["off-axis row", (r) => { r.rows[1].sentence = "Off."; }],
+    ["turn_axis pass", (r) => { r.passed.pop(); }],
+    ["rules_run", (r) => { r.rules_run = r.rules_run.filter((id) => id !== "bore_depth"); }],
+    ["machine", (r) => { r.machine = "lathe"; }],
+    ["turn_axis", (r) => { (r as { turn_axis: number[] }).turn_axis = [0, 0, -1]; }],
+    ["bar stock", (r) => { (r.stock as { diameter_in: number }).diameter_in = 1; }],
+    ["off-axis driver", (r) => { r.cost_drivers[0].score = 3; }],
+  ];
+  for (const [what, plant] of cases) {
+    const r = s6key();
+    plant(r);
+    expect(compare(r, s6key(), 6).status, what).toBe("different");
+  }
+  // S5 compared a turned file on the S1 keys only
+  const r = s6key();
+  r.features = [];
+  r.machine = "lathe";
+  r.rules_run = []; // what the S5 browser copy ran on a turned part
+  r.checks_run = [];
+  expect(compare(r, s6key(), 5).status).toBe("same");
+});
+
+test("S6: looks_turned compares on a milled file", () => {
+  const k = { ...s5key(), findings: [...s5key().findings, { id: "F5", rule: "looks_turned", severity: "high", feature: null, measured: 55, limit: 40, title: "looks turned" }] };
+  const r = structuredClone(k);
+  expect(compare(r, k, 6).status).toBe("same");
+  r.findings[4].measured = 56;
+  expect(compare(r, k, 6).status).toBe("different");
+});

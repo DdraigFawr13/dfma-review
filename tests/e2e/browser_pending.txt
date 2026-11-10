@@ -4,14 +4,6 @@
 # slice it needs. S7 empties it (the tests that fake the service's /api/analyze are rewritten or marked service-only
 # there); S8 deletes it.
 
-tests/e2e/test_lathe_plan.py::test_block_as_turn_shows_no_plan[chromium] # S6
-tests/e2e/test_lathe_plan.py::test_clean_shaft_passed_list[chromium] # S6
-tests/e2e/test_lathe_plan.py::test_flange_bolt_hole[chromium] # S6
-tests/e2e/test_lathe_plan.py::test_inside_groove_note[chromium] # S6
-tests/e2e/test_lathe_plan.py::test_part_wide_pin_does_not_hide_the_cross_hole[chromium] # S6
-tests/e2e/test_lathe_plan.py::test_slender_shaft_for_milling[chromium] # S6
-tests/e2e/test_lathe_plan.py::test_slender_shaft_on_the_lathe[chromium] # S6
-tests/e2e/test_steps.py::test_turning_overview[chromium] # S6
 # Moved from S5 (2026-11-10, S5 run): they pass the walls, then wait for the service's /api/analyze reply to a
 # material change, which the browser copy never sends (S7 rewrites the tests that wait on the service).
 tests/e2e/test_findings.py::test_click_highlights_face[chromium] # S7

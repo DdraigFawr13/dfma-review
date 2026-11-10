@@ -37,8 +37,9 @@ def nist(name: str):
 
 
 # The rules the browser copy has ported, by process (web/src/engine/rules/index.ts `ported`); each slice adds its own.
-PORTED = {"mill": {"hole_depth", "hole_size", "access", "corner_radius", "pocket_depth", "undercut", "thin_wall"},
-          "turn": set()}  # S2: holes; S4: pockets, corners, undercuts; S5: walls; Milling only until S6
+PORTED = {"mill": {"hole_depth", "hole_size", "access", "corner_radius", "pocket_depth", "undercut", "thin_wall", "looks_turned"},
+          "turn": {"hole_depth", "hole_size", "thin_wall", "turn_axis", "turn_slender", "turn_offaxis", "bore_depth"}}
+# S2: holes; S4: pockets, corners, undercuts; S5: walls; S6: turned parts and looks_turned. Only the .ipt checks wait (S7).
 
 
 def not_checked(process: str = "mill") -> str:
@@ -82,8 +83,8 @@ def test_view_part(page: Page, base_url: str):
 def test_not_checked_notice(page: Page, base_url: str):
     """J1 and D-057: the Not-checked-yet line on the Features card and step and on Report, naming only the checks not
     ported. From S2 the hole checks run on a milled part, so its chips, Show OK and "Checks run" show; from S3 its
-    Machining and Cost show the plan and the drivers. A turned part runs no check and has no plan yet (S6), so it keeps
-    S1's states: no chips, Show OK or checks, and Machining and Cost not worked out yet."""
+    Machining and Cost show the plan and the drivers. From S6 a turned part runs its checks too (only the .ipt checks
+    are named) and Machining and Cost are worked out: report_sample has no turning axis, so no machine is planned."""
     page.goto(base_url)
     read(page, PARTS / "report_sample.step")
     line = not_checked()
@@ -110,21 +111,19 @@ def test_not_checked_notice(page: Page, base_url: str):
     expect(page.locator("#page-report [data-pdf]:visible")).to_have_count(2)  # the findings and the plan; no .ipt
     expect(page.locator('#page-report [data-pdf="findings"]')).to_be_visible()
     expect(page.locator('#page-report [data-pdf="plan"]')).to_be_visible()
-    # A turned part names every turning check and keeps S1's states (the Process select sits on the Part step)
+    # S6: a turned part names only the .ipt checks, runs the turning checks and is worked out on Machining and Cost
     page.get_by_test_id("step-part").click()
     page.get_by_test_id("upload-process").select_option("turn")
     page.get_by_test_id("step-report").click()
     expect(page.get_by_test_id("report-notrun")).to_have_text(not_checked("turn"), timeout=60_000)
-    expect(page.locator("#report-checks")).to_be_hidden()
-    expect(page.locator("#page-report [data-pdf]:visible")).to_have_count(0)
+    expect(page.locator("#report-checks")).to_contain_text("Turning axis check")
     page.get_by_test_id("step-features").click()
-    expect(page.locator("#row-chips button")).to_have_count(0)
-    expect(page.get_by_test_id("show-ok")).to_be_hidden()
-    expect(page.locator("#rows")).not_to_contain_text("No findings")
+    expect(page.locator("#row-chips button").first).to_be_visible()
     page.get_by_test_id("step-machining").click()
-    expect(page.get_by_test_id("plan-notrun")).to_have_text(later)
+    expect(page.get_by_test_id("plan-notrun")).to_be_hidden()
+    expect(page.locator("#plan-none")).to_be_visible()  # no turning axis: no machine, as Python
     page.get_by_test_id("step-cost").click()
-    expect(page.locator("#cost")).to_have_text(later)
+    expect(page.locator("#cost")).not_to_contain_text(later)
 
 
 @pytest.mark.timed
@@ -328,7 +327,7 @@ def test_wall_rows(page: Page, base_url: str, name: str):
     pick = lambda fs: [(f["id"], f["faces"], f.get("hole"), f.get("at")) for f in fs if f["kind"] == "wall"]  # noqa: E731
     assert pick(result["features"]) == pick(walls)
     ported = PORTED["mill"]
-    findings = [f for f in key["findings"] if f["rule"] in ported]  # every mill rule but looks_turned is ported
+    findings = [f for f in key["findings"] if f["rule"] in ported]  # every mill rule is ported from S6
     rows = [r for r in key["rows"] if r["rule"] == "thin_wall"]
     if name in ("thin_floor", "thin_drill_point"):  # expected.toml: each has a thin_wall finding in aluminium
         assert rows, f"{name} has no thin-wall row"
