@@ -41,6 +41,8 @@ def main() -> int:
         # J4 (the 49.94 MiB plate) is not here: it runs once per slice, alone (D-058; pytest -m per_slice)
         ("browser e2e tests", [py, "-m", "pytest", "-m", "e2e and not per_slice", "-q", "--engine", "browser"]),
     ]
+    if not (ROOT / "web" / "node_modules").is_dir():  # a fresh checkout (CI): install the web packages first
+        steps.insert(3, ("web install", [npm, "--prefix", "web", "ci"]))
     for name, cmd in steps:
         print(f"\n== {name}: {' '.join(Path(c).name if i == 0 else c for i, c in enumerate(cmd))}", flush=True)
         start = time.perf_counter()
