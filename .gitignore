@@ -18,3 +18,8 @@ __pycache__/
 /tests/nist/.cache/
 /tests/grading/.cache/
 /tests/inventor/.local/
+/tests/parity/.cache/
+/tests/parts/.cache/
+/web/dist-pages/
+/web/dist-pages-test/
+/web/dist-demo/

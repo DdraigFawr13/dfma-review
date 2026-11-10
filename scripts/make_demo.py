@@ -1,6 +1,9 @@
 """Build the view-only demo page (D-009): the real web build in one HTML file, with test parts analysed in advance.
 
     python scripts/make_demo.py <out.html>        (inside the dfma environment, after `npm --prefix web run build`)
+    python scripts/make_demo.py --engine browser <out.html>
+        (the GitLab Pages port, D-056: the browser copy's page, `node web/scripts/build-pages.mjs --demo`, answered
+        from the browser engine's own results, `npm --prefix web run demo-results`; no .ipt pairs until S7)
 
 The page is the production build (web/dist) with its CSS, JS and fonts inlined. A row of part buttons stands in
 for the file picker (Morgan uses a phone, D-009), and `fetch("/api/analyze")` is answered from results the real
@@ -64,19 +67,45 @@ HARNESS = [
     ("nist_stc_10_asme1_ap242-e2.stp", "INV_nist_ftc_10_asme1_2024.ipt", "I1 S2 + I2 S1: 6 threads, one 0.10 mm off its hole (a finding); 9 Hole features, 24 holes"),
 ]
 LINED_UP = " (lined up)"
+NOTE_SERVICE = "<b>View-only demo</b> of the real app, with these test parts analyzed in advance. Tap a part (a turning part opens on Turning): it opens on its overview; walk the five steps with the tabs, the card headings, Next and Back, or the phone's Back. Process and material sit under the file name and work as in the app. Your files can't be uploaded here; the first two I1 pairs show the app's refusals; the two marked \"lined up\" were lined up by the test harness so their threads show (the app itself refuses them); a matching pair needs your own files in the app. Export PDF builds the file only in the app on a computer: this viewer blocks downloads, so here it saves nothing (the S7 mock-up shows the PDF pages)."
+NOTE_BROWSER = ("<b>View-only demo</b> of the test copy that runs in the browser, with these test parts analyzed in advance by "
+                "its own engine. Tap a part (a turning part opens on Turning): it opens on its overview; walk the five "
+                "steps with the tabs, Next and Back. This first version reads the part and shows the model; it runs no "
+                "checks yet, and every step says so. Your files can't be uploaded here. Export PDF saves nothing in this viewer, "
+                "which blocks downloads; it works in the app.")
+
+
+def browser_results() -> dict:
+    """Every DEMO part, process and material through the browser engine in Node (npm run demo-results)."""
+    import os
+    import subprocess
+    import tempfile
+    jobs = [{"path": path.relative_to(ROOT).as_posix(), "process": process, "material": material}
+            for path, *_ in DEMO for process in settings.PROCESSES for material in settings.MATERIALS]
+    with tempfile.TemporaryDirectory() as tmp:
+        src, dst = Path(tmp) / "in.json", Path(tmp) / "out.json"
+        src.write_text(json.dumps(jobs), encoding="utf-8")
+        npm = "npm.cmd" if sys.platform == "win32" else "npm"
+        subprocess.run([npm, "--prefix", "web", "run", "demo-results"], cwd=ROOT, check=True,
+                       env={**os.environ, "DEMO_IN": str(src), "DEMO_OUT": str(dst)})
+        return json.loads(dst.read_text(encoding="utf-8"))
 
 
 def main() -> int:
-    out = Path(sys.argv[1])
-    dist = ROOT / "web" / "dist"
+    args = sys.argv[1:]
+    browser = args[:2] == ["--engine", "browser"]
+    if browser:
+        args = args[2:]
+    out = Path(args[0])
+    dist = ROOT / "web" / ("dist-demo" if browser else "dist")
     html = (dist / "index.html").read_text(encoding="utf-8")
-    results = {}
-    for path, *_ in DEMO:
+    results = browser_results() if browser else {}
+    for path, *_ in ([] if browser else DEMO):
         for process in settings.PROCESSES:
             for material in settings.MATERIALS:
                 results[f"{path.name}|{process}|{material}"] = analyze(path, path.name, process, material)
     pairs = []
-    for stem, ipt, what in PAIRS:
+    for stem, ipt, what in ([] if browser else PAIRS):
         step = next(p for p in ap242_files() if p.name.startswith(stem))
         pairs.append([step.name, ipt, what])
         for process in settings.PROCESSES:
@@ -86,7 +115,7 @@ def main() -> int:
                 except ReadError as e:
                     hit = {"__status": 422, "error": str(e)}
                 results[f"{step.name}+{ipt}|{process}|{material}"] = hit
-    for name, ipt, what in HARNESS:
+    for name, ipt, what in ([] if browser else HARNESS):
         step = next(p for p in ap242_files() if p.name == name)
         shown = step.stem + LINED_UP + step.suffix
         pairs.append([shown, ipt, f"{what}. {DEMO_LABEL}"])
@@ -135,7 +164,7 @@ window.fetch = async (url, init) => {
 </script>""" % (json.dumps(results, separators=(",", ":")), json.dumps(meshes, separators=(",", ":")))
     picker = """
 <div class="demo-bar" role="group" aria-label="Demo parts">
-  <p class="demo-note"><b>View-only demo</b> of the real app, with these test parts analyzed in advance. Tap a part (a turning part opens on Turning): it opens on its overview; walk the five steps with the tabs, the card headings, Next and Back, or the phone's Back. Process and material sit under the file name and work as in the app. Your files can't be uploaded here; the first two I1 pairs show the app's refusals; the two marked \"lined up\" were lined up by the test harness so their threads show (the app itself refuses them); a matching pair needs your own files in the app. Export PDF builds the file only in the app on a computer: this viewer blocks downloads, so here it saves nothing (the S7 mock-up shows the PDF pages).</p>
+  <p class="demo-note">%s</p>
   <div class="demo-parts">%s</div>
 </div>
 <style>
@@ -158,7 +187,7 @@ for (const b of document.querySelectorAll(".demo-parts button")) b.addEventListe
   input.files = dt.files;
   input.dispatchEvent(new Event("change"));
 });
-</script>""" % ("".join(f'<button type="button" data-name="{s}" data-ipt="{i}" data-process="mill" aria-pressed="false">'
+</script>""" % (NOTE_BROWSER if browser else NOTE_SERVICE, "".join(f'<button type="button" data-name="{s}" data-ipt="{i}" data-process="mill" aria-pressed="false">'
                          f'{s.removesuffix(".stp")} + .ipt<small>{w}</small></button>' for s, i, w in pairs)
        + "".join(f'<button type="button" data-name="{n}" data-process="{pr}" aria-pressed="false">'
                  f'{n.removesuffix(".step")}<small>{w}</small></button>' for n, w, pr in names))

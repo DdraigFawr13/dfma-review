@@ -5,14 +5,23 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
+    "build:pages": "node scripts/build-pages.mjs",
+    "build:pages:test": "node scripts/build-pages.mjs --test",
     "check": "tsc --noEmit && vitest run",
-    "dev": "vite"
+    "compare": "node src/engine/compare-cli.ts",
+    "demo-results": "vitest run --silent=false --config vitest.parity.config.ts src/engine/demo-results.test.ts",
+    "dev": "vite",
+    "parity": "vitest run --silent=false --config vitest.parity.config.ts src/engine/parity.test.ts",
+    "parity:full": "node scripts/parity-full.mjs"
   },
   "dependencies": {
+    "@taucad/opencascade.js": "3.0.0-beta.3",
     "jspdf": "4.2.1",
+    "smol-toml": "1.9.1",
     "three": "0.187.0"
   },
   "devDependencies": {
+    "@types/node": "22.20.5",
     "@types/three": "0.187.0",
     "typescript": "7.0.2",
     "vite": "8.3.6",

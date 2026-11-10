@@ -8,6 +8,9 @@ export interface Face {
   kind: "plane" | "cylinder" | "cone" | "torus" | "other";
   positions: number[]; // flat xyz, mm, file coordinates
   indices: number[]; // local to this face
+  /** The browser copy only (port J3): the face's normals and edge lines, worked out in the worker so the page doesn't
+   *  stall drawing a large part. The service's page works them out itself. Never compared with Python. */
+  view?: { normals: Float32Array; edges: Float32Array };
 }
 
 /** I1 (spec "Response"): present only when an .ipt was uploaded with the STEP. */
@@ -123,6 +126,7 @@ export interface Analysis {
   tool_changes: number;
   cost_drivers: CostDriver[]; // S7: counts above 0, ranked by score
   cost_total: number | null; // review-steps S1: the sum of the scores to 0.1; null with no drivers
+  checks_not_run?: string[]; // the browser copy only (port spec Design): checks this copy has not ported yet
 }
 
 export interface CostDriver {
@@ -217,7 +221,20 @@ export class ApiError extends Error {
 
 const GENERIC = "The analysis failed. Try again, or try another file.";
 
+if (import.meta.env.VITE_ENGINE === "browser") void import("./engine-client").then((m) => m.prepareEngine());
+
+/** VITE_ENGINE=browser (the static site, port spec Design "web/src/api.ts"): the engine runs in a worker in this
+ *  page; nothing is sent anywhere. Otherwise the Python service at /api/analyze. */
 export async function analyze(file: File, ipt: File | null, process: Process, material: Material): Promise<Analysis> {
+  if (import.meta.env.VITE_ENGINE === "browser") {
+    const { analyzeInBrowser, EngineError } = await import("./engine-client");
+    try {
+      return await analyzeInBrowser(file, ipt, process, material);
+    } catch (e) {
+      if (e instanceof EngineError) throw new ApiError(e.message, e.retry);
+      throw new ApiError(GENERIC, true);
+    }
+  }
   const body = new FormData();
   body.append("file", file);
   if (ipt) body.append("ipt", ipt); // sent only when picked (I1)

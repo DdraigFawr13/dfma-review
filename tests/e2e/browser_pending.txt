@@ -1,0 +1,71 @@
+# Port spec "Browser tests": e2e tests deselected in the browser-engine run until the slice that ports their
+# feature. One pytest node id per line, then " # S<n>". Written from the first browser run (2026-11-10: 65 failed,
+# 13 passed). The list only shrinks: a slice runs its tests and removes them, or moves a test still failing to the
+# slice it needs. S7 empties it (the tests that fake the service's /api/analyze are rewritten or marked service-only
+# there); S8 deletes it.
+
+tests/e2e/test_findings.py::test_checked_holes_exclude_holes_with_findings[chromium] # S2
+tests/e2e/test_findings.py::test_clean_part_shows_clean_verdict[chromium] # S2
+tests/e2e/test_findings.py::test_click_highlights_face[chromium] # S2
+tests/e2e/test_passed_and_setups.py::test_setup_select_lights_the_countersink[chromium] # S3
+tests/e2e/test_plan_panel.py::test_plan_panel_angled_hole[chromium] # S3
+tests/e2e/test_audit_2026_11_09.py::test_f15_rows_announce_one_state_and_point_at_their_detail[chromium] # S4
+tests/e2e/test_audit_2026_11_09.py::test_f16_small_targets_are_44px_below_900px[chromium] # S4
+tests/e2e/test_audit_2026_11_09.py::test_f1_f12_no_internal_ids_and_american_spelling_on_screen_or_in_the_pdf[chromium] # S4
+tests/e2e/test_audit_2026_11_09.py::test_f21_fix_first_follows_the_cards_with_no_gap[chromium] # S4
+tests/e2e/test_audit_2026_11_09.py::test_f26_every_pin_carries_its_mark[chromium] # S4
+tests/e2e/test_audit_2026_11_09.py::test_f27_pins_clear_each_others_stems_and_issues_open_their_row[chromium] # S4
+tests/e2e/test_audit_2026_11_09.py::test_f29_f31_f32_machining_lines_at_200_percent_text[chromium] # S4
+tests/e2e/test_audit_2026_11_09.py::test_f2_f6_f7_f34_pdf_words_match_the_screen[chromium] # S4
+tests/e2e/test_audit_2026_11_09.py::test_f33_setup_chips_sit_above_the_model_below_900px[chromium] # S4
+tests/e2e/test_audit_2026_11_09.py::test_f34_advice_is_what_to_do_on_both_severities[chromium] # S4
+tests/e2e/test_audit_2026_11_09.py::test_f4_open_row_detail_fits_at_200_percent_text[chromium] # S4
+tests/e2e/test_audit_2026_11_09.py::test_f7_f8_f22_f23_report_and_cost_words[chromium] # S4
+tests/e2e/test_findings.py::test_finding_labels_never_cover_each_other[chromium] # S4
+tests/e2e/test_findings.py::test_pins_behind_the_part_are_hidden[chromium] # S4
+tests/e2e/test_findings.py::test_pins_sit_on_their_findings[chromium] # S4
+tests/e2e/test_findings.py::test_pocket_and_corner_switches[chromium] # S4
+tests/e2e/test_findings.py::test_sharp_corner_is_drawn_on_its_edge[chromium] # S4
+tests/e2e/test_passed_and_setups.py::test_setup_select_shows_why[chromium] # S4
+tests/e2e/test_pdf.py::test_export_pdf[chromium] # S4
+tests/e2e/test_plan_panel.py::test_plan_panel_two_sided_block[chromium] # S4
+tests/e2e/test_steps.py::test_cost_total[chromium] # S4
+tests/e2e/test_steps.py::test_feature_rows[chromium] # S4
+tests/e2e/test_steps.py::test_machining[chromium] # S4
+tests/e2e/test_steps.py::test_machining_whole_part_and_no_setup[chromium] # S4
+tests/e2e/test_steps.py::test_rows_in_view[chromium] # S4
+tests/e2e/test_audit_2026_11_09.py::test_f14_passed_feature_states_its_measurement_once[chromium] # S5
+tests/e2e/test_audit_2026_11_09.py::test_f18_show_ok_sits_under_the_chips_below_900px[chromium] # S5
+tests/e2e/test_findings.py::test_wall_switch[chromium] # S5
+tests/e2e/test_passed_and_setups.py::test_passed_list[chromium] # S5
+tests/e2e/test_passed_and_setups.py::test_passed_open_at_200_percent_text_has_no_sideways_scroll[chromium] # S5
+tests/e2e/test_steps.py::test_show_ok[chromium] # S5
+tests/e2e/test_lathe_plan.py::test_block_as_turn_shows_no_plan[chromium] # S6
+tests/e2e/test_lathe_plan.py::test_clean_shaft_passed_list[chromium] # S6
+tests/e2e/test_lathe_plan.py::test_flange_bolt_hole[chromium] # S6
+tests/e2e/test_lathe_plan.py::test_inside_groove_note[chromium] # S6
+tests/e2e/test_lathe_plan.py::test_part_wide_pin_does_not_hide_the_cross_hole[chromium] # S6
+tests/e2e/test_lathe_plan.py::test_slender_shaft_for_milling[chromium] # S6
+tests/e2e/test_lathe_plan.py::test_slender_shaft_on_the_lathe[chromium] # S6
+tests/e2e/test_steps.py::test_turning_overview[chromium] # S6
+tests/e2e/test_audit_2026_11_09.py::test_f3_error_says_how_to_fix_it_beside_the_file_field[chromium] # S7
+tests/e2e/test_blends.py::test_panel[chromium] # S7
+tests/e2e/test_blends.py::test_panel_hidden_without_ipt[chromium] # S7
+tests/e2e/test_blends.py::test_panel_opens_for_not_mapped[chromium] # S7
+tests/e2e/test_hole_features.py::test_names[chromium] # S7
+tests/e2e/test_hole_features.py::test_no_names_and_copies[chromium] # S7
+tests/e2e/test_hole_features.py::test_panel[chromium] # S7
+tests/e2e/test_hole_features.py::test_panel_hidden_without_ipt[chromium] # S7
+tests/e2e/test_pdf.py::test_pdf_blends[chromium] # S7
+tests/e2e/test_pdf.py::test_pdf_hole_features[chromium] # S7
+tests/e2e/test_pdf.py::test_pdf_threads[chromium] # S7
+tests/e2e/test_steps.py::test_empty_states[chromium] # S7
+tests/e2e/test_steps.py::test_part_step[chromium] # S7
+tests/e2e/test_steps.py::test_report_step[chromium] # S7
+tests/e2e/test_steps.py::test_walk[chromium-1280] # S7
+tests/e2e/test_steps.py::test_walk[chromium-900] # S7
+tests/e2e/test_threads.py::test_no_threads_and_no_ipt[chromium] # S7
+tests/e2e/test_threads.py::test_thread_disagrees_and_states[chromium] # S7
+tests/e2e/test_threads.py::test_threads_panel[chromium] # S7
+tests/e2e/test_upload_pair.py::test_nist_pair_refused[chromium] # S7
+tests/e2e/test_upload_pair.py::test_pair_shown[chromium] # S7

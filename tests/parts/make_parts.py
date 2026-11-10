@@ -447,6 +447,46 @@ def toml_parts(parts: list[dict]) -> str:
 NO_FEATURES = {"hole": 0, "pocket": 0, "corner": 0, "wall": 0}
 
 
+# J4 (port spec, S1): a 48 to 50 MiB STEP file for the browser engine's memory test, made on demand into the
+# git-ignored tests/parts/.cache/. A 10 mm plate, 112 x 112 through holes of 3 mm on a 5 mm pitch (12,544 holes):
+# about 4.0 KiB of STEP per hole, measured 2026-11-10 on a 60 x 60 grid (14.1 MiB). One cut with every hole as a
+# tool, not in parallel (a parallel cut of this size ran out of memory here).
+BIG_PLATE_GRID = 112
+BIG_PLATE_PITCH_MM = 5.0
+BIG_PLATE_HOLE_MM = 3.0
+BIG_PLATE_MIB = (48, 50)
+
+
+def big_plate() -> Path:
+    from OCC.Core.TopTools import TopTools_ListOfShape
+    n, pitch = BIG_PLATE_GRID, BIG_PLATE_PITCH_MM
+    plate = BRepPrimAPI_MakeBox(n * pitch, n * pitch, 10.0).Shape()
+    tools, args = TopTools_ListOfShape(), TopTools_ListOfShape()
+    for i in range(n):
+        for j in range(n):
+            tools.Append(through_z(pitch / 2 + i * pitch, pitch / 2 + j * pitch, 10.0, BIG_PLATE_HOLE_MM))
+    args.Append(plate)
+    op = BRepAlgoAPI_Cut()
+    op.SetArguments(args)
+    op.SetTools(tools)
+    op.SetRunParallel(False)
+    op.Build()
+    if not op.IsDone():
+        raise RuntimeError("big plate: cut failed")
+    out = HERE / ".cache" / "big_plate.step"
+    out.parent.mkdir(exist_ok=True)
+    writer = STEPControl_Writer()
+    Interface_Static.SetCVal("write.step.unit", "MM")
+    writer.Transfer(op.Shape(), STEPControl_AsIs)
+    if writer.Write(str(out)) != IFSelect_RetDone:
+        raise RuntimeError("could not write big_plate.step")
+    mib = out.stat().st_size / 2**20
+    if not BIG_PLATE_MIB[0] <= mib <= BIG_PLATE_MIB[1]:
+        raise RuntimeError(f"big_plate.step is {mib:.2f} MiB, outside {BIG_PLATE_MIB} MiB: change BIG_PLATE_GRID")
+    print(f"{out}: {mib:.2f} MiB, {n * n} holes")
+    return out
+
+
 def main() -> int:
     parts: list[dict] = []
 
@@ -639,4 +679,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if sys.argv[1:] == ["--big-plate"]:  # J4: only the big plate, into tests/parts/.cache/
+        big_plate()
+        sys.exit(0)
     sys.exit(main())

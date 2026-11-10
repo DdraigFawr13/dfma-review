@@ -54,6 +54,7 @@ export class Viewer {
   private findings: Finding[] = [];
   private readonly edges = new Map<string, THREE.Mesh>(); // finding id -> its sharp-corner edge, drawn as a bar
   private readonly edgeMaterial = new THREE.LineBasicMaterial({ color: token("--ink") }); // one for every part
+  private edgeLines: THREE.LineSegments | null = null; // every face's edges, in one object
   private checked = new Map<number, CheckedKind>(); // faces of features checked with no finding
   private readonly showChecked: Record<CheckedKind, boolean> = { hole: false, pocket: false, corner: false, wall: false };
   private okStep = false; // review-steps S2: OK tints only while the Features step shows
@@ -64,6 +65,8 @@ export class Viewer {
     // preserveDrawingBuffer: the canvas can be read back (tests now, the PDF in S7).
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Port J3: skip three's synchronous shader error checks (they wait for each compile; about 150 ms measured).
+    this.renderer.debug.checkShaderErrors = false;
     // Pins are measured to place them: when the pins' font arrives after the first placement their boxes change size,
     // so place them again (audit F27: a stem and dot ended up over a neighbour's pin).
     document.fonts?.addEventListener?.("loadingdone", () => this.render());
@@ -87,23 +90,40 @@ export class Viewer {
     for (const mesh of this.meshes.values()) {
       mesh.geometry.dispose();
       (mesh.material as THREE.Material).dispose();
-      for (const child of mesh.children) (child as THREE.LineSegments).geometry.dispose();
       this.part.remove(mesh);
     }
     this.meshes.clear();
+    if (this.edgeLines) {
+      this.edgeLines.geometry.dispose();
+      this.part.remove(this.edgeLines);
+      this.edgeLines = null;
+    }
+    const edgeParts: ArrayLike<number>[] = [];
     for (const face of faces) {
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute("position", new THREE.Float32BufferAttribute(face.positions, 3));
       geometry.setIndex(face.indices);
-      geometry.computeVertexNormals();
+      if (face.view) geometry.setAttribute("normal", new THREE.Float32BufferAttribute(face.view.normals, 3));
+      else geometry.computeVertexNormals();
       // polygonOffset pushes faces back a little so their edge lines are never hidden by them.
       const material = new THREE.MeshStandardMaterial({ metalness: 0.1, roughness: 0.6, side: THREE.DoubleSide,
         polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.userData.faceId = face.id;
-      mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 30), this.edgeMaterial));
+      // Edge lines: from the worker in the browser copy (worker.ts faceView), else worked out here
+      edgeParts.push(face.view ? face.view.edges : new THREE.EdgesGeometry(geometry, 30).getAttribute("position").array);
       this.part.add(mesh);
       this.meshes.set(face.id, mesh);
+    }
+    // Every face's edge lines in one object: one draw instead of one per face (port J3: a 635-face part drew 1,270
+    // objects in the frame that showed it). They share one material, so nothing changes on screen.
+    const total = edgeParts.reduce((n, e) => n + e.length, 0);
+    if (total) {
+      const all = new Float32Array(total);
+      let at = 0;
+      for (const e of edgeParts) { all.set(e, at); at += e.length; }
+      this.edgeLines = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute("position", new THREE.BufferAttribute(all, 3)), this.edgeMaterial);
+      this.part.add(this.edgeLines);
     }
     this.findings = [];
     this.clearEdges();

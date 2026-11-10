@@ -3,6 +3,7 @@
 // (mockups/ui-direction/round3-frames.html: r3-overview, r3-features, r3-passed, r3-mach, r3-cost, r3-report) and the
 // Features groups mock-up (mockups/review-steps-features.html, D-049).
 
+import { NOT_WORKED_OUT, noChecksRun, notCheckedLine, planNotWorkedOut } from "./notrun";
 import type { Analysis, Finding, Row } from "./api";
 import { checkedCount, featureLine, holeThreads, measured, okFeatures } from "./findings";
 import { idRange, plural, sevMark, sevWord } from "./words";
@@ -92,7 +93,10 @@ function sub(...children: (Node | string)[]): HTMLElement {
 export function renderOverview(cards: HTMLElement, first: HTMLElement, result: Analysis, onOpen: (s: Step) => void): void {
   cards.replaceChildren();
   const features = card("features", 2, onOpen);
-  if (result.findings.length === 0) {
+  const notChecked = notCheckedLine(result); // the browser copy (D-057): the checks it has not run, under the counts
+  if (noChecksRun(result)) {
+    // nothing checked: no counts, and no "No findings" (it would be false)
+  } else if (result.findings.length === 0) {
     features.append(sub("No findings. Every feature checked passed its rules."));
   } else {
     const tally = (severity: string, n: number) => {
@@ -103,10 +107,13 @@ export function renderOverview(cards: HTMLElement, first: HTMLElement, result: A
     const count = (s: string) => result.findings.filter((f) => f.severity === s).length;
     features.append(sub(tally("high", count("high")), tally("medium", count("medium")), tally("ok", okFeatures(result).length)));
   }
-  features.append(sub(checkedCount(result)));
+  if (!noChecksRun(result)) features.append(sub(checkedCount(result)));
+  if (notChecked) features.append(el("p", "notrun", notChecked));
 
   const machining = card("machining", 3, onOpen);
-  if (!result.machine) {
+  if (planNotWorkedOut(result)) {
+    machining.append(el("p", "notrun", NOT_WORKED_OUT));
+  } else if (!result.machine) {
     machining.append(sub("No machine plan for this part."));
   } else {
     machining.append(sub(el("span", undefined, machineName(result.machine)), el("span", "num", plural(result.setups.length, "setup")),
@@ -114,7 +121,9 @@ export function renderOverview(cards: HTMLElement, first: HTMLElement, result: A
   }
 
   const cost = card("cost", 4, onOpen);
-  if (!result.cost_drivers.length) {
+  if (planNotWorkedOut(result)) {
+    cost.append(el("p", "notrun", NOT_WORKED_OUT));
+  } else if (!result.cost_drivers.length) {
     cost.append(sub("None: one setup and no tools to load."));
   } else {
     cost.append(sub(el("span", "num", plural(result.cost_drivers.length, "cost driver")), el("span", undefined, `Biggest: ${biggestDrivers(result)}`)));
@@ -138,6 +147,10 @@ export function renderOverview(cards: HTMLElement, first: HTMLElement, result: A
  *  the total, and what the score is. No time or dollars (D-003). */
 export function renderCost(host: HTMLElement, result: Analysis): void {
   host.replaceChildren();
+  if (planNotWorkedOut(result)) {
+    host.append(el("p", "notrun", NOT_WORKED_OUT)); // no drivers and no total in this copy yet (D-057)
+    return;
+  }
   if (!result.cost_drivers.length) {
     host.append(el("p", "none pad", "None: one setup and no tools to load."));
     return;
