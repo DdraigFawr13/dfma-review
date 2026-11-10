@@ -11,16 +11,22 @@ import type { OC } from "./oc";
 import { readStep } from "./read";
 import { holes } from "./features/holes";
 import { checkName, checksRun, costTotal, findingRows, limitText, passedRows } from "./rows";
-import { costDrivers } from "./drivers";
+import { costDrivers, driverRules } from "./drivers";
 import { plan, type Plan } from "./plan";
 import { RULES } from "./rules/index";
 import type { Feature, PartSummary } from "./rules/types";
 import { ASSUMPTIONS, MATERIALS, MSG_NO_UNIT, MSG_OPEN_SHELL, PROCESSES, thresholds, TURN_ASSUMPTIONS } from "./settings";
 import { mmToIn, round } from "./units";
 
-export type BrowserAnalysis = Analysis & { checks_not_run: string[] };
+export type BrowserAnalysis = Analysis & { checks_not_run: string[]; cost_partial: boolean };
 
 const IN_FILE = "/in.step";
+
+/** A rule config/drivers.toml maps to a driver is not ported yet for this process: the cost total is partial (D-061). */
+export function costPartial(process: Process): boolean {
+  const feeds = driverRules();
+  return RULES.some((r) => !r.ported.includes(process) && r.PROCESSES.includes(process) && feeds.includes(r.ID));
+}
 
 /** The check names of the rules not ported yet for this process, in RULES order, each once. */
 export function checksNotRun(process: Process): string[] {
@@ -90,6 +96,7 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
       cost_total: costTotal(drivers),
       assumptions,
       checks_not_run: checksNotRun(process),
+      cost_partial: costPartial(process),
     };
   } finally {
     oc.FS.unlink(IN_FILE);

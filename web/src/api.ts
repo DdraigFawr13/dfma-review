@@ -127,6 +127,7 @@ export interface Analysis {
   cost_drivers: CostDriver[]; // S7: counts above 0, ranked by score
   cost_total: number | null; // review-steps S1: the sum of the scores to 0.1; null with no drivers
   checks_not_run?: string[]; // the browser copy only (port spec Design): checks this copy has not ported yet
+  cost_partial?: boolean; // the browser copy only (D-061): a check that feeds a cost driver has not run
 }
 
 export interface CostDriver {

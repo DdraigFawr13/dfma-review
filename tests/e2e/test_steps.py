@@ -169,7 +169,7 @@ def test_cost_total(page: Page, base_url: str):
     expect(page.get_by_test_id("driver-extra_setups")).to_contain_text("from the machine plan")
     total = page.get_by_test_id("cost-total")
     expect(total).to_contain_text("Total score")
-    expect(total).to_contain_text("14.0 points")
+    expect(total).to_have_text("Total score14.0 points")  # no "(partial)" in the Python app (D-061)
     expect(page.get_by_test_id("page-cost")).to_contain_text(
         "Score is count × weight. Every weight is an estimate. No time or dollars yet.")
     assert page.get_by_test_id("page-cost").locator("[data-testid^='driver-']").count() == 7

@@ -4,6 +4,9 @@ import type { Analysis } from "./api";
 import { SLICE } from "./engine/slice";
 
 export const NOT_WORKED_OUT = "Not worked out yet in this copy.";
+/** D-061: the plan holds holes only until pockets are ported (S4). */
+export const POCKETS_LATER = "Pockets are not in this plan yet in this copy, so it may need more setups and tools.";
+const POCKET_SLICE = 4;
 const PLAN_SLICE = 3; // the mill plan and the cost drivers are ported in S3
 const TURN_SLICE = 6; // the lathe plan in S6: until then the browser copy plans no turned part (machine null)
 
@@ -22,6 +25,16 @@ export function noChecksRun(result: Analysis): boolean {
  *  with no total. From S3 a milled part has its plan; a turned part (no machine in this copy) waits for S6. */
 export function planNotWorkedOut(result: Analysis): boolean {
   return result.checks_not_run !== undefined && (SLICE < PLAN_SLICE || (result.machine === null && SLICE < TURN_SLICE));
+}
+
+/** A milled part's plan in the browser copy before S4: it leaves out pockets, so Machining and the PDF say so. */
+export function pocketsLater(result: Analysis): boolean {
+  return result.checks_not_run !== undefined && result.machine !== null && SLICE < POCKET_SLICE;
+}
+
+/** " (partial)" after the cost total while a check that feeds a cost driver has not run (D-061), else "". */
+export function partial(result: Analysis): string {
+  return result.cost_partial ? " (partial)" : "";
 }
 
 /** The status line before a part is read; the browser copy has no .ipt field until S7. */

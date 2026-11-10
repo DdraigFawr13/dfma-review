@@ -21,6 +21,8 @@ def test_plan_panel_two_sided_block(page: Page, base_url: str):
     expect(page.get_by_test_id("plan-loads")).to_have_text("5 (the first in each setup counts)")  # D-029; frame r3-mach words
     expect(page.locator("#plan-count")).to_have_text("3 setups")
     expect(page.get_by_test_id("plan-setup-1")).to_contain_text("Setup 1 · from +Z")
+    expect(page.get_by_test_id("plan-setup-1").locator(".shint")).to_have_text("Show on model ›")  # D-061, both copies
+    expect(page.get_by_test_id("plan-notrun")).to_be_hidden()  # no pocket line in the Python app
     expect(page.get_by_test_id("plan-setup-1")).to_contain_text("1. 1/2 in end mill")  # roughs
     expect(page.get_by_test_id("plan-setup-1")).to_contain_text("2. 1/4 in end mill")  # finishes
     expect(page.get_by_test_id("plan-setup-1")).not_to_contain_text("em-0.500")  # no tool codes on screen

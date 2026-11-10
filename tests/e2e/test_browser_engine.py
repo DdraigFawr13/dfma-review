@@ -95,7 +95,7 @@ def test_not_checked_notice(page: Page, base_url: str):
     expect(page.locator("#row-chips button").first).to_be_visible()
     expect(page.get_by_test_id("show-ok")).to_be_visible()
     page.get_by_test_id("step-machining").click()
-    expect(page.get_by_test_id("plan-notrun")).to_be_hidden()
+    expect(page.get_by_test_id("plan-notrun")).to_have_text(POCKETS_LATER)  # a milled plan holds holes only until S4 (D-061)
     expect(page.get_by_test_id("plan-machine")).to_have_text("3-axis mill")
     expect(page.locator("#plan-none")).to_be_hidden()
     page.get_by_test_id("step-cost").click()
@@ -276,3 +276,39 @@ def test_hole_rows(page: Page, base_url: str, name: str):
     faces = sorted({i for f in findings if f["id"] in first["findings"] for i in f["faces"]})
     page.get_by_test_id(f"row-{ids[first['findings'][0]]}").click()
     assert sorted(page.evaluate("window.__dfma.highlightedFaces()")) == faces
+
+
+POCKETS_LATER = "Pockets are not in this plan yet in this copy, so it may need more setups and tools."
+
+
+def test_plan_and_cost(page: Page, base_url: str, tmp_path):
+    """S3 (D-061): clean_holes.step's plan and drivers as Python gives them; the pocket line on Machining and in the
+    PDF; the setup card says what a tap does and that it is done; the total, the Cost card and the PDF read
+    "(partial)" while a check that feeds a driver has not run, and the Cost step names those checks."""
+    from pypdf import PdfReader
+    key = analyze(PARTS / "clean_holes.step", "clean_holes.step")
+    page.goto(base_url)
+    shown = read(page, PARTS / "clean_holes.step")
+    for name in ("machine", "setups", "operations", "tools", "tool_changes", "cost_drivers", "cost_total"):
+        assert shown[name] == key[name], name
+    assert shown["cost_partial"] is True
+    total = f"{key['cost_total']:.1f} points (partial)"
+    expect(page.get_by_test_id("overview-cost")).to_contain_text("1 cost driver (partial)")
+    page.get_by_test_id("step-machining").click()
+    expect(page.get_by_test_id("plan-notrun")).to_have_text(POCKETS_LATER)
+    setup = page.get_by_test_id("plan-setup-1")
+    expect(setup).to_contain_text("Setup 1 · from +Z")
+    expect(setup.locator(".shint")).to_have_text("Show on model ›")
+    setup.click()
+    expect(setup).to_have_attribute("aria-pressed", "true")
+    expect(setup.locator(".shint")).to_have_text("Shown on model")
+    page.get_by_test_id("step-cost").click()
+    expect(page.get_by_test_id("cost-total")).to_contain_text(total)
+    expect(page.locator("#cost .notrun")).to_have_text(not_checked())
+    with page.expect_download() as download:
+        page.get_by_test_id("export-pdf").click()
+    path = tmp_path / "report.pdf"
+    download.value.save_as(path)
+    first = PdfReader(path).pages[0].extract_text().replace("\n", " ")
+    for text in (POCKETS_LATER, "Machine: 3-axis mill", f"Total score: {total}", not_checked()):
+        assert text in first, f"{text!r} is not on page 1"
