@@ -82,9 +82,18 @@ code { font-family: var(--mono); font-size: .9em; }
     </ul>
   </section>
 
+  <section>
+    <h2>Accuracy: unchanged</h2>
+    <ul>
+      <li>I listed every test by name, before and after. The lists are identical: 926 service, 79 app and 56 browser-copy tests, none missing and none run twice.</li>
+      <li>No assertion, tolerance or time limit was changed. The only test edit is a <code>timed</code> label on the three timed tests.</li>
+      <li>The timed tests are more reliable now. ctc_02 once took 10.2 s inside a full run against its 10 s limit, but 7.9 to 8.3 s alone. They now run alone.</li>
+    </ul>
+  </section>
+
   <section class="ask">
     <h2 style="margin:0">Your call: the service tests, now the slowest group at 5:47</h2>
-    <div class="opt"><span class="tag">Recommended</span><strong>Add pytest-xdist</strong><span class="note">A standard pytest add-on that spreads tests across all 4 cores. About 4 to 5 min in total (an estimate, not measured). It adds one test-only package to <code>environment.yml</code>.</span></div>
+    <div class="opt"><span class="tag">Recommended</span><strong>Add pytest-xdist</strong><span class="note">A standard pytest add-on that spreads tests across all 4 cores. About 4 to 5 min in total (an estimate, not measured). It adds one test-only package to <code>environment.yml</code>. Adopted only if the parallel run passes exactly the same named tests as the serial run, three runs in a row in different orders, with the timed tests still alone. Otherwise I fix the test that depended on order, or drop it.</span></div>
     <div class="opt"><strong>Leave it at about 7 min</strong><span class="note">No new package.</span></div>
     <p class="note">Reply in chat with your choice.</p>
   </section>
