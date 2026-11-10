@@ -7,7 +7,7 @@ Run it inside the dfma environment. Cross-platform; Python only.
 Three stages:
 1. Setup, one step at a time: the drift check, the settings dump and the web check and builds (about 20 s).
 2. Three lanes at once, each step in its own process, its output held until it ends so the lanes don't mix:
-   the service tests (on every core, pytest-xdist); the e2e tests against the service; the parity key, then parity and the browser e2e tests.
+   the service tests (pytest-xdist, cores - 2 workers); the e2e tests against the service; the parity key, then parity and the browser e2e tests.
    The lanes share no files or ports (8765 for the service, 8766 for the browser build).
 3. The tests that assert a wall-clock limit (marker `timed`), alone, after the lanes, so other work can't slow them.
 """
@@ -97,6 +97,12 @@ class Lane(threading.Thread):
                 pass
 
 
+def service_workers() -> int:
+    """pytest-xdist workers for the service lane: the cores this process may use, less one per browser lane."""
+    cores = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)
+    return max(1, cores - 2)
+
+
 def environment_matches() -> bool:
     """Every conda package pinned in environment.yml is installed at its pinned version. A cached container can hold an
     environment built before a package was added (olefile, then pytest-xdist), which fails later with an import error."""
@@ -137,8 +143,10 @@ def main() -> int:
     if not (ROOT / "web" / "node_modules").is_dir():  # a fresh checkout (CI): install the web packages first
         setup.insert(2, ("web install", [npm, "--prefix", "web", "ci"]))
     lanes = {
-        # pytest-xdist on every core (D-065): same tests, same outcomes as a serial run, by name
-        "service": [("service tests", [*pytest, "tests/service", "-m", NOT_TIMED, "-n", "auto", "--dist", "worksteal"])],
+        # pytest-xdist (D-065): same tests, same outcomes as a serial run, by name. Workers = cores - 2, so each browser
+        # lane keeps a core: with every core (-n auto), CI starved the e2e lane's PDF build past Playwright's 30 s wait
+        "service": [("service tests", [*pytest, "tests/service", "-m", NOT_TIMED, "-n", str(service_workers()),
+                                       "--dist", "worksteal"])],
         "e2e": [("e2e tests", [*pytest, "-m", f"e2e and {NOT_TIMED}"])],
         "browser": [
             # Port spec J2: the Python key, then the browser engine in Node against it (quick set);
