@@ -8,6 +8,9 @@ export interface Face {
   kind: "plane" | "cylinder" | "cone" | "torus" | "other";
   positions: number[]; // flat xyz, mm, file coordinates
   indices: number[]; // local to this face
+  /** The browser copy only (port J3): the face's normals and edge lines, worked out in the worker so the page doesn't
+   *  stall drawing a large part. The service's page works them out itself. Never compared with Python. */
+  view?: { normals: Float32Array; edges: Float32Array };
 }
 
 /** I1 (spec "Response"): present only when an .ipt was uploaded with the STEP. */
@@ -217,6 +220,8 @@ export class ApiError extends Error {
 }
 
 const GENERIC = "The analysis failed. Try again, or try another file.";
+
+if (import.meta.env.VITE_ENGINE === "browser") void import("./engine-client").then((m) => m.prepareEngine());
 
 /** VITE_ENGINE=browser (the static site, port spec Design "web/src/api.ts"): the engine runs in a worker in this
  *  page; nothing is sent anywhere. Otherwise the Python service at /api/analyze. */

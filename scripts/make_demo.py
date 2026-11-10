@@ -71,7 +71,8 @@ NOTE_SERVICE = "<b>View-only demo</b> of the real app, with these test parts ana
 NOTE_BROWSER = ("<b>View-only demo</b> of the test copy that runs in the browser, with these test parts analyzed in advance by "
                 "its own engine. Tap a part (a turning part opens on Turning): it opens on its overview; walk the five "
                 "steps with the tabs, Next and Back. This first version reads the part and shows the model; it runs no "
-                "checks yet, and every step says so. Your files can't be uploaded here.")
+                "checks yet, and every step says so. Your files can't be uploaded here. Export PDF saves nothing in this viewer, "
+                "which blocks downloads; it works in the app.")
 
 
 def browser_results() -> dict:

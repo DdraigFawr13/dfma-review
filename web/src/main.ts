@@ -79,7 +79,9 @@ window.__dfma = {
   flagState: () => viewer.flagState(), // test hook: each pin shown, folded into another, or hidden
   pinFootprints: () => viewer.pinFootprints(), // test hook: each pin shown with its stem and dot (audit F27)
   checkedFaces: (kind?: CheckedKind) => viewer.checkedFaces(kind), // test hook: drawn in a kind's "checked" colour
-  analysis: () => shown, // test hook: the result on screen (port J4, J6b; the test build adds wasm_bytes and worker)
+  // test hook: the result on screen, without the view buffers the worker adds (port J4, J6b; the test build adds
+  // wasm_bytes and worker)
+  analysis: () => shown && { ...shown, faces: shown.faces.map(({ view: _view, ...f }) => f) },
 };
 
 /** Faces of the features checked with no finding, by kind. Walls go first, so a face that is also
@@ -214,6 +216,7 @@ function showFindings(result: Analysis | null, message: string): void {
   const selected = selId();
   // The browser copy (D-057): the checks it has not run, over the rows; with none run, only that line
   const notChecked = result ? notCheckedLine(result) : null;
+  byId("row-chips").hidden = !!result && noChecksRun(result); // no empty chips bar under the line (D-057 mock-up)
   byId("features-notrun").hidden = !notChecked;
   byId("features-notrun").textContent = notChecked ?? "";
   if (!result) {

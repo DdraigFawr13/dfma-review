@@ -1,0 +1,28 @@
+{
+ "lead": "Slice 1 of the GitLab Pages port is built: the app now also runs entirely in Chrome, with nothing installed and nothing uploaded. It reads the part and shows the 3D model the same as the Python app; it runs no checks yet, and every step says so. You approved the merge; it goes in once the last checks below pass.",
+ "try": [
+  "<a href=\"https://claude.ai/artifact/6hbrYJqxyP1PtUL3aSAhCM\">View-only demo</a>: 19 test parts, each analyzed in advance by the new browser engine. Tap a part, then walk the five steps.",
+  "After the merge, turn on the public test copy once: on github.com open the repository, tap Settings, then Pages, and set Source to GitHub Actions. The next push to main publishes it; I'll send the link."
+ ],
+ "measured": [
+  "The browser engine gives the Python app's answer on <span class=\"num\">77 of 77</span> quick-set files (part size, faces, every mesh point, assumptions, refusals).",
+  "Tests: <span class=\"num\">926</span> service, <span class=\"num\">37</span> web, <span class=\"num\">78</span> service-page and <span class=\"num\">25</span> browser-copy tests pass. <span class=\"num\">65</span> older page tests wait for the slices that port their features (listed, slice by slice).",
+  "Page stays usable while a part is analyzed: the longest pause <span class=\"num\">20 to 26 ms</span>, taps answered in <span class=\"num\">22 to 35 ms</span> (limit 200 ms, 4 runs).",
+  "Drawing the finished part: <span class=\"num\">310 to 484 ms</span> in the test browser (software graphics). The Python app freezes <span class=\"num\">1,144 to 1,387 ms</span> on the same file.",
+  "__J4__",
+  "__FULL__"
+ ],
+ "decisions": [
+  "Page freeze: found and fixed. The engine now loads while the page waits for a file, the 3D view's lines are worked out in the background, and all edges draw as one. The 200 ms limit stays, measured during the analysis.",
+  "Big test plate: runs once per slice, alone, with a 60-minute limit, not on every push."
+ ],
+ "later": [
+  "No checks yet: holes come in S2, then plan, cost and the PDF in S3 (the first version engineers at work can use).",
+  "The Inventor .ipt field is hidden until S7.",
+  "A crash inside the engine shows the usual \"The analysis failed\" message, but no test can make the engine crash on purpose yet."
+ ],
+ "plan": [
+  "Done: trial, spec, S1 site, viewer and parity check.",
+  "Next: S2 holes, S3 plan, cost and PDF, S4 pockets, S5 walls, S6 turning, S7 Inventor, S8 retire Python."
+ ]
+}

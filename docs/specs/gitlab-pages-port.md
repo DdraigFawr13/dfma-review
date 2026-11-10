@@ -1,7 +1,7 @@
 # GitLab Pages port: the whole app in the browser
 
 - **Status:** Approved 2026-11-10 (Morgan on [Port Spec Approval](https://claude.ai/artifact/AjZQkdVY7ATByDULSNBfmQ), collection `final`: "Approved, start building"; D-056)
-- **Planned in:** [Port Round 1](https://claude.ai/artifact/GsFh2jKiaVwTGoDRxyRE4z) (collection `round1`), [Port Review 1](https://claude.ai/artifact/LB487Hw6uY7NAmwZHLERKk) (Morgan, 2026-11-09: "Ok approved with your recommendations"). Trial: `spikes/ocjs/README.md`. **Decisions:** D-001, D-004, D-006, D-009, D-011, D-030, D-054, D-055, D-056, D-057. **S1 mock-up:** [approved 2026-11-10](https://claude.ai/artifact/EDnCkkdnccX7jjsjrP3ZJa) (D-057).
+- **Planned in:** [Port Round 1](https://claude.ai/artifact/GsFh2jKiaVwTGoDRxyRE4z) (collection `round1`), [Port Review 1](https://claude.ai/artifact/LB487Hw6uY7NAmwZHLERKk) (Morgan, 2026-11-09: "Ok approved with your recommendations"). Trial: `spikes/ocjs/README.md`. **Decisions:** D-001, D-004, D-006, D-009, D-011, D-030, D-054, D-055, D-056, D-057, D-058. **S1 mock-up:** [approved 2026-11-10](https://claude.ai/artifact/EDnCkkdnccX7jjsjrP3ZJa) (D-057).
 - **Approving this spec** also accepts D-054 (the engine and the static site), which replaces D-004's stack and D-006's package gate for the app.
 
 ## Problem
@@ -202,14 +202,14 @@ Settled at build after the zero-decision re-check; none changes a goal (WS-02). 
 - **Compare:** `rules_run` and `checks_run` are Python's filtered to the ported rules (`PORTED_RULES` in `compare.ts`); a mesh point must find an unused partner within 1.5e-5 mm on every coordinate (Python's and JavaScript's rounding differ at a tie, so a sorted pairing misaligned on 75 of 77 files). `compare.test.ts` plants 6 changes and checks each is caught. The last merged slice is `web/src/engine/slice.ts`.
 - **Not checked yet:** the lines key on `checks_not_run`, which only the browser engine returns; `checks_not_run` lists each check name once. Machining and Cost show "Not worked out yet in this copy." while `SLICE` < 3. The PDF prints the line in its summary in place of the verdict while no check has run, and the not-worked-out line under Machine plan and Cost drivers.
 - **Refusals (J5):** too large, then a compound file (an `.ipt`) in the STEP field (`MSG_IPT_NEEDS_STEP`, as `app.py`), then the engine; "try again" shows only for too long and failed, as today (the spec's "with Try again" for every message did not match today's page). An engine abort is `MSG_FAILED`.
-- **J3:** a tap on the Part tab (the one tab enabled during a first analysis) is timed in the page during the analysis.
-- **J4:** `make_parts.py --big-plate`: 112 x 112 holes of 3 mm on a 5 mm pitch, 49.94 MiB (12,544 holes); one non-parallel cut (a parallel cut ran out of memory here). `check.py` makes it once; CI caches it.
+- **J3 (D-058):** a 10 ms heartbeat in the page and a tap on the Part tab timed from the test both stay under 200 ms from the upload to the worker's reply; the engine compiles while the page waits for a file, and the test waits for that first. The drawing after the reply is printed (310 to 484 ms here, software WebGL; the service app: 1,144 and 1,387 ms on the same file). The worker sends each face's normals and edge lines; the viewer draws all edges as one object and skips three's synchronous shader checks.
+- **J4 (D-058):** `make_parts.py --big-plate`: 112 x 112 holes of 3 mm on a 5 mm pitch, 49.94 MiB (12,544 holes); one non-parallel cut (a parallel cut ran out of memory here). Python's reader takes 925.6 s on it. J4 is marked `per_slice` and runs once per slice, alone, with a 60-minute limit: `pytest -m per_slice --engine browser`; not in `check.py` or CI.
 - **Test hooks:** `window.__dfma.analysis()` returns the result on screen; the test build adds `wasm_bytes` and `worker` to it.
 
 ## Verification
 
 - Every push: `python scripts/check.py` until S8 (S1 adds the quick parity and the browser e2e run); from S8, `npm run check` at the root.
-- Before a slice's PR is marked ready: `npm --prefix web run parity:full`, its summary line in the PR.
+- Before a slice's PR is marked ready: `npm --prefix web run parity:full` and J4 (`pytest -m per_slice --engine browser`, alone on the machine; D-058), their summary lines in the PR.
 - End to end: the GitHub Pages link on Morgan's PC (D-009 status page per slice); the work URL from S3 on, by Morgan.
 
 ## Open questions

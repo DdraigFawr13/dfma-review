@@ -43,7 +43,7 @@ function licensesListed(): Plugin {
         const m = /node_modules\/((?:@[^/]+\/)?[^/]+)\//.exec(id.replace(/\\/g, "/"));
         if (m) packages.add(m[1]);
       }
-      const page = readFileSync(resolve(__dirname, "public/licences.html"), "utf8");
+      const page = readFileSync(resolve(import.meta.dirname, "public/licences.html"), "utf8");
       const missing = [...packages].filter((p) => !page.includes(`>${p}<`)).sort();
       if (process.env.DFMA_LIST_PACKAGES) console.log(`packages: ${[...packages].sort().join(" ")}`);
       if (missing.length) this.error(`public/licences.html does not list: ${missing.join(", ")}`);

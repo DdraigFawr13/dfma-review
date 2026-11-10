@@ -18,12 +18,21 @@ let nextId = 1;
 
 function engineModule(): Promise<WebAssembly.Module> {
   if (!compiled) {
-    compiled = WebAssembly.compileStreaming(fetch(wasmUrl)).catch((e) => {
+    compiled = WebAssembly.compileStreaming(fetch(wasmUrl)).then((m) => {
+      (window as unknown as { __dfmaEngineReady?: boolean }).__dfmaEngineReady = true; // a test hook (port J3)
+      return m;
+    }).catch((e) => {
       compiled = null; // try the download again next time
       throw e;
     });
   }
   return compiled;
+}
+
+/** Start downloading and compiling the engine while the page waits for a file (port J3: the compile then never
+ *  falls inside an analysis, and the first analysis starts sooner). A failure here is retried by the analysis. */
+export function prepareEngine(): void {
+  engineModule().catch(() => {});
 }
 
 /** The time limit; the test build honours ?time_limit_s= (J4, J5). */

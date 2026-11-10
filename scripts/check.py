@@ -38,10 +38,9 @@ def main() -> int:
         ("parity", [npm, "--prefix", "web", "run", "parity"]),
         # Port spec "Browser tests": the test build, then the e2e suite against it (browser_pending.txt deselected)
         ("browser build", [npm, "--prefix", "web", "run", "build:pages:test"]),
-        ("browser e2e tests", [py, "-m", "pytest", "-m", "e2e", "-q", "--engine", "browser"]),
+        # J4 (the 49.94 MiB plate) is not here: it runs once per slice, alone (D-058; pytest -m per_slice)
+        ("browser e2e tests", [py, "-m", "pytest", "-m", "e2e and not per_slice", "-q", "--engine", "browser"]),
     ]
-    if not (ROOT / "tests" / "parts" / ".cache" / "big_plate.step").is_file():  # J4's 49 MiB plate, made once
-        steps.insert(len(steps) - 1, ("big plate", [py, "tests/parts/make_parts.py", "--big-plate"]))
     for name, cmd in steps:
         print(f"\n== {name}: {' '.join(Path(c).name if i == 0 else c for i, c in enumerate(cmd))}", flush=True)
         start = time.perf_counter()
