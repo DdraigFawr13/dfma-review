@@ -13,7 +13,8 @@ export const ORDER = ["+Z", "-Z", "+X", "-X", "+Y", "-Y"] as const;
 export const MACHINE_3AXIS = "3-axis mill";
 export const MACHINE_MULTI = "4/5-axis mill or fixture";
 
-export interface Tool { id: string; kind: "drill" | "end_mill" | "countersink"; diameter_in: number | null; undersized: boolean }
+export interface Tool { id: string; kind: "drill" | "end_mill" | "countersink" | "turn" | "bore" | "groove"; diameter_in: number | null;
+  undersized: boolean; width_in?: number }
 export interface Operation { setup: number; tool: string; features: string[]; faces: number[] }
 export interface Setup { direction: string; features: string[] }
 export interface Plan { machine: string; setups: Setup[]; operations: Operation[]; tools: Tool[]; tool_changes: number }
@@ -54,7 +55,7 @@ function millId(dMm: number): string {
 }
 
 /** The matching drill, or pickEndMill(hole radius, hole diameter) when no drill matches (spec Plan). */
-function holeTool(f: Feature, units: string): Tool {
+export function holeTool(f: Feature, units: string): Tool {
   const d = f.dims_mm.diameter;
   const drill = nearestDrill(d, units);
   if (Math.abs(drill.diameter_mm - d) <= matchToleranceMm() + 1e-9) {
@@ -91,9 +92,9 @@ function countersinkTool(deg: number): Tool {
   return { id: `cs-${pyG(deg)}`, kind: "countersink", diameter_in: null, undersized: false };
 }
 
-type Rank = [number, number, string];
+export type Rank = [number, number, string];
 /** Within a setup: end mills largest to smallest, then drills smallest to largest, then countersinks by angle. */
-function rank(tool: Tool): Rank {
+export function rank(tool: Tool): Rank {
   if (tool.kind === "end_mill") return [0, -tool.diameter_in!, tool.id];
   if (tool.kind === "drill") return [1, tool.diameter_in!, tool.id];
   return [2, 0.0, tool.id];

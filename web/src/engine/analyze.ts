@@ -1,19 +1,18 @@
 // Port of service/dfma/analyze.py (port spec Design "analyze.ts"). It always returns the full response shape;
-// a key not ported yet holds what Python returns for a part with none of that kind, and `checks_not_run` names,
-// in check-name wording, every rule not ported yet. S1 ported the read, the face kinds, the frame, the mesh, the part
-// summary and the assumptions; S2 the holes and the hole rules (hole_depth, hole_size, access) with their rows, on
-// Milling only (a turned part's holes split into holes and bores first: S6); S3 the mill plan and the cost drivers
-// (a turned part's plan is turning.plan: S6); S4 the pockets, corners and undercuts with their rules, on Milling
-// (a turned part's pockets feed its profile and off-axis checks: S6); S5 the walls and thin_wall, on Milling (a wall at a
-// hole names the hole by its split_bores id on a turned part: S6).
+// `checks_not_run` names, in check-name wording, every rule not ported yet. S1 ported the read, the face kinds, the
+// frame, the mesh, the part summary and the assumptions; S2 the holes and the hole rules; S3 the mill plan and the cost
+// drivers; S4 the pockets, corners and undercuts; S5 the walls and thin_wall; S6 the turning axis, bores, grooves, the
+// turned profile, the turn rules and the lathe plan (turning.ts), and looks_turned on Milling. The .ipt checks: S7.
 import type { Analysis, Material, Process } from "../api";
-import { extentsMm, faceInfo, partFrame, type Vec } from "./frame";
+import { extentsMm, faceInfo, partFrame, turningAxis, type Vec } from "./frame";
 import { meshFaces } from "./mesh";
 import type { OC } from "./oc";
 import { readStep } from "./read";
-import { holes, number } from "./features/holes";
+import { holes, number, Topology } from "./features/holes";
 import { linkCorners, pockets } from "./features/pockets";
 import { holeWalls, walls } from "./features/walls";
+import { grooves, holeOffAxis, pocketOnAxis, profileFeature, splitBores, turnedProfile } from "./features/turned";
+import { plan as lathePlan } from "./turning";
 import { checkName, checksRun, costTotal, findingRows, limitText, passedRows } from "./rows";
 import { costDrivers, driverRules } from "./drivers";
 import { plan, type Plan } from "./plan";
@@ -25,6 +24,7 @@ import { mmToIn, round } from "./units";
 export type BrowserAnalysis = Analysis & { checks_not_run: string[]; cost_partial: boolean };
 
 const IN_FILE = "/in.step";
+const TURN_NEEDS_AXIS = ["turn_slender", "turn_offaxis", "bore_depth"];
 
 /** A rule config/drivers.toml maps to a driver is not ported yet for this process: the cost total is partial (D-061). */
 export function costPartial(process: Process): boolean {
@@ -51,29 +51,51 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
     for (const m of meshes) for (let i = 0; i < m.positions.length; i += 3) vertices.push([m.positions[i], m.positions[i + 1], m.positions[i + 2]]);
     const frame = partFrame(infos, vertices);
     const bboxIn = extentsMm(frame, vertices).map((e) => round(mmToIn(e), 6)) as [number, number, number];
-    // S2: holes and the hole rules, on Milling (rules_run lists the ported rules that ran, in RULES order)
-    const holeList = process === "mill" ? holes(oc, part.solid, part.faces, frame) : [];
-    // S4: pockets and corners, after the holes whose faces they skip (analyze.py)
+    // Holes, then pockets (skipping hole faces), then walls between planar faces and at holes (analyze.py)
+    let holeList = holes(oc, part.solid, part.faces, frame);
     const holeFaces = new Set(holeList.flatMap((f) => f.faces));
-    const [rawPockets, rawCorners] = process === "mill" ? pockets(oc, part.solid, part.faces, frame, holeFaces) : [[], []];
-    // S5: walls between planar faces, then walls at holes, numbered together and placed last (analyze.py)
-    const wallList = process === "mill" ? [...walls(oc, part.solid, part.faces), ...holeWalls(oc, part.solid, part.faces, holeList)] : [];
+    const [rawPockets, rawCorners] = pockets(oc, part.solid, part.faces, frame, holeFaces);
+    const wallList = [...walls(oc, part.solid, part.faces), ...holeWalls(oc, part.solid, part.faces, holeList)];
     const pocketList = number(rawPockets, "pocket");
     const cornerList = number(rawCorners, "corner");
     linkCorners(pocketList, cornerList);
-    const features = [...holeList, ...pocketList, ...cornerList, ...number(wallList, "wall")] as unknown as Feature[];
+    // S6: the turning axis, for Turning and, on Milling, for looks_turned (D-028)
+    const topo = new Topology(oc, part.solid, part.faces);
+    const turn = turnedProfile(topo, infos.map((f) => f.area), vertices, turningAxis(infos, vertices));
+    let turnFeatures: Feature[] | null = null;
+    if (process === "turn" && turn.diameter !== undefined) { // spec Features "Turned profile", "Groove", "Bore"
+      const [kept, bores, renamed] = splitBores(topo, holeList, turn);
+      holeList = kept;
+      for (const w of wallList) if (w.hole !== undefined) w.hole = renamed.get(w.hole)!; // a wall at a hole names it by its new id
+      const taken = new Set([...kept, ...bores].flatMap((f) => f.faces));
+      const grooveList = number(grooves(topo, turn, taken), "groove");
+      for (const i of [...grooveList, ...pocketList].flatMap((f) => f.faces)) taken.add(i);
+      const profile = { id: "profile-1", ...profileFeature(topo, turn, taken) };
+      for (const f of [...kept, ...bores, ...pocketList] as unknown as (Record<string, unknown> & { faces: number[]; kind: string })[]) {
+        delete f.on_axis; // recorded instead as the angle and offset turn_offaxis reads
+        [f.off_axis_deg, f.off_axis_mm] = f.kind === "pocket"
+          ? pocketOnAxis(oc, f as unknown as { faces: number[]; axis: number[] }, part.faces, turn)
+          : holeOffAxis(topo, f, turn);
+      }
+      turnFeatures = [...bores, ...grooveList, profile] as unknown as Feature[];
+    }
+    const features = [...holeList, ...(turnFeatures ?? []), ...pocketList, ...cornerList, ...number(wallList, "wall")] as unknown as Feature[];
     const pocketFaces = new Set(pocketList.flatMap((f) => f.faces));
-    const summary: PartSummary = { units_in_file: part.unitsInFile, frame, face_count: part.faces.length };
+    const summary: PartSummary = { units_in_file: part.unitsInFile, frame, turn, face_count: part.faces.length };
     const limits = thresholds(material);
-    const rules = RULES.filter((r) => r.module && r.ported.includes(process) && r.PROCESSES.includes(process));
+    const rules = RULES.filter((r) => r.module && r.ported.includes(process) && r.PROCESSES.includes(process)
+      && !(TURN_NEEDS_AXIS.includes(r.ID) && turnFeatures === null)); // no axis: only the shared rules
     const raw = rules.flatMap((r) => r.module!.check(features, summary, limits));
     const findings = raw.map((f, n) => ({ id: `F${n + 1}`, ...f, check: checkName(f.rule), limit_text: limitText(f.threshold_source) }));
     const passed = rules.flatMap((r) => (r.module!.passes ? r.module!.passes(features, summary, limits) : []))
       .map((p) => ({ ...p, limit_text: limitText(p.threshold_source) }));
     const rulesRun = rules.map((r) => r.ID);
-    const milled: Plan | { machine: null; setups: []; operations: []; tools: []; tool_changes: 0 } = process === "mill"
+    type NoPlan = { machine: null; setups: []; operations: []; tools: []; tool_changes: 0 };
+    const milled: Plan | NoPlan = process === "mill"
       ? plan(features, findings as { rule: string; feature?: string | null }[], frame, part.unitsInFile)
-      : { machine: null, setups: [], operations: [], tools: [], tool_changes: 0 }; // turning.plan: S6
+      : turnFeatures !== null
+        ? lathePlan(features, findings as { rule: string }[], part.unitsInFile)
+        : { machine: null, setups: [], operations: [], tools: [], tool_changes: 0 }; // turned, but no turning axis: nothing to plan
     const drivers = costDrivers(findings as unknown as { id: string; rule: string }[], milled.setups, milled.tools);
     const assumptions = [...ASSUMPTIONS, ...(process === "turn" ? TURN_ASSUMPTIONS : [])];
     if (part.freeEdges) assumptions.push(MSG_OPEN_SHELL.replace("{n}", String(part.freeEdges)));
@@ -86,7 +108,7 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
         face_count: part.faces.length,
         volume_mm3: part.volumeMm3,
         ignored_solids: part.ignoredSolids,
-        // Torus and other faces, except those that belong to a pocket (S4, as Python; a turned part's pockets: S6).
+        // Torus and other faces, except those that belong to a pocket (as Python).
         not_analysed_faces: infos.filter((f) => (f.kind === "torus" || f.kind === "other") && !pocketFaces.has(f.id)).map((f) => f.id),
         frame: { x: [...frame.x], y: [...frame.y], z: [...frame.z] },
       },
@@ -100,8 +122,11 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
       rows: findingRows(findings) as unknown as Analysis["rows"],
       passed_rows: passedRows(features, findings, passed) as unknown as Analysis["passed_rows"],
       machine: milled.machine,
-      turn_axis: null, // S6
-      stock: { shape: "block", size_in: bboxIn }, // the part's own size, no allowance (a bar: S6)
+      turn_axis: turnFeatures !== null ? [...turn.axis!] : null,
+      // The stock in the machine plan: the part's own size, no allowance added (Morgan, 2026-11-08)
+      stock: turnFeatures !== null
+        ? { shape: "bar", diameter_in: round(mmToIn(turn.diameter!), 6), length_in: round(mmToIn(turn.length!), 6) }
+        : { shape: "block", size_in: bboxIn },
       setups: milled.setups,
       operations: milled.operations,
       tools: milled.tools as Analysis["tools"],

@@ -150,3 +150,15 @@ Build, first usable version: all seven slices merged. S1 to S6 in #3 to #17 (his
 
 - 2026-11-09 D-052: a deep pocket's advice counts its passes at a safe depth (1× the tool, 0.5× in stainless; estimate).
 - 2026-11-09 D-051: review-steps S2+S3 approved and merged (#30); spec shipped.
+
+
+## Moved 2026-11-10 (S6 session)
+
+- 2026-11-10 Faster `check.py` (PR #39; D-065; Morgan: faster, keep accuracy; approved "Merge when ready"): three lanes at once, then the `timed` tests alone; service tests on pytest-xdist (cores − 2 workers, after CI's first run starved a PDF download with every core). 12 min 40 s → about 6 to 7 min here; same tests by name, identical outcomes serial vs 3 parallel orders. `check.py` first checks the env against `environment.yml` and prints the fix.
+- 2026-11-10 Port S5 (walls) merged (PR #38; D-063, D-064): `features/walls.ts` (a direct port of `walls`, `hole_walls` and helpers), `rules/thin_wall.ts`; Milling only until S6. Stop triggered: 4 NIST linkage arms differed (V8's atan2 one step off glibc's at a seam); Morgan: snap whole-degree bins in both (D-063; Python's answers move on 7 files, no finding or cost). Full parity 282/290 the same (2 mesh-only, 6 crash Python), quick 77/77; " (partial)" gone on Milling; all `# S5` e2e removed (2 moved to S7: they wait on /api/analyze); `check.py` 927 service (+ ctc_02 at 10.1 s, Morgan: let it go), 53 web, 79 + 74 browser; review 1 medium + 5 low, 4 fixed. [Status](https://claude.ai/artifact/2Dd8BPTPijg7sopM9DP17q), [demo](https://claude.ai/artifact/PrJG2MQ6nPQdismR8uVCte). Olefile 0.47 was missing again; installed with micromamba.
+- 2026-11-10 D-058: J3's freeze fixed (limit stays, measured during the analysis); J4's plate runs once per slice, 60 min.
+- 2026-11-10 D-057: S1 mock-up approved with its choices; merge when satisfied.
+- 2026-11-10 D-056: port spec approved with its 5 additions; D-054 Accepted.
+- 2026-11-09 D-055: port planning answers (Chrome, GitHub Pages copy, Python as answer key, full engine, holes first, work release after holes and PDF, tell IT first).
+- 2026-11-09 D-054 (Proposed): a static GitLab Pages build on opencascade.js; trial passed on geometry and `.ipt` streams.
+- 2026-11-09 D-053: the UX audit's 34 fixes as recommended; amends D-017 (pins carry ▲/◆), D-042 ("Why n setups:", no stretched cards) and D-049 ("What to do").

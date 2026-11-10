@@ -248,6 +248,16 @@ Settled after the zero-decision re-check of S5 against merged S4 (a fresh review
 - **Compare (S5):** `PORTED_KINDS[5]` is `wall`, `PORTED_RULES[5]` `thin_wall`, `PORTED_KEYS[5]` adds no key. `PLAN_KINDS` is unchanged (the plan reads no wall). A file whose key holds a `looks_turned` finding still leaves the plan and cost out until S6, as the S3 rule says ("no finding from a rule not ported").
 - **Screens:** no new wording. On Milling every rule that feeds a driver now runs, so " (partial)" and the Cost step's not-checked line go (D-061's rule); the Features step and the PDF summary still name Looks turned and the `.ipt` checks. `test_browser_engine.py::test_wall_rows` checks the walls and thin-wall rows on five parts; `test_plan_and_cost` now expects no " (partial)".
 
+## Builder defaults (S6, 2026-11-10)
+
+Settled at build against merged S5; none changes a goal (WS-02).
+
+- **Files:** `features/turned.ts` (`turnedProfile`, `grooves`, `splitBores`, `pocketOnAxis`, `profileFeature`, `coaxial`, `Round`, and `holeOffAxis` for `analyze.py` `_off_axis`), `turning.ts`, `rules/{turn_axis,turn_offaxis,turn_slender,bore_depth,looks_turned}.ts`. `plan.ts` exports `holeTool` and `rank` for the lathe plan; its `Tool` kind adds `turn`, `bore` and `groove` (and `width_in`). One `Topology` serves the turned code (Python builds one inside `grooves`).
+- **Every process:** holes, pockets and walls now run on Turning too, then `split_bores` renames holes and the walls at them, as `analyze.py`. Every rule but the three `.ipt` checks is ported for every process it runs on, so `checks_not_run` names only those (S7) and `cost_partial` is false on both processes.
+- **Compare (S6):** `PORTED_KEYS[6]` is `turn_axis`; `PORTED_RULES[6]` the five turning rules (`looks_turned` on Milling); `PORTED_KINDS[6]` `bore`, `groove`, `profile`. Turned files now compare every key. `compare.test.ts` plants 15 S6 changes on a turned key and one on `looks_turned`.
+- **Review:** a fresh reviewer found 0 high and 4 low. Fixed: `roundOf` reads `Cylinder()` once, and the turned part's notice test asserts "No machine plan". Kept: the engine's axis handles and the shared `Topology` stay undeleted, as in every slice since S4 (the worker is new for each file); `${COAX_DEG}` prints "0.5", as Python does.
+- **Tests:** the eight `# S6` lines of `browser_pending.txt` pass and are removed. `test_not_checked_notice` now expects a turned part's checks, chips and plan (only the `.ipt` checks named).
+
 ## Verification
 
 - Every push: `python scripts/check.py` until S8 (S1 adds the quick parity and the browser e2e run); from S8, `npm run check` at the root.
