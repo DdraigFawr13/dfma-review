@@ -1,7 +1,7 @@
 # GitLab Pages port: the whole app in the browser
 
-- **Status:** Draft
-- **Planned in:** [Port Round 1](https://claude.ai/artifact/GsFh2jKiaVwTGoDRxyRE4z) (collection `round1`), [Port Review 1](https://claude.ai/artifact/LB487Hw6uY7NAmwZHLERKk) (Morgan, 2026-11-09: "Ok approved with your recommendations"). Trial: `spikes/ocjs/README.md`. **Decisions:** D-001, D-004, D-006, D-009, D-011, D-030, D-054, D-055.
+- **Status:** Approved 2026-11-10 (Morgan on [Port Spec Approval](https://claude.ai/artifact/AjZQkdVY7ATByDULSNBfmQ), collection `final`: "Approved, start building"; D-056)
+- **Planned in:** [Port Round 1](https://claude.ai/artifact/GsFh2jKiaVwTGoDRxyRE4z) (collection `round1`), [Port Review 1](https://claude.ai/artifact/LB487Hw6uY7NAmwZHLERKk) (Morgan, 2026-11-09: "Ok approved with your recommendations"). Trial: `spikes/ocjs/README.md`. **Decisions:** D-001, D-004, D-006, D-009, D-011, D-030, D-054, D-055, D-056.
 - **Approving this spec** also accepts D-054 (the engine and the static site), which replaces D-004's stack and D-006's package gate for the app.
 
 ## Problem
