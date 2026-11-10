@@ -474,3 +474,10 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-10). Morgan, in chat during the S5 build: "Ok I approve of everything when you are done. Please go ahead and begin to once this slice is complete and start a new session for the next slice. Merge when ci is completed".
 - **Decision:** merge S5 once its checks and CI pass, the fresh reviewer's findings are settled, the full-set parity is recorded and the status page and demo are published (D-009), without waiting for another approval. S6 (turned parts) then starts in a new session.
 - **Why:** Morgan approved the slice and delegated the merge.
+
+## D-065 Faster check.py: lanes at once, timed tests alone, service tests on pytest-xdist
+
+- **Status:** Accepted (2026-11-10). Morgan, in chat: "Can we work on reducing the amount of testing time for this port phase?", "I want to maintain accuracy still though", then "Do as you recommend" (pytest-xdist on the stated terms). After the measured results: "Approved. Merge when ready" (PR #39). D-063 and D-064 are on the S5 branch (PR #38).
+- **Decision:** `scripts/check.py` runs its setup steps in series, then three lanes at once (service tests; e2e against the service; parity key, parity, browser e2e), then every test marked `timed` (it asserts a wall-clock limit) alone. The service lane runs on pytest-xdist 3.8.0 with cores − 2 workers, so each browser lane keeps a core (with every core, PR #39's first CI run starved a PDF download past Playwright's 30 s wait) (MIT, conda-forge; with execnet 2.1.2, MIT), a new test-only package. It stays only while a parallel run passes exactly the tests a serial run passes, by name, run after run; no assertion, tolerance or limit changes for it.
+- **Why:** `check.py` took 12 min 40 s here and 13 min 24 s in CI against a 20-minute limit, one step after another. Measured results are on the [status page](https://claude.ai/artifact/He8bThHsaFfvnDt1MB8XS8) and in PR #39.
+

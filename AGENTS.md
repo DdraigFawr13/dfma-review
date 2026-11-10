@@ -14,7 +14,7 @@ Shared rules come from AI-Master-Instructions and load through CLAUDE.md (`.clau
 
 ## Local checks (run before pushing)
 
-- Every push: `python scripts/check.py` inside the `dfma` environment (drift check, service tests, web check and build, browser tests).
+- Every push: `python scripts/check.py` inside the `dfma` environment (drift check, service tests, web check and build, browser tests). It runs three lanes at once (service tests; e2e; parity then browser e2e), then the `timed` tests alone: mark any test that asserts a wall-clock limit `@pytest.mark.timed`, or the lanes can slow it past its limit.
 - Cloud sessions have no conda. The "Network" environment's setup script builds the env at `/opt/mamba/envs/dfma` on a fresh container; if it is missing, install micromamba from conda-forge (D-008) and build `environment.yml` yourself. Set `DFMA_CHROMIUM` to the preinstalled Chromium (`/opt/pw-browsers/chromium-*/chrome-linux64/chrome`).
 
 ## What CI runs

@@ -25,6 +25,7 @@ def test_every_file_is_scored():
     assert sorted(p.name for p in FILES) == sorted(SCORECARD)
 
 
+@pytest.mark.timed
 @pytest.mark.parametrize("path", FILES, ids=lambda p: p.stem)
 def test_nist_file(path):
     start = time.monotonic()

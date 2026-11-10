@@ -64,6 +64,8 @@ Approved in D-004, D-007, D-008 and D-031; versions are pinned in `environment.y
 | httpx | 0.28.1 | BSD-3-Clause | tests |
 | playwright, playwright-python | 1.60.0 | Apache-2.0 | browser tests |
 | pytest-playwright | 0.10.0 | Apache-2.0 | browser tests |
+| pytest-xdist | 3.8.0 | MIT | service tests in parallel (D-065) |
+| execnet | 2.1.2 | MIT | pulled in by pytest-xdist |
 | pypdf | 7.0.0 | BSD-3-Clause | tests (from S7) |
 | vitest | 5.1.0 | MIT | tests |
 

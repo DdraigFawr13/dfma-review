@@ -1,6 +1,6 @@
 # Handoff
 
-Updated: 2026-11-10 (port S4 merged). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
+Updated: 2026-11-10 (port S5 merged; faster check.py merged). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
 
 ## Phase
 
@@ -24,6 +24,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
+- 2026-11-10 Faster `check.py` (PR #39; D-065; Morgan: faster, keep accuracy; approved "Merge when ready"): three lanes at once, then the `timed` tests alone; service tests on pytest-xdist (cores − 2 workers, after CI's first run starved a PDF download with every core). 12 min 40 s → about 6 to 7 min here; same tests by name, identical outcomes serial vs 3 parallel orders. `check.py` first checks the env against `environment.yml` and prints the fix.
 - 2026-11-10 Port S5 (walls) merged (PR #38; D-063, D-064): `features/walls.ts` (a direct port of `walls`, `hole_walls` and helpers), `rules/thin_wall.ts`; Milling only until S6. Stop triggered: 4 NIST linkage arms differed (V8's atan2 one step off glibc's at a seam); Morgan: snap whole-degree bins in both (D-063; Python's answers move on 7 files, no finding or cost). Full parity 282/290 the same (2 mesh-only, 6 crash Python), quick 77/77; " (partial)" gone on Milling; all `# S5` e2e removed (2 moved to S7: they wait on /api/analyze); `check.py` 927 service (+ ctc_02 at 10.1 s, Morgan: let it go), 53 web, 79 + 74 browser; review 1 medium + 5 low, 4 fixed. [Status](https://claude.ai/artifact/2Dd8BPTPijg7sopM9DP17q), [demo](https://claude.ai/artifact/PrJG2MQ6nPQdismR8uVCte). Olefile 0.47 was missing again; installed with micromamba.
 
 ## Next
@@ -43,6 +44,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-10 D-065: faster `check.py` (lanes, timed tests alone, pytest-xdist); approved and merged in PR #39.
 - 2026-11-10 D-064: S5 approved; merge when CI is done; S6 in a new session.
 - 2026-11-10 D-063: S5 stop answered: whole-degree bins snap to 9 decimals in Python and the port; 7 Python answers move (no finding or cost).
 - 2026-11-10 D-062: S4 approved; merge when done; S5 in a new session.
@@ -55,6 +57,4 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - 2026-11-09 D-055: port planning answers (Chrome, GitHub Pages copy, Python as answer key, full engine, holes first, work release after holes and PDF, tell IT first).
 - 2026-11-09 D-054 (Proposed): a static GitLab Pages build on opencascade.js; trial passed on geometry and `.ipt` streams.
 - 2026-11-09 D-053: the UX audit's 34 fixes as recommended; amends D-017 (pins carry ▲/◆), D-042 ("Why n setups:", no stretched cards) and D-049 ("What to do").
-- 2026-11-09 D-052: a deep pocket's advice counts its passes at a safe depth (1× the tool, 0.5× in stainless; estimate).
-- 2026-11-09 D-051: review-steps S2+S3 approved and merged (#30); spec shipped.
 - D-001 to D-037: see `docs/DECISIONS.md` (`grep '^## D-'`).
