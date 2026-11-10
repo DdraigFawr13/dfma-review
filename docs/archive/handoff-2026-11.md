@@ -132,3 +132,5 @@ Build, first usable version: all seven slices merged. S1 to S6 in #3 to #17 (his
 ## Moved 2026-11-10 (port S2 start)
 
 - 2026-11-10 Port spec approved by Morgan ("Approved, start building"; D-056) and merged with the trial in #33: [docs/specs/gitlab-pages-port.md](specs/gitlab-pages-port.md), 8 slices; all 5 additions approved. [Approval page](https://claude.ai/artifact/AjZQkdVY7ATByDULSNBfmQ), [PR #33](https://github.com/DdraigFawr13/dfma-review/pull/33).
+- 2026-11-10 Port S1 merged (PR #34; D-057, D-058): the app runs in Chrome on `@taucad/opencascade.js` with nothing uploaded; quick parity 77/77, full set 282/290 the same (6 crash Python, 2 differ in mesh points only, spec Risks); page freeze fixed (J3); J4's plate did not finish in 60 min. [Status](https://claude.ai/artifact/3wDSZ5G1mrhaTpmunEQj9R), [demo](https://claude.ai/artifact/6hbrYJqxyP1PtUL3aSAhCM). Morgan: turn on GitHub Pages (Settings, Pages, Source: GitHub Actions).
+- 2026-11-09 D-048: review-steps S2 and S3 built and merged together, one branch and one PR.
