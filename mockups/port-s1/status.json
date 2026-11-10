@@ -9,7 +9,7 @@
   "Tests: <span class=\"num\">926</span> service, <span class=\"num\">37</span> web, <span class=\"num\">78</span> service-page and <span class=\"num\">25</span> browser-copy tests pass. <span class=\"num\">65</span> older page tests wait for the slices that port their features (listed, slice by slice).",
   "Page stays usable while a part is analyzed: the longest pause <span class=\"num\">20 to 26 ms</span>, taps answered in <span class=\"num\">22 to 35 ms</span> (limit 200 ms, 4 runs).",
   "Drawing the finished part: <span class=\"num\">310 to 484 ms</span> in the test browser (software graphics). The Python app freezes <span class=\"num\">1,144 to 1,387 ms</span> on the same file.",
-  "__J4__",
+  "Big test plate (49.94 MB, 12,544 holes): <span class=\"warn\">not finished in the 60-minute limit</span> in the browser (the tab was at 3.3 GB after 53 minutes); Python's own reader alone takes 15.4 minutes on it. The 6.1 MB NIST FTC 09 file before it read fine. Next step: pick a plate size that finishes (your D-058 call, at S2).",
   "__FULL__"
  ],
  "decisions": [

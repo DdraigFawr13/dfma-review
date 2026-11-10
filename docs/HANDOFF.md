@@ -29,7 +29,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-00. Now: port S1 (PR #34, draft; D-057). Stopped for Morgan's call on 2 browser tests: J3 heartbeat gap 782 ms (limit 200; taps 121.8 ms); J4 `big_plate.step` (49.94 MiB, 12,550 faces) never showed in 15 min; Python's reader alone took 925.6 s; Node run killed for memory. Uncommitted: review fixes and `browser_pending.txt`. No push until Morgan decides.
+00. Now: port S1 (PR #34): Morgan approved the merge once checks pass (2026-11-10). J3 fixed (D-058). J4 run once: the 49.94 MiB plate did not finish in the 60-minute limit (tab 3.3 GB at 53 min; Python's reader 925.6 s); pick a size that finishes before S2's J4 run. Then: check.py, parity:full, ready, CI, merge.
 0. Now: plainer sentences for the rule cases that still read as titles, each shown to Morgan first (D-045). Follow-up from the audit fixes: Hole feature rows still carry aria-pressed and aria-expanded (F15's pattern, out of its scope).
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `python tests/inventor/local_pairs.py` (now prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
 2. Recognition and stress-test status, scoring commands and the MFCAD++ download: archive "Moved 2026-11-09" (old Next 3 and 3a). Re-run them on every recognition change.
