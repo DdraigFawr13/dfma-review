@@ -62,7 +62,7 @@ function segment(faces: number[], origin: Vec, axis: Vec, radius: number, lo: nu
   };
 }
 
-const sub = (a: Vec, b: Vec): Vec => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+export const sub = (a: Vec, b: Vec): Vec => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const scale = (k: number, a: Vec): Vec => [k * a[0], k * a[1], k * a[2]];
 const neg = (a: Vec): Vec => [-a[0], -a[1], -a[2]];
 const norm = (a: Vec) => Math.sqrt(dot(a, a));
@@ -208,11 +208,11 @@ export class Topology {
   }
 }
 
-function pt(p: OC): Vec {
+export function pt(p: OC): Vec {
   return [p.X(), p.Y(), p.Z()];
 }
 
-function vertices(oc: OC, shape: OC): Vec[] {
+export function vertices(oc: OC, shape: OC): Vec[] {
   const out: Vec[] = [];
   const exp = new oc.TopExp_Explorer(shape, oc.TopAbs_ShapeEnum.TopAbs_VERTEX);
   for (; exp.More(); exp.Next()) {
@@ -245,7 +245,7 @@ export function points(oc: OC, shape: OC, perEdge = 9): Vec[] {
   return out.length ? out : vertices(oc, shape);
 }
 
-function uvBounds(oc: OC, face: OC): [number, number, number, number] {
+export function uvBounds(oc: OC, face: OC): [number, number, number, number] {
   const b = oc.BRepTools.UVBounds(face);
   return [b.UMin, b.UMax, b.VMin, b.VMax];
 }
@@ -307,7 +307,7 @@ export function cylinder(topo: Topology, faceId: number, tapers = false): Cyl | 
   return { id: faceId, origin, axis, radius: geo.RefRadius() - slope * dot(origin, axis), bins, lo, hi, slope };
 }
 
-function sameLine(a: { axis: Vec; origin: Vec }, b: { axis: Vec; origin: Vec }): boolean {
+export function sameLine(a: { axis: Vec; origin: Vec }, b: { axis: Vec; origin: Vec }): boolean {
   if (Math.abs(dot(a.axis, b.axis)) < Math.cos(ANGLE_TOL)) return false;
   return norm(cross(sub(b.origin, a.origin), a.axis)) <= LINE_TOL;
 }

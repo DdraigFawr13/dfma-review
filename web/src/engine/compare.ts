@@ -13,32 +13,38 @@ import { SLICE } from "./slice.ts"; // the last slice merged; each slice raises 
 export { SLICE };
 
 /** Keys compared at this slice (S1: the part summary, the faces, the assumptions and the rule lists; S2: holes and
- *  the findings, rows and passed checks of the hole rules; S3: the machine plan and the cost drivers). */
+ *  the findings, rows and passed checks of the hole rules; S3: the machine plan and the cost drivers; S4: no new key,
+ *  but pockets, corners and their rules in the keys above, and part.not_analysed_faces on milled files). */
 export const PORTED_KEYS: Record<number, string[]> = {
   1: ["part", "faces", "assumptions", "rules_run", "checks_run"],
   2: ["features", "findings", "rows", "passed", "passed_rows"],
   3: ["machine", "stock", "setups", "operations", "tools", "tool_changes", "cost_drivers", "cost_total"],
+  4: [], // S4 adds kinds and rules to the keys above, and part.not_analysed_faces on milled files
 };
 /** Rules ported by slice, with their check names (rows.py CHECKS); rules_run and checks_run compare on these only. */
 export const PORTED_RULES: Record<number, Record<string, string>> = {
   1: {},
   2: { hole_depth: "Hole depth check", hole_size: "Hole size check", access: "Access check" },
   3: {},
+  4: { corner_radius: "Corner radius check", pocket_depth: "Pocket depth check", undercut: "Undercut check" },
 };
 /** Feature kinds ported by slice: a list key compares only its items on these kinds (port spec Parity). */
 export const PORTED_KINDS: Record<number, string[]> = {
   1: [],
   2: ["hole"],
   3: [],
+  4: ["pocket", "corner"],
 };
 /** The plan and cost keys (S3) compare only on files whose key has no feature of these kinds while they are not
  *  ported, and no finding from a rule not ported: the plan reads holes and pockets and the findings on them
  *  (plan.py), and every finding can feed a cost driver (drivers.toml). */
-const PLAN_KINDS = ["pocket", "corner"];
+const PLAN_KINDS = ["pocket", "corner"]; // both ported from S4, so this filters only at S3 and below
 /** Until S6 a turned file (its key ran turn_axis) compares the S1 keys only: holes on a turned part are split into
  *  holes and bores there (analyze.py split_bores), and the browser copy runs no hole rule on it yet. */
 const TURN_SLICE = 6;
-const SKIP_PART_FIELDS = ["not_analysed_faces"]; // leaves out pocket faces: S4
+/** part.not_analysed_faces leaves out pocket faces: compared from S4 on milled files, and on turned files from S6
+ *  (Python finds a turned part's pockets; the browser copy does not until S6). */
+const POCKET_FACES_SLICE = 4;
 
 export const MSG_FAILED = "The analysis failed on this file. Try again, or try another file.";
 
@@ -158,14 +164,15 @@ export function compare(result: Json, key: Json, slice: number = SLICE): Outcome
       same("cost_drivers", drivers(r, pr), drivers(k, pk), diffs);
     } else if (name === "faces") sameFaces(r.faces, k.faces, diffs);
     else if (name === "part") {
-      const strip = (p: Json) => Object.fromEntries(Object.entries(p as object).filter(([f]) => !SKIP_PART_FIELDS.includes(f)));
+      const skip = upTo < POCKET_FACES_SLICE ? ["not_analysed_faces"] : [];
+      const strip = (p: Json) => Object.fromEntries(Object.entries(p as object).filter(([f]) => !skip.includes(f)));
       same("part", strip(r.part), strip(k.part), diffs);
     } else if (name === "rules_run" || name === "checks_run") {
       const ran = (k.rules_run as string[]).filter((id) => id in rules);
       const want = name === "rules_run" ? ran : [...new Set(ran.map((id) => rules[id]))];
       same(name, r[name], want, diffs);
     } else if (name === "rows") {
-      // A row groups one rule's findings; a key row holding a finding not ported yet (access on a pocket, S4) can't
+      // A row groups one rule's findings; a key row holding a finding not ported yet (access on a pocket before S4) can't
       // be built by the browser engine, so that row is left out on both sides: on the browser's side, the row that
       // holds its ported findings.
       const mixed = (k.rows as Row[]).filter((row) => row.rule in rules && row.findings.some((id) => !pk.ids.has(id)));

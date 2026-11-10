@@ -227,6 +227,16 @@ Settled after the zero-decision re-check of S3 against merged S2 and Morgan's an
 - **Files beyond the list:** `tools.ts` (end mills), `api.ts` (`cost_partial`), `notrun.ts`, `findings.ts` and `style.css` (the setup card), `main.ts`, `steps.ts`.
 - **`.gitlab-ci.yml`:** the spec's job plus a 15-minute timeout and a J7 guard that fails if the work build says "Test copy"; its script ran here on Node 22, not on GitLab (J8 stays Morgan's).
 
+## Builder defaults (S4, 2026-11-10)
+
+Settled after the zero-decision re-check of S4 against merged S3 (a fresh reviewer: no gap for Morgan); none changes a goal (WS-02).
+
+- **Files:** `features/pockets.ts` holds `pockets`, `linkCorners`, `innerPoints`, `Rays`, `box` and every helper they call (S5 imports `Rays`, `innerPoints` and `box` from it; `_area` waits for S5); `holes.ts` exports `pt`, `vertices`, `uvBounds`, `sameLine` and `sub` for it. `Rays` loads at 1e-6 and casts over (1e-4, 1e9), as `_Rays`, apart from `Topology.lineHits`.
+- **Milling only:** the browser copy finds pockets on Milling only until S6 (a turned part's pockets feed its profile and off-axis checks there), as the holes in S2. `features` is holes, then pockets, then corners, each numbered and the corners linked, as `analyze.py`; walls follow in S5.
+- **Compare (S4):** `PORTED_KINDS[4]` is `pocket`, `corner`; `PORTED_RULES[4]` the three pocket rules; `PORTED_KEYS[4]` adds no key. `part.not_analysed_faces` compares on milled files from S4 and on turned files from S6 (Python leaves a turned part's pocket faces out too). The S2 "mixed rows" code stays for older slices; at S4 every `access` row is ported.
+- **Mesh and memory (build review):** `box()` reads the triangulation (`BRepBndLib.Add(..., true)`, as pythonocc's default), a second mesh dependency beside `innerPoints`; the full-set parity covers both. Temporaries in hot loops are deleted where the engine returns a copy; handles and references the engine owns (surfaces, axes, casts) are left as `holes.ts` leaves them, and the worker is new for each file. Not measured: J4 is dropped (D-059).
+- **Screens:** the pocket line goes (D-061 said "until pockets are ported"); no new wording. The cost total keeps " (partial)" until S5 (`thin_wall` feeds a driver). `test_browser_engine.py::test_pocket_rows` checks the pocket and corner rows word for word on five parts.
+
 ## Verification
 
 - Every push: `python scripts/check.py` until S8 (S1 adds the quick parity and the browser e2e run); from S8, `npm run check` at the root.

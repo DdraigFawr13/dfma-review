@@ -4,38 +4,24 @@
 # slice it needs. S7 empties it (the tests that fake the service's /api/analyze are rewritten or marked service-only
 # there); S8 deletes it.
 
-tests/e2e/test_audit_2026_11_09.py::test_f15_rows_announce_one_state_and_point_at_their_detail[chromium] # S4
-tests/e2e/test_audit_2026_11_09.py::test_f16_small_targets_are_44px_below_900px[chromium] # S4
-tests/e2e/test_audit_2026_11_09.py::test_f1_f12_no_internal_ids_and_american_spelling_on_screen_or_in_the_pdf[chromium] # S4
-tests/e2e/test_audit_2026_11_09.py::test_f21_fix_first_follows_the_cards_with_no_gap[chromium] # S4
-tests/e2e/test_audit_2026_11_09.py::test_f26_every_pin_carries_its_mark[chromium] # S4
-tests/e2e/test_audit_2026_11_09.py::test_f27_pins_clear_each_others_stems_and_issues_open_their_row[chromium] # S4
-tests/e2e/test_audit_2026_11_09.py::test_f29_f31_f32_machining_lines_at_200_percent_text[chromium] # S4
-tests/e2e/test_audit_2026_11_09.py::test_f2_f6_f7_f34_pdf_words_match_the_screen[chromium] # S4
-tests/e2e/test_audit_2026_11_09.py::test_f33_setup_chips_sit_above_the_model_below_900px[chromium] # S4
-tests/e2e/test_audit_2026_11_09.py::test_f34_advice_is_what_to_do_on_both_severities[chromium] # S4
-tests/e2e/test_audit_2026_11_09.py::test_f4_open_row_detail_fits_at_200_percent_text[chromium] # S4
-tests/e2e/test_audit_2026_11_09.py::test_f7_f8_f22_f23_report_and_cost_words[chromium] # S4
-tests/e2e/test_findings.py::test_finding_labels_never_cover_each_other[chromium] # S4
-tests/e2e/test_findings.py::test_pins_behind_the_part_are_hidden[chromium] # S4
-tests/e2e/test_findings.py::test_pins_sit_on_their_findings[chromium] # S4
-tests/e2e/test_findings.py::test_pocket_and_corner_switches[chromium] # S4
-tests/e2e/test_findings.py::test_sharp_corner_is_drawn_on_its_edge[chromium] # S4
-tests/e2e/test_passed_and_setups.py::test_setup_select_shows_why[chromium] # S4
-tests/e2e/test_pdf.py::test_export_pdf[chromium] # S4
-tests/e2e/test_plan_panel.py::test_plan_panel_two_sided_block[chromium] # S4
-tests/e2e/test_steps.py::test_cost_total[chromium] # S4
-tests/e2e/test_steps.py::test_feature_rows[chromium] # S4
-tests/e2e/test_steps.py::test_machining[chromium] # S4
-tests/e2e/test_steps.py::test_rows_in_view[chromium] # S4
 # The next three moved from S2 (2026-11-10): they pass the hole rows but assert the wall count ("1 hole and 4 walls
 # checked"); S2 checks the hole rows in test_browser_engine.py::test_hole_rows instead.
 tests/e2e/test_findings.py::test_checked_holes_exclude_holes_with_findings[chromium] # S5
 tests/e2e/test_findings.py::test_clean_part_shows_clean_verdict[chromium] # S5
 tests/e2e/test_findings.py::test_click_highlights_face[chromium] # S5
 
+# Moved from S4 (2026-11-10, S4 run): they pass the pockets and corners but need walls: "8 walls checked", a cost
+# total with no " (partial)" (thin_wall feeds a driver), and the Passed list, which on report_sample is its 9 walls
+# (the browser copy shows "Passed 0", so test_f16 and test_feature_rows find no passed row to open).
+tests/e2e/test_audit_2026_11_09.py::test_f16_small_targets_are_44px_below_900px[chromium] # S5
+tests/e2e/test_findings.py::test_pocket_and_corner_switches[chromium] # S5
+tests/e2e/test_pdf.py::test_export_pdf[chromium] # S5
+tests/e2e/test_steps.py::test_cost_total[chromium] # S5
+tests/e2e/test_steps.py::test_feature_rows[chromium] # S5
+
 # Moved from S4 (2026-11-10, S3 review): it asserts a thin wall's row under "Whole part" (thin_wall: S5).
 tests/e2e/test_steps.py::test_machining_whole_part_and_no_setup[chromium] # S5
+# Listed at S1 for walls (S5):
 tests/e2e/test_audit_2026_11_09.py::test_f14_passed_feature_states_its_measurement_once[chromium] # S5
 tests/e2e/test_audit_2026_11_09.py::test_f18_show_ok_sits_under_the_chips_below_900px[chromium] # S5
 tests/e2e/test_findings.py::test_wall_switch[chromium] # S5
