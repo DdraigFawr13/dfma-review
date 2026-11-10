@@ -1,6 +1,7 @@
 # From the AI-Master-Instructions template, adapted with the efficient-github-actions skill.
 # One Linux job runs scripts/check.py: the master drift check, service tests, web check and
-# build, then the browser tests. The conda environment and the npm cache are cached.
+# build, the browser tests, the parity run and the browser-engine tests (port S1). The conda environment, the npm
+# cache, the parity key and the big test plate are cached.
 name: CI
 
 on:
@@ -39,5 +40,15 @@ jobs:
         with:
           path: ~/.npm
           key: npm-${{ runner.os }}-${{ hashFiles('web/package-lock.json') }}
+      # Port S1: the Python key for the parity run (content-addressed, so any older cache helps) and J4's 49 MiB plate
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: tests/parity/.cache/by-hash
+          key: parity-key-${{ hashFiles('service/**', 'config/**', 'tests/parity/key.py', 'tests/parts/**') }}
+          restore-keys: parity-key-
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: tests/parts/.cache
+          key: big-plate-${{ hashFiles('tests/parts/make_parts.py') }}
       - run: python -m playwright install --with-deps chromium
       - run: python scripts/check.py

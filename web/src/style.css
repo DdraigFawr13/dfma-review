@@ -244,3 +244,11 @@ div.thread-row { text-align: left; }
   #page-features .showok { padding: 8px 12px; border-bottom: 1px solid var(--line); }
   .setupchips { position: static; order: -1; } /* above the model, not over it (audit F33) */
 }
+
+/* The browser copy (port spec "Not checked yet"; S1 mock-up, D-057) */
+.copytag { font-weight: 600; font-size: 0.875rem; border: 1px solid var(--ink); border-radius: var(--radius); padding: 2px var(--space-2); white-space: nowrap; }
+.notrun { margin: 0 0 var(--space-3); padding: var(--space-2) var(--space-3); background: var(--bg); border-left: 3px solid var(--muted); font-size: 0.875rem; color: var(--ink); }
+#page-features > .notrun, .cost > .notrun { margin: var(--space-3); }
+.card .notrun { margin: var(--space-1) 0 0; }
+.foot { display: flex; padding: 0 var(--space-4); border-top: 1px solid var(--line); background: var(--panel); }
+.foot a { display: inline-flex; align-items: center; min-height: 32px; color: var(--accent); font-size: 0.875rem; }

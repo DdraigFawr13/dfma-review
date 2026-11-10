@@ -93,6 +93,8 @@
         <section class="page" id="page-features" data-testid="page-features" aria-labelledby="findings-title" hidden>
           <h2 id="findings-title" tabindex="-1" class="sr-only">Features</h2>
           <!-- review-steps S2 (frames r3-features, r3-passed): chips, rows, then the .ipt groups (D-049) -->
+          <!-- the browser copy (port spec "Not checked yet", D-057): the checks it has not run -->
+          <p class="notrun" id="features-notrun" data-testid="features-notrun" hidden></p>
           <div class="chips" role="group" aria-label="Show" id="row-chips"></div>
           <div class="rows" id="rows"><p class="none pad">No findings yet. Choose a STEP file to start.</p></div>
           <div class="iptgroups" id="ipt-groups" data-testid="ipt-groups" hidden>
@@ -113,6 +115,7 @@
         </section>
         <section class="page plan" id="page-machining" data-testid="page-machining" aria-labelledby="plan-title" hidden>
           <h2 id="plan-title" tabindex="-1">Machining <span class="count" id="plan-count"></span></h2>
+          <p class="notrun" id="plan-notrun" data-testid="plan-notrun" hidden></p>
           <div data-testid="plan" id="plan-panel"><div id="plan"></div></div>
           <p class="none" id="plan-none" hidden>No machine plan for this part.</p>
         </section>
@@ -122,16 +125,17 @@
         </section>
         <section class="page report" id="page-report" data-testid="page-report" aria-labelledby="report-title" hidden>
           <h2 id="report-title" tabindex="-1">Report</h2>
+          <p class="notrun" id="report-notrun" data-testid="report-notrun" hidden></p>
           <div class="block"><span class="label">The PDF holds</span>
             <ul class="plain">
               <li>Page 1: the counts and the part summary</li>
-              <li>The machine plan, its tools and the cost drivers</li>
-              <li>With an .ipt: threads, Hole features, and fillets and chamfers</li>
-              <li>Then a page for each finding, with a picture of it on the model</li>
+              <li data-pdf="plan">The machine plan, its tools and the cost drivers</li>
+              <li data-pdf="ipt">With an .ipt: threads, Hole features, and fillets and chamfers</li>
+              <li data-pdf="findings">Then a page for each finding, with a picture of it on the model</li>
               <li>Last: the assumptions</li>
             </ul>
           </div>
-          <div class="block"><span class="label">Checks run</span><ul class="plain" id="report-rules" data-testid="report-rules"></ul></div>
+          <div class="block" id="report-checks"><span class="label">Checks run</span><ul class="plain" id="report-rules" data-testid="report-rules"></ul></div>
           <details class="assume" id="report-assumptions" data-testid="report-assumptions"><summary>Assumptions</summary><ul></ul></details>
           <button type="button" class="action big" id="report-export-pdf" data-testid="report-export-pdf">Export PDF</button>
         </section>

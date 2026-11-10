@@ -1,0 +1,2 @@
+# Port spec "Browser tests": e2e tests deselected in the browser-engine run until the slice that ports their
+# feature. One pytest node id per line, then " # S<n>". The list only shrinks; S7 empties it; S8 deletes it.

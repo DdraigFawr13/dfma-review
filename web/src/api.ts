@@ -123,6 +123,7 @@ export interface Analysis {
   tool_changes: number;
   cost_drivers: CostDriver[]; // S7: counts above 0, ranked by score
   cost_total: number | null; // review-steps S1: the sum of the scores to 0.1; null with no drivers
+  checks_not_run?: string[]; // the browser copy only (port spec Design): checks this copy has not ported yet
 }
 
 export interface CostDriver {
@@ -217,7 +218,18 @@ export class ApiError extends Error {
 
 const GENERIC = "The analysis failed. Try again, or try another file.";
 
+/** VITE_ENGINE=browser (the static site, port spec Design "web/src/api.ts"): the engine runs in a worker in this
+ *  page; nothing is sent anywhere. Otherwise the Python service at /api/analyze. */
 export async function analyze(file: File, ipt: File | null, process: Process, material: Material): Promise<Analysis> {
+  if (import.meta.env.VITE_ENGINE === "browser") {
+    const { analyzeInBrowser, EngineError } = await import("./engine-client");
+    try {
+      return await analyzeInBrowser(file, ipt, process, material);
+    } catch (e) {
+      if (e instanceof EngineError) throw new ApiError(e.message, e.retry);
+      throw new ApiError(GENERIC, true);
+    }
+  }
   const body = new FormData();
   body.append("file", file);
   if (ipt) body.append("ipt", ipt); // sent only when picked (I1)

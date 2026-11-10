@@ -3,6 +3,7 @@
 // finding highlighted; the assumptions come last. Built in the browser with jsPDF, so the file never leaves the computer (APP-01).
 
 // Imported up front, not on demand: the view-only demo page inlines one script and has no chunks to load (D-009).
+import { NOT_WORKED_OUT, noChecksRun, notCheckedLine, planNotWorkedOut } from "./notrun";
 import { jsPDF } from "jspdf";
 import type { Analysis, Finding } from "./api";
 import { axisText, blendCounts, blendFaces, blendKinds, blendTitle, holeCopies, holeCounts, holeFeatureSize, holeNamesSeen, holeFeatureTitle, checkedLine, driverLine, inMm, meta, notPlanned, planFoot, planWhy, setupHead, stockText, threadCallout, threadCounts, threadSize, toolName } from "./findings";
@@ -97,8 +98,12 @@ function summaryPage(p: Page, input: ReportInput): void {
   p.text("DFMA Review report", { size: 20, bold: true, gap: 4 });
   p.text(part.name, { size: 13, bold: true, gap: 2 });
   p.text(`${input.processLabel} · ${input.materialLabel} · ${input.date}`, { colour: [85, 101, 122], gap: 8 });
-  p.text(verdictText(result), { size: 13, bold: true, gap: 2 });
-  p.text(checkedLine(result), { colour: [85, 101, 122], gap: 4 });
+  const notChecked = notCheckedLine(result); // the browser copy (port spec "Not checked yet", D-057)
+  if (!noChecksRun(result)) {
+    p.text(verdictText(result), { size: 13, bold: true, gap: 2 });
+    p.text(checkedLine(result), { colour: [85, 101, 122], gap: notChecked ? 2 : 4 });
+  }
+  if (notChecked) p.text(notChecked, { bold: noChecksRun(result), gap: 4 });
   p.rule();
 
   p.heading("Part summary");
@@ -108,7 +113,9 @@ function summaryPage(p: Page, input: ReportInput): void {
   if (result.stock) p.text(`Stock: ${stockText(result.stock)}`);
 
   p.heading("Machine plan");
-  if (!result.machine) {
+  if (planNotWorkedOut(result)) {
+    p.text(NOT_WORKED_OUT);
+  } else if (!result.machine) {
     p.text("No machine could be chosen for this part, so nothing is planned.");
   } else {
     p.text(`Machine: ${result.machine}`, { bold: true });
@@ -138,7 +145,8 @@ function summaryPage(p: Page, input: ReportInput): void {
   }
 
   p.heading("Cost drivers");
-  if (!result.cost_drivers.length) p.text("None: one setup and no tools to load.");
+  if (planNotWorkedOut(result)) p.text(NOT_WORKED_OUT);
+  else if (!result.cost_drivers.length) p.text("None: one setup and no tools to load.");
   for (const d of result.cost_drivers) p.text(driverLine(d), { indent: 12, gap: 1 });
   if (result.cost_drivers.length) {
     const sources = [...new Set(result.cost_drivers.map((d) => d.weight_source))].join(", ");

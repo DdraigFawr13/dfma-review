@@ -1,7 +1,7 @@
 # GitLab Pages port: the whole app in the browser
 
 - **Status:** Approved 2026-11-10 (Morgan on [Port Spec Approval](https://claude.ai/artifact/AjZQkdVY7ATByDULSNBfmQ), collection `final`: "Approved, start building"; D-056)
-- **Planned in:** [Port Round 1](https://claude.ai/artifact/GsFh2jKiaVwTGoDRxyRE4z) (collection `round1`), [Port Review 1](https://claude.ai/artifact/LB487Hw6uY7NAmwZHLERKk) (Morgan, 2026-11-09: "Ok approved with your recommendations"). Trial: `spikes/ocjs/README.md`. **Decisions:** D-001, D-004, D-006, D-009, D-011, D-030, D-054, D-055, D-056.
+- **Planned in:** [Port Round 1](https://claude.ai/artifact/GsFh2jKiaVwTGoDRxyRE4z) (collection `round1`), [Port Review 1](https://claude.ai/artifact/LB487Hw6uY7NAmwZHLERKk) (Morgan, 2026-11-09: "Ok approved with your recommendations"). Trial: `spikes/ocjs/README.md`. **Decisions:** D-001, D-004, D-006, D-009, D-011, D-030, D-054, D-055, D-056, D-057. **S1 mock-up:** [approved 2026-11-10](https://claude.ai/artifact/EDnCkkdnccX7jjsjrP3ZJa) (D-057).
 - **Approving this spec** also accepts D-054 (the engine and the static site), which replaces D-004's stack and D-006's package gate for the app.
 
 ## Problem
@@ -191,6 +191,20 @@ Each slice ports its Python modules line for line, adds its keys to the parity c
 ### S8 Retire Python
 
 - **Files:** freeze `tests/parity/key/`; port `tests/e2e/` to `@playwright/test` in `web/e2e/` and each service test parity doesn't cover to vitest, the PR listing every test file and where it went; a root `package.json` whose `check` runs the web check, build, vitest, parity and e2e; delete `service/`, `environment.yml`, `tests/e2e/`, `tests/parity/key.py` and its cache; replace `scripts/make_demo.py` with a Node script that builds demos from `web/dist-pages`; `ci.yml` on Node only; README and AGENTS "Local checks". **Checks:** J9. **Waits on:** S7, and Morgan approving the S8 file list.
+
+## Builder defaults (S1, 2026-11-10)
+
+Settled at build after the zero-decision re-check; none changes a goal (WS-02). Where the spec's words and the approved mock-up or today's code differ, the mock-up (D-057) and "exactly as today" win.
+
+- **Builds:** `web/scripts/build-pages.mjs` sets `VITE_ENGINE`, `VITE_COPY` and `VITE_TEST`, then runs Vite (works on Windows): `build:pages [-- --mode work]`, `build:pages:test` (`--test`, into `dist-pages-test/`), `--demo` (into `dist-demo/`, for `make_demo.py --engine browser`). The browser copy's page changes (mark, privacy and status lines, hidden `#ipt-field`, Licenses footer) are made on the HTML by a Vite plugin, so the built `index.html` carries them and the service build is unchanged.
+- **Licenses:** the link and page say "Licenses" (American spelling, D-057); the file stays `licences.html`. The browser build fails when a package in its bundle is missing from the page (18 packages at S1, jsPDF's included), and the page ships the engine's license and exception texts. `licences.test.ts` also checks every `dependencies` entry.
+- **Key:** `key.py` also writes `<dir>/index-<set>.json` (path, process, key file), which `parity.test.ts` reads; a name listed twice in `expected.toml` takes its first entry's process; the hash cache sits in `tests/parity/.cache/by-hash/`. The quick set is 77 files: 44 parts and all 33 STEP files of the NIST zip (AP203 and AP242).
+- **Compare:** `rules_run` and `checks_run` are Python's filtered to the ported rules (`PORTED_RULES` in `compare.ts`); a mesh point must find an unused partner within 1.5e-5 mm on every coordinate (Python's and JavaScript's rounding differ at a tie, so a sorted pairing misaligned on 75 of 77 files). `compare.test.ts` plants 6 changes and checks each is caught. The last merged slice is `web/src/engine/slice.ts`.
+- **Not checked yet:** the lines key on `checks_not_run`, which only the browser engine returns; `checks_not_run` lists each check name once. Machining and Cost show "Not worked out yet in this copy." while `SLICE` < 3. The PDF prints the line in its summary in place of the verdict while no check has run, and the not-worked-out line under Machine plan and Cost drivers.
+- **Refusals (J5):** too large, then a compound file (an `.ipt`) in the STEP field (`MSG_IPT_NEEDS_STEP`, as `app.py`), then the engine; "try again" shows only for too long and failed, as today (the spec's "with Try again" for every message did not match today's page). An engine abort is `MSG_FAILED`.
+- **J3:** a tap on the Part tab (the one tab enabled during a first analysis) is timed in the page during the analysis.
+- **J4:** `make_parts.py --big-plate`: 112 x 112 holes of 3 mm on a 5 mm pitch, 49.94 MiB (12,544 holes); one non-parallel cut (a parallel cut ran out of memory here). `check.py` makes it once; CI caches it.
+- **Test hooks:** `window.__dfma.analysis()` returns the result on screen; the test build adds `wasm_bytes` and `worker` to it.
 
 ## Verification
 

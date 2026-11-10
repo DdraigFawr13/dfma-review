@@ -2,6 +2,7 @@
 // changes while a file is loaded. No submit button (spec S1, settled at build).
 // The review reads as five steps, one shown at a time, named in the address (review-steps spec J1, J2; D-042, D-045).
 
+import { NOT_WORKED_OUT, START_STATUS, noChecksRun, notCheckedLine, planNotWorkedOut } from "./notrun";
 import { analyze, ApiError, type Analysis, type Material, type Process } from "./api";
 import { blendKinds, renderBlends, renderHoleFeatures, renderPlan, renderThreads, setupHead, type Pick } from "./findings";
 import { formatSize } from "./format";
@@ -62,6 +63,7 @@ declare global {
       paintedFaces(): number[];
       opacities(): Record<number, number>;
       checkedFaces(kind?: CheckedKind): number[];
+      analysis(): Analysis | null;
       flagBoxes(): { id: string; x: number; y: number; w: number; h: number }[];
       flagState(): { id: string; shown: boolean; mergedInto: string }[];
       pinFootprints(): { id: string; x: number; y: number; w: number; h: number }[];
@@ -77,6 +79,7 @@ window.__dfma = {
   flagState: () => viewer.flagState(), // test hook: each pin shown, folded into another, or hidden
   pinFootprints: () => viewer.pinFootprints(), // test hook: each pin shown with its stem and dot (audit F27)
   checkedFaces: (kind?: CheckedKind) => viewer.checkedFaces(kind), // test hook: drawn in a kind's "checked" colour
+  analysis: () => shown, // test hook: the result on screen (port J4, J6b; the test build adds wasm_bytes and worker)
 };
 
 /** Faces of the features checked with no finding, by kind. Walls go first, so a face that is also
@@ -209,8 +212,15 @@ function showFindings(result: Analysis | null, message: string): void {
   const page = byId("page-features"), keepRows = page.scrollTop;
   shown = result;
   const selected = selId();
+  // The browser copy (D-057): the checks it has not run, over the rows; with none run, only that line
+  const notChecked = result ? notCheckedLine(result) : null;
+  byId("features-notrun").hidden = !notChecked;
+  byId("features-notrun").textContent = notChecked ?? "";
   if (!result) {
     rowsHost.replaceChildren(Object.assign(document.createElement("p"), { className: "none pad", textContent: message }));
+    byId("row-chips").replaceChildren();
+  } else if (noChecksRun(result)) {
+    rowsHost.replaceChildren();
     byId("row-chips").replaceChildren();
   } else {
     renderChips(byId("row-chips"), result, rowFilter, (f) => {
@@ -230,8 +240,11 @@ function showFindings(result: Analysis | null, message: string): void {
   const placed = result ? placeRows(result) : new Map();
   renderPlan(byId("plan"), byId("plan-count"), result, select, selected,
     (where) => (placed.get(where) ?? []).map((p: Placed) => placedLine(p, openPlaced)));
-  byId("plan-panel").hidden = !result?.machine;
-  byId("plan-none").hidden = !result || !!result.machine;
+  const later = !!result && planNotWorkedOut(result); // the browser copy until S3 (D-057)
+  byId("plan-notrun").hidden = !later;
+  byId("plan-notrun").textContent = later ? NOT_WORKED_OUT : "";
+  byId("plan-panel").hidden = later || !result?.machine;
+  byId("plan-none").hidden = later || !result || !!result.machine;
   if (result) renderSetupChips(byId("setup-chips"), result, result.setups.map((s, i) => setupHead(s, i).replace(", about the turning axis", "")),
     selected, (i) => select({ id: `setup:${i}`, faces: stillThere(result, `setup:${i}`)?.faces ?? [] }));
   // The .ipt groups at the foot of the Features step (D-049): one folding row each, its tally in the approved words
@@ -277,6 +290,16 @@ function showFindings(result: Analysis | null, message: string): void {
   renderOverview(byId("overview-cards"), byId("fix-first"), result, (s) => showStep(s));
   renderCost(byId("cost"), result);
   renderReport(byId("report-rules"), byId<HTMLDetailsElement>("report-assumptions"), result);
+  // The browser copy (D-057): the line under the heading; no empty "Checks run"; "The PDF holds" lists only what it has
+  const reportLine = notCheckedLine(result);
+  byId("report-notrun").hidden = !reportLine;
+  byId("report-notrun").textContent = reportLine ?? "";
+  byId("report-checks").hidden = noChecksRun(result);
+  for (const li of document.querySelectorAll<HTMLElement>("#page-report [data-pdf]")) {
+    const what = li.dataset.pdf;
+    li.hidden = (what === "plan" && planNotWorkedOut(result)) || (what === "findings" && noChecksRun(result))
+      || (what === "ipt" && result.checks_not_run !== undefined && result.checks_not_run.includes(".ipt check"));
+  }
 }
 
 // --- Steps (review-steps J2): the address names the step; Back and Forward walk them ---
@@ -309,7 +332,7 @@ function showStep(name: Step, focus = true): void {
   if (i > 0) back.textContent = `‹ ${STEP_NAMES[STEPS[i - 1]]}`;
   if (i < STEPS.length - 1) next.textContent = `${STEP_NAMES[STEPS[i + 1]]} ›`;
   // Show OK and the OK tints on Features only (J3); the setup chips on Machining only (J4)
-  byId("show-ok").hidden = !shown || name !== "features";
+  byId("show-ok").hidden = !shown || name !== "features" || noChecksRun(shown);
   viewer.setOkStep(!!shown && name === "features");
   byId("setup-chips").hidden = !shown || name !== "machining" || !shown.setups.length;
   if (focus) [...byId(`page-${name}`).querySelectorAll<HTMLElement>("h2")].find((h) => h.offsetParent !== null)?.focus();
@@ -435,7 +458,7 @@ byId("change-file").addEventListener("click", () => {
   fileInput.removeAttribute("aria-describedby");
   clearPart();
   viewerNote("The part shows here once it's read.");
-  status.textContent = "Choose a STEP file to start. Add its .ipt too, if you have one.";
+  status.textContent = START_STATUS;
   startForm.querySelector("h2")!.focus();
 });
 startForm.addEventListener("submit", (e) => e.preventDefault());

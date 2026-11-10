@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Licenses · DFMA Review</title>
+<!-- Port spec J6 (S1), mock-up approved (D-057). Versions and licenses as each package's package.json states them.
+     The build fails when a package it bundles is missing here (web/vite.config.ts, licensesListed). -->
+<style>
+@font-face { font-family: "IBM Plex Sans"; src: url("fonts/IBMPlexSans-latin-var.woff2") format("woff2"); font-weight: 100 700; }
+@font-face { font-family: "IBM Plex Mono"; src: url("fonts/IBMPlexMono-latin-500.woff2") format("woff2"); font-weight: 500; }
+:root { --bg: #eef2f6; --panel: #ffffff; --ink: #16263d; --muted: #55657a; --line: #c4cfdc; --accent: #1f5fa8;
+  --radius: 2px; --space-2: 8px; --space-3: 12px; --space-4: 16px; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1rem/1.5 "IBM Plex Sans", system-ui, sans-serif; }
+header { padding: var(--space-3) var(--space-4); background: var(--panel); border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+header h1 { margin: 0; font-size: 1rem; font-weight: 700; }
+header a { color: var(--accent); font-size: 0.875rem; display: inline-flex; align-items: center; min-height: 32px; }
+main { max-width: 760px; margin: var(--space-4) auto; padding: 0 var(--space-4); }
+h2 { font-size: 1.125rem; margin: var(--space-4) 0 var(--space-2); }
+p { margin: 0 0 var(--space-3); }
+.wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); }
+th, td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--line); vertical-align: top; font-size: 0.875rem; }
+th { color: var(--muted); font-weight: 600; }
+td.num { font-family: "IBM Plex Mono", ui-monospace, monospace; font-weight: 500; white-space: nowrap; }
+a { color: var(--accent); }
+.note { color: var(--muted); font-size: 0.875rem; }
+</style>
+</head>
+<body>
+<header><h1>DFMA Review · Licenses</h1><a href="./">Back to the review</a></header>
+<main>
+  <p>This page runs on the code below. Each part keeps its own license; the full texts ship with the page.</p>
+  <h2>Geometry engine</h2>
+  <div class="wrap"><table>
+    <tr><th>Part</th><th>Version</th><th>License</th><th>Source</th></tr>
+    <tr><td>OpenCascade Technology, built for the browser as <span class="num">@taucad/opencascade.js</span></td><td class="num">3.0.0-beta.3 (OCCT 8.0.0)</td>
+      <td>LGPL-2.1-only with the Open CASCADE exception 1.0 · <a href="licences/opencascade-LICENSE.txt">license</a> · <a href="licences/opencascade-OCCT-exception.txt">exception</a></td>
+      <td><a href="https://registry.npmjs.org/@taucad/opencascade.js/-/opencascade.js-3.0.0-beta.3.tgz">package as shipped</a> · <a href="https://github.com/taucad/opencascade.js">build recipe</a></td></tr>
+  </table></div>
+  <p class="note">The engine file ships unchanged. You may replace it with your own build of the same source.</p>
+  <h2>Other packages in the page</h2>
+  <div class="wrap"><table>
+    <tr><th>Package</th><th>Version</th><th>License</th></tr>
+      <tr><td class="num">@babel/runtime</td><td class="num">7.29.13</td><td>MIT</td></tr>
+      <tr><td class="num">canvg</td><td class="num">3.0.11</td><td>MIT</td></tr>
+      <tr><td class="num">core-js</td><td class="num">3.51.0</td><td>MIT</td></tr>
+      <tr><td class="num">dompurify</td><td class="num">3.4.17</td><td>MPL-2.0 OR Apache-2.0</td></tr>
+      <tr><td class="num">fast-png</td><td class="num">6.4.0</td><td>MIT</td></tr>
+      <tr><td class="num">fflate</td><td class="num">0.8.3</td><td>MIT</td></tr>
+      <tr><td class="num">html2canvas</td><td class="num">1.4.1</td><td>MIT</td></tr>
+      <tr><td class="num">iobuffer</td><td class="num">5.4.0</td><td>MIT</td></tr>
+      <tr><td class="num">jspdf</td><td class="num">4.2.1</td><td>MIT</td></tr>
+      <tr><td class="num">pako</td><td class="num">2.2.0</td><td>MIT AND Zlib</td></tr>
+      <tr><td class="num">performance-now</td><td class="num">2.1.0</td><td>MIT</td></tr>
+      <tr><td class="num">raf</td><td class="num">3.4.1</td><td>MIT</td></tr>
+      <tr><td class="num">rgbcolor</td><td class="num">1.0.1</td><td>MIT OR SEE LICENSE IN FEEL-FREE.md</td></tr>
+      <tr><td class="num">smol-toml</td><td class="num">1.9.1</td><td>BSD-3-Clause</td></tr>
+      <tr><td class="num">stackblur-canvas</td><td class="num">2.7.0</td><td>MIT</td></tr>
+      <tr><td class="num">svg-pathdata</td><td class="num">6.0.3</td><td>MIT</td></tr>
+      <tr><td class="num">three</td><td class="num">0.187.0</td><td>MIT</td></tr>
+  </table></div>
+  <h2>Fonts</h2>
+  <div class="wrap"><table>
+    <tr><th>Font</th><th>License</th></tr>
+    <tr><td>IBM Plex Sans, IBM Plex Mono</td><td>SIL Open Font License 1.1 · <a href="fonts/OFL.txt">full text</a></td></tr>
+  </table></div>
+</main>
+</body>
+</html>
