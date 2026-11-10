@@ -503,3 +503,15 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - **Plan first:** steps and slots change the plan and tools first. Their open sides join `open_dirs`, so a cutter can enter from the side, and a slot gets a roughing end mill under its width before the finish. Findings only for a slot deeper than 6× its width (Protolabs) and, later, for the special cutters (T-slot, dovetail).
   - **Order:** a labelled `steps_slots` test set, then NIST and EDMR runs, before the MFCAD++ score (LESSONS "recognition"). Planned and specced after the port (S8), unless Morgan moves it up.
 - **Why:** MFCAD++ has no open-pocket class: what the UMD labels "Opened Pocket" and CAD Exchanger calls an "Open pocket", MFCAD++ labels a step or a slot ([research](research/feature-recognition.html)). So, against Morgan's chosen gold standard, an open pocket is the same feature under another name, and a third kind would be a call MFCAD++ can never score. The rest are the research page's recommendations, which Morgan accepted.
+
+## D-069 Port S7 approved; merge when ready
+
+- **Status:** Accepted (2026-11-10). Morgan, in chat: "Ok I approve please merge when ready. No need to show me the demo".
+- **Decision:** mark PR #41 ready once the full-set parity is recorded, and merge it when CI passes (auto-merge where the repo allows). S8 (retire Python) starts in a new session, its file list approved by Morgan first. Morgan's UI list (HANDOFF Next 000a) waits for planning.
+- **Why:** Morgan approved the slice and delegated the merge; no demo review needed.
+
+## D-070 S7 merges without the full-set parity; long runs show progress
+
+- **Status:** Accepted (2026-11-10). Morgan, in chat: "Skip the rule. End the testing and analyze the results so far. Also when doing runs like this I want to make sure to receive at least some indication of progress so we know it is not hung up. Merge when ready to do so".
+- **Decision:** S7's full-set parity was stopped after 64 min of CPU with no result (it printed only at the end). PR #41 merges on the quick parity (122 of 122) and green CI; the spec's "full set before ready" rule is waived for S7 only. From now on the parity run prints one line per file (`parity <set> [n/N] <status> <s> (total <s>): <file>`), and a long run is watched on those lines.
+- **Why:** Morgan's call; S7's new code runs only with an `.ipt`, and the full set's extra files have none.

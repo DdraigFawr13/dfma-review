@@ -35,3 +35,11 @@ def show_finding(page: Page, result: dict, fid: str) -> None:
     for _ in range(row["findings"].index(fid)):
         page.get_by_test_id("row-next").click()
     expect(page.get_by_test_id("row-detail")).to_contain_text(f"{fid} · ")
+
+
+def reanalysis(page: Page, timeout: int = 30_000):
+    """Wait for the analysis an action starts: the service's /api/analyze response, or, in the browser copy (served on
+    the browser run's port, conftest.py BROWSER_PORT), the new worker it makes for each analysis (port spec "Worker")."""
+    if ":8766" in page.url:
+        return page.expect_event("worker", timeout=timeout)
+    return page.expect_response(lambda r: r.url.endswith("/api/analyze"), timeout=timeout)

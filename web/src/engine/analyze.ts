@@ -2,7 +2,8 @@
 // `checks_not_run` names, in check-name wording, every rule not ported yet. S1 ported the read, the face kinds, the
 // frame, the mesh, the part summary and the assumptions; S2 the holes and the hole rules; S3 the mill plan and the cost
 // drivers; S4 the pockets, corners and undercuts; S5 the walls and thin_wall; S6 the turning axis, bores, grooves, the
-// turned profile, the turn rules and the lathe plan (turning.ts), and looks_turned on Milling. The .ipt checks: S7.
+// turned profile, the turn rules and the lathe plan (turning.ts), and looks_turned on Milling; S7 the .ipt: its reading
+// (inventor/), the pair checks, the thread, Hole feature and blend mapping and the three .ipt rules.
 import type { Analysis, Material, Process } from "../api";
 import { extentsMm, faceInfo, partFrame, turningAxis, type Vec } from "./frame";
 import { meshFaces } from "./mesh";
@@ -20,11 +21,22 @@ import { RULES } from "./rules/index";
 import type { Feature, PartSummary } from "./rules/types";
 import { ASSUMPTIONS, MATERIALS, MSG_NO_UNIT, MSG_OPEN_SHELL, PROCESSES, thresholds, TURN_ASSUMPTIONS } from "./settings";
 import { mmToIn, round } from "./units";
+import type { IptRead } from "./inventor/part";
+import { checkPair, checkPartType, inventorBlock, pairReason } from "./inventor/pair";
+import { mapThreads, type StepHole, type Transform } from "./inventor/threads";
+import { mapHoles } from "./inventor/holes";
+import { mapBlends } from "./inventor/blends";
+import { IPT_ASSUMPTION } from "./settings";
 
 export type BrowserAnalysis = Analysis & { checks_not_run: string[]; cost_partial: boolean };
 
 const IN_FILE = "/in.step";
 const TURN_NEEDS_AXIS = ["turn_slender", "turn_offaxis", "bore_depth"];
+const NEEDS_IPT = ["thread_mismatch", "hole_mismatch", "blend_mismatch"]; // runs only when an .ipt was read
+
+/** The test harness's options (tests/inventor/nist_pair.py: a NIST pair lined up by `register`, no pair check); the
+ *  app never passes them. */
+export interface Harness { transform?: Transform; check?: boolean }
 
 /** A rule config/drivers.toml maps to a driver is not ported yet for this process: the cost total is partial (D-061). */
 export function costPartial(process: Process): boolean {
@@ -37,14 +49,22 @@ export function checksNotRun(process: Process): string[] {
   return [...new Set(RULES.filter((r) => !r.ported.includes(process) && r.PROCESSES.includes(process)).map((r) => checkName(r.ID)))];
 }
 
+/** `ipt` is the .ipt read beforehand (inventor/part.ts readIpt, which is asynchronous) and its file name. */
 export function analyze(oc: OC, step: Uint8Array, name: string, process: Process, material: Material,
-  _ipt?: { bytes: Uint8Array; name: string }): BrowserAnalysis {
-  // _ipt: accepted and ignored until S7 (the .ipt field is hidden in the browser copy, D-057).
+  ipt?: { read: IptRead; name: string }, harness: Harness = {}): BrowserAnalysis {
   if (!(PROCESSES as readonly string[]).includes(process)) throw new Error(`unknown process ${process}`);
   if (!(MATERIALS as readonly string[]).includes(material)) throw new Error(`unknown material ${material}`);
   oc.FS.writeFile(IN_FILE, step);
   try {
     const part = readStep(oc, IN_FILE);
+    let inventor: ReturnType<typeof inventorBlock> & Record<string, unknown> | null = null;
+    const iptPart = ipt?.read.part;
+    if (ipt !== undefined) { // the .ipt beside its STEP; checks before any analysis (spec I1 Builder defaults)
+      if (ipt.read.error) throw ipt.read.error;
+      checkPartType(iptPart!, part);
+      const checks = harness.check === false ? pairReason(oc, iptPart!, part)[1] : checkPair(oc, iptPart!, part);
+      inventor = inventorBlock(iptPart!, ipt.name, checks);
+    }
     const infos = part.faces.map((f, i) => faceInfo(oc, i, f));
     const meshes = meshFaces(oc, part.solid, part.faces);
     const vertices: Vec[] = [];
@@ -79,12 +99,25 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
       }
       turnFeatures = [...bores, ...grooveList, profile] as unknown as Feature[];
     }
+    if (inventor !== null) { // threads onto the final holes and bores, before the rules; then Hole features, blends
+      const stepHoles = [...holeList, ...(turnFeatures ?? []).filter((f) => f.kind === "bore")] as unknown as StepHole[];
+      inventor.threads = mapThreads(topo, iptPart!.threads, stepHoles, harness.transform);
+      inventor.hole_features = mapHoles(topo, iptPart!.hole_features, stepHoles, harness.transform);
+      inventor.hole_names_seen = iptPart!.hole_names_seen; // "<n> Hole features in the browser, <m> read"
+      inventor.blends = mapBlends(topo, iptPart!.blends, harness.transform);
+    }
     const features = [...holeList, ...(turnFeatures ?? []), ...pocketList, ...cornerList, ...number(wallList, "wall")] as unknown as Feature[];
     const pocketFaces = new Set(pocketList.flatMap((f) => f.faces));
     const summary: PartSummary = { units_in_file: part.unitsInFile, frame, turn, face_count: part.faces.length };
+    if (inventor !== null) {
+      summary.inventor_threads = inventor.threads as PartSummary["inventor_threads"];
+      summary.inventor_holes = inventor.hole_features as PartSummary["inventor_holes"];
+      summary.inventor_blends = inventor.blends as PartSummary["inventor_blends"];
+    }
     const limits = thresholds(material);
     const rules = RULES.filter((r) => r.module && r.ported.includes(process) && r.PROCESSES.includes(process)
-      && !(TURN_NEEDS_AXIS.includes(r.ID) && turnFeatures === null)); // no axis: only the shared rules
+      && !(TURN_NEEDS_AXIS.includes(r.ID) && turnFeatures === null) // no axis: only the shared rules
+      && !(NEEDS_IPT.includes(r.ID) && inventor === null));
     const raw = rules.flatMap((r) => r.module!.check(features, summary, limits));
     const findings = raw.map((f, n) => ({ id: `F${n + 1}`, ...f, check: checkName(f.rule), limit_text: limitText(f.threshold_source) }));
     const passed = rules.flatMap((r) => (r.module!.passes ? r.module!.passes(features, summary, limits) : []))
@@ -100,7 +133,8 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
     const assumptions = [...ASSUMPTIONS, ...(process === "turn" ? TURN_ASSUMPTIONS : [])];
     if (part.freeEdges) assumptions.push(MSG_OPEN_SHELL.replace("{n}", String(part.freeEdges)));
     if (part.unitsInFile === "none") assumptions.push(MSG_NO_UNIT);
-    return {
+    if (inventor !== null) assumptions.push(IPT_ASSUMPTION);
+    const result: BrowserAnalysis = {
       part: {
         name,
         units_in_file: part.unitsInFile,
@@ -137,6 +171,8 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
       checks_not_run: checksNotRun(process),
       cost_partial: costPartial(process),
     };
+    if (inventor !== null) (result as unknown as Record<string, unknown>).inventor = inventor;
+    return result;
   } finally {
     oc.FS.unlink(IN_FILE);
   }

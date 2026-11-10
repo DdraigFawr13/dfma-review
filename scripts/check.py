@@ -159,6 +159,7 @@ def main() -> int:
     }
     timed = [
         ("timed service tests", [*pytest, "tests/service", "-m", "timed"]),
+        ("timed e2e tests", [*pytest, "-m", "e2e and timed"]),  # S7: the .ipt PDF tests wait 30 s for their download
         ("timed browser e2e tests", [*pytest, "-m", "e2e and not per_slice and timed", "--engine", "browser"]),
     ]
 

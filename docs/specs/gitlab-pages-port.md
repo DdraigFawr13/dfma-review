@@ -258,10 +258,22 @@ Settled at build against merged S5; none changes a goal (WS-02).
 - **Review:** a fresh reviewer found 0 high and 4 low. Fixed: `roundOf` reads `Cylinder()` once, and the turned part's notice test asserts "No machine plan". Kept: the engine's axis handles and the shared `Topology` stay undeleted, as in every slice since S4 (the worker is new for each file); `${COAX_DEG}` prints "0.5", as Python does.
 - **Tests:** the eight `# S6` lines of `browser_pending.txt` pass and are removed. `test_not_checked_notice` now expects a turned part's checks, chips and plan (only the `.ipt` checks named).
 
+## Builder defaults (S7, 2026-11-10)
+
+Settled after the zero-decision re-check of S7 against merged S6; none changes a goal (WS-02).
+
+- **Reading first:** the browser inflates asynchronously, so `inventor/part.ts` `readIpt(bytes)` opens the file with `cfb`, inflates every `RSeStorage/B` stream and reads the part before `analyze()`; a refusal is kept as a value and `analyze()` raises it after the STEP's own refusals, in Python's order. `analyze()` takes `ipt?: {read, name}` (the worker and the Node parity call `readIpt` first) and the test harness's `{transform, check}` (never the app path).
+- **Inflate:** `DecompressionStream("deflate")` refuses bytes after the end of a zlib stream, and Chromium then drops the last output; Python's zlib ignores them. On that refusal the end is found by halving (a prefix that ends cleanly is the whole stream); any other failure is a stream with no model, as `zlib.error`. A stream cut short (Python keeps the part it inflated) is read as no model: no sample.
+- **Python's arithmetic:** stream names in olefile's order (sorted by path parts); olefile 0.47's property parser as it is (VT_CLSID for property 31; VT_LPWSTR read from 4 bytes on, cut at the first NUL); `sum()` of floats compensated (`units.pySum`, Python 3.12), dot products included; `c // tol` as CPython's float floor division. Measured: all 16 NIST `.ipt` files read to the same part as Python (threads, Hole features, names, blends, corners).
+- **Parity (quick and full sets):** each of the 16 NIST `.ipt` files beside its NIST AP242 STEP (2021: `nist_<ctc|ftc>_NN`; 2024: `nist_stc_NN`; FTC 08 takes `e2`), twice: through the app (all refused: 13 by face count, 3 as sheet metal) and lined up by `tests/inventor/nist_pair.py` with no pair check (13 analysed; the 3 sheet-metal parts are still refused, as the type check runs first), the key carrying the harness's transform (`__harness`) so the port needs no `register`. Plus 13 hostile files written by `key.py` into `tests/parity/.cache/hostile/`: the three broken models and a text file beside `box_through_hole.step` (the messages), the bad hole and blend tags and the two cycling rings on CTC 04 (lined up), and one planted fillet 2% larger on CTC 04, because no NIST fillet disagrees (`blend_mismatch`). From S7 every key compares on every file, finding ids as they are; `checks_not_run`, `cost_partial` and `__harness` are left out.
+- **Browser tests:** `browser_pending.txt` is empty. A test that fakes `/api/analyze` with `page.route` runs on the browser copy: in the browser run `conftest.py` sets a flag the test build reads (`web/src/api.ts`), so the page sends that request instead of running the engine. `test_upload_pair.py::test_nist_pair_refused` runs a NIST pair through the real worker.
+- **Screens:** the `.ipt` field and the service copy's status line ("… Add its .ipt too, if you have one.") are back; no Not-checked-yet line shows (every check runs). The privacy line stays "Your file stays on this computer. Nothing is uploaded." (D-057's wording), with two files too.
+- **Licenses:** `cfb` 1.2.2 and the two packages it bundles, `adler-32` 1.3.1 and `crc-32` 1.2.2 (all Apache-2.0), each with its licence text in `public/licences/`.
+
 ## Verification
 
 - Every push: `python scripts/check.py` until S8 (S1 adds the quick parity and the browser e2e run); from S8, `npm run check` at the root.
-- Before a slice's PR is marked ready: `npm --prefix web run parity:full`, its summary line in the PR. J4 is not run (D-059).
+- Before a slice's PR is marked ready: `npm --prefix web run parity:full`, its summary line in the PR. J4 is not run (D-059). S7 was merged without it (D-070: stopped after 64 min with no result); from S7 the run prints one line per file.
 - End to end: the GitHub Pages link on Morgan's PC (D-009 status page per slice); the work URL from S3 on, by Morgan.
 
 ## Open questions

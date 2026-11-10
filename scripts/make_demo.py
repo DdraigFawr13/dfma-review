@@ -3,7 +3,7 @@
     python scripts/make_demo.py <out.html>        (inside the dfma environment, after `npm --prefix web run build`)
     python scripts/make_demo.py --engine browser <out.html>
         (the GitLab Pages port, D-056: the browser copy's page, `node web/scripts/build-pages.mjs --demo`, answered
-        from the browser engine's own results, `npm --prefix web run demo-results`; no .ipt pairs until S7)
+        from the browser engine's own results, `npm --prefix web run demo-results`; from S7 the .ipt pairs too)
 
 The page is the production build (web/dist) with its CSS, JS and fonts inlined. A row of part buttons stands in
 for the file picker (Morgan uses a phone, D-009), and `fetch("/api/analyze")` is answered from results the real
@@ -70,27 +70,41 @@ LINED_UP = " (lined up)"
 NOTE_SERVICE = "<b>View-only demo</b> of the real app, with these test parts analyzed in advance. Tap a part (a turning part opens on Turning): it opens on its overview; walk the five steps with the tabs, the card headings, Next and Back, or the phone's Back. Process and material sit under the file name and work as in the app. Your files can't be uploaded here; the first two I1 pairs show the app's refusals; the two marked \"lined up\" were lined up by the test harness so their threads show (the app itself refuses them); a matching pair needs your own files in the app. Export PDF builds the file only in the app on a computer: this viewer blocks downloads, so here it saves nothing (the S7 mock-up shows the PDF pages)."
 NOTE_BROWSER = ("<b>View-only demo</b> of the test copy that runs in the browser, with these test parts analyzed in advance by "
                 "its own engine. Tap a part (a turning part opens on Turning): it opens on its overview; walk the five "
-                "steps with the tabs, Next and Back. It runs every check but the .ipt checks (those come in S7): the hole, "
-                "pocket and wall checks and the process check on milled parts, the turning checks on turned parts, and "
-                "works out the machine plan and cost drivers for both; each step names what "
-                "is not done yet. Your files can't be uploaded here. Export PDF saves nothing in this viewer, "
-                "which blocks downloads; it works in the app.")
+                "steps with the tabs, Next and Back. From S7 it runs every check, the .ipt checks too: the first two "
+                ".ipt pairs show its refusals; the two marked \"lined up\" were lined up by the test harness so their "
+                "threads, Hole features and fillets show (the copy itself refuses them). Your files can't be uploaded "
+                "here. Export PDF saves nothing in this viewer, which blocks downloads; it works in the app.")
 
 
 def browser_results() -> dict:
-    """Every DEMO part, process and material through the browser engine in Node (npm run demo-results)."""
+    """Every DEMO part and .ipt pair, process and material through the browser engine in Node (npm run
+    demo-results); a lined-up pair takes the harness's transform (nist_pair.transform), as the parity run does."""
     import os
     import subprocess
     import tempfile
+
+    from nist_pair import transform
+    every = [(p, m) for p in settings.PROCESSES for m in settings.MATERIALS]
     jobs = [{"path": path.relative_to(ROOT).as_posix(), "process": process, "material": material}
-            for path, *_ in DEMO for process in settings.PROCESSES for material in settings.MATERIALS]
+            for path, *_ in DEMO for process, material in every]
+    for stem, ipt, _ in PAIRS:
+        step = next(p for p in ap242_files() if p.name.startswith(stem))
+        jobs += [{"path": step.relative_to(ROOT).as_posix(), "ipt": (INV / ipt).relative_to(ROOT).as_posix(),
+                  "process": process, "material": material} for process, material in every]
+    for name, ipt, _ in HARNESS:
+        step = next(p for p in ap242_files() if p.name == name)
+        rows, shift = transform(str(step), str(INV / ipt))
+        jobs += [{"path": step.relative_to(ROOT).as_posix(), "ipt": (INV / ipt).relative_to(ROOT).as_posix(),
+                  "shown": step.stem + LINED_UP + step.suffix, "transform": [[list(r) for r in rows], list(shift)],
+                  "process": process, "material": material} for process, material in every]
     with tempfile.TemporaryDirectory() as tmp:
         src, dst = Path(tmp) / "in.json", Path(tmp) / "out.json"
         src.write_text(json.dumps(jobs), encoding="utf-8")
         npm = "npm.cmd" if sys.platform == "win32" else "npm"
         subprocess.run([npm, "--prefix", "web", "run", "demo-results"], cwd=ROOT, check=True,
                        env={**os.environ, "DEMO_IN": str(src), "DEMO_OUT": str(dst)})
-        return json.loads(dst.read_text(encoding="utf-8"))
+        out = json.loads(dst.read_text(encoding="utf-8"))
+        return {k: ({"__status": 422, **v} if "error" in v else v) for k, v in out.items()}  # a refusal, as the app's 422
 
 
 def main() -> int:
@@ -107,9 +121,11 @@ def main() -> int:
             for material in settings.MATERIALS:
                 results[f"{path.name}|{process}|{material}"] = analyze(path, path.name, process, material)
     pairs = []
-    for stem, ipt, what in ([] if browser else PAIRS):
+    for stem, ipt, what in PAIRS:
         step = next(p for p in ap242_files() if p.name.startswith(stem))
         pairs.append([step.name, ipt, what])
+        if browser:
+            continue  # the browser engine's results are in already
         for process in settings.PROCESSES:
             for material in settings.MATERIALS:
                 try:
@@ -117,10 +133,12 @@ def main() -> int:
                 except ReadError as e:
                     hit = {"__status": 422, "error": str(e)}
                 results[f"{step.name}+{ipt}|{process}|{material}"] = hit
-    for name, ipt, what in ([] if browser else HARNESS):
+    for name, ipt, what in HARNESS:
         step = next(p for p in ap242_files() if p.name == name)
         shown = step.stem + LINED_UP + step.suffix
         pairs.append([shown, ipt, f"{what}. {DEMO_LABEL}"])
+        if browser:
+            continue
         for process in settings.PROCESSES:
             for material in settings.MATERIALS:
                 results[f"{shown}+{ipt}|{process}|{material}"] = analyze_registered(step, INV / ipt, process, material)

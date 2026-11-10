@@ -27,7 +27,7 @@ export interface Cyl {
   slope: number; // a tapered hole's cone: radius change per mm along the axis; radius is then at height 0
 }
 
-const radiusAt = (c: Cyl, t: number) => c.radius + c.slope * t;
+export const radiusAt = (c: Cyl, t: number) => c.radius + c.slope * t;
 
 export interface Segment {
   faces: number[]; // cylinder faces

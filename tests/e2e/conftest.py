@@ -113,6 +113,27 @@ def _static_server():
         proc.wait(timeout=10)
 
 
+@pytest.fixture(autouse=True)
+def _faked_service_in_browser(request, engine):
+    """Port S7: a test that fakes the service's /api/analyze with page.route checks the browser copy's page on the same
+    answers. In the browser run, routing /api/analyze sets the test build's flag (web/src/api.ts), so the page sends
+    that request instead of running the engine; every other test runs the engine."""
+    if engine != "browser" or "page" not in request.fixturenames:
+        yield
+        return
+    page = request.getfixturevalue("page")
+    route = page.route
+
+    def faking_route(url, handler, *args, **kwargs):
+        if "api/analyze" in str(url):
+            page.add_init_script("window.__dfmaFakeService = true")
+            page.evaluate("window.__dfmaFakeService = true")  # a page already open
+        return route(url, handler, *args, **kwargs)
+
+    page.route = faking_route
+    yield
+
+
 @pytest.fixture(scope="session")
 def base_url(app_server):
     return app_server

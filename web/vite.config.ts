@@ -11,8 +11,8 @@ const ENGINE = process.env.VITE_ENGINE ?? "service";
 const COPY = process.env.VITE_COPY ?? "test";
 const TEST = process.env.VITE_TEST === "1";
 
-/** The browser copy's page (S1 mock-up, D-057): the copy mark, its privacy line and status line, no .ipt field
- *  until S7, and the Licenses link. Done on the HTML so the built index.html carries them (J7). */
+/** The browser copy's page (S1 mock-up, D-057): the copy mark, its privacy line and the Licenses link (the .ipt
+ *  field and the status line hidden until S7 are back as in the service copy). Done on the HTML so the built index.html carries them (J7). */
 function browserPage(): Plugin {
   return {
     name: "dfma-browser-page",
@@ -24,8 +24,6 @@ function browserPage(): Plugin {
       if (COPY === "test") swap("<h1>DFMA Review</h1>", '<h1>DFMA Review</h1>\n      <span class="copytag" data-testid="copy-tag">Test copy</span>');
       swap("Your files are analyzed on this computer and deleted straight after. Nothing is kept.",
         "Your file stays on this computer. Nothing is uploaded.");
-      swap("Choose a STEP file to start. Add its .ipt too, if you have one.", "Choose a STEP file to start.");
-      swap('<div class="field" id="ipt-field">', '<div class="field" id="ipt-field" hidden>');
       swap("</main>", '</main>\n    <footer class="foot"><a href="licences.html" data-testid="licenses-link">Licenses</a></footer>');
       return html;
     },
