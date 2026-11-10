@@ -20,3 +20,8 @@ test("the config loaders read config/*.toml", () => {
   expect(Object.keys(settings.toolsConfig()).length).toBeGreaterThan(0);
   expect(Object.keys(settings.driversConfig()).length).toBeGreaterThan(0);
 });
+
+test("the parity compare's MSG_FAILED is settings' (compare.ts keeps its own copy to stay import-free)", async () => {
+  const { MSG_FAILED } = await import("./compare");
+  expect(MSG_FAILED).toBe(settings.MSG_FAILED);
+});

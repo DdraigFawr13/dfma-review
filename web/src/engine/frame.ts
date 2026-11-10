@@ -57,7 +57,8 @@ export function faceInfo(oc: OC, faceId: number, face: unknown): FaceInfo {
 
 export function largest(candidates: FaceInfo[]): FaceInfo | null {
   if (!candidates.length) return null;
-  const top = Math.max(...candidates.map((f) => f.area));
+  let top = -Infinity;
+  for (const f of candidates) if (f.area > top) top = f.area; // a loop: a spread fails past ~120k faces
   return candidates.filter((f) => f.area >= top * (1 - AREA_TIE)).reduce((a, b) => (b.id < a.id ? b : a));
 }
 

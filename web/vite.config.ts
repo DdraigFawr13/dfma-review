@@ -64,7 +64,7 @@ export default defineConfig(ENGINE === "demo"
       base: "./",
       plugins: [browserPage(), licensesListed()],
       build: { outDir: process.env.DFMA_OUT_DIR ?? (TEST ? "dist-pages-test" : "dist-pages"), emptyOutDir: true, chunkSizeWarningLimit: 5000 },
-      worker: { format: "es" },
+      worker: { format: "es", plugins: () => [licensesListed()] }, // the worker is its own bundle: check it too
       server: { fs: { allow: [".."] } }, // config/*.toml is read with ?raw from outside web/
     }
   : {

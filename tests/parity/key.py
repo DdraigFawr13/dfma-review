@@ -90,18 +90,23 @@ def child(path: str, process: str) -> None:
 
 
 def run_one(path: Path, process: str, out: Path, digest: str) -> None:
+    """Write the key for one file. A response or refusal is cached by its hash; a crash is never cached, so a crash
+    caused by this machine (a kill, a timeout under load) is tried again on the next run."""
     cached = CACHE / "by-hash" / (digest + ".json")
-    if not cached.exists():
+    if cached.exists():
+        body = cached.read_text(encoding="utf-8")
+    else:
         try:
             done = subprocess.run([sys.executable, __file__, "--child", str(path), process], cwd=ROOT,
                                   capture_output=True, text=True, timeout=CHILD_TIMEOUT_S)
             line = next((ln for ln in done.stdout.splitlines() if ln.startswith(MARK)), None)
             body = line[len(MARK):] if line else json.dumps({"crash": done.returncode})
         except subprocess.TimeoutExpired:
-            body = json.dumps({"crash": "timeout"})
-        cached.parent.mkdir(parents=True, exist_ok=True)
-        cached.write_text(body, encoding="utf-8")
-    (out / key_name(path)).write_text(cached.read_text(encoding="utf-8"), encoding="utf-8")
+            body = json.dumps({"crash": -9})  # killed at CHILD_TIMEOUT_S, as SIGKILL reports it
+        if not body.startswith('{"crash"'):
+            cached.parent.mkdir(parents=True, exist_ok=True)
+            cached.write_text(body, encoding="utf-8")
+    (out / key_name(path)).write_text(body, encoding="utf-8")
 
 
 def write_set(name: str, out: Path) -> int:

@@ -20,13 +20,19 @@ export function unitName(fileLengthUnit: string): Unit {
   return "other";
 }
 
-/** Python's round(x, n) for the values the engine rounds: round half to even on the decimal string. */
+/** Python's round(x, n): the decimal nearest the float's exact binary value, an exact tie to the even digit.
+ *  toFixed(n) is correctly rounded except at an exact tie, where it rounds up; the exact expansion (toFixed with
+ *  enough digits ends the binary fraction) shows the tie. */
 export function round(x: number, places: number): number {
-  const scaled = x * 10 ** places;
-  const floor = Math.floor(scaled);
-  const diff = scaled - floor;
-  let r: number;
-  if (Math.abs(diff - 0.5) < 1e-9 * Math.max(1, Math.abs(scaled))) r = floor % 2 === 0 ? floor : floor + 1;
-  else r = Math.round(scaled);
-  return r / 10 ** places + 0; // + 0 turns -0 into 0, as Python prints it
+  if (!Number.isFinite(x)) return x;
+  const exact = Math.abs(x).toFixed(Math.min(100, places + 60));
+  const tail = exact.slice(exact.indexOf(".") + 1 + places);
+  let r = Number(x.toFixed(places));
+  if (/^50*$/.test(tail)) {
+    const step = 10 ** -places;
+    const down = Number((Math.sign(x) * (Math.abs(x) - step / 2)).toFixed(places)); // the neighbour towards zero
+    const digit = (v: number) => Math.round(Math.abs(v) * 10 ** places) % 2;
+    if (digit(r) === 1) r = down; // an exact tie: keep the even one
+  }
+  return r + 0; // + 0 turns -0 into 0, as Python prints it
 }

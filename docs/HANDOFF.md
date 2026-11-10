@@ -29,7 +29,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-00. Now: port S1 build on branch `port-s1-site-viewer` (mock-up approved; D-057: merge when satisfied). Built, uncommitted, checks passing so far: engine core, `key.py` (quick parity 77/77 the same), worker, D-057 screens, Licenses page, `pages.yml`, CI caches, big plate (49.94 MiB), demo from the browser engine (`make_demo.py --engine browser`), spike removed, spec "Builder defaults (S1)". Running: the first browser e2e run (writes `tests/e2e/browser_pending.txt`) and a fresh reviewer on frozen commit db1e80d. Then: J4 run, full-set parity, `check.py`, commit, push, status page, PR ready, merge.
+00. Now: port S1 (PR #34, draft; D-057). Stopped for Morgan's call on 2 browser tests: J3 heartbeat gap 782 ms (limit 200; taps 121.8 ms); J4 `big_plate.step` (49.94 MiB, 12,550 faces) never showed in 15 min; Python's reader alone took 925.6 s; Node run killed for memory. Uncommitted: review fixes and `browser_pending.txt`. No push until Morgan decides.
 0. Now: plainer sentences for the rule cases that still read as titles, each shown to Morgan first (D-045). Follow-up from the audit fixes: Hole feature rows still carry aria-pressed and aria-expanded (F15's pattern, out of its scope).
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `python tests/inventor/local_pairs.py` (now prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
 2. Recognition and stress-test status, scoring commands and the MFCAD++ download: archive "Moved 2026-11-09" (old Next 3 and 3a). Re-run them on every recognition change.
@@ -38,7 +38,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 ## Open questions
 
 - Shape from the `.ipt` alone: its own phase after I1 (D-035); test-run numbers in the archive.
-- `test_nist.py` ctc_02 took 5.8-7.07 s here and once 10.4 s in a busier container, against a 10 s limit; limit unchanged (VER-04); detail in the archive.
+- `test_nist.py` ctc_02 took 5.8-7.07 s here and once 10.4 s in a busier container, against a 10 s limit; limit unchanged (VER-04); detail in the archive. 2026-11-10: 10.2 s once inside a full `check.py`, 7.9-8.3 s alone (3 runs).
 - Backlog and after-project ideas (hole types, ring-face threads, G-code view, waivers, shop profiles): archive "Moved 2026-11-09".
 - GitLab at work: are there CI runners, and can they download packages? Ask IT before the move (D-006).
 

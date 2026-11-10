@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+import time
 
 import pytest
 from playwright.sync_api import Page, expect
@@ -105,22 +106,34 @@ def test_not_checked_notice(page: Page, base_url: str):
 
 
 def test_ui_responsive(page: Page, base_url: str):
-    """J3: while the slowest NIST file is analysed, "Analyzing" shows and a tap on a step tab is handled in 200 ms."""
+    """J3: while the slowest NIST file is analysed, "Analyzing" shows, the page's main thread never stalls for 200 ms
+    (a 10 ms heartbeat records its longest gap over the whole analysis), and a tap on the Part tab, timed from the
+    test's side, is handled within 200 ms."""
     page.goto(base_url)
+    page.evaluate("""() => {
+      window.__beat = { last: performance.now(), worst: 0, beats: 0 };
+      window.__beatTimer = setInterval(() => {
+        const now = performance.now();
+        window.__beat.worst = Math.max(window.__beat.worst, now - window.__beat.last);
+        window.__beat.last = now;
+        window.__beat.beats++;
+      }, 10);
+    }""")
     page.get_by_test_id("upload-file").set_input_files(nist("nist_ctc_02_asme1_ap242-e2.stp"))
     expect(page.locator("#status")).to_contain_text("Analyzing")
-    samples = []
-    while page.get_by_test_id("overview").is_hidden() and len(samples) < 50:
-        samples.append(page.evaluate("""() => new Promise((done) => {
-          const t = performance.now();
-          const tab = document.querySelector('[data-testid="step-part"]');
-          tab.addEventListener('click', () => setTimeout(() => done(performance.now() - t), 0), { once: true });
-          tab.click();
-        })"""))
+    taps = []
+    while page.get_by_test_id("overview").is_hidden():
+        start = time.perf_counter()
+        page.evaluate("() => { document.querySelector('[data-testid=\"step-part\"]').click(); return document.activeElement !== null; }")
+        taps.append((time.perf_counter() - start) * 1000)
+        if len(taps) > 2000:
+            break
     expect(page.get_by_test_id("overview")).to_be_visible(timeout=120_000)
-    print(f"tab taps during the analysis: {len(samples)}, slowest {max(samples, default=0):.1f} ms")
-    assert samples, "the analysis finished before a tap could be timed"
-    assert max(samples) < 200
+    beat = page.evaluate("() => { clearInterval(window.__beatTimer); return window.__beat; }")
+    print(f"heartbeats {beat['beats']}, longest gap {beat['worst']:.1f} ms; taps {len(taps)}, slowest {max(taps, default=0):.1f} ms")
+    assert taps, "the analysis finished before a tap could be timed"
+    assert beat["worst"] < 200, "the page's main thread stalled during the analysis"
+    assert max(taps) < 200
 
 
 def test_peak_memory(page: Page, base_url: str):

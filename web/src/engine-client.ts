@@ -13,6 +13,7 @@ export class EngineError extends Error {
 
 let compiled: Promise<WebAssembly.Module> | null = null;
 let workersMade = 0;
+let endPrevious: (() => void) | null = null; // a newer analysis ends the older one's worker (main.ts drops its result)
 let nextId = 1;
 
 function engineModule(): Promise<WebAssembly.Module> {
@@ -48,6 +49,7 @@ export async function analyzeInBrowser(file: File, ipt: File | null, process: Pr
   } catch {
     throw new EngineError(MSG_FAILED, true);
   }
+  endPrevious?.();
   const worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });
   workersMade++;
   const id = nextId++;
@@ -56,8 +58,11 @@ export async function analyzeInBrowser(file: File, ipt: File | null, process: Pr
     const done = (fn: () => void) => {
       clearTimeout(timer);
       worker.terminate(); // everything the engine made goes with it
+      if (endPrevious === cancel) endPrevious = null;
       fn();
     };
+    const cancel = () => done(() => reject(new EngineError(MSG_FAILED, true)));
+    endPrevious = cancel;
     worker.onerror = () => done(() => reject(new EngineError(MSG_FAILED, true)));
     worker.onmessage = (event: MessageEvent) => {
       const m = event.data;

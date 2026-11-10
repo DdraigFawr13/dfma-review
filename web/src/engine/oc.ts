@@ -24,13 +24,15 @@ export async function loadOc(opts: LoadOptions = {}): Promise<Loaded> {
     mem = (Object.values(instance.exports).find((v) => v instanceof WebAssembly.Memory) as WebAssembly.Memory) ?? null;
   };
   const args: Record<string, unknown> = {};
+  let fail: (e: unknown) => void = () => {};
+  const failed = new Promise<never>((_, reject) => { fail = reject; });
   if (opts.module) {
     const module = opts.module;
     args.instantiateWasm = (imports: WebAssembly.Imports, receive: (i: WebAssembly.Instance, m: WebAssembly.Module) => void) => {
       WebAssembly.instantiate(module, imports).then((instance) => {
         keep(instance);
         receive(instance, module);
-      });
+      }).catch(fail); // e.g. out of memory: the worker then replies MSG_FAILED instead of hanging
       return {};
     };
   } else {
@@ -51,6 +53,6 @@ export async function loadOc(opts: LoadOptions = {}): Promise<Loaded> {
       WebAssembly.instantiate = original;
     }
   }
-  const oc = await (init as (o: unknown) => Promise<OC>)(args);
+  const oc = await Promise.race([(init as (o: unknown) => Promise<OC>)(args), failed]);
   return { oc, memory: () => (mem ? (mem as WebAssembly.Memory).buffer.byteLength : 0) };
 }

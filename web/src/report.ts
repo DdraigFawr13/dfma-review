@@ -110,7 +110,7 @@ function summaryPage(p: Page, input: ReportInput): void {
   p.text(`Size: ${formatSize(part.bbox_in)}`);
   p.text(`Faces: ${part.face_count}`);
   p.text(`Units in file: ${part.units_in_file}`);
-  if (result.stock) p.text(`Stock: ${stockText(result.stock)}`);
+  if (result.stock && !planNotWorkedOut(result)) p.text(`Stock: ${stockText(result.stock)}`); // the plan's (D-057)
 
   p.heading("Machine plan");
   if (planNotWorkedOut(result)) {
