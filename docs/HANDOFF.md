@@ -25,7 +25,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-10 Port S7 (Inventor pairs): `web/src/engine/inventor/` (ole, sab, tags, topo, surfaces, names, part, pair, threads, holes, blends), the three `.ipt` rules; `cfb` 1.2.2 (+ adler-32, crc-32) on the Licenses page; the `.ipt` field back; `checks_not_run` and `browser_pending.txt` empty. Quick parity 122/122 the same, every key (16 NIST pairs through the app and lined up by the harness, 13 hostile files incl. a planted fillet for `blend_mismatch`). Builder defaults in the spec (S7). Re-check: no gap for Morgan.
+- 2026-11-10 Port S7 (Inventor pairs): `web/src/engine/inventor/` (ole, sab, tags, topo, surfaces, names, part, pair, threads, holes, blends), the three `.ipt` rules; `cfb` 1.2.2 (+ adler-32, crc-32) on the Licenses page; the `.ipt` field back; `checks_not_run` and `browser_pending.txt` empty. Quick parity 122/122 the same, every key (16 NIST pairs through the app and lined up by the harness, 13 hostile files incl. a planted fillet for `blend_mismatch`). Builder defaults in the spec (S7). Re-check: no gap for Morgan. PR #41 (draft); [status](https://claude.ai/artifact/7ouNdQhJ24G6WoYfbYx4Ey), [demo](https://claude.ai/artifact/NHpR9Vby8YbvUaV3pPuDWJ).
 
 
 ## Next
