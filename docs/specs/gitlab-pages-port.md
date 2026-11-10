@@ -273,7 +273,7 @@ Settled after the zero-decision re-check of S7 against merged S6; none changes a
 ## Verification
 
 - Every push: `python scripts/check.py` until S8 (S1 adds the quick parity and the browser e2e run); from S8, `npm run check` at the root.
-- Before a slice's PR is marked ready: `npm --prefix web run parity:full`, its summary line in the PR. J4 is not run (D-059).
+- Before a slice's PR is marked ready: `npm --prefix web run parity:full`, its summary line in the PR. J4 is not run (D-059). S7 was merged without it (D-070: stopped after 64 min with no result); from S7 the run prints one line per file.
 - End to end: the GitHub Pages link on Morgan's PC (D-009 status page per slice); the work URL from S3 on, by Morgan.
 
 ## Open questions

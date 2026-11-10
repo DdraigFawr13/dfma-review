@@ -47,6 +47,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-10 D-070: S7 merges without the full-set parity (stopped, no result); parity prints a line per file.
 - 2026-11-10 D-069: S7 approved; merge when ready; S8 in a new session.
 - 2026-11-10 D-068: steps and slots named and scored by MFCAD++'s classes (no open-pocket kind); plan and tools first; slot depth over 6× width a finding.
 - 2026-11-10 D-067: S6 approved; merge when CI is done; S7 in a new session.
@@ -55,6 +56,5 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - 2026-11-10 D-065: faster `check.py` (lanes, timed tests alone, pytest-xdist); approved and merged in PR #39.
 - 2026-11-10 D-064: S5 approved; merge when CI is done; S6 in a new session.
 - 2026-11-10 D-063: S5 stop answered: whole-degree bins snap to 9 decimals in Python and the port; 7 Python answers move (no finding or cost).
-- 2026-11-10 D-062: S4 approved; merge when done; S5 in a new session.
 - 2026-11-10 D-059: J4 (big plate) dropped; S3 makes the Machining setups distinct, with a mock-up first.
 - D-001 to D-037: see `docs/DECISIONS.md` (`grep '^## D-'`).
