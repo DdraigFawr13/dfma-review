@@ -9,7 +9,7 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from helpers import PARTS
-from steps import open_step, shown as part_shown
+from steps import open_step, reanalysis, shown as part_shown
 
 from dfma.analyze import analyze
 
@@ -63,7 +63,7 @@ def test_click_highlights_face(page: Page, base_url: str):
     assert moved != target
     target = moved
     open_step(page, "part")  # process and material sit in the overview once a part is read
-    with page.expect_response(lambda r: r.url.endswith("/api/analyze"), timeout=30_000):
+    with reanalysis(page):
         page.get_by_test_id("upload-material").select_option("plastic")
     expect(page.locator("#status")).to_have_text("Showing deep_hole.step.", timeout=30_000)
     open_step(page, "features")

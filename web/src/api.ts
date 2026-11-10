@@ -227,7 +227,10 @@ if (import.meta.env.VITE_ENGINE === "browser") void import("./engine-client").th
 /** VITE_ENGINE=browser (the static site, port spec Design "web/src/api.ts"): the engine runs in a worker in this
  *  page; nothing is sent anywhere. Otherwise the Python service at /api/analyze. */
 export async function analyze(file: File, ipt: File | null, process: Process, material: Material): Promise<Analysis> {
-  if (import.meta.env.VITE_ENGINE === "browser") {
+  // The test build answers through /api/analyze when a browser test fakes the service with page.route (port S7:
+  // tests/e2e/conftest.py sets the flag), so those tests check the browser copy's page on the same answers.
+  const faked = import.meta.env.VITE_TEST === "1" && (window as unknown as { __dfmaFakeService?: boolean }).__dfmaFakeService === true;
+  if (import.meta.env.VITE_ENGINE === "browser" && !faked) {
     const { analyzeInBrowser, EngineError } = await import("./engine-client");
     try {
       return await analyzeInBrowser(file, ipt, process, material);

@@ -7,6 +7,10 @@ Each file runs `dfma.analyze.analyze` (Aluminum 6061; the process tests/parts/ex
 Milling) in its own process (the tests/grading/child.py pattern: some files crash pythonocc) and is written to
 `<DIR>/<path relative to the repo, "/" as "__">.json`: the response, {"error": <message>} or {"crash": <exit code>}.
 `<DIR>/index-<set>.json` lists the set: [{"path", "process", "key"}], which web/src/engine/parity.test.ts reads.
+From port S7 the quick set also holds each of the 16 NIST .ipt files beside its NIST STEP (`ipt`), twice: through the
+app (every NIST pair is refused, J2) and lined up by the test harness (`harness`: tests/inventor/nist_pair.py, no
+pair check; the key then carries the harness's transform as "__harness", so the port needs no `register`), and the
+hostile .ipt files of tests/service/test_inventor_safety.py, written to tests/parity/.cache/hostile/.
 A key is reused while its SHA-256 (the part file, every file under service/ and config/, this script,
 expected.toml and the pythonocc version) is unchanged.
 """
@@ -78,18 +82,122 @@ def file_hash(path: Path, code: bytes) -> str:
     return h.hexdigest()
 
 
-def child(path: str, process: str) -> None:
-    """Analyse one file and print MARK, then its JSON (runs in its own process)."""
+def child(path: str, process: str, ipt: str | None = None, harness: bool = False) -> None:
+    """Analyse one file (with its .ipt) and print MARK, then its JSON (runs in its own process)."""
     from dfma.analyze import analyze
     from dfma.errors import ReadError
     try:
-        result = analyze(path, Path(path).name, process, "al6061")
+        if harness:
+            sys.path.insert(0, str(ROOT / "tests" / "inventor"))
+            from nist_pair import analyze_registered, transform
+            result = analyze_registered(path, ipt, process)
+            rows, shift = transform(str(path), str(ipt))
+            result["__harness"] = {"transform": [[list(r) for r in rows], list(shift)]}
+        else:
+            result = analyze(path, Path(path).name, process, "al6061", ipt_path=ipt,
+                             ipt_name=Path(ipt).name if ipt else None)
     except ReadError as exc:
         result = {"error": str(exc)}
     sys.stdout.write(MARK + json.dumps(result) + "\n")
 
 
-def run_one(path: Path, process: str, out: Path, digest: str) -> None:
+INV = ROOT / "tests" / "inventor" / "files"
+HOSTILE = CACHE / "hostile"
+
+
+def nist_step(ipt: Path) -> Path:
+    """The NIST STEP of an .ipt: INV_nist_<ctc|ftc>_NN_..._2021 -> nist_<ctc|ftc>_NN_..._ap242, _2024 -> nist_stc_NN
+    (NIST STC 06-10, SOURCE.md); the last in name order, so FTC 08 takes e2, not e1-tg (as hole_counts.toml)."""
+    from nist_files import ap242_files
+    kind, nn, year = ipt.stem.split("_")[2], ipt.stem.split("_")[3], ipt.stem.split("_")[-1]
+    prefix = f"nist_{'stc' if year == '2024' else kind}_{nn}_asme1_ap242"
+    return sorted(p for p in ap242_files() if p.name.startswith(prefix))[-1]
+
+
+def fillet_radius(d: bytes) -> bytes:
+    """CTC 04's first fillet with its radius 2% larger in the .ipt: every face of it (cylinder: the length of its 3rd
+    vector; torus: its minor radius; sphere: its radius), so it stays one fillet and disagrees with the STEP
+    (blend_mismatch; no NIST pair has a fillet that disagrees). The other bytes stay where they are."""
+    import struct
+
+    import hostile
+    from dfma.inventor import blends, sab, tags
+    k = d.find(sab.HEADER)
+    best = None
+    while k >= 0:  # the model with the most faces, as read_ipt picks it
+        _, recs = sab.split(d, k)
+        n = sum(1 for r in recs if r.name == "face")
+        if best is None or n > best[2]:
+            best = (k, recs, n)
+        k = d.find(sab.HEADER, k + 1)
+    start, recs, _ = best
+    offsets = hostile.records(d, start)
+    fillet = next((b for b in blends.read_blends(recs, tags.feature_tags(recs)) if b.kind == "fillet"), None)
+    if fillet is None:  # a stream whose model has no fillet: unchanged
+        return d
+    out = bytearray(d)
+    for face in fillet.faces:
+        surf = next(q for p in recs[face].of("p") if (q := sab.ref(recs, p, suffix="surface")) is not None)
+        name = recs[surf].name or ""
+        vals = offsets[surf]["values"]
+        if name.startswith("cone"):
+            at = [o for t, o in vals if t in (0x13, 0x14)][2]
+            v = struct.unpack_from("<3d", out, at + 1)
+            struct.pack_into("<3d", out, at + 1, *(1.02 * x for x in v))
+        else:  # torus: the 2nd float; sphere: the 1st
+            at = [o for t, o in vals if t == 0x06][1 if name.startswith("torus") else 0]
+            struct.pack_into("<d", out, at + 1, 1.02 * struct.unpack_from("<d", out, at + 1)[0])
+    return bytes(out)
+
+
+def hostile_files() -> list[tuple[Path, Path, bool]]:
+    """(STEP, hostile .ipt, harness) for each case of test_inventor_safety.py, written once to HOSTILE."""
+    import shutil
+
+    sys.path[:0] = [str(ROOT / "tests" / "service"), str(ROOT / "tests" / "inventor")]
+    import hostile
+    from helpers import rewrite_ipt_models
+    from test_inventor_safety import BOX, CTC04, _blend_face, _cut, _no_header, _owner_feature, _unknown_tag
+    HOSTILE.mkdir(parents=True, exist_ok=True)
+    out = []
+    n, face, _ = _owner_feature()
+    bface, _ = _blend_face(0)
+    cases = [("no-model", INV / "INV_nist_ftc_11_asme1_2021.ipt", _no_header, False),
+             ("unknown-tag", INV / "INV_nist_ftc_11_asme1_2021.ipt", _unknown_tag, False),
+             ("cut-short", INV / "INV_nist_ftc_11_asme1_2021.ipt", _cut, False)]
+    cases += [(f"hole-{k}", CTC04, (lambda k: lambda d: getattr(hostile, k)(d, n))(k), True)
+              for k in ("no_end", "long_list", "owner_off")]
+    cases += [(f"blend-{k}", CTC04, (lambda k: lambda d: getattr(hostile, k)(d, 0, kind="blend"))(k), True)
+              for k in ("no_end", "long_list", "owner_off")]
+    cases += [("cycle-hole", CTC04, lambda d: hostile.cycle(d, face), True),
+              ("cycle-blend", CTC04, lambda d: hostile.cycle(d, bface), True),
+              ("fillet-radius", CTC04, lambda d: fillet_radius(d) if d.find(b"\x0d\x09asmheader") >= 0 else d, True)]  # noqa: E501
+    for name, base, change, harness in cases:
+        p = HOSTILE / f"{name}.ipt"
+        shutil.copyfile(base, p)
+        rewrite_ipt_models(p, change)
+        out.append((nist_step(base) if harness else BOX, p, harness))
+    notes = HOSTILE / "not-an-ipt.ipt"
+    notes.write_text("not a compound file")
+    out.append((BOX, notes, False))
+    return out
+
+
+def ipt_jobs() -> list[tuple[Path, str, Path | None, bool]]:
+    """(STEP, process, .ipt, harness) for the 16 NIST pairs (app and harness) and the hostile files."""
+    jobs = []
+    for ipt in sorted(INV.glob("*.ipt")):
+        jobs += [(nist_step(ipt), "mill", ipt, False), (nist_step(ipt), "mill", ipt, True)]
+    return jobs + [(step, "mill", ipt, harness) for step, ipt, harness in hostile_files()]
+
+
+def job_key(path: Path, ipt: Path | None, harness: bool) -> str:
+    if ipt is None:
+        return key_name(path)
+    return key_name(path)[:-5] + "+" + ipt.name + ("+harness" if harness else "") + ".json"
+
+
+def run_one(path: Path, process: str, out: Path, digest: str, ipt: Path | None = None, harness: bool = False) -> None:
     """Write the key for one file. A response or refusal is cached by its hash; a crash is never cached, so a crash
     caused by this machine (a kill, a timeout under load) is tried again on the next run."""
     cached = CACHE / "by-hash" / (digest + ".json")
@@ -97,7 +205,8 @@ def run_one(path: Path, process: str, out: Path, digest: str) -> None:
         body = cached.read_text(encoding="utf-8")
     else:
         try:
-            done = subprocess.run([sys.executable, __file__, "--child", str(path), process], cwd=ROOT,
+            extra = [str(ipt), "harness" if harness else "app"] if ipt is not None else []
+            done = subprocess.run([sys.executable, __file__, "--child", str(path), process, *extra], cwd=ROOT,
                                   capture_output=True, text=True, timeout=CHILD_TIMEOUT_S)
             line = next((ln for ln in done.stdout.splitlines() if ln.startswith(MARK)), None)
             body = line[len(MARK):] if line else json.dumps({"crash": done.returncode})
@@ -106,7 +215,7 @@ def run_one(path: Path, process: str, out: Path, digest: str) -> None:
         if not body.startswith('{"crash"'):
             cached.parent.mkdir(parents=True, exist_ok=True)
             cached.write_text(body, encoding="utf-8")
-    (out / key_name(path)).write_text(body, encoding="utf-8")
+    (out / job_key(path, ipt, harness)).write_text(body, encoding="utf-8")
 
 
 def write_set(name: str, out: Path) -> int:
@@ -116,10 +225,21 @@ def write_set(name: str, out: Path) -> int:
         processes.setdefault(part["name"], part.get("process", "mill"))  # a name listed twice: the first entry wins
     code = code_hash()
     out.mkdir(parents=True, exist_ok=True)
-    jobs = [(p, process_of(p, processes)) for p in files]
+    jobs = [(p, process_of(p, processes), None, False) for p in files] + ipt_jobs()  # the .ipt pairs from S7
+
+    def digest(j) -> str:
+        if j[2] is None:
+            return file_hash(j[0], code)
+        h = hashlib.sha256(file_hash(j[0], code).encode() + rel(j[2]).encode() + b"\0" + j[2].read_bytes() + b"\0")
+        h.update(b"harness" if j[3] else b"app")
+        for p in sorted((ROOT / "tests" / "inventor").glob("*.py")):  # the harness: register, nist_pair
+            h.update(p.read_bytes())
+        return h.hexdigest()
+
     with ThreadPoolExecutor(max_workers=os.cpu_count() or 2) as pool:
-        list(pool.map(lambda j: run_one(j[0], j[1], out, file_hash(j[0], code)), jobs))
-    index = [{"path": rel(p), "process": proc, "key": key_name(p)} for p, proc in jobs]
+        list(pool.map(lambda j: run_one(j[0], j[1], out, digest(j), j[2], j[3]), jobs))
+    index = [{"path": rel(p), "process": proc, "key": job_key(p, ipt, harness),
+              **({"ipt": rel(ipt), "harness": harness} if ipt is not None else {})} for p, proc, ipt, harness in jobs]
     (out / f"index-{name}.json").write_text(json.dumps(index, indent=1), encoding="utf-8")
     bad = [i["path"] for i in index if "crash" in json.loads((out / i["key"]).read_text(encoding="utf-8"))]
     print(f"key: {len(index)} files in {rel(out) if out.is_relative_to(ROOT) else out}; Python crashed on {len(bad)}: {', '.join(bad) or 'none'}")
@@ -137,8 +257,8 @@ def write_settings() -> int:
 
 
 def main() -> int:
-    if len(sys.argv) == 4 and sys.argv[1] == "--child":
-        child(sys.argv[2], sys.argv[3])
+    if len(sys.argv) in (4, 6) and sys.argv[1] == "--child":
+        child(sys.argv[2], sys.argv[3], *((sys.argv[4], sys.argv[5] == "harness") if len(sys.argv) == 6 else ()))
         return 0
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--set", choices=("quick", "full"))

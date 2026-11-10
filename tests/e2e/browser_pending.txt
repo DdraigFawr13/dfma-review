@@ -4,28 +4,5 @@
 # slice it needs. S7 empties it (the tests that fake the service's /api/analyze are rewritten or marked service-only
 # there); S8 deletes it.
 
-# Moved from S5 (2026-11-10, S5 run): they pass the walls, then wait for the service's /api/analyze reply to a
-# material change, which the browser copy never sends (S7 rewrites the tests that wait on the service).
-tests/e2e/test_findings.py::test_click_highlights_face[chromium] # S7
-tests/e2e/test_passed_and_setups.py::test_passed_list[chromium] # S7
-tests/e2e/test_audit_2026_11_09.py::test_f3_error_says_how_to_fix_it_beside_the_file_field[chromium] # S7
-tests/e2e/test_blends.py::test_panel[chromium] # S7
-tests/e2e/test_blends.py::test_panel_hidden_without_ipt[chromium] # S7
-tests/e2e/test_blends.py::test_panel_opens_for_not_mapped[chromium] # S7
-tests/e2e/test_hole_features.py::test_names[chromium] # S7
-tests/e2e/test_hole_features.py::test_no_names_and_copies[chromium] # S7
-tests/e2e/test_hole_features.py::test_panel[chromium] # S7
-tests/e2e/test_hole_features.py::test_panel_hidden_without_ipt[chromium] # S7
-tests/e2e/test_pdf.py::test_pdf_blends[chromium] # S7
-tests/e2e/test_pdf.py::test_pdf_hole_features[chromium] # S7
-tests/e2e/test_pdf.py::test_pdf_threads[chromium] # S7
-tests/e2e/test_steps.py::test_empty_states[chromium] # S7
-tests/e2e/test_steps.py::test_part_step[chromium] # S7
-tests/e2e/test_steps.py::test_report_step[chromium] # S7
-tests/e2e/test_steps.py::test_walk[chromium-1280] # S7
-tests/e2e/test_steps.py::test_walk[chromium-900] # S7
-tests/e2e/test_threads.py::test_no_threads_and_no_ipt[chromium] # S7
-tests/e2e/test_threads.py::test_thread_disagrees_and_states[chromium] # S7
-tests/e2e/test_threads.py::test_threads_panel[chromium] # S7
-tests/e2e/test_upload_pair.py::test_nist_pair_refused[chromium] # S7
-tests/e2e/test_upload_pair.py::test_pair_shown[chromium] # S7
+# Empty from S7 (2026-11-10): the tests that fake the service's /api/analyze run on the browser copy through the test
+# build's flag (conftest.py _faked_service_in_browser).

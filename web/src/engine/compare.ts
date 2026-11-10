@@ -23,6 +23,7 @@ export const PORTED_KEYS: Record<number, string[]> = {
   4: [], // S4 adds kinds and rules to the keys above, and part.not_analysed_faces on milled files
   5: [], // S5 adds the walls and thin_wall to the keys above
   6: ["turn_axis"], // S6 also adds turned files to every key above, and bores, grooves, profiles and the turn rules
+  7: ["inventor"], // S7: the .ipt block and the three .ipt rules; from S7 every key is compared, ids as they are
 };
 /** Rules ported by slice, with their check names (rows.py CHECKS); rules_run and checks_run compare on these only. */
 export const PORTED_RULES: Record<number, Record<string, string>> = {
@@ -33,6 +34,7 @@ export const PORTED_RULES: Record<number, Record<string, string>> = {
   5: { thin_wall: "Thin wall check" },
   6: { looks_turned: "Process check", turn_axis: "Turning axis check", turn_slender: "Length to diameter check",
     turn_offaxis: "Turning axis check", bore_depth: "Bore depth check" },
+  7: { thread_mismatch: "Thread vs hole", hole_mismatch: "Hole feature vs hole", blend_mismatch: "Fillet vs face" },
 };
 /** Feature kinds ported by slice: a list key compares only its items on these kinds (port spec Parity). */
 export const PORTED_KINDS: Record<number, string[]> = {
@@ -42,7 +44,12 @@ export const PORTED_KINDS: Record<number, string[]> = {
   4: ["pocket", "corner"],
   5: ["wall"],
   6: ["bore", "groove", "profile"],
+  7: [],
 };
+/** From this slice every key of the response is compared on every file, finding ids as they are (port spec Parity). */
+export const ALL_SLICE = 7;
+/** Keys only the browser engine returns (port spec Design "analyze.ts"), and the harness's note in a pair's key. */
+const NOT_COMPARED = ["checks_not_run", "cost_partial", "__harness", "wasm_bytes", "worker"]; // the last two: the test build (J4)
 /** The plan and cost keys (S3) compare only on files whose key has no feature of these kinds while they are not
  *  ported, and no finding from a rule not ported: the plan reads holes and pockets and the findings on them
  *  (plan.py), and every finding can feed a cost driver (drivers.toml). */
@@ -149,6 +156,15 @@ export function compare(result: Json, key: Json, slice: number = SLICE): Outcome
   }
   if ("error" in k || "error" in r) {
     if (k.error !== r.error) diffs.push(`error: ${JSON.stringify(r.error)} ≠ ${JSON.stringify(k.error)}`);
+    return { status: diffs.length ? "different" : "same", diffs, leftOut: [] };
+  }
+  if (slice >= ALL_SLICE) {
+    const names = [...new Set([...Object.keys(r), ...Object.keys(k)])].filter((n) => !NOT_COMPARED.includes(n)).sort();
+    for (const name of names) {
+      if (!(name in r) || !(name in k)) diffs.push(`${name}: ${name in r ? "not in the key" : "missing"}`);
+      else if (name === "faces") sameFaces(r.faces, k.faces, diffs);
+      else same(name, r[name], k[name], diffs);
+    }
     return { status: diffs.length ? "different" : "same", diffs, leftOut: [] };
   }
   const leftOut: string[] = [];

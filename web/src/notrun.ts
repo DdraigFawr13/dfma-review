@@ -29,7 +29,5 @@ export function partial(result: Analysis): string {
   return result.cost_partial ? " (partial)" : "";
 }
 
-/** The status line before a part is read; the browser copy has no .ipt field until S7. */
-export const START_STATUS = import.meta.env.VITE_ENGINE === "browser" || import.meta.env.VITE_ENGINE === "demo"
-  ? "Choose a STEP file to start."
-  : "Choose a STEP file to start. Add its .ipt too, if you have one.";
+/** The status line before a part is read: from S7 the browser copy has the .ipt field too. */
+export const START_STATUS = "Choose a STEP file to start. Add its .ipt too, if you have one.";

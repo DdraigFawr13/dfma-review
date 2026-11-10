@@ -8,7 +8,7 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from helpers import PARTS
-from steps import open_step, shown
+from steps import open_step, reanalysis, shown
 
 from dfma.analyze import analyze
 
@@ -39,7 +39,7 @@ def test_passed_list(page: Page, base_url: str):
     assert page.evaluate("window.__dfma.highlightedFaces()") == sorted(hole["faces"])
     # A material change re-analyses the same file: the chip, the open row and the selection are kept.
     open_step(page, "part")  # process and material sit in the overview once a part is read
-    with page.expect_response(lambda r: r.url.endswith("/api/analyze"), timeout=30_000):
+    with reanalysis(page):
         page.select_option("#material", "plastic")
     expect(page.locator("#status")).to_have_text("Showing clean_one_setup.step.", timeout=30_000)
     open_step(page, "features")

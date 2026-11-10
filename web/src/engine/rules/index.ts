@@ -1,6 +1,6 @@
 // The rule order of service/dfma/rules/__init__.py RULES, with each rule's PROCESSES. A slice that ports a rule adds
 // its module here and the processes it is ported for; checks_not_run names every rule not ported yet for the process
-// (port spec Design). From S6 every rule but the three .ipt checks (S7) is ported for every process it runs on.
+// (port spec Design). From S7 every rule is ported for every process it runs on.
 import type { Process } from "../../api";
 import * as access from "./access";
 import * as cornerRadius from "./corner_radius";
@@ -14,6 +14,9 @@ import * as turnAxis from "./turn_axis";
 import * as turnSlender from "./turn_slender";
 import * as turnOffaxis from "./turn_offaxis";
 import * as boreDepth from "./bore_depth";
+import * as threadMismatch from "./thread_mismatch";
+import * as holeMismatch from "./hole_mismatch";
+import * as blendMismatch from "./blend_mismatch";
 import type { Feature, Finding, Limits, PartSummary, Pass } from "./types";
 
 export interface RuleModule {
@@ -35,7 +38,7 @@ export const RULES: RuleEntry[] = [
   { ID: "turn_slender", PROCESSES: ["turn"], ported: ["turn"], module: turnSlender },
   { ID: "turn_offaxis", PROCESSES: ["turn"], ported: ["turn"], module: turnOffaxis },
   { ID: "bore_depth", PROCESSES: ["turn"], ported: ["turn"], module: boreDepth },
-  { ID: "thread_mismatch", PROCESSES: ["mill", "turn"], ported: [] },
-  { ID: "hole_mismatch", PROCESSES: ["mill", "turn"], ported: [] },
-  { ID: "blend_mismatch", PROCESSES: ["mill", "turn"], ported: [] },
+  { ID: "thread_mismatch", PROCESSES: ["mill", "turn"], ported: ["mill", "turn"], module: threadMismatch },
+  { ID: "hole_mismatch", PROCESSES: ["mill", "turn"], ported: ["mill", "turn"], module: holeMismatch },
+  { ID: "blend_mismatch", PROCESSES: ["mill", "turn"], ported: ["mill", "turn"], module: blendMismatch },
 ];

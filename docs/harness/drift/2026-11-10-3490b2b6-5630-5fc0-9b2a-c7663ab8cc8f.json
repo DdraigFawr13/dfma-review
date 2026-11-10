@@ -1,0 +1,1 @@
+{"date":"2026-11-10","session":"3490b2b6-5630-5fc0-9b2a-c7663ab8cc8f","commit_calls":1,"counts":{"tests.delete":1},"warnings":[{"ts":"2026-11-10T20:04:37.808Z","check":"tests.delete","outcome":"ask","detail":"deletes test path `web/src/engine/inventor/scratch.test.ts`: never delete a test to get green"}]}

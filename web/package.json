@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@taucad/opencascade.js": "3.0.0-beta.3",
+    "cfb": "1.2.2",
     "jspdf": "4.2.1",
     "smol-toml": "1.9.1",
     "three": "0.187.0"

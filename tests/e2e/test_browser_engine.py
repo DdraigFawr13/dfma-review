@@ -36,15 +36,15 @@ def nist(name: str):
     return NIST / name
 
 
-# The rules the browser copy has ported, by process (web/src/engine/rules/index.ts `ported`); each slice adds its own.
-PORTED = {"mill": {"hole_depth", "hole_size", "access", "corner_radius", "pocket_depth", "undercut", "thin_wall", "looks_turned"},
-          "turn": {"hole_depth", "hole_size", "thin_wall", "turn_axis", "turn_slender", "turn_offaxis", "bore_depth"}}
-# S2: holes; S4: pockets, corners, undercuts; S5: walls; S6: turned parts and looks_turned. Only the .ipt checks wait (S7).
+# The rules the browser copy has ported, by process (web/src/engine/rules/index.ts `ported`): every rule from S7, so the
+# Not-checked-yet line never shows (S2: holes; S4: pockets, corners, undercuts; S5: walls; S6: turned parts and
+# looks_turned; S7: the .ipt checks).
+PORTED = {p: {r.ID for r in RULES if p in r.PROCESSES} for p in ("mill", "turn")}
 
 
-def not_checked(process: str = "mill") -> str:
+def not_checked(process: str = "mill") -> str | None:
     names = checks_run([r.ID for r in RULES if process in r.PROCESSES and r.ID not in PORTED[process]])
-    return f"Not checked yet in this copy: {', '.join(names)}."
+    return f"Not checked yet in this copy: {', '.join(names)}." if names else None
 
 
 def read(page: Page, path, timeout_ms: int = 120_000) -> dict:
@@ -59,8 +59,8 @@ def test_view_part(page: Page, base_url: str):
     page.goto(base_url)
     expect(page.get_by_test_id("copy-tag")).to_have_text("Test copy")
     expect(page.locator(".privacy")).to_have_text("Your file stays on this computer. Nothing is uploaded.")
-    expect(page.locator("#ipt-field")).to_be_hidden()
-    expect(page.locator("#status")).to_have_text("Choose a STEP file to start.")
+    expect(page.locator("#ipt-field")).to_be_visible()  # S7: back, as in the service copy
+    expect(page.locator("#status")).to_have_text("Choose a STEP file to start. Add its .ipt too, if you have one.")
     before = canvas(page)
     read(page, PARTS / "report_sample.step")
     part = expected("report_sample")
@@ -83,17 +83,18 @@ def test_view_part(page: Page, base_url: str):
 def test_not_checked_notice(page: Page, base_url: str):
     """J1 and D-057: the Not-checked-yet line on the Features card and step and on Report, naming only the checks not
     ported. From S2 the hole checks run on a milled part, so its chips, Show OK and "Checks run" show; from S3 its
-    Machining and Cost show the plan and the drivers. From S6 a turned part runs its checks too (only the .ipt checks
-    are named) and Machining and Cost are worked out: report_sample has no turning axis, so no machine is planned."""
+    Machining and Cost show the plan and the drivers. From S6 a turned part runs its checks too and Machining and Cost
+    are worked out: report_sample has no turning axis, so no machine is planned. From S7 every check is ported, so
+    the line shows nowhere, and the Report step lists the .ipt line of "The PDF holds" again."""
     page.goto(base_url)
     read(page, PARTS / "report_sample.step")
-    line = not_checked()
+    assert not_checked() is None and not_checked("turn") is None
     later = "Not worked out yet in this copy."
-    expect(page.get_by_test_id("overview-features")).to_contain_text(line)
+    expect(page.get_by_test_id("overview-features")).not_to_contain_text("Not checked yet")
     expect(page.get_by_test_id("overview-machining")).to_contain_text("3-axis mill")
     expect(page.get_by_test_id("overview-cost")).not_to_contain_text(later)
     page.get_by_test_id("step-features").click()
-    expect(page.get_by_test_id("features-notrun")).to_have_text(line)
+    expect(page.get_by_test_id("features-notrun")).to_be_hidden()
     expect(page.locator("#row-chips button").first).to_be_visible()
     expect(page.get_by_test_id("show-ok")).to_be_visible()
     page.get_by_test_id("step-machining").click()
@@ -104,19 +105,19 @@ def test_not_checked_notice(page: Page, base_url: str):
     expect(page.get_by_test_id("cost-total")).to_be_visible()
     expect(page.locator("#cost")).not_to_contain_text(later)
     page.get_by_test_id("step-report").click()
-    expect(page.get_by_test_id("report-notrun")).to_have_text(line)
+    expect(page.get_by_test_id("report-notrun")).to_be_hidden()
     expect(page.locator("#report-checks")).to_be_visible()
     for name in ("Hole depth check", "Hole size check", "Access check"):
         expect(page.locator("#report-checks")).to_contain_text(name)
-    expect(page.locator("#page-report [data-pdf]:visible")).to_have_count(2)  # the findings and the plan; no .ipt
-    expect(page.locator('#page-report [data-pdf="findings"]')).to_be_visible()
-    expect(page.locator('#page-report [data-pdf="plan"]')).to_be_visible()
-    # S6: a turned part names only the .ipt checks, runs the turning checks and is worked out on Machining and Cost
+    expect(page.locator("#page-report [data-pdf]:visible")).to_have_count(3)  # the findings, the plan and the .ipt line
+    for what in ("findings", "plan", "ipt"):
+        expect(page.locator(f'#page-report [data-pdf="{what}"]')).to_be_visible()
+    # S6: a turned part runs the turning checks and is worked out on Machining and Cost; S7: no line names a check
     page.get_by_test_id("step-part").click()
     page.get_by_test_id("upload-process").select_option("turn")
     page.get_by_test_id("step-report").click()
-    expect(page.get_by_test_id("report-notrun")).to_have_text(not_checked("turn"), timeout=60_000)
-    expect(page.locator("#report-checks")).to_contain_text("Turning axis check")
+    expect(page.locator("#report-checks")).to_contain_text("Turning axis check", timeout=60_000)
+    expect(page.get_by_test_id("report-notrun")).to_be_hidden()
     page.get_by_test_id("step-features").click()
     expect(page.locator("#row-chips button").first).to_be_visible()
     page.get_by_test_id("step-machining").click()
@@ -263,7 +264,7 @@ def test_hole_rows(page: Page, base_url: str, name: str):
     assert len([f for f in result["features"] if f["kind"] == "hole"]) == len(holes)
     card = page.get_by_test_id("overview-features")
     expect(card).to_contain_text(f"{len(holes)} hole{'s' if len(holes) != 1 else ''}")  # S4: "…, 1 pocket and 4 corners checked"
-    expect(card).to_contain_text(not_checked())
+    expect(card).not_to_contain_text("Not checked yet")  # S7: every check runs
     page.get_by_test_id("step-features").click()
     if not rows:
         expect(card).to_contain_text("No findings. Every feature checked passed its rules.")
@@ -376,7 +377,8 @@ def test_plan_and_cost(page: Page, base_url: str, tmp_path):
     path = tmp_path / "report.pdf"
     download.value.save_as(path)
     first = PdfReader(path).pages[0].extract_text().replace("\n", " ")
-    for text in ("Machine: 3-axis mill", f"Total score: {total}", not_checked()):
+    for text in ("Machine: 3-axis mill", f"Total score: {total}"):
         assert text in first, f"{text!r} is not on page 1"
+    assert "Not checked yet" not in first  # S7: every check runs
     assert "(partial)" not in first
     assert POCKETS_LATER not in first  # S4: the plan holds pockets

@@ -367,3 +367,44 @@ test("S6: looks_turned compares on a milled file", () => {
   r.findings[4].measured = 56;
   expect(compare(r, k, 6).status).toBe("different");
 });
+
+const s7key = () => ({
+  ...s6key(),
+  findings: [...s6key().findings, { id: "F9", rule: "hole_mismatch", severity: "medium", feature: "hole-1", measured: 0.002,
+    title: "Hole1 hole on hole-1: diameter", hole_feature: "hf-1", ipt_hole: "hf-1.1" }],
+  inventor: {
+    name: "p.ipt", saved_with: "2021 (Build 250183000, 183)", acis_version: "226.0.3.65535",
+    checks: { faces: [10, 12], corners: [8, 8], worst_corner_gap_mm: null },
+    threads: [{ id: "thread-1", designation: "M6x1", state: "matched", hole: "hole-1", gaps: [], start: [0, 0, 1] }],
+    hole_features: [{ id: "hf-1", name: "Hole1", type: "simple", diameter_mm: 5, state: "disagrees",
+      holes: [{ id: "hf-1.1", state: "disagrees", hole: "hole-1", gaps: [{ what: "diameter", mm: 0.05, text: "Ø…" }] }] }],
+    hole_names_seen: 1,
+    blends: [{ id: "bl-1", kind: "fillet", radius_mm: 2, step_faces: [3, 4], state: "matched", gaps: [] }],
+  },
+  checks_not_run: [], cost_partial: false,
+});
+
+test("S7: every key compares, ids as they are, the browser-only keys and the harness's note are left out", () => {
+  const k = { ...s7key(), __harness: { transform: [[[1, 0, 0], [0, 1, 0], [0, 0, 1]], [0, 0, 0]] } } as Record<string, unknown>;
+  delete k.checks_not_run;
+  delete k.cost_partial;
+  expect(compare(s7key(), k, 7)).toEqual({ status: "same", diffs: [], leftOut: [] });
+  const cases: [string, (r: ReturnType<typeof s7key>) => void][] = [
+    ["finding id", (r) => { r.findings[r.findings.length - 1].id = "F10"; }],
+    ["saved with", (r) => { r.inventor.saved_with = "2024"; }],
+    ["face check", (r) => { r.inventor.checks.faces = [10, 11]; }],
+    ["thread state", (r) => { r.inventor.threads[0].state = "disagrees"; }],
+    ["thread start", (r) => { r.inventor.threads[0].start = [0, 0, 1.0001]; }],
+    ["hole feature name", (r) => { r.inventor.hole_features[0].name = "Hole2"; }],
+    ["ipt hole gap", (r) => { r.inventor.hole_features[0].holes[0].gaps[0].mm = 0.06; }],
+    ["names seen", (r) => { r.inventor.hole_names_seen = 0; }],
+    ["blend faces", (r) => { r.inventor.blends[0].step_faces = [3]; }],
+    ["no inventor", (r) => { delete (r as Partial<typeof r>).inventor; }],
+    ["a key Python has not", (r) => { (r as Record<string, unknown>).extra = 1; }],
+  ];
+  for (const [what, plant] of cases) {
+    const r = s7key();
+    plant(r);
+    expect(compare(r, k, 7).status, what).toBe("different");
+  }
+});

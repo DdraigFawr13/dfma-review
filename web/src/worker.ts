@@ -2,6 +2,7 @@
 // {id, module, step, name, process, material, ipt?}; the worker loads the engine from the module, posts
 // {type: "ready"}, analyzes, and replies {id, ok: true, analysis} or {id, ok: false, message, retry}.
 import { analyze } from "./engine/analyze";
+import { readIpt } from "./engine/inventor/part";
 import { loadOc } from "./engine/oc";
 import { ReadError } from "./engine/read";
 import { MSG_FAILED } from "./engine/settings";
@@ -45,7 +46,7 @@ self.onmessage = async (event: MessageEvent<Request>) => {
   }
   post({ type: "ready" });
   try {
-    const ipt = r.ipt ? { bytes: new Uint8Array(r.ipt.bytes), name: r.ipt.name } : undefined;
+    const ipt = r.ipt ? { read: await readIpt(new Uint8Array(r.ipt.bytes)), name: r.ipt.name } : undefined; // read first: it inflates asynchronously
     const analysis = analyze(loaded.oc, new Uint8Array(r.step), r.name, r.process, r.material, ipt);
     const extra = import.meta.env.VITE_TEST === "1" ? { wasm_bytes: loaded.memory() } : {}; // test build only (J4)
     const faces = analysis.faces.map((f) => ({ ...f, view: faceView(f) }));
