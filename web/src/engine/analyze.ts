@@ -1,15 +1,18 @@
 // Port of service/dfma/analyze.py (port spec Design "analyze.ts"). It always returns the full response shape;
 // a key not ported yet holds what Python returns for a part with none of that kind, and `checks_not_run` names,
-// in check-name wording, every rule not ported yet. S1 ports the read, the face kinds, the frame, the mesh,
-// the part summary and the assumptions.
+// in check-name wording, every rule not ported yet. S1 ported the read, the face kinds, the frame, the mesh, the part
+// summary and the assumptions; S2 the holes and the hole rules (hole_depth, hole_size, access) with their rows, on
+// Milling only (a turned part's holes split into holes and bores first: S6).
 import type { Analysis, Material, Process } from "../api";
 import { extentsMm, faceInfo, partFrame, type Vec } from "./frame";
 import { meshFaces } from "./mesh";
 import type { OC } from "./oc";
 import { readStep } from "./read";
-import { checkName, checksRun } from "./rows";
+import { holes } from "./features/holes";
+import { checkName, checksRun, findingRows, limitText, passedRows } from "./rows";
 import { RULES } from "./rules/index";
-import { ASSUMPTIONS, MATERIALS, MSG_NO_UNIT, MSG_OPEN_SHELL, PROCESSES, TURN_ASSUMPTIONS } from "./settings";
+import type { Feature, PartSummary } from "./rules/types";
+import { ASSUMPTIONS, MATERIALS, MSG_NO_UNIT, MSG_OPEN_SHELL, PROCESSES, thresholds, TURN_ASSUMPTIONS } from "./settings";
 import { mmToIn, round } from "./units";
 
 export type BrowserAnalysis = Analysis & { checks_not_run: string[] };
@@ -18,7 +21,7 @@ const IN_FILE = "/in.step";
 
 /** The check names of the rules not ported yet for this process, in RULES order, each once. */
 export function checksNotRun(process: Process): string[] {
-  return [...new Set(RULES.filter((r) => !r.ported && r.PROCESSES.includes(process)).map((r) => checkName(r.ID)))];
+  return [...new Set(RULES.filter((r) => !r.ported.includes(process) && r.PROCESSES.includes(process)).map((r) => checkName(r.ID)))];
 }
 
 export function analyze(oc: OC, step: Uint8Array, name: string, process: Process, material: Material,
@@ -35,7 +38,16 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
     for (const m of meshes) for (let i = 0; i < m.positions.length; i += 3) vertices.push([m.positions[i], m.positions[i + 1], m.positions[i + 2]]);
     const frame = partFrame(infos, vertices);
     const bboxIn = extentsMm(frame, vertices).map((e) => round(mmToIn(e), 6)) as [number, number, number];
-    const rulesRun: string[] = []; // S2 on: the ported rules that ran
+    // S2: holes and the hole rules, on Milling (rules_run lists the ported rules that ran, in RULES order)
+    const features = (process === "mill" ? holes(oc, part.solid, part.faces, frame) : []) as unknown as Feature[];
+    const summary: PartSummary = { units_in_file: part.unitsInFile, frame, face_count: part.faces.length };
+    const limits = thresholds(material);
+    const rules = RULES.filter((r) => r.module && r.ported.includes(process) && r.PROCESSES.includes(process));
+    const raw = rules.flatMap((r) => r.module!.check(features, summary, limits));
+    const findings = raw.map((f, n) => ({ id: `F${n + 1}`, ...f, check: checkName(f.rule), limit_text: limitText(f.threshold_source) }));
+    const passed = rules.flatMap((r) => (r.module!.passes ? r.module!.passes(features, summary, limits) : []))
+      .map((p) => ({ ...p, limit_text: limitText(p.threshold_source) }));
+    const rulesRun = rules.map((r) => r.ID);
     const assumptions = [...ASSUMPTIONS, ...(process === "turn" ? TURN_ASSUMPTIONS : [])];
     if (part.freeEdges) assumptions.push(MSG_OPEN_SHELL.replace("{n}", String(part.freeEdges)));
     if (part.unitsInFile === "none") assumptions.push(MSG_NO_UNIT);
@@ -52,13 +64,14 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
         frame: { x: [...frame.x], y: [...frame.y], z: [...frame.z] },
       },
       faces: infos.map((f, i) => ({ id: f.id, kind: f.kind, ...meshes[i] })),
-      features: [],
-      findings: [],
+      // The rule modules build plain objects, as the Python dicts; parity checks their shape against the key.
+      features: features as unknown as Analysis["features"],
+      findings: findings as unknown as Analysis["findings"],
       rules_run: rulesRun,
       checks_run: checksRun(rulesRun),
-      passed: [],
-      rows: [],
-      passed_rows: [],
+      passed: passed as unknown as Analysis["passed"],
+      rows: findingRows(findings) as unknown as Analysis["rows"],
+      passed_rows: passedRows(features, findings, passed) as unknown as Analysis["passed_rows"],
       machine: null,
       turn_axis: null,
       stock: { shape: "block", size_in: bboxIn }, // S3 (and S6 for a bar)

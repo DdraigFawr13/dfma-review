@@ -47,8 +47,9 @@ Each journey's check fails at the starting commit, because `web/src/engine/`, th
 
 - **When** Morgan picks `nist_ctc_02_asme1_ap242-e2.stp` (the slowest NIST file in Python: 5.8 to 10.4 s, HANDOFF). **Then** "Analysing …" shows and a tap on a step tab is handled within 200 ms during the analysis. **Check:** `test_browser_engine.py::test_ui_responsive`.
 
-### J4 Memory (S1, re-run each slice)
+### J4 Memory (S1; dropped from S2, D-059)
 
+- **Dropped 2026-11-10 (D-059):** Morgan: "you don't have to do j4". The test below stays in the repo, unrun.
 - **When** the largest file in the full set (`nist_ftc_09_asme1_ap242-e1.stp`, 6.1 MB) and then a 50 MB STEP file are analysed in the page. **Then** each finishes, and the worker's wasm memory stays under 2 GB. A second analysis starts in a fresh worker (Design "Worker"). **Check:** `test_browser_engine.py::test_peak_memory`: the test build (Design "Browser tests") adds `wasm_bytes` (the `buffer.byteLength` of the memory the worker's own `instantiateWasm` instance exports) and `worker` (a count of workers made) to the reply; the test prints each file's value and checks the two analyses ran in different workers; the 50 MB file is made by `python tests/parts/make_parts.py --big-plate` (a new flag; today `main()` takes none) into the git-ignored `tests/parts/.cache/big_plate.step`: a 10 mm plate with a grid of through holes, the grid chosen in S1 so the file is 48 to 50 MB (under `MAX_UPLOAD_BYTES`), the grid recorded in the script. If it takes Python longer than `TIME_LIMIT_S`, the test opens the page with `?time_limit_s=600` and the time goes in the S1 PR.
 
 ### J5 Bad files and hangs (S1)
@@ -149,7 +150,7 @@ Each journey's check fails at the starting commit, because `web/src/engine/`, th
 
 ## Slices
 
-Each slice ports its Python modules line for line, adds its keys to the parity compare, removes its rules from `checks_not_run` and its tests from `browser_pending.txt`, and passes J4. Only S1 changes a screen, so only S1 starts with a mock-up.
+Each slice ports its Python modules line for line, adds its keys to the parity compare, removes its rules from `checks_not_run` and its tests from `browser_pending.txt`, and passed J4 until S2 (dropped, D-059). S1 and S3 change a screen, so they start with a mock-up (S3: D-059).
 
 ### S1 Site, viewer and parity harness
 
@@ -170,6 +171,7 @@ Each slice ports its Python modules line for line, adds its keys to the parity c
 - **Morgan tries:** Machining, Cost and the PDF for `clean_holes.step`; the PDF and Cost show what's not checked yet.
 - **Checks that fail now:** parity S3 keys; the `# S3` tests.
 - **Files:** `plan.ts`, `drivers.ts`; `web/src/report.ts` and the Cost step (the "(partial)" total); `.gitlab-ci.yml`.
+- **Also (D-059):** the Machining step's setup list: each setup clearly separate and plainly tappable (Morgan: "The individual setups should be more distinct from each other"). A screen change: S3 starts with a mock-up, approved by Morgan before code.
 - **Waits on:** S2.
 
 ### S4 Pockets, corners, undercuts
@@ -206,10 +208,19 @@ Settled at build after the zero-decision re-check; none changes a goal (WS-02). 
 - **J4 (D-058):** `make_parts.py --big-plate`: 112 x 112 holes of 3 mm on a 5 mm pitch, 49.94 MiB (12,544 holes); one non-parallel cut (a parallel cut ran out of memory here). Python's reader takes 925.6 s on it. J4 is marked `per_slice` and runs once per slice, alone, with a 60-minute limit: `pytest -m per_slice --engine browser`; not in `check.py` or CI.
 - **Test hooks:** `window.__dfma.analysis()` returns the result on screen; the test build adds `wasm_bytes` and `worker` to it.
 
+## Builder defaults (S2, 2026-11-10)
+
+Settled after the zero-decision re-check of S2 against merged S1 (a fresh reviewer and this session); none changes a goal (WS-02).
+
+- **Turned parts:** the hole rules are ported for Milling only (`ported` per process in `rules/index.ts`). On Turning the browser copy finds no holes and runs no rule until S6, and `checks_not_run` keeps the hole checks, because Python splits a turned part's holes into holes and bores first (`split_bores`). The compare reads a turned file from its key (`rules_run` holds `turn_axis`) and compares only the S1 keys on it until S6.
+- **Files beyond the list:** `tools.ts` (the drills of `tools.py`; end mills in S3), `units.ts` gains `past_limit`, `fraction`, `fmt_in`, `METRIC` and Python's number formats (`pyFixed`: an exact tie rounds to even, as Python's `f"{x:.3f}"`; `pyG` for `:g`), `rules/types.ts`. `number()` is ported but unused until S4.
+- **Compare (S2):** `features` of kind `hole`; `findings` on ported rules whose feature is of a ported kind, renumbered F1, F2… on each side, with `rows` (`id`, `findings`, `range`) mapped the same way; `passed` and `passed_rows` on ported rules and kinds. A key row of a ported rule that holds a finding not ported (an `access` row mixing a pocket's finding) leaves that rule's rows out of the file on both sides, counted in the summary. `compare.test.ts` plants 8 S2 changes.
+- **Tests:** the three `# S2` tests in `browser_pending.txt` pass the hole rows but assert the wall count ("1 hole and 4 walls checked"), so they move to `# S5`; `test_browser_engine.py::test_hole_rows` checks the hole rows word for word against Python on `report_sample`, `countersunk_hole`, `deep_hole` and `clean_holes`. `test_not_checked_notice` now expects the chips, Show OK and "Checks run" on a milled part and S1's states on a turned one.
+
 ## Verification
 
 - Every push: `python scripts/check.py` until S8 (S1 adds the quick parity and the browser e2e run); from S8, `npm run check` at the root.
-- Before a slice's PR is marked ready: `npm --prefix web run parity:full` and J4 (`pytest -m per_slice --engine browser`, alone on the machine; D-058), their summary lines in the PR.
+- Before a slice's PR is marked ready: `npm --prefix web run parity:full`, its summary line in the PR. J4 is not run (D-059).
 - End to end: the GitHub Pages link on Morgan's PC (D-009 status page per slice); the work URL from S3 on, by Morgan.
 
 ## Open questions

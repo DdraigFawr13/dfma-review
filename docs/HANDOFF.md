@@ -1,10 +1,10 @@
 # Handoff
 
-Updated: 2026-11-10. A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
+Updated: 2026-11-10 (port S2 merged). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
 
 ## Phase
 
-Build. First usable version: S1 to S7 merged (#3 to #18). Inventor parts: I1 (#21 to #23), I2 and I3 (#24, #27; D-039 to D-046) merged. Review-steps S1 merged in #29 (D-047). Review-steps S2+S3 merged in #30 (D-051): the step screen is complete. UX audit merged in #31; its 34 fixes merged in #32 (D-053). Now: GitLab Pages port S2 (holes; D-056); S1 merged in #34 (D-057, D-058), and the work-pair check from 2026-11-12. History and full entries: [docs/archive/handoff-2026-11.md](archive/handoff-2026-11.md) (grep it; "Moved 2026-11-09" holds the long entries cut from here).
+Build. First usable version: S1 to S7 merged (#3 to #18). Inventor parts: I1 (#21 to #23), I2 and I3 (#24, #27; D-039 to D-046) merged. Review-steps S1 merged in #29 (D-047). Review-steps S2+S3 merged in #30 (D-051): the step screen is complete. UX audit merged in #31; its 34 fixes merged in #32 (D-053). Now: GitLab Pages port S3 (plan, cost, PDF; mock-up first for the setup list, D-059); S1 merged in #34, S2 in #35 (D-060), and the work-pair check from 2026-11-12. History and full entries: [docs/archive/handoff-2026-11.md](archive/handoff-2026-11.md) (grep it; "Moved 2026-11-09" holds the long entries cut from here).
 
 ## Plan map
 
@@ -19,17 +19,17 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ▶ Inventor parts (Morgan, 2026-11-08): ✔ research · ✔ own reader (D-031) · ✔ plan (D-032) · ✔ spec I1 (D-033) · ✔ I1 S1 #21, S2 #22, S3 #23 · ✔ spec I2+I3 (D-039) · ✔ I2 S1 hole features #24 (D-041) · ✔ S2 names and copies and S3 fillets and chamfers, merged in #27 (D-043, D-046) · ▶ work-pair check owed (from 2026-11-12).
 - ○ Inventor shape from the `.ipt` alone (D-035; after I1).
 - ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ✔ spec approved (D-045, #28) · ✔ S1 merged in #29 (D-047) · ✔ S2 + S3 merged in #30 (D-048 to D-052) · ✔ UX audit #31 · ✔ audit fixes #32 (D-053) ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
-- ▶ GitLab Pages port (Morgan, 2026-11-09; D-054, D-055, D-056): ✔ trial · ✔ spec approved (PR #33) · ✔ S1 site, viewer, parity (PR #34) · ▶ S2 holes · ○ S3 plan, cost, PDF (work release possible) · ○ S4 pockets · ○ S5 walls · ○ S6 turning · ○ S7 Inventor · ○ S8 retire Python.
+- ▶ GitLab Pages port (Morgan, 2026-11-09; D-054, D-055, D-056): ✔ trial · ✔ spec approved (PR #33) · ✔ S1 site, viewer, parity (PR #34) · ✔ S2 holes (PR #35) · ▶ S3 plan, cost, PDF (work release possible) · ○ S4 pockets · ○ S5 walls · ○ S6 turning · ○ S7 Inventor · ○ S8 retire Python.
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
 
+- 2026-11-10 Port S2 (holes) merged (PR #35; D-059, D-060): `features/holes.ts`, the hole rules, `rows.ts` whole, `tools.ts`; quick parity 77/77 on the S2 keys (1,105 holes, 379 findings, 3,022 passes; 8/77 before the port); full set 282/290 the same (6 crash Python, 2 mesh-only, as S1); mill only until S6; three `# S2` e2e tests moved to `# S5` (wall counts), `test_hole_rows` added; fresh review: 8 items, 7 fixed, 1 a recorded limit. J4 dropped (D-059). [Status](https://claude.ai/artifact/PjanrDkuq2gc7moMFXEd9o), [demo](https://claude.ai/artifact/VNPfaiRZ3Dhu46441YLRJw). Olefile 0.47 was missing from the cloud env again; installed with micromamba.
 - 2026-11-10 Port S1 merged (PR #34; D-057, D-058): the app runs in Chrome on `@taucad/opencascade.js` with nothing uploaded; quick parity 77/77, full set 282/290 the same (6 crash Python, 2 differ in mesh points only, spec Risks); page freeze fixed (J3); J4's plate did not finish in 60 min. [Status](https://claude.ai/artifact/3wDSZ5G1mrhaTpmunEQj9R), [demo](https://claude.ai/artifact/6hbrYJqxyP1PtUL3aSAhCM). Morgan: turn on GitHub Pages (Settings, Pages, Source: GitHub Actions).
-- 2026-11-10 Port spec approved by Morgan ("Approved, start building"; D-056) and merged with the trial in #33: [docs/specs/gitlab-pages-port.md](specs/gitlab-pages-port.md), 8 slices; all 5 additions approved. [Approval page](https://claude.ai/artifact/AjZQkdVY7ATByDULSNBfmQ), [PR #33](https://github.com/DdraigFawr13/dfma-review/pull/33).
 
 ## Next
 
-00. Now: port S2 (holes) of [docs/specs/gitlab-pages-port.md](specs/gitlab-pages-port.md): zero-decision re-check of S2 against merged S1, checks fail first, build, reviewer, status page and demo. Before S2's J4 run, pick a plate size that finishes (D-058). Send Morgan the GitHub Pages link once Pages is on.
+00. Now: port S3 (plan, cost, PDF) in a new session (Morgan, D-060): zero-decision re-check against merged S2, then the `ui-mockups` mock-up of the Machining setup list (each setup distinct and plainly tappable, D-059) for Morgan's approval before code; then checks fail first, build, reviewer, `parity:full`, status page and demo. J4 is not run (D-059). Send Morgan the GitHub Pages link once Pages is on.
 0. Now: plainer sentences for the rule cases that still read as titles, each shown to Morgan first (D-045). Follow-up from the audit fixes: Hole feature rows still carry aria-pressed and aria-expanded (F15's pattern, out of its scope).
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `python tests/inventor/local_pairs.py` (now prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
 2. Recognition and stress-test status, scoring commands and the MFCAD++ download: archive "Moved 2026-11-09" (old Next 3 and 3a). Re-run them on every recognition change.
@@ -44,6 +44,8 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-10 D-060: S2 approved; merge when ready; S3 in a new session.
+- 2026-11-10 D-059: J4 (big plate) dropped; S3 makes the Machining setups distinct, with a mock-up first.
 - 2026-11-10 D-058: J3's freeze fixed (limit stays, measured during the analysis); J4's plate runs once per slice, 60 min.
 - 2026-11-10 D-057: S1 mock-up approved with its choices; merge when satisfied.
 - 2026-11-10 D-056: port spec approved with its 5 additions; D-054 Accepted.
@@ -55,6 +57,4 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - 2026-11-09 D-050: an angled hole or pocket is a Review; a hole is a Fix when it enters its face off square.
 - 2026-11-09 D-049: Features groups mock-up approved; a corner sits in its pocket's setup, a thin wall under "Whole part".
 - 2026-11-09 D-048: review-steps S2 and S3 built and merged together, one branch and one PR.
-- 2026-11-09 D-047: review-steps S1 approved and merged (#29); builder calls recorded.
-- 2026-11-09 D-046: merge #27 now; the work-pair check follows the merge (amends D-041).
 - D-001 to D-037: see `docs/DECISIONS.md` (`grep '^## D-'`).

@@ -438,3 +438,15 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-10). Morgan, in chat: "Go with your recommendations but do try to keep the resting time shorter please. Be more efficient", on the [two-tests page](https://claude.ai/artifact/PQryDfevPjVgpWMcDAHRPR).
 - **Decision:** J3 keeps its 200 ms limit. The freeze was found and fixed: the engine compiles while the page waits for a file, and the worker works out each face's normals and edge lines; the viewer draws every face's edges as one object and skips three's synchronous shader checks. J3 measures the analysis, from the upload to the worker's reply, as its spec words say; the drawing of the result after it is printed, not limited, because it is the shared 3D viewer (the service app freezes 1,144 and 1,387 ms drawing the same file; the browser copy 310 to 484 ms). J4 (the 49.94 MiB plate) runs once per slice, alone on the machine, with a 60-minute limit (`pytest -m per_slice --engine browser`), not on every push; its time and memory are recorded, then its size is decided.
 - **Why:** Python's own reader took 925.6 s on the plate, so the file's size, not the browser, made J4 impractical on every push; the freeze measured 782 ms in the test and was found to be the result's drawing, not the analysis.
+
+## D-059 Port: J4 dropped; S3 makes the machining setups easier to tell apart
+
+- **Status:** Accepted (2026-11-10). Morgan, in chat during S2: "you don't to have to do that large plate with holes test that you did last session. We can just skip that it's unnecessary"; "Stop you don't have to do j4". And: "It is difficult to see where to click to select a machining setup in the right bar. The individual setups should be more distinct from each other", to be added "when we get to that slice".
+- **Decision:** J4 (`test_peak_memory`, the 49.94 MiB plate, `pytest -m per_slice --engine browser`) is no longer run per slice or before a PR is marked ready; no plate size is chosen. The test stays in the repo, unrun, so a later slice can bring it back. S3 (Machining) also makes each setup in the Machining step's side list clearly separate and plainly tappable; that changes a screen, so S3 starts with a mock-up for it (`ui-mockups`), approved by Morgan before code.
+- **Why:** Morgan judged the big-plate test unnecessary; the setup list is hard to read and tap today. Amends D-058 (J4 once per slice) and the spec's "only S1 changes a screen".
+
+## D-060 Port S2 approved; merge when ready; S3 in a new session
+
+- **Status:** Accepted (2026-11-10). Morgan, in chat: "I approve and you can merge when ready and start s3 in a new session".
+- **Decision:** merge S2 once its checks pass, the fresh reviewer's findings are settled, the full-set parity is recorded and the status page and demo are published (D-009), without waiting for another approval. S3 starts in a new session, with its mock-up first (D-059).
+- **Why:** Morgan approved the slice and delegated the merge.

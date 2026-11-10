@@ -128,3 +128,7 @@ Build, first usable version: all seven slices merged. S1 to S6 in #3 to #17 (his
 - 2026-11-09 opencascade.js trial (Morgan: run "on Gitlab pages completely"): the fork reads all 33 NIST files the same as the app, 8,137 of 8,137 faces, in Node and Chromium; recognizer engine calls identical except 214 meshed faces; 512 of 512 `.ipt` streams. `spikes/ocjs/README.md`, D-054. [Status](https://claude.ai/artifact/Xi214RHUBM5P85dq69PbE9).
 - 2026-11-09 D-045: review-steps spec approved; 3 slices; rows.py; build from main.
 - 2026-11-09 D-042: review screen redesign approved (steps Part · Features · Machining · Cost · Report, overview after reading, Fix / Review, plain-sentence rows, Show OK per kind, cost total); not built. Found on that branch: `test_nist` ctc_02 took 10.5 s and 11.1 s (limit 10 s) in 2 of 3 full runs in a cloud container under load, 9.19 s alone; limit unchanged (VER-04).
+
+## Moved 2026-11-10 (port S2 start)
+
+- 2026-11-10 Port spec approved by Morgan ("Approved, start building"; D-056) and merged with the trial in #33: [docs/specs/gitlab-pages-port.md](specs/gitlab-pages-port.md), 8 slices; all 5 additions approved. [Approval page](https://claude.ai/artifact/AjZQkdVY7ATByDULSNBfmQ), [PR #33](https://github.com/DdraigFawr13/dfma-review/pull/33).
