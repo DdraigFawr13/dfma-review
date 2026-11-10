@@ -80,6 +80,7 @@ def test_export_pdf(page: Page, base_url: str, tmp_path):
     assert len(images) == len({tuple(sorted(f["faces"])) for f in result["findings"]}) and len(set(images)) == len(images)
 
 
+@pytest.mark.timed  # waits 30 s for the PDF of the large CTC 04 / STC 10 fixture (about 10 s alone); CI's lanes slowed it past that (S7)
 def test_pdf_threads(page: Page, base_url: str, tmp_path):
     """J5: the summary page's Threads section, one line per thread; F26 (the disagreeing thread) has its page."""
     import json
@@ -109,6 +110,7 @@ def test_pdf_threads(page: Page, base_url: str, tmp_path):
     assert any("F26 · REVIEW" in p for p in pages)  # its finding page, headed with the word (D-042)
 
 
+@pytest.mark.timed  # waits 30 s for the PDF of the large CTC 04 / STC 10 fixture (about 10 s alone); CI's lanes slowed it past that (S7)
 def test_pdf_hole_features(page: Page, base_url: str, tmp_path):
     """I2 S1 J6: the summary page's Hole features section after Threads (D-040), one line per feature; a
     disagreeing hole (F39) has its finding page."""
@@ -144,6 +146,7 @@ def test_pdf_hole_features(page: Page, base_url: str, tmp_path):
     assert any("F39 · REVIEW" in p for p in pages)  # its finding page
 
 
+@pytest.mark.timed  # waits 30 s for the PDF of the large CTC 04 / STC 10 fixture (about 10 s alone); CI's lanes slowed it past that (S7)
 def test_pdf_blends(page: Page, base_url: str, tmp_path):
     """I3 S3 (D-043): the summary page's Fillets and chamfers section after Hole features, one line per blend."""
     import json
