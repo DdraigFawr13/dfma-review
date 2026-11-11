@@ -19,7 +19,7 @@ The second line is only needed to run the browser tests. To use a Chromium that 
 
 ```
 npm --prefix web run build:pages
-npm --prefix web exec -- vite preview --outDir dist-pages --port 8000
+cd web && npx vite preview --outDir dist-pages --port 8000
 ```
 
 Then open <http://localhost:8000>, choose a STEP file, and drag the part to rotate it. The analysis runs in your browser (a worker), so no server is needed.
