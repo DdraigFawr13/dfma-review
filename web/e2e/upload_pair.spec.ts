@@ -80,7 +80,9 @@ test("test_pair_shown", async ({ page }) => {
   await page.getByTestId("upload-file").setInputFiles([BOX, resolve(INV, "INV_nist_ftc_11_asme1_2021.ipt")]); // both in one pick
   await expect(page.getByTestId("ipt-build")).toHaveText("2024.1 (Build 281209000, 209)");
   await expect(page.locator("#inventor-meta")).toBeVisible();
-  expect(bodies.length).toBe(2);
+  // The first answer already carries the .ipt build, so the two checks above can pass before the second request is
+  // sent: wait for that request itself (it failed 2 in 30 runs without this wait, 2026-11-11).
+  await expect.poll(() => bodies.length).toBe(2);
   expect(bodies[0].includes('name="ipt"')).toBe(false); // sent only once picked
   expect(bodies[1].includes('name="ipt"')).toBe(true);
 });
