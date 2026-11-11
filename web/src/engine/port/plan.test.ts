@@ -200,4 +200,4 @@ test("angled holes square to their face are review", async () => {
   expect(new Set(found.map((f: Feat) => f.severity))).toEqual(new Set(["medium"]));
   const ids = new Set(found.map((x: Feat) => x.feature));
   expect(new Set(r.features.filter((f: Feat) => ids.has(f.id)).map((f: Feat) => f.entry_deg))).toEqual(new Set([0.0]));
-});
+}, 30_000); // the browser engine takes about 5.2 s here; the Python twin 3.8 s (S8b, measured): a 30 s limit, not a looser check
