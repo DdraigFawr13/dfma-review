@@ -22,6 +22,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ▶ GitLab Pages port (Morgan, 2026-11-09; D-054, D-055, D-056): ✔ trial · ✔ spec approved (PR #33) · ✔ S1 site, viewer, parity (PR #34) · ✔ S2 holes (PR #35) · ✔ S3 plan, cost, PDF (PR #36; work release possible) · ✔ S4 pockets (PR #37) · ✔ S5 walls (PR #38) · ✔ S6 turning (PR #40) · ✔ S7 Inventor (PR #41) · ✔ S8a (PR #42) · ✔ S8b retire Python (PR #43).
 - ✔ UI fixes (Morgan, 2026-11-10; D-076): ✔ round 1 and review · ✔ mock-up approved (PR #46) · ✔ spec A+B (D-078, #49) · ✔ slice A model (#51, D-080) · ✔ slice B screens (#53) · ○ Morgan's work-copy check · ○ later: cutaway, dimensions; tool-access check after steps and slots.
 - ▶ Steps and slots (Morgan, 2026-11-10; D-066, D-068, D-079): ✔ research ([page](research/feature-recognition.html)) · ✔ planning ([round 1](https://claude.ai/artifact/2NiJeW3rhomfLQSDeVzDhY), [review](https://claude.ai/artifact/1DwcDhFZcZVzxisd3QTqcy)) · ✔ spec `docs/specs/steps-slots.md` approved (D-081), merged in PR #50 · ○ S1 steps · ○ S2 slots · ○ S3 screens · ○ then V-groove and round-bottom slots, edge treatments, pocket shapes (D-075).
+- ▶ Machining and DFMA rework, then Inventor-only and Vault (Morgan, 2026-11-11; D-083, D-084 Proposed): ▶ research auto-CAM and instant quoting (Xometry) · ○ plan · ○ machining · ○ DFMA · ○ Inventor-only · ○ Vault.
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
@@ -49,6 +50,8 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - GitLab at work: are there CI runners, and can they download packages? Ask IT before the move (D-006).
 
 ## Decisions since the last plan update
+
+- 2026-11-11 D-083: research comes first in every major module (Morgan). D-084 Proposed: machining and DFMA rework, Inventor-only, then Vault; open questions in the entry.
 
 - 2026-11-11 D-082: a UI-only change skips the parity run and timed engine tests (Morgan); merged in PR #54.
 - 2026-11-11 D-081: steps and slots spec approved; merged after UI fixes B (Morgan: "You merge after pr 53").

@@ -646,3 +646,15 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - Locally the change is the merge base with `origin/main` to the working tree, untracked files included; in CI it is the PR's merge commit (`HEAD^1..HEAD`). A push to `main` and a manual run always run everything, once per merge. `DFMA_FULL=1` forces everything.
   - D-077's light path (docs-only: drift check alone) and its EDMR rule are unchanged.
 - **Why:** on PR #51 (screen code only) the parity run took about 134 s and the timed engine tests 100 s of a 695 s check (2026-11-11 local run); neither reads the screen code. The engine reads `web/src/api.ts`, `web/src/grading/`, `web/src/inventor-harness/` and `config/` (grep of `web/src/engine` imports, 2026-11-11), so those are not UI. Checked: 19 cases in `web/src/scope.test.ts` (5 fail with the UI pattern widened to all of `web/src/`), and 8 git cases in a scratch repo (local unstaged, committed, untracked engine file, engine edit, `DFMA_FULL`, push, PR merge commit, empty change).
+
+## D-083 Research comes first in every major module
+
+- **Status:** Accepted (2026-11-11). Morgan, in chat: "It seems like we overlooked some research and I want to make research a standard part of all of these major modules."
+- **Decision:** every major module (a plan-map line such as machining, DFMA, Inventor, Vault, assemblies, drawings) starts with a research step before planning: what existing tools do, which open resources (code, data, papers) we can use, with licences and sources. Its result is a page under `docs/research/` linked from HANDOFF's plan map. The planning interview starts from it.
+- **Why:** an engineer's review showed the machining side falls short of what Xometry's quoting does, and that research was missed before the machining estimate was built.
+
+## D-084 New direction: better machining and DFMA, Inventor parts, then Autodesk Vault
+
+- **Status:** Proposed (2026-11-11). Morgan, in chat: "from his feedback it is clear we need to improve the machining aspect and the dfma aspect of this tool as well as get it working with just inventor parts then get it ported to work in Autodesk vault preferably." First step: research auto-CAM programs like Xometry's quoting (D-083).
+- **Decision (proposed):** order of work: (1) research auto-CAM and instant quoting; (2) improve machining; (3) improve DFMA; (4) work from Inventor parts alone; (5) port to Autodesk Vault. Open: what the engineer's feedback said, point by point; whether "just inventor parts" drops STEP input or adds `.ipt` without a STEP (D-035); whether a Vault port keeps the browser app (D-054) or becomes a Vault/Inventor add-in.
+- **Why:** an engineer's feedback (not yet written down in the repo).
