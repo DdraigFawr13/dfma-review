@@ -117,6 +117,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-07).
 - **Amended by D-042, built 2026-11-09:** HIGH / MEDIUM read FIX / REVIEW on screen and in the PDF; the selected pin reads "F4 FIX".
 - **Amended by D-053 (2026-11-09):** every pin carries its ▲/◆ mark, selected or not, so a pin's severity no longer rests on its ring colour alone (UX audit F26).
+- **Amended by D-076, built in UI fixes S1 (2026-11-11):** pins and stems hide while the camera moves (drag, wheel, keys) and come back about 150 ms after the last mouse or wheel move, 600 ms after a key; and a selection greys everything else, so "nothing else dims" no longer holds.
 - **Decision:**
   - Each finding's label is a pin ("F5") on a visible spot of its faces, white and ringed in its severity colour. A pin that would cover one already placed folds into it ("F4 +2"); a pin whose spot is behind the part is hidden. This replaces D-015's labels that moved to the nearest free spot.
   - The selected finding's pin is solid in its severity colour (red for HIGH, orange for MEDIUM), larger, with its severity word ("F5 HIGH"), raised on a stem to a dot on its spot. Its faces still turn the Selected colour (`--accent`); nothing else dims.
@@ -581,6 +582,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
     - Top bar: Open…, Examples ▾, Export PDF; the file name moves to the status line; "Change file" leaves the overview. One picker takes the STEP and its .ipt.
     - Machine view on Machining: a Part / Machine switch over the model; a setup chip turns the view so the spindle is on top (a lathe part lies across the screen); tapping a tool row (a button, at least 32 px tall) lights the faces it cuts in that setup and shows it in a placeholder spindle (cutter diameter to scale, the rest generic); a lathe part shows a placeholder chuck.
   - **Later:** tool-access check after steps and slots (Morgan, review note), research first; cutaway and dimensions on the part: Soon, after A and B; view cube: no.
+- **Slice A built (2026-11-11, branch `ui-fixes-a-model`):** UI_STYLE "Selected finding" and D-017 amended; builder defaults in the spec's S1 section.
 - **Amends, when built:** UI_STYLE "Selected finding" (a row lights the finding it shows; other faces grey, not their colours); D-042 ("Change file" leaves the overview; one Open… picker); D-023 (the Machine view turns the view per setup and lights a tool's faces); D-017 (pins hidden while the part moves).
 - **Why:** Morgan's 4 photos of the work copy (2026-11-10): rotating was "the hardest currently"; a row with many copies lit the whole part. Round 1 and the review settled each choice; an adversarial review and two fresh mock-up checks ($1.42 measured) found the folded-row cause, the lag on wheel and keys, the arrow-key clash, trackpad moves and the lathe view.
 
@@ -603,3 +605,11 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - The part turns freely (Open question 2, b): Morgan, in chat after the approval: "Oh wait no I want the free rotation not the turn table". Built on three's `ArcballControls` (same package, no new dependency), which replaces today's orbit about the file's Y axis.
   - The page's additions stand: pins return about 0.5 s after a move on big parts (CTC 02); 600 ms after a key; any selection greys the rest, PDF pictures included; stepping frames each finding; view buttons move under the model at 500 px and below.
 - **Why:** 41 of 42 sample parts have part axes that differ from the file's (26 with part +Z = file −Z), so Top in part axes would show the underside; the orbit-axis cause was confirmed with three.js 0.187 in Node. Measured before: CTC 02 drag frame gap p90 344-466 ms, pin placement 420 ms a frame.
+
+## D-080 UI fixes slice A approved; merge when ready
+
+- **Numbered D-080:** recorded first as D-079 on the slice A branch; renumbered before merging because the steps and slots branch (PR #50) had already recorded its own D-079.
+
+- **Status:** Accepted (2026-11-11). Morgan, in chat, after the [demo](https://claude.ai/artifact/KzexiP7jM8zQdB3RQox29M): "Ok I approve of the demo. You may merge whenever you are ready to do so" (PR #51).
+- **Decision:** slice A (spec `docs/specs/ui-fixes.md` S1) merges as built, with the builder defaults in the spec's S1 "Built" list. The reply named neither open call, so both stand as built (WS-02): the arrow keys move the camera the arrow's way; the drag frame target of 50 ms stays a target, judged on the work copy's GPU (measured here in software WebGL: p90 192-196 ms, page script 0.22-0.27 s per 40-move drag, against 10.9-15.2 s on main). Slice B starts in a new session after the merge.
+- **Why:** the demo showed the slice working; `npm run check` passed (662 s), a fresh review's 8 findings were fixed, and each new check failed on main or on a planted bug.

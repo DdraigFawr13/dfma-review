@@ -108,14 +108,41 @@ test("test_export_pdf", async ({ page, browser }, testInfo) => {
   const path = testInfo.outputPath("report.pdf");
   await download.saveAs(path);
   expect(download.suggestedFilename()).toBe("report_sample-dfma-review.pdf");
-  const row = result.rows.find((r: Result) => r.findings.includes("F2"));
+  // the shown finding's faces (UI fixes A5, D-076): the row is at F2
   expect(await page.evaluate("window.__dfma.highlightedFaces()")).toEqual(
-    [...new Set<number>(result.findings.filter((f: Result) => row.findings.includes(f.id)).flatMap((f: Result) => f.faces))].sort((a, b) => a - b));
+    [...result.findings.find((f: Result) => f.id === "F2").faces].sort((a: number, b: number) => a - b));
   expect(await page.evaluate("window.__dfma.cameraTarget()")).toEqual(camera);
   await expect(page.getByTestId("row-F1")).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByTestId("row-detail")).toContainText("F2 · hole-2 · 2 of 2");
 
+  // UI fixes A13: the triad pass leaves the renderer as it was, and no PDF picture holds the triad
+  expect(await page.evaluate(() => window.__dfma.renderState())).toEqual({ autoClear: true, scissorTest: false });
+
   const pdf = readPdf(path);
+  {
+    const jpeg = Buffer.from(pdf.image(pdf.pages[1].xobjects[0]), "latin1").toString("base64");
+    const hits = await page.evaluate(async (b64) => {
+      const img = new Image();
+      img.src = `data:image/jpeg;base64,${b64}`;
+      await img.decode();
+      const c = document.createElement("canvas");
+      c.width = img.width;
+      c.height = img.height;
+      const g = c.getContext("2d")!;
+      g.drawImage(img, 0, 0);
+      const px = g.getImageData(0, img.height - 128, 128, 128).data; // the bottom-left corner, where the triad would be
+      // The triad's X and Y arrows are red #c62828 and green #2e7d32; every face not selected is grey (A5), so a
+      // clearly red or green pixel there is the triad. Not ±8 of its colours: JPEG blurs its 1 px lines further
+      // (a picture with the triad drawn in had 0 pixels within ±8; builder default, spec S1).
+      let n = 0;
+      for (let i = 0; i < px.length; i += 4) {
+        const [r, g2, b] = [px[i], px[i + 1], px[i + 2]];
+        if ((r - Math.max(g2, b) > 50) || (g2 - Math.max(r, b) > 30)) n++;
+      }
+      return n;
+    }, jpeg);
+    expect(hits).toBe(0);
+  }
   const first = flat(pdf.pages[0].text);
   const stock = (result.stock.size_in as number[]).map((v) => v.toFixed(3)).join(" × "); // the part's own axes, as the screen shows it
   for (const text of ["DFMA Review report", "report_sample.step", `${result.findings.length} findings: 4 Fix, 4 Review.`,

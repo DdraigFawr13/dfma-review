@@ -26,12 +26,23 @@
     <p id="status" class="status" role="status" aria-live="polite">Choose a STEP file to start. Add its .ipt too, if you have one.</p>
     <main class="cols">
       <section class="viewer" aria-label="3D view of the part">
-        <canvas data-testid="viewer-canvas" id="viewer" role="img" aria-label="3D model of the part"></canvas>
+        <div class="stage">
+          <canvas data-testid="viewer-canvas" id="viewer" tabindex="0" role="application" aria-label="3D model of the part. Arrows rotate, Shift and arrows move, plus and minus zoom, H goes home."></canvas>
+          <!-- UI fixes A2: views in the file's axes (D-078) -->
+          <div class="views" id="views" role="group" aria-label="Views" hidden>
+            <button type="button" class="chip" data-testid="view-home" id="view-home">Home</button>
+            <button type="button" class="chip" data-testid="view-front" id="view-front">Front</button>
+            <button type="button" class="chip" data-testid="view-top" id="view-top">Top</button>
+            <button type="button" class="chip" data-testid="view-right" id="view-right">Right</button>
+            <button type="button" class="chip" data-testid="view-iso" id="view-iso">Iso</button>
+          </div>
+          <span class="triad-caption" id="triad-caption" aria-hidden="true" hidden>Part axes</span>
+        </div>
         <!-- review-steps S3 (frame r3-mach): one chip per setup over the model, on the Machining step only -->
         <div class="setupchips" role="group" aria-label="Setups" id="setup-chips" data-testid="setup-chips" hidden></div>
         <div class="viewer-note" id="viewer-note" data-testid="viewer-note"><span class="spin" id="spin" aria-hidden="true" hidden></span><span id="viewer-note-text">The part shows here once it's read.</span></div>
         <div class="viewfoot">
-          <p class="hint">Drag to rotate, scroll to zoom, right-drag to pan. By keyboard or touch, the lists and chips pick what the model shows.</p>
+          <p class="hint">Drag to rotate. Middle-drag or Shift + drag to move. The wheel zooms to the mouse. Tab to the model for keys.</p>
           <!-- review-steps S2 (D-014 amended by D-042): the Show OK switches, on the Features step only -->
           <div class="showok" role="group" aria-labelledby="show-ok-label" data-testid="show-ok" id="show-ok" hidden>
             <span class="lbl" id="show-ok-label">Show OK</span>
