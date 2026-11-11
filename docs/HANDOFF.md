@@ -26,7 +26,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-11 Spec UI fixes A and B drafted (`docs/specs/ui-fixes.md`, branch `spec-ui-fixes`): before-numbers on CTC 02 (drag frame gap p90 344-466 ms; pin placement 420 ms a frame, drawing 3.3 ms); found the orbit-axis bug (OrbitControls built Y-up, camera held Z-up) and that 41 of 42 sample parts' part axes differ from the file's. Fresh checks next, then Morgan's approval.
+- 2026-11-11 Spec UI fixes A and B written (`docs/specs/ui-fixes.md`, branch `spec-ui-fixes`): before-numbers on CTC 02 (drag frame gap p90 344-466 ms; pin placement 420 ms a frame, drawing 3.3 ms); orbit-axis bug confirmed in three.js; 41 of 42 sample parts' part axes differ from the file's. 3 fresh checks, 2 re-checks and fix passes done; last narrow check running; then the approval page. Morgan chose D-077 (a): CI change on branch `ci-docs-only-light`.
 - Earlier (UI fixes plan, S8b, tessellation, harness v4.14.0, #47): archive "Moved 2026-11-11 (spec session)".
 
 ## Next
