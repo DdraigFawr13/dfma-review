@@ -1,1 +1,1 @@
-{"date":"2026-11-11","session":"0c61ab42-db7a-51d9-9700-8613942b37eb","commit_calls":1,"counts":{}}
+{"date":"2026-11-11","session":"0c61ab42-db7a-51d9-9700-8613942b37eb","commit_calls":2,"counts":{"gate.ci":1},"warnings":[{"ts":"2026-11-11T06:29:22.768Z","check":"gate.ci","outcome":"warn","detail":"pushed origin/plan-ui-fixes-000a at 06:28 UTC and scheduled no CI check: schedule one about 5 minutes out (send_later) and read the check runs then; don't promise a CI notice"}]}
