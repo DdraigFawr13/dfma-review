@@ -14,14 +14,15 @@ Shared rules come from AI-Master-Instructions and load through CLAUDE.md (`.clau
 
 ## Local checks (run before pushing)
 
-- Every push: `npm run check` at the repo root (drift check, NIST unpack, web type check and vitest, web build and test build, parity against the frozen key, browser e2e, timed tests). Python is retired (S8b, D-074); the EDMR tests run by `npm --prefix web run edmr` before a PR is marked ready.
+- Every push that changes code: `npm run check` at the repo root (drift check, NIST unpack, web type check and vitest, web build and test build, parity against the frozen key, browser e2e, timed tests). A push made only of Markdown, `docs/` and `mockups/` runs `npm run drift` alone, as CI does (D-077). Python is retired (S8b, D-074); the EDMR tests run by `npm --prefix web run edmr` before a PR is marked ready when `web/src/engine/` or the web packages changed (D-077).
+- Morgan checks each slice by using it and says what works and what to change (D-077); that is not a substitute for the checks above.
 - Time budget (D-073): `npm run check` under 900 s here (measured 421 s on 2026-11-11, S8b, with the timed vitest lane), and CI under its 20-minute `timeout-minutes`. Report the check time against it; over budget means find the slow step (test-design skill, "Time budgets").
 - Mark any test that asserts a wall-clock limit `timed` (Vitest test name, or Playwright `{ tag: "@timed" }`), so the timed run covers it.
 - Cloud sessions: Node 22 is preinstalled; set `DFMA_CHROMIUM` to the preinstalled Chromium (`/opt/pw-browsers/chromium-*/chrome-linux64/chrome`).
 
 ## What CI runs
 
-- **CI** (`ci.yml`): one Linux job, Node 22, runs `npm run check` on every PR update (non-draft) and `main` push. Markdown and `docs/**` changes skip it.
+- **CI** (`ci.yml`): one Linux job, Node 22, runs `npm run check` on every PR update (non-draft) and `main` push; when `scripts/ci-scope.sh` finds only Markdown, `docs/` and `mockups/` changed, the job runs only the drift check and still reports (D-077).
 - No deploys yet.
 
 ## Project rules
