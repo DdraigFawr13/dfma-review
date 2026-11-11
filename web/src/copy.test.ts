@@ -28,7 +28,7 @@ test("the test build says Test copy and the work build does not", () => {
   for (const page of [testPage, workPage]) {
     expect(page).toContain("Your file stays on this computer. Nothing is uploaded.");
     expect(page).not.toContain("deleted straight after");
-    expect(page).toContain('<div class="field" id="ipt-field">'); // S7: the .ipt field is back, shown
+    expect(page).toContain('<div class="field" id="example-field">'); // UI fixes B1: the examples sit where the .ipt field was
     expect(page).toContain(">Choose a STEP file to start. Add its .ipt too, if you have one.<");
     expect(page).toContain('href="licences.html"');
   }

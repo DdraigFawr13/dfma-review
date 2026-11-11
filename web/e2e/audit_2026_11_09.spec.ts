@@ -87,7 +87,6 @@ test("test_f1_f12_no_internal_ids_and_american_spelling_on_screen_or_in_the_pdf"
   texts.push(...(await exportPdf(page, testInfo)));
   // A turned part with an inside groove: its setup's reasons (findings.ts named D-026 there)
   await openStep(page, "part");
-  await page.getByTestId("change-file").click();
   await page.getByTestId("upload-process").selectOption("turn");
   await load(page, resolve(PARTS, "shaft_with_groove_and_bore.step"));
   await openStep(page, "machining");
@@ -153,11 +152,11 @@ test("test_f3_error_says_how_to_fix_it_beside_the_file_field", async ({ page }) 
   await expect(error).toHaveText("This is not a STEP file this tool can read. Export it again as .step or .stp from your CAD.", { timeout: 30_000 });
   await expect(page.locator("#error-next")).toBeHidden();
   expect(await page.getByTestId("upload-file").getAttribute("aria-describedby")).toBe("error");
-  // right under the STEP file field: after it, before the .ipt field and the settings
+  // right under the STEP file field: after it, before the examples and the settings
   expect(
     await page.evaluate(() => { const e = document.getElementById("error")!;
-      const step = document.getElementById("file")!.closest(".field"), ipt = document.getElementById("ipt")!.closest(".field")!;
-      return e.previousElementSibling === step && !!(e.compareDocumentPosition(ipt) & Node.DOCUMENT_POSITION_FOLLOWING); }),
+      const step = document.getElementById("start-open")!.closest(".field"), next = document.getElementById("example-field")!;
+      return e.previousElementSibling === step && !!(e.compareDocumentPosition(next) & Node.DOCUMENT_POSITION_FOLLOWING); }),
   ).toBeTruthy();
   await page.addInitScript("window.__dfmaFakeService = true");
   await page.evaluate("window.__dfmaFakeService = true"); // the page is already open

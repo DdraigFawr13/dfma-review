@@ -2,7 +2,8 @@
 // changes while a file is loaded. No submit button (spec S1, settled at build).
 // The review reads as five steps, one shown at a time, named in the address (review-steps spec J1, J2; D-042, D-045).
 
-import { NOT_WORKED_OUT, START_STATUS, noChecksRun, notCheckedLine, planNotWorkedOut } from "./notrun";
+import { EXAMPLES } from "./examples";
+import { NOT_WORKED_OUT, noChecksRun, notCheckedLine, planNotWorkedOut } from "./notrun";
 import { analyze, ApiError, type Analysis, type Material, type Process } from "./api";
 import { blendKinds, renderBlends, renderHoleFeatures, renderPlan, renderThreads, setupHead, type Pick } from "./findings";
 import { formatSize } from "./format";
@@ -18,7 +19,6 @@ function byId<T extends HTMLElement>(id: string): T {
 }
 
 const fileInput = byId<HTMLInputElement>("file");
-const iptInput = byId<HTMLInputElement>("ipt");
 const processSelect = byId<HTMLSelectElement>("process");
 const materialSelect = byId<HTMLSelectElement>("material");
 const status = byId<HTMLParagraphElement>("status");
@@ -48,14 +48,15 @@ let run = 0;
 /** What is selected (review-steps spec Design "Parts"): a row and the finding it shows, or one thing by its id
  *  ("pass:wall-3", "setup:1", "thread:t1", "hf:hf-3", "hfh:hf-3.1", "bl:bl-2"). */
 type Sel = { kind: "row"; row: string; at: number }
-  | { kind: "finding" | "pass" | "setup" | "thread" | "hf" | "hfh" | "bl"; id: string } | null;
+  | { kind: "finding" | "pass" | "setup" | "op" | "thread" | "hf" | "hfh" | "bl"; id: string } | null;
 let sel: Sel = null;
 let openRow: string | null = null; // the Features row shown open (a passed feature can be selected inside it)
 let rowFilter: RowFilter = "issues";
 let shownFile: File | null = null;
 let shownIpt: File | null = null;
-// The same words as settings.MSG_IPT_NEEDS_STEP in the service (I1 spec Builder defaults)
-const NEEDS_STEP = "Add the STEP export of this part: the shape is read from the STEP";
+let stepFile: File | null = null; // what was picked or loaded as an example: a material or process change reads it again
+let iptFile: File | null = null;
+let machine = false; // UI fixes B3: the Machine view, on the Machining step only
 
 declare global {
   interface Window {
@@ -77,6 +78,8 @@ declare global {
       placements(): number;
       faceColours(): Record<number, string>;
       barColours(): Record<string, { colour: string; opacity: number }>;
+      spindle(): { diameter_mm: number } | null;
+      chuck(): boolean;
     };
   }
 }
@@ -97,6 +100,8 @@ window.__dfma = {
   placements: () => viewer.placements(),
   faceColours: () => viewer.faceColours(),
   barColours: () => viewer.barColours(), // test hook: drawn in a kind's "checked" colour
+  spindle: () => viewer.spindle(), // test hooks (UI fixes B3): the placeholder spindle and chuck
+  chuck: () => viewer.chuck(),
   // test hook: the result on screen, without the view buffers the worker adds (port J4, J6b; the test build adds
   // wasm_bytes and worker)
   analysis: () => shown && { ...shown, faces: shown.faces.map(({ view: _view, ...f }) => f) },
@@ -135,7 +140,7 @@ function selId(): string | null {
 
 function kindOf(id: string): Exclude<NonNullable<Sel>, { kind: "row" }>["kind"] {
   const k = id.split(":")[0];
-  return (["pass", "setup", "thread", "hf", "hfh", "bl"].includes(k) ? k : "finding") as "finding";
+  return (["pass", "setup", "op", "thread", "hf", "hfh", "bl"].includes(k) ? k : "finding") as "finding";
 }
 
 /** What the viewer shows for a selection in `result`, or null when it isn't there (a new result of the same file:
@@ -176,6 +181,11 @@ function stillThere(result: Analysis, id: string | null): Pick | null {
     const b = result.inventor?.blends?.find((x) => `bl:${x.id}` === id);
     return b?.step_faces.length ? { id, faces: b.step_faces } : null;
   }
+  if (id.startsWith("op:")) { // B3: the faces one tool cuts in one setup
+    const m = /^op:(\d+):(.+)$/.exec(id);
+    const faces = m ? [...new Set(result.operations.filter((o) => o.setup === Number(m[1]) && o.tool === m[2]).flatMap((o) => o.faces))] : [];
+    return faces.length ? { id, faces } : null;
+  }
   if (id.startsWith("setup:")) {
     const s = result.setups[Number(id.slice(6))];
     const i = Number(id.slice(6));
@@ -187,14 +197,92 @@ function stillThere(result: Analysis, id: string | null): Pick | null {
 /** Show the selection on the model and redraw the lists. */
 function apply(frame = true): void {
   viewer.select(shown ? pickOf(shown, sel) : null, frame);
+  syncMachine();
   showFindings(shown, "");
 }
 
 /** Select a passed feature, a setup or an .ipt row by its id (tapping the selected one again clears it). */
-function select(f: Pick): void {
+function select(f: Pick, frame = true): void {
   sel = selId() === f.id ? null : { kind: kindOf(f.id), id: f.id };
   openRow = null; // a setup or .ipt selection replaces the open row
-  apply();
+  apply(frame);
+}
+
+// --- Machine view (UI fixes B3) ---
+
+type Vec3 = [number, number, number];
+
+/** A setup's direction name ("+Z", "-X") in file coordinates, through the part's own axes (plan.ts ORDER). */
+function directionOf(name: string): Vec3 | null {
+  const axis = shown?.part.frame?.["xyz"["XYZ".indexOf(name[1])] as "x" | "y" | "z"];
+  if (!axis) return null;
+  const sign = name[0] === "+" ? 1 : -1;
+  return [sign * axis[0], sign * axis[1], sign * axis[2]];
+}
+
+/** The camera for setup `i` in the Machine view: its direction up, or the turning axis across the screen. */
+function lookSetup(i: number): void {
+  const s = shown?.setups[i];
+  if (!shown || !s) return;
+  if (s.direction === "turn") { if (shown.turn_axis) viewer.showLathe(shown.turn_axis as Vec3); return; }
+  const d = directionOf(s.direction);
+  if (d) viewer.showSetup(d);
+}
+
+/** A setup picked (chip or plan box): selected as before; in the Machine view the camera goes to its side. */
+function selectSetup(p: Pick): void {
+  select(p);
+  if (machine && sel?.kind === "setup" && sel.id === p.id) lookSetup(Number(p.id.slice(6)));
+}
+
+/** A tool row: lights the faces it cuts in that setup, with the spindle for a tool that has a diameter. */
+function selectTool(setup: number, tool: string): void {
+  const id = `op:${setup}:${tool}`;
+  select({ id, faces: shown ? stillThere(shown, id)?.faces ?? [] : [] }, false); // the setup's view stays, spindle in sight
+}
+
+let toolsKey = "";
+/** The placeholder spindle and chuck follow the Machine view and the tool row selected (B3). */
+function syncMachine(): void {
+  const on = machine && !!shown && step === "machining";
+  const lathe = !!shown?.turn_axis && shown.setups.length === 1 && shown.setups[0].direction === "turn";
+  const chuck = on && lathe ? (shown!.turn_axis as Vec3) : null;
+  let spindle: { diameterMm: number; axis: Vec3; faces: number[] } | null = null;
+  if (on && !lathe && sel?.kind === "op") {
+    const m = /^op:(\d+):(.+)$/.exec(sel.id);
+    const tool = m && shown!.tools.find((t) => t.id === m[2]);
+    const axis = m && directionOf(shown!.setups[Number(m[1])]?.direction ?? "");
+    const faces = stillThere(shown!, sel.id)?.faces ?? [];
+    if (tool && tool.diameter_in !== null && axis && faces.length) spindle = { diameterMm: tool.diameter_in * 25.4, axis, faces };
+  }
+  const key = JSON.stringify([chuck, spindle]);
+  if (key === toolsKey) return;
+  toolsKey = key;
+  viewer.setChuck(chuck);
+  viewer.setSpindle(spindle);
+}
+
+/** Part or Machine. Leaving Machine drops the spindle and chuck and goes Home. */
+function setMachine(on: boolean): void {
+  if (machine === on) return;
+  machine = on;
+  byId<HTMLInputElement>(on ? "mode-machine" : "mode-part").checked = true;
+  if (!on && sel?.kind === "op") sel = null;
+  if (on) {
+    if (sel?.kind === "setup") lookSetup(Number(sel.id.slice(6)));
+    else if (shown?.setups.length === 1 && shown.setups[0].direction === "turn") lookSetup(0);
+  } else viewer.showView("home");
+  syncMachine();
+  viewer.select(shown ? pickOf(shown, sel) : null, false);
+  showFindings(shown, "");
+}
+
+/** What the model's overlays show: the setup chips and the Part / Machine switch on Machining; the view buttons not in Machine. */
+function overlays(): void {
+  const here = !!shown && step === "machining" && !!shown.setups.length;
+  byId("setup-chips").hidden = !here;
+  byId("mode-switch").hidden = !here;
+  byId("views").hidden = !shown || machine;
 }
 
 const rowHandlers = {
@@ -264,15 +352,16 @@ function showFindings(result: Analysis | null, message: string): void {
   }
   // S3 (frame r3-mach, D-049): each row's findings placed in a setup, the whole part or no setup
   const placed = result ? placeRows(result) : new Map();
-  renderPlan(byId("plan"), byId("plan-count"), result, select, selected,
-    (where) => (placed.get(where) ?? []).map((p: Placed) => placedLine(p, openPlaced)));
+  renderPlan(byId("plan"), byId("plan-count"), result, selectSetup, selected,
+    (where) => (placed.get(where) ?? []).map((p: Placed) => placedLine(p, openPlaced)),
+    machine ? { onTool: selectTool } : null);
   const later = !!result && planNotWorkedOut(result); // the browser copy until S3 (D-057)
   byId("plan-notrun").hidden = !later;
   byId("plan-notrun").textContent = later ? NOT_WORKED_OUT : "";
   byId("plan-panel").hidden = later || !result?.machine;
   byId("plan-none").hidden = later || !result || !!result.machine;
   if (result) renderSetupChips(byId("setup-chips"), result, result.setups.map((s, i) => setupHead(s, i).replace(", about the turning axis", "")),
-    selected, (i) => select({ id: `setup:${i}`, faces: stillThere(result, `setup:${i}`)?.faces ?? [] }));
+    selected, (i) => selectSetup({ id: `setup:${i}`, faces: stillThere(result, `setup:${i}`)?.faces ?? [] }));
   // The .ipt groups at the foot of the Features step (D-049): one folding row each, its tally in the approved words
   const inv = result?.inventor;
   byId("ipt-groups").hidden = !inv;
@@ -294,15 +383,12 @@ function showFindings(result: Analysis | null, message: string): void {
   if (focusId && !side.contains(document.activeElement)) {
     side.querySelector<HTMLElement>(`[data-testid="${focusId}"]`)?.focus({ preventScroll: true });
   }
-  byId("setup-chips").hidden = !result || step !== "machining" || !result.setups.length;
+  overlays();
   const counts = stepCounts(byId("step-counts"), result);
   tabs.get("features")!.setAttribute("aria-label", counts ? `2 Features: ${counts}` : "2 Features");
   byId<HTMLButtonElement>("export-pdf").disabled = !result;
   byId("export-pdf").hidden = !result;
-  byId("views").hidden = !result;
   byId("triad-caption").hidden = !result;
-  byId("top-file").hidden = !result;
-  byId("top-file").textContent = result?.part.name ?? "";
   for (const s of STEPS) if (s !== "part") { // focusable while closed, with the reason (audit F19)
     const tab = tabs.get(s)!;
     if (result) { tab.removeAttribute("aria-disabled"); tab.removeAttribute("aria-describedby"); tab.removeAttribute("title"); }
@@ -312,7 +398,7 @@ function showFindings(result: Analysis | null, message: string): void {
   startForm.hidden = !!result;
   // Process and material: in the form, then in the overview. Moved only when that changes, so a select keeps focus.
   if (settings.parentElement !== (result ? byId("settings-slot") : startForm)) {
-    (result ? byId("settings-slot") : byId("ipt-field")).insertAdjacentElement(result ? "beforeend" : "afterend", settings);
+    (result ? byId("settings-slot") : byId("example-field")).insertAdjacentElement(result ? "beforeend" : "afterend", settings);
   }
   if (!result) return;
   renderOverview(byId("overview-cards"), byId("fix-first"), result, (s) => showStep(s));
@@ -362,7 +448,9 @@ function showStep(name: Step, focus = true): void {
   // Show OK and the OK tints on Features only (J3); the setup chips on Machining only (J4)
   byId("show-ok").hidden = !shown || name !== "features" || noChecksRun(shown);
   viewer.setOkStep(!!shown && name === "features");
-  byId("setup-chips").hidden = !shown || name !== "machining" || !shown.setups.length;
+  if (name !== "machining") setMachine(false); // leaving Machining: spindle and chuck go, Home view (B3)
+  syncMachine();
+  overlays();
   if (focus) [...byId(`page-${name}`).querySelectorAll<HTMLElement>("h2")].find((h) => h.offsetParent !== null)?.focus();
 }
 
@@ -401,18 +489,9 @@ function viewerNote(text: string | null, busy = false): void {
 }
 
 async function analyse(): Promise<void> {
-  const file = fileInput.files?.[0] ?? null;
-  const ipt = iptInput.files?.[0] ?? null;
-  if (!file) {
-    // D-034: an .ipt picked first waits for its STEP
-    if (ipt) status.textContent = "Now choose the STEP file that Inventor exported from this .ipt.";
-    return;
-  }
+  const file = stepFile, ipt = iptFile;
+  if (!file) return;
   const mine = ++run;
-  if (/\.ipt$/i.test(file.name)) { // the shape comes from the STEP (D-031): no upload
-    showError(NEEDS_STEP);
-    return;
-  }
   const both = ipt ? ` with ${ipt.name}` : "";
   status.textContent = `Analyzing ${file.name}${both}…`;
   error.hidden = true;
@@ -438,6 +517,8 @@ async function analyse(): Promise<void> {
     shownFile = file;
     shownIpt = ipt;
     if (!samePart) {
+      machine = false; // a new part opens in the Part view (B3)
+      byId<HTMLInputElement>("mode-part").checked = true;
       rowFilter = "issues"; // a new part opens on its issues, no row open
       openRow = null;
       byId<HTMLDetailsElement>("report-assumptions").open = false; // folded for each new part (spec J5)
@@ -486,24 +567,103 @@ function clearPart(): void {
   showStep("part", false);
 }
 
-/** "Change file" (spec Design "Parts"): the start form again; process and material keep their values, both file
- *  inputs clear, an analysis in flight is dropped and the selection clears. */
-byId("change-file").addEventListener("click", () => {
-  run++;
-  fileInput.value = "";
-  iptInput.value = "";
-  error.hidden = true;
-  errorNext.hidden = true;
-  fileInput.removeAttribute("aria-describedby");
-  clearPart();
-  viewerNote("The part shows here once it's read.");
-  status.textContent = START_STATUS;
-  startForm.querySelector("h2")!.focus();
+/** The one picker (UI fixes B2): a STEP and, if there is one, its .ipt, sorted by extension. */
+const PICK_ERROR = "Choose one STEP file and, if you have it, its .ipt.";
+function pick(list: File[]): void {
+  if (!list.length) return;
+  const ipts = list.filter((f) => /\.ipt$/i.test(f.name)), steps = list.filter((f) => !/\.ipt$/i.test(f.name));
+  if (list.length > 2 || steps.length > 1 || ipts.length > 1) {
+    run++;
+    stepFile = iptFile = null;
+    showError(PICK_ERROR);
+    return;
+  }
+  if (!steps.length) { // D-034: an .ipt picked alone waits for its STEP
+    status.textContent = "Now choose the STEP file that Inventor exported from this .ipt.";
+    return;
+  }
+  stepFile = steps[0];
+  iptFile = ipts[0] ?? null;
+  void analyse();
+}
+
+fileInput.addEventListener("change", () => {
+  const list = [...(fileInput.files ?? [])];
+  fileInput.value = ""; // the same files can be picked again
+  pick(list);
 });
+byId("open-button").addEventListener("click", () => fileInput.click());
+byId("start-open").addEventListener("click", () => fileInput.click());
+
+// --- Examples (UI fixes B1): the start form's buttons and the top bar's menu ---
+
+const exButton = byId<HTMLButtonElement>("examples-button");
+const exMenu = byId("examples-menu");
+const exItems: HTMLButtonElement[] = [];
+function closeMenu(refocus: boolean): void {
+  exMenu.hidden = true;
+  exButton.setAttribute("aria-expanded", "false");
+  if (refocus) exButton.focus();
+}
+function openMenu(): void {
+  exMenu.hidden = false;
+  exButton.setAttribute("aria-expanded", "true");
+  exItems[0]?.focus();
+}
+async function openExample(name: string): Promise<void> {
+  const example = EXAMPLES.find((e) => e.name === name);
+  if (!example) return;
+  closeMenu(true);
+  const mine = ++run;
+  let file: File;
+  try {
+    const res = await fetch(`${(import.meta as unknown as { env: { BASE_URL: string } }).env.BASE_URL}examples/${name}.step`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    file = new File([await res.blob()], `${name}.step`);
+  } catch (e) {
+    if (mine === run) showError("The example could not be loaded. Try again.", true);
+    console.error(e);
+    return;
+  }
+  if (mine !== run) return; // a newer pick replaced it
+  processSelect.value = example.process; // Material stays as it is
+  stepFile = file;
+  iptFile = null;
+  await analyse();
+}
+for (const e of EXAMPLES) {
+  const item = document.createElement("button");
+  item.type = "button";
+  item.setAttribute("role", "menuitem");
+  item.tabIndex = -1;
+  item.dataset.testid = `examples-item-${e.name}`;
+  item.textContent = e.name;
+  item.addEventListener("click", () => void openExample(e.name));
+  exMenu.append(item);
+  exItems.push(item);
+  const start = document.createElement("button");
+  start.type = "button";
+  start.className = "ghostbtn";
+  start.dataset.testid = `example-${e.name}`;
+  start.textContent = e.name;
+  start.addEventListener("click", () => void openExample(e.name));
+  byId("example-list").append(start);
+}
+exButton.addEventListener("click", () => (exMenu.hidden ? openMenu() : closeMenu(true)));
+exMenu.addEventListener("keydown", (e) => {
+  const at = exItems.indexOf(document.activeElement as HTMLButtonElement);
+  if (e.key === "Escape") { e.preventDefault(); closeMenu(true); return; }
+  if (e.key === "Tab") { closeMenu(false); return; }
+  const to = e.key === "ArrowDown" ? (at + 1) % exItems.length : e.key === "ArrowUp" ? (at + exItems.length - 1) % exItems.length
+    : e.key === "Home" ? 0 : e.key === "End" ? exItems.length - 1 : -1;
+  if (to >= 0) { e.preventDefault(); exItems[to].focus(); }
+});
+document.addEventListener("click", (e) => {
+  if (!exMenu.hidden && !(e.target as Element).closest(".exwrap")) closeMenu(false);
+});
+for (const id of ["mode-part", "mode-machine"]) byId<HTMLInputElement>(id).addEventListener("change", (e) => setMachine((e.target as HTMLInputElement).value === "machine"));
 startForm.addEventListener("submit", (e) => e.preventDefault());
 
-fileInput.addEventListener("change", analyse);
-iptInput.addEventListener("change", analyse);
 processSelect.addEventListener("change", analyse);
 materialSelect.addEventListener("change", analyse);
 

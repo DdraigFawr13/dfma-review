@@ -175,6 +175,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 ## D-023 Machine plan panel, Passed list and selectable setups
 
 - **Status:** Accepted (2026-11-08). The Machine plan panel first; the two additions after their [mock-up](https://claude.ai/artifact/ACtTrQnaA8qUkRzZkUgMRX) (Morgan: "Approved, merge when ready").
+- **Amended by D-076 (slice B, built 2026-11-11):** the Machining step has a Part / Machine switch over the model; in Machine a setup puts its direction up on screen, and a tool row lights the faces it cuts with a placeholder spindle (a chuck on a lathe part). Part is as before.
 - **Amended by D-042, built 2026-11-09:** the Machine plan panel is the Machining step; the Passed list is the Features step's Passed chip (rows by kind and check, each feature's math in the open row).
 - **Decision:**
   - Accepted: the Machine plan panel as on the [mock-up](https://claude.ai/artifact/5Cmq85bG5CPpi7oZ3oZHGW) (`mockups/plan-panel.html`).
@@ -331,6 +332,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 ## D-042 Review screen redesign: a step-by-step review
 
 - **Status:** Accepted (2026-11-09; Morgan, on the [round 3 page](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8): "Approved with the changes I wrote" and "The cost section isn't showing any total but otherwise go with what you recommend"). Not built yet: the build is its own slice, planned with `write-spec` after the Inventor I2+I3 work. Until then UI_STYLE describes the screen as built. When built, it amends D-012 (layout and verdict line), D-014 (legend), D-017 (severity words) and D-023 (where Plan and Passed sit).
+- **Amended by D-076 (slice B, built 2026-11-11):** one Open… picker in the top bar takes a STEP and its .ipt together; "Change file" and the file name in the bar are gone; Examples ▾ loads four sample parts.
 - **Amended by D-053 (2026-11-09):** the setup count's reason reads "Why n setups:" on its own line (F31); Fix first stays last on the overview, but the cards column no longer stretches, so no blank band sits above it (F21).
 - **Decision:**
   - Steps across the top: Part · Features · Machining · Cost · Report, with Back / Next at the foot of each. The Part step is the start form; once the part is read it becomes the overview (counts per step, features checked, biggest cost drivers, Fix first) with "Change file".

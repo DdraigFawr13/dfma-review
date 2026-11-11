@@ -1,0 +1,1 @@
+{"date":"2026-11-11","session":"f346b5ea-ef26-5dde-93f3-fbfa0ffd4d4c","commit_calls":1,"counts":{"shell.pkill":1},"warnings":[{"ts":"2026-11-11T14:56:22.368Z","check":"shell.pkill","outcome":"ask","detail":"stop runs by PID from `ps -eo pid,args`"}]}
