@@ -25,7 +25,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-11 S8b integration (WIP, not green): Python deleted (service/, tests/service, tests/e2e, environment.yml, check.py, make_demo.py, add_zoom.py, parity key.py, grading and harness scripts). Node: root `npm run check`; web vitest 900 of 901 pass; the failing one is plan.test.ts "angled holes square to their face are review" (5201 ms, 5 s limit): find the cause before any timeout change (VER-04). EDMR vitest moved to `npm --prefix web run edmr`. Still to run after that: parity, e2e, timed.
+- 2026-11-11 S8b (PR #43, draft): Python retired; `npm run check` at the root passes (exit 0): drift, NIST unpack, web check (901 vitest), build and test build, parity quick 122 of 122 the same (4 shards, 99.7 s), e2e 101 passed, timed 4 passed. Not run yet: `npm --prefix web run edmr` (114 EDMR tests, about 9 min) and `parity:full`; run both before the PR is marked ready. Known: parity:full lists bn_ball6 and nasty_cheese as different (D-073, tessellation); plan.test.ts angled-holes test has a 30 s limit (engine 5.2 s vs Python 3.8 s).
 - Status page for Morgan: https://claude.ai/artifact/MgtFDYNREZzpeUP9b4cdn5 (update before approval).
 
 ## Next
