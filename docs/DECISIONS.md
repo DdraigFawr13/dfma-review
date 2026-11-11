@@ -515,3 +515,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-10). Morgan, in chat: "Skip the rule. End the testing and analyze the results so far. Also when doing runs like this I want to make sure to receive at least some indication of progress so we know it is not hung up. Merge when ready to do so".
 - **Decision:** S7's full-set parity was stopped after 64 min of CPU with no result (it printed only at the end). PR #41 merges on the quick parity (122 of 122) and green CI; the spec's "full set before ready" rule is waived for S7 only. From now on the parity run prints one line per file (`parity <set> [n/N] <status> <s> (total <s>): <file>`), and a long run is watched on those lines.
 - **Why:** Morgan's call; S7's new code runs only with an `.ipt`, and the full set's extra files have none.
+
+## D-071 S8 before the UI list; faster checks on the S8 branch
+
+- **Status:** Accepted (2026-11-11). Morgan, in chat: "yes do both on the S8 branch and do what you recommend. If retiring python reduces the work load for testing further changes then do that first".
+- **Decision:** S8 (retire Python) comes before the UI list (HANDOFF 000a), because it drops the Python service tests, the service-copy e2e run and the Python key from every later check. The parity run is split across processes and the key cache stops rebuilding on harness-only edits, on the S8 branch. **Proposed, waiting for Morgan:** the S8 file list and its split into S8a (speed-ups, frozen key, scorer and Inventor harness on the engine) and S8b (Playwright and vitest ports, Python deleted), [S8 file list](https://claude.ai/artifact/ExT2DS3QeAL7bRas5LJLRT).
+- **Why:** Morgan's call; the spec's S8 list missed the scorer, the Inventor harness and the part generators, which also run on Python.
