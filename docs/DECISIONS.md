@@ -536,7 +536,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 
 ## D-073 S8b: the two full-set position diffs are tessellation; Python retired
 
-- **Status:** Measured 2026-11-11 (S8b, before any Python is deleted); PR for S8b is a draft until Morgan approves. Morgan's approval of the S8 file list: D-071.
+- **Status:** Approved 2026-11-11 (owner, in chat: "Approved. Merge when ready"); PR #43. Measured before any Python was deleted. The tessellation exemption and the 30 s plan-test limit were chosen on the owner's "do what you recommend" and approved with the PR. Morgan's approval of the S8 file list: D-071.
 - **Decision:** the two full-set differences in `faces[].positions` (bn_ball6, nasty_cheese; D-072) are tessellation, not geometry. No engine change. The frozen key keeps `faces[].positions` as it is (D-072).
 - **Measured** (scratch measure run, Python OCC in `/opt/mamba/envs/dfma` against the key and the browser engine's output; numbers from that run):
   - `bn_ball6.step`, faces 14 and 18 (B-spline/revolution surfaces): 153 points and 822 indices on each side; Hausdorff 0.3490 mm (face 14) and 0.3374 mm (face 18); each point within 7.44e-6 mm of the face surface on both sides. Also faces 2 and 22 (planes) differ in index order only (deviation 0).
