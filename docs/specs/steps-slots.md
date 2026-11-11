@@ -1,7 +1,7 @@
 # Steps and slots
 
-- **Status:** Draft
-- **Planned in:** [round 1](https://claude.ai/artifact/2NiJeW3rhomfLQSDeVzDhY), [review](https://claude.ai/artifact/1DwcDhFZcZVzxisd3QTqcy) (2026-11-11). **Decisions:** D-066, D-068, D-075, D-079 (D-018, D-019, D-029, D-052 apply).
+- **Status:** Approved 2026-11-11 (D-081)
+- **Planned in:** [round 1](https://claude.ai/artifact/2NiJeW3rhomfLQSDeVzDhY), [review](https://claude.ai/artifact/1DwcDhFZcZVzxisd3QTqcy) (2026-11-11). **Decisions:** D-066, D-068, D-075, D-079, D-081 (D-018, D-019, D-029, D-052 apply).
 
 ## Problem
 
