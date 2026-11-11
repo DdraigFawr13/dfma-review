@@ -26,7 +26,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-11 Steps and slots planned (D-079; Morgan: research, then the recommendations): spec written; 3 fresh checks, 2 re-checks, a final and a narrow zero-decision pass, each fixed; [approval page](https://claude.ai/artifact/G38mPz8nx9BMCwwYR39hqc) (collection `approve1`) waits for Morgan. Measured: today's engine on MFCAD++ first 500 holes 12/602 missed, pockets 78/3,745, 1 wrong (716 s, 4 jobs); check set holes 23/666, pockets 112/3,872, 1 wrong. MFCAD++ unpacked in `tests/grading/.cache/mfcadpp` (re-download per archive "Moved 2026-11-09" in a fresh container).
+- 2026-11-11 Steps and slots planned (D-079; Morgan: research, then the recommendations): spec written and checked 6 times; [approval page](https://claude.ai/artifact/G38mPz8nx9BMCwwYR39hqc) (collection `approve1`) waits for Morgan. Measured: today's engine on MFCAD++ first 500 holes 12/602 missed, pockets 78/3,745, 1 wrong (716 s, 4 jobs); check set holes 23/666, pockets 112/3,872, 1 wrong. MFCAD++ unpacked in `tests/grading/.cache/mfcadpp` (re-download per archive "Moved 2026-11-09" in a fresh container).
 - Earlier (UI fixes plan, S8b, tessellation, harness v4.14.0, #47): archive "Moved 2026-11-11 (spec session)".
 
 ## Next
