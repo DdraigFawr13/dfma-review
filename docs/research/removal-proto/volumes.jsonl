@@ -1,0 +1,17 @@
+{"name":"nist_ctc_01_asme1_ap242-e1.stp","total":39355177,"holes":511294,"pockets":0,"explained_pct":1.3,"analyze_ms":1660,"volumes_ms":0}
+{"name":"nist_ctc_02_asme1_ap242-e2.stp","total":186813211,"holes":2332278,"pockets":59070,"explained_pct":1.28,"analyze_ms":7892,"volumes_ms":1}
+{"name":"nist_ctc_03_asme1_ap242-e2.stp","total":23594699,"holes":9525,"pockets":0,"explained_pct":0.04,"analyze_ms":918,"volumes_ms":0}
+{"name":"nist_ctc_04_asme1_ap242-e1.stp","total":33414829,"holes":195112,"pockets":2573458,"explained_pct":8.29,"analyze_ms":4567,"volumes_ms":4}
+{"name":"nist_ctc_05_asme1_ap242-e1.stp","total":129425806,"holes":4869026,"pockets":904,"explained_pct":3.76,"analyze_ms":1920,"volumes_ms":0}
+{"name":"nist_ftc_06_asme1_ap242-e2.stp","total":4057996,"holes":40058,"pockets":1130,"explained_pct":1.01,"analyze_ms":2259,"volumes_ms":0}
+{"name":"nist_ftc_07_asme1_ap242-e2.stp","total":7704043,"holes":24535,"pockets":11954,"explained_pct":0.47,"analyze_ms":4000,"volumes_ms":1}
+{"name":"nist_ftc_08_asme1_ap242-e1-tg.stp","total":2845499,"holes":0,"pockets":0,"explained_pct":0,"analyze_ms":207,"volumes_ms":0}
+{"name":"nist_ftc_08_asme1_ap242-e2.stp","total":2845474,"holes":5066,"pockets":1584068,"explained_pct":55.85,"analyze_ms":2727,"volumes_ms":1}
+{"name":"nist_ftc_09_asme1_ap242-e1.stp","total":25246,"holes":3380,"pockets":565,"explained_pct":15.63,"analyze_ms":2661,"volumes_ms":0}
+{"name":"nist_ftc_10_asme1_ap242-e2.stp","total":179023,"holes":18566,"pockets":65580,"explained_pct":47,"analyze_ms":5354,"volumes_ms":0}
+{"name":"nist_ftc_11_asme1_ap242-e2.stp","total":6761,"holes":1206,"pockets":2,"explained_pct":17.87,"analyze_ms":459,"volumes_ms":0}
+{"name":"nist_stc_06_asme1_ap242-e3.stp","total":4058012,"holes":40068,"pockets":1130,"explained_pct":1.02,"analyze_ms":2051,"volumes_ms":0}
+{"name":"nist_stc_07_asme1_ap242-e3.stp","total":7704039,"holes":24535,"pockets":11955,"explained_pct":0.47,"analyze_ms":2770,"volumes_ms":1}
+{"name":"nist_stc_08_asme1_ap242-e3.stp","total":2845188,"holes":5066,"pockets":1583797,"explained_pct":55.84,"analyze_ms":3307,"volumes_ms":1}
+{"name":"nist_stc_09_asme1_ap242-e3.stp","total":25246,"holes":3380,"pockets":565,"explained_pct":15.63,"analyze_ms":2380,"volumes_ms":0}
+{"name":"nist_stc_10_asme1_ap242-e2.stp","total":179027,"holes":18394,"pockets":65667,"explained_pct":46.95,"analyze_ms":2965,"volumes_ms":0}
