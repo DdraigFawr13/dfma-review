@@ -622,5 +622,5 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Decision:**
   - The spec `docs/specs/steps-slots.md` is approved: S1 steps, S2 slots, S3 screens and PDF after the UI fixes merge.
   - The five additions stand: the guarded parity re-freeze script; crossing slots and slots into a pocket wait; steps and slots only on a floor along a part axis; a step's floor picked by direction order and recorded; UMD parts counted by feature.
-  - PR #50 merges after UI fixes slice A (`ui-fixes-a-model`) and slice B (`ccr-cb7e43ab-n1dv94`) merge: then update from main and merge. No CI run until Morgan says so.
+  - PR #50 merges after UI fixes slice A (PR #51, merged 2026-11-11) and slice B (PR #53, `ccr-cb7e43ab-n1dv94`; Morgan, in chat: "You merge after pr 53"): then update from main and merge. No CI run until Morgan says so.
 - **Why:** Morgan's instruction. The two UI branches change the screens and HANDOFF; merging after them keeps one order of decisions and handoff entries.
