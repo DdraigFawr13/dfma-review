@@ -270,6 +270,7 @@ FROZEN = ROOT / "tests" / "parity" / "key"
 def write_freeze() -> int:
     """S8a: copy the quick and full keys the cache holds into tests/parity/key/ (committed): only the files the two
     indexes name, so a stale cache entry stays out. Run it after `--set quick` and `--set full`."""
+    import gzip
     import shutil
     cache = CACHE / "key"
     indexes = [cache / f"index-{s}.json" for s in ("quick", "full")]
@@ -283,8 +284,19 @@ def write_freeze() -> int:
             old.unlink()
     for n in sorted(names):  # gzipped (mtime 0, so the same key gives the same bytes): the frozen set is ~5x smaller
         (FROZEN / (n + ".gz")).write_bytes(gzip.compress((cache / n).read_bytes(), 9, mtime=0))
-    for i in indexes:  # the index names the gzipped files
-        index = [{**e, "key": e["key"] + ".gz"} for e in json.loads(i.read_text(encoding="utf-8"))]
+    # The hostile .ipt inputs live in the git-ignored cache; CI has no cache, so they are copied in (S8a CI fix)
+    (FROZEN / "ipt").mkdir(exist_ok=True)
+    for old in (FROZEN / "ipt").glob("*.ipt.gz"):
+        old.unlink()
+    for i in indexes:  # the index names the gzipped keys and the frozen .ipt inputs
+        index = []
+        for e in json.loads(i.read_text(encoding="utf-8")):
+            e = {**e, "key": e["key"] + ".gz"}
+            if "ipt" in e and (ROOT / e["ipt"]).is_relative_to(CACHE):
+                src = ROOT / e["ipt"]
+                (FROZEN / "ipt" / (src.name + ".gz")).write_bytes(gzip.compress(src.read_bytes(), 9, mtime=0))
+                e["ipt"] = rel(FROZEN / "ipt" / (src.name + ".gz"))
+            index.append(e)
         (FROZEN / i.name).write_text(json.dumps(index, indent=1), encoding="utf-8")
     size = sum(p.stat().st_size for p in FROZEN.rglob("*") if p.is_file())
     print(f"freeze: {len(names)} keys (gzipped) and 2 indexes in {rel(FROZEN)}: {size / 1e6:.2f} MB")

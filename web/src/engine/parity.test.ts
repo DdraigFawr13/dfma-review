@@ -18,6 +18,8 @@ const SET = process.env.PARITY_SET ?? "quick";
 const { k, n } = parseShard(process.env.PARITY_SHARD ?? "0/1");
 const RESULTS = process.env.PARITY_RESULTS;
 // The frozen key is gzipped (key.py --freeze); an older plain .json key still reads
+// Frozen .ipt inputs are gzipped too (the hostile set, key.py --freeze)
+const readBytes = (file: string): Buffer => (file.endsWith(".gz") ? gunzipSync(readFileSync(file)) : readFileSync(file));
 const readKey = (file: string) => JSON.parse((file.endsWith(".gz") ? gunzipSync(readFileSync(file)) : readFileSync(file)).toString("utf8"));
 
 type Entry = { path: string; process: Process; key: string; ipt?: string; harness?: boolean };
@@ -27,7 +29,7 @@ test(`S${SLICE} keys: the browser engine equals the key on the ${SET} set (shard
   expect(existsSync(indexPath), `${indexPath} is missing: the frozen key is tests/parity/key/ (python tests/parity/key.py --freeze)`).toBe(true);
   const index = JSON.parse(readFileSync(indexPath, "utf8")) as Entry[];
   // Each entry's size: its STEP and its .ipt, so the shards get about the same bytes
-  const sizeOf = (e: Entry) => readFileSync(resolve(ROOT, e.path)).length + (e.ipt ? readFileSync(resolve(ROOT, e.ipt)).length : 0);
+  const sizeOf = (e: Entry) => readFileSync(resolve(ROOT, e.path)).length + (e.ipt ? readBytes(resolve(ROOT, e.ipt)).length : 0);
   const shard = shardOf(index.map(sizeOf), n);
   const mine = index.map((e, i) => [e, i] as const).filter(([, i]) => shard[i] === k);
   const oc = await loadNodeOc();
@@ -41,7 +43,7 @@ test(`S${SLICE} keys: the browser engine equals the key on the ${SET} set (shard
     const key = readKey(resolve(KEY_DIR, entry.key));
     const bytes = new Uint8Array(readFileSync(resolve(ROOT, entry.path)));
     // S7: an .ipt beside the STEP; `harness` lines the pair up with the transform Python's harness found (nist_pair.py)
-    const ipt = entry.ipt ? { bytes: new Uint8Array(readFileSync(resolve(ROOT, entry.ipt))), name: entry.ipt.split("/").pop()! } : undefined;
+    const ipt = entry.ipt ? { bytes: new Uint8Array(readBytes(resolve(ROOT, entry.ipt))), name: entry.ipt.replace(/\.gz$/, "").split("/").pop()! } : undefined;
     const harness = entry.harness ? { transform: key.__harness?.transform, check: false } : {};
     const result = await analyzeOrRefuse(oc, bytes, entry.path.split("/").pop()!, entry.process, "al6061", ipt, harness);
     const outcome = compare(result, key);

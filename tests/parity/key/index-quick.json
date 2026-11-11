@@ -612,91 +612,91 @@
   "path": "tests/parts/box_through_hole.step",
   "process": "mill",
   "key": "tests__parts__box_through_hole.step+no-model.ipt.json.gz",
-  "ipt": "tests/parity/.cache/hostile/no-model.ipt",
+  "ipt": "tests/parity/key/ipt/no-model.ipt.gz",
   "harness": false
  },
  {
   "path": "tests/parts/box_through_hole.step",
   "process": "mill",
   "key": "tests__parts__box_through_hole.step+unknown-tag.ipt.json.gz",
-  "ipt": "tests/parity/.cache/hostile/unknown-tag.ipt",
+  "ipt": "tests/parity/key/ipt/unknown-tag.ipt.gz",
   "harness": false
  },
  {
   "path": "tests/parts/box_through_hole.step",
   "process": "mill",
   "key": "tests__parts__box_through_hole.step+cut-short.ipt.json.gz",
-  "ipt": "tests/parity/.cache/hostile/cut-short.ipt",
+  "ipt": "tests/parity/key/ipt/cut-short.ipt.gz",
   "harness": false
  },
  {
   "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
   "process": "mill",
   "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+hole-no_end.ipt+harness.json.gz",
-  "ipt": "tests/parity/.cache/hostile/hole-no_end.ipt",
+  "ipt": "tests/parity/key/ipt/hole-no_end.ipt.gz",
   "harness": true
  },
  {
   "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
   "process": "mill",
   "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+hole-long_list.ipt+harness.json.gz",
-  "ipt": "tests/parity/.cache/hostile/hole-long_list.ipt",
+  "ipt": "tests/parity/key/ipt/hole-long_list.ipt.gz",
   "harness": true
  },
  {
   "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
   "process": "mill",
   "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+hole-owner_off.ipt+harness.json.gz",
-  "ipt": "tests/parity/.cache/hostile/hole-owner_off.ipt",
+  "ipt": "tests/parity/key/ipt/hole-owner_off.ipt.gz",
   "harness": true
  },
  {
   "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
   "process": "mill",
   "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+blend-no_end.ipt+harness.json.gz",
-  "ipt": "tests/parity/.cache/hostile/blend-no_end.ipt",
+  "ipt": "tests/parity/key/ipt/blend-no_end.ipt.gz",
   "harness": true
  },
  {
   "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
   "process": "mill",
   "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+blend-long_list.ipt+harness.json.gz",
-  "ipt": "tests/parity/.cache/hostile/blend-long_list.ipt",
+  "ipt": "tests/parity/key/ipt/blend-long_list.ipt.gz",
   "harness": true
  },
  {
   "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
   "process": "mill",
   "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+blend-owner_off.ipt+harness.json.gz",
-  "ipt": "tests/parity/.cache/hostile/blend-owner_off.ipt",
+  "ipt": "tests/parity/key/ipt/blend-owner_off.ipt.gz",
   "harness": true
  },
  {
   "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
   "process": "mill",
   "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+cycle-hole.ipt+harness.json.gz",
-  "ipt": "tests/parity/.cache/hostile/cycle-hole.ipt",
+  "ipt": "tests/parity/key/ipt/cycle-hole.ipt.gz",
   "harness": true
  },
  {
   "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
   "process": "mill",
   "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+cycle-blend.ipt+harness.json.gz",
-  "ipt": "tests/parity/.cache/hostile/cycle-blend.ipt",
+  "ipt": "tests/parity/key/ipt/cycle-blend.ipt.gz",
   "harness": true
  },
  {
   "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
   "process": "mill",
   "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+fillet-radius.ipt+harness.json.gz",
-  "ipt": "tests/parity/.cache/hostile/fillet-radius.ipt",
+  "ipt": "tests/parity/key/ipt/fillet-radius.ipt.gz",
   "harness": true
  },
  {
   "path": "tests/parts/box_through_hole.step",
   "process": "mill",
   "key": "tests__parts__box_through_hole.step+not-an-ipt.ipt.json.gz",
-  "ipt": "tests/parity/.cache/hostile/not-an-ipt.ipt",
+  "ipt": "tests/parity/key/ipt/not-an-ipt.ipt.gz",
   "harness": false
  }
 ]
