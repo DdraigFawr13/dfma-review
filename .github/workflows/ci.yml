@@ -40,11 +40,5 @@ jobs:
         with:
           path: ~/.npm
           key: npm-${{ runner.os }}-${{ hashFiles('web/package-lock.json') }}
-      # Port S1: the Python key for the parity run (content-addressed, so any older cache helps)
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: tests/parity/.cache/by-hash
-          key: parity-key-${{ hashFiles('service/**', 'config/**', 'tests/parity/key.py', 'tests/parts/**') }}
-          restore-keys: parity-key-
       - run: python -m playwright install --with-deps chromium
       - run: python scripts/check.py

@@ -11,7 +11,7 @@
     "compare": "node src/engine/compare-cli.ts",
     "demo-results": "vitest run --silent=false --config vitest.parity.config.ts src/engine/demo-results.test.ts",
     "dev": "vite",
-    "parity": "vitest run --silent=false --config vitest.parity.config.ts src/engine/parity.test.ts",
+    "parity": "node scripts/parity-run.mjs",
     "parity:full": "node scripts/parity-full.mjs"
   },
   "dependencies": {
