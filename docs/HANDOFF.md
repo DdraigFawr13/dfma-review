@@ -27,7 +27,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-11 Reach spike (D-085 step 1), branch `spike-reach`, draft PR; [README](research/reach-spike/README.md) has every number and how it was measured. CTC 02 (largest NIST part), 6 directions × 11 end mills + holder, Chromium: 10.0 s on 1 worker, 3.8 s on 3 at cell D/4 capped 4 M cells. Manifold 3.5.4: 218 kB gzip, loads in 34-45 ms; all 17 NIST meshes weld valid; FTC 08 `-e1-tg` mesh is inside-out. OpenCAMLib (Morgan approved the install): LGPL-2.1-or-later; built from source and run; centre-sampled tips are optimistic on 0.13-20.7 % of points (P2a needs a conservative raster or a wider disk). Code: `web/src/reach-spike/`, spike config only.
+- 2026-11-11 Reach spike (D-085 step 1), branch `spike-reach`, draft [PR #58](https://github.com/DdraigFawr13/dfma-review/pull/58); [README](research/reach-spike/README.md) has every number and how it was measured. CTC 02 (largest NIST part), 6 directions × 11 end mills + holder, Chromium: 10.0 s on 1 worker, 3.8 s on 3 at cell D/4 capped 4 M cells. Manifold 3.5.4: 218 kB gzip, loads in 34-45 ms; all 17 NIST meshes weld valid; FTC 08 `-e1-tg` mesh is inside-out. OpenCAMLib (Morgan approved the install): LGPL-2.1-or-later; built from source and run; centre-sampled tips are optimistic on 0.13-20.7 % of points (P2a needs a conservative raster or a wider disk). Code: `web/src/reach-spike/`, spike config only.
 - 2026-11-11 P0 approved (D-086), merged in PR #57: archive "Moved 2026-11-11 (reach spike session)".
 - Earlier (P1+P2 plan #56, UI fixes, S8b, harness): archive.
 
