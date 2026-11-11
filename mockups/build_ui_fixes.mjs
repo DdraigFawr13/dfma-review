@@ -68,6 +68,17 @@ ${fig("07-examples-menu.png", "Proposed: Examples menu open over a loaded part",
 ${fig("05-machine-mill.png", "Proposed machine view, mill, setup 2 from −X", "<b>Proposed, mill.</b> Part / Machine switch over the model. A setup chip turns the part so its spindle is on top (Setup 2 from −X: the pocket faces up). Tapping a tool row lights the faces it cuts: tool 3, the 3/4 in end mill, lights pocket-1.")}
 ${fig("06-machine-lathe.png", "Proposed machine view, lathe", "<b>Proposed, lathe.</b> slender_shaft.step: the turning axis lies across the screen, as a lathe looks from the front. The whole part is red because Slender part (F1, Fix) is about the whole part, as today.")}
 
+<h2>Settled rules this changes</h2>
+<p class="muted">Each becomes a Proposed entry in DECISIONS with the final plan; none changes until you approve it.</p>
+<ul>
+<li><b>UI_STYLE "Selected finding"</b> (<code>docs/UI_STYLE.md:69</code>): "A row selects all its findings' faces" becomes "a row lights the finding it shows". While something is picked, other findings and the Show OK tints turn plain grey (still faded to 0.35), not their colours (your round 1 answer).</li>
+<li><b>D-042</b>: "Change file" leaves the Part overview; Open… in the top bar replaces it, and the start form's two pickers become one.</li>
+<li><b>D-023</b> (selectable setups): in the Machine view a setup chip also turns the part so the spindle is on top, and a tool row lights the faces that tool cuts in that setup.</li>
+<li><b>D-017</b> pins: unchanged when the part is still; hidden while it moves (new).</li>
+<li><b>Mouse</b>: today middle-drag zooms (three.js default); it becomes move, as in Inventor.</li>
+</ul>
+<p class="muted">Tap sizes: the tool rows on Machining are about 22 px tall today, under the 32 px minimum (UI_STYLE); as buttons they grow to at least 32 px. The ‹ › buttons and "Show on model ›" are checked against 32 px in the build too.</p>
+
 <h2>Later</h2>
 <ul><li><b>Tool-access check:</b> after steps and slots (your review note), research first.</li><li><b>Cutaway and dimensions on the part:</b> Soon, after A and B.</li></ul>
 

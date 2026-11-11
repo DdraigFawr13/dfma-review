@@ -72,7 +72,7 @@ async function views(p) {
     for (const t of ['Home', 'Front', 'Top', 'Right', 'Iso']) { const b = document.createElement('button'); b.textContent = t; d.append(b); }
     v.append(d);
     const c = document.getElementById('viewer'); d.style.bottom = 'auto'; d.style.top = (c.offsetTop + c.offsetHeight - 48) + 'px';
-    document.querySelector('.viewfoot .hint').textContent = 'Drag: rotate · Middle-drag or Shift + drag: move · Wheel: zoom to the mouse · Keys on the model: arrows, + −, H';
+    document.querySelector('.viewfoot .hint').textContent = 'Drag: rotate · Middle- or right-drag, or Shift + drag: move · Wheel: zoom to the mouse · Keys: arrows, + −, H';
   });
 }
 async function machineSwitch(p, label) {
