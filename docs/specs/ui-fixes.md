@@ -3,6 +3,13 @@
 - **Status:** Draft (2026-11-11)
 - **Planned in:** [round 1](https://claude.ai/artifact/TC6zxWereXxzeVBLG4MtLE) (collection `round1`), [review](https://claude.ai/artifact/N8rWXXux4n2VWqNhkDzEUB) (collection `review1`), approved [mock-up](https://claude.ai/artifact/Adh7jrTqHCskfymUbrPkc4) (`mockups/ui-fixes.html`; prototype `mockups/ui-fixes/proto.diff`, reference only). **Decisions:** D-076; amends D-017, D-023, D-042 and UI_STYLE "Selected finding" when built.
 
+## Terms
+
+- **File axes:** the X, Y, Z of the STEP file, as the CAD drew it; the 3D view's coordinates (mm, `web/src/engine/read.ts:1`).
+- **Part axes:** `result.part.frame` (`web/src/api.ts:109`), three unit vectors in file axes: +Z the outward normal of the largest planar face, +X of the largest face square to it (`web/src/engine/frame.ts:2`). Setup names ("from −X", `plan.ts:12`) use part axes (`features/holes.ts:678`).
+- **Work copy:** the copy of the app Morgan runs at work (D-055).
+- Form ids (`worst`, `pinmode` and others) are answer keys on the round 1 and review forms linked above.
+
 ## Problem
 
 Morgan, from 4 photos of the work copy (2026-11-10): "The rotating is the hardest currently" (round 1 `worst`). Picking a row with many copies lit the whole part. Users are engineers (`users`). Pins lag while the part moves.
@@ -15,7 +22,7 @@ Measured on `main` (`d42fcfd`), production build (`node web/scripts/build-pages.
 
 Two causes found in the code, not in the plan:
 
-- **Rotation axis.** OrbitControls fixes its orbit axis from `camera.up` when it is built (`three/examples/jsm/controls/OrbitControls.js:406`); the viewer builds it while `up` is three's default +Y (`web/src/viewer.ts` constructor), then `place()` sets `up` to +Z on every fit. So the part spins about the file's Y axis while the screen is held Z-up (inference from the code; not yet seen on screen).
+- **Rotation axis.** OrbitControls fixes its orbit axis from `camera.up` when it is built (`three/examples/jsm/controls/OrbitControls.js:406`); the viewer builds it while `up` is three's default +Y (`web/src/viewer.ts` constructor), then `place()` sets `up` to +Z on every fit. So the part spins about the file's Y axis while the screen is held Z-up. Checked with three.js 0.187 in Node: from the opening view, a left-right turn of 0.3 rad kept the camera's y (−66.56) and changed its z (49.92 → 64.09); with up set to +Z before building, the same turn kept z (49.92) and changed y (−66.56 → −79.98).
 - **Pin cost.** Every camera change re-places every pin, with up to 24 ray tests per finding against every face (`anchorsOf`).
 
 ## Goals
@@ -30,9 +37,9 @@ Two causes found in the code, not in the plan:
 
 - No view cube (round 1 `p_cube`: "no"). No cutaway, no dimensions on the part (Soon, after A and B). No tool-access check (after steps and slots; review `c_r_reach`).
 - Touch gestures unchanged (one finger rotates, two move and zoom).
-- The PDF's pictures unchanged: no triad, no grey-out change (`snapshot()` paints as the screen does today, see Design A4).
 - Passed rows unchanged: an open passed row still lights all its features until one feature is picked.
 - No faster pin placement in slice A beyond not placing while moving (see Alternatives and Risks).
+- The PDF gains no triad. Its pictures do follow the new paint (A5), since `snapshot()` paints as the screen does.
 - Real machine shapes: the spindle and chuck are placeholders.
 
 ## Journeys and checks
@@ -43,42 +50,42 @@ Each check fails at `d42fcfd`. E2E tests run in the test build (`web/dist-pages-
 
 - **Given** `box_through_hole.step` shown.
 - **When** left-drag; Shift + left-drag; middle-drag; Shift + middle-drag; right-drag; wheel forward with the mouse off-centre.
-- **Then** left-drag and Shift + middle-drag rotate (target unchanged, camera moved); middle-drag, Shift + left-drag and right-drag move (target and camera moved by the same vector); wheel forward brings the camera closer and moves the target towards the point under the mouse. After any rotation the camera's up stays +Z (file axes) to 1e-6. **Check:** `test_mouse_like_inventor` reads `__dfma.view()` before and after each gesture.
+- **Then** left-drag and Shift + middle-drag rotate (target unchanged, camera moved); middle-drag, Shift + left-drag and right-drag move (target and camera moved by the same vector); wheel forward brings the camera closer and moves the target towards the point under the mouse. A horizontal left-drag keeps the camera's height above the target (z − target z) within 1e-6 of the part's size and changes the camera's heading. Gestures: drags of 120 px in 8 steps from the canvas centre; wheel 3 notches of deltaY −100 at 150 px left of centre; "moved" means by over 1e-3 of the part's bounding-sphere radius. **Check:** `test_mouse_like_inventor` reads `__dfma.view()` before and after each gesture. Fails now on middle-drag (dolly today), the turn's height, and the target moving under the wheel.
 - **When** a middle-button `mousedown` on the canvas. **Then** its `defaultPrevented` is true (no autoscroll, no paste). **Check:** `test_middle_click_blocked`.
 
 ### J2 View buttons (A)
 
 - **Given** `report_sample.step` shown.
 - **When** each of Home, Front, Top, Right, Iso is pressed.
-- **Then** the camera looks along the named direction (table in Design A2) to within 0.1°, the whole part is framed, the part's faces never move (`__dfma.facePositions()` hash unchanged), and Home equals the view the part opened with. **Check:** `test_view_buttons`.
+- **Then** camera position − target is parallel to the Direction in Design A2 within 0.1°, the screen-up is the Up there within 0.1°, all 8 corners of the part's box project inside the view, the face positions are unchanged (`__dfma.facePositions()` checksum), and Home equals the view the part opened with. **Check:** `test_view_buttons` (fails now: no buttons).
 
 ### J3 Axis triad (A)
 
 - **Given** a part shown. **When** Front, then Top, is pressed.
-- **Then** `__dfma.triad()` reports each arrow's on-screen direction and label; after Front, the arrow for the axis named in Design A3 points right / up as the table says, within 2°. The triad's letters are `--ink` on `--view` (contrast over 4.5:1). **Check:** `test_axis_triad`; screenshot at 2× in the PR.
+- **Then** `__dfma.triad()` reports each arrow's on-screen direction. Expected: project each part axis `a` (file coordinates) on the view: after Front (looking towards +Y, up +Z) it is (a·X, a·Z); after Top (looking towards −Z, up +Y) it is (a·X, a·Y), both in file axes, normalized; compared within 2° for arrows whose projected length is over 0.2 (an arrow pointing at the viewer is skipped). On report_sample (part x = file −Z, y = file +X, z = file −Y) after Front: X points down, Y right, Z is skipped. **Check:** `test_axis_triad` (fails now: no hook); screenshot at 2× in the PR.
 
 ### J4 Pins hide while the camera moves (A)
 
 - **Given** `report_sample.step` with pins shown.
 - **When** a drag is in progress, a wheel notch, or an arrow key on the focused model.
-- **Then** within one frame every `.flag` and the leader layer are hidden and `__dfma.placements()` does not grow while moving; 150 ms after the last change (allow 150-600 ms) pins show again where a still camera would put them (`flagState()` equals a fresh placement). A view button, a row pick or a setup chip does not hide them; it re-places them once. **Check:** `test_pins_hide_while_moving` (event-driven waits on the hidden and shown states, no fixed sleep as a pass condition); `web/scripts/pin-lag.mjs` before/after numbers in the PR.
+- **Then** every `.flag` and the leader layer are hidden (`.stage.moving`) and `__dfma.placements()` does not grow while the button is held, even if the mouse rests mid-drag; after the release (or the notch, or the key) pins show again no sooner than 150 ms and no later than 1,500 ms, as `__dfma.flagState()` (existing hook, `main.ts:79`) would place them still. A view button, a row pick or a setup chip never adds `moving`; each re-places pins once. **Check:** `test_pins_stay_hidden_while_held` (no wall-clock limit: counts placements) and `test_pins_return_after_moving` tagged `@timed` (the 150-1,500 ms window; AGENTS "Local checks"). Fails now: pins are never hidden. `web/scripts/pin-lag.mjs` numbers before/after in the PR.
 
 ### J5 One feature at a time (A)
 
 - **Given** `report_sample.step`, Features step.
 - **When** row "Sharp corner ×4" (F4-F7) is opened; then › ; then → with the open row focused; then ←.
-- **Then** only F4's edge bar is accent, F4's walls solid grey; every other face `--part` at opacity 0.35, every other bar `--part` at 0.35; Show OK tints and other findings' colours are not drawn (`paintedFaces()`, a new `faceColours()` hook). › and → move to F5 ("2 of 4"), ← back to F4. The same holds for "Deep hole ×2" on report_sample (one hole's faces only). **Check:** `test_one_feature_at_a_time`; existing assertions that expect a row's union change (Design A5).
+- **Then** only F4's edge bar is `--accent`; F4's two walls stay solid (opacity 1) in `--part`; every other face is `--part` at opacity 0.35; every other bar `--part` at 0.35; no face shows a severity colour or a Show OK colour. Read with `__dfma.faceColours()` and `__dfma.barColours()` (new) and `opacities()` (existing). › and → move to F5 ("2 of 4"), ← back to F4. "Deep hole ×2" on report_sample lights one hole's faces only (`highlightedFaces()` = F1's `faces`). **Check:** `test_one_feature_at_a_time` (fails now: the row lights its union and other findings keep their colour); the existing assertions listed in A5.
 - **When** nothing is picked. **Then** colours and Show OK as today (existing `findings.spec.ts`, `steps.spec.ts` pass unchanged).
 
 ### J6 Keys on the focused model (A)
 
 - **Given** a part shown. **When** Tab reaches the model.
-- **Then** it shows a 3 px `--accent` focus ring, inset (the viewer clips; LESSONS "spec" S3 build). ← → ↑ ↓ rotate 10° per press; Shift + arrows move 10% of the view height; `+` / `=` / NumpadAdd zoom in 1.25×, `-` / NumpadSubtract out; H goes Home. The page does not scroll. **Check:** `test_model_keys` (camera via `__dfma.view()`, `window.scrollY` unchanged, ring width read with `getComputedStyle`).
+- **Then** it shows a 3 px `--accent` focus ring drawn inside the canvas edge (the viewer clips with `overflow: hidden`, `style.css:177`, which hid a ring before: LESSONS "spec", port S3). ← → turn 10° about +Z per press; ↑ ↓ tilt 10°; Shift + arrows move 10% of the view height; `+` / `=` / NumpadAdd zoom in 1.25×, `-` / NumpadSubtract out; H goes Home. The page does not scroll. **Check:** `test_model_keys` (camera via `__dfma.view()`; `window.scrollY` and the side panel's `scrollTop` unchanged; ring via `getComputedStyle(canvas).outlineWidth` = 3px). Fails now: the canvas can't take focus.
 
 ### J7 Examples (B)
 
 - **Given** the start form. **When** an example is picked (start form list, or Examples ▾ in the top bar).
-- **Then** the part loads as if uploaded, Process switches to Turning for slender_shaft and Milling for the other three, and the status line reads "Showing <name>.". **Check:** `test_examples` loads each of the 4.
+- **Then** the part loads as if uploaded, Process switches to Turning for slender_shaft and Milling for report_sample, angled_hole_in_pocket and clean_one_setup, and the status line (`#status`, under the top bar) reads "Showing report_sample.step." (the file name with its extension, as today). **Check:** `test_examples` loads each of the 4 from both places (fails now: no examples).
 
 ### J8 Top bar and one picker (B)
 
@@ -88,15 +95,16 @@ Each check fails at `d42fcfd`. E2E tests run in the test build (`web/dist-pages-
 ### J9 Machine view (B)
 
 - **Given** `report_sample.step`, Machining. **When** Machine is chosen and Setup 2 tapped.
-- **Then** the camera looks down the setup's direction (spindle on top of the screen); tapping a tool row (a `<button>` at least 32 px tall) lights the faces it cuts in that setup and shows a placeholder spindle whose cutter diameter equals the tool's `diameter_in` (scene units converted). For `slender_shaft.step` (Turning) the turning axis lies across the screen and a placeholder chuck shows at the axis's lower end. Part keeps today's behaviour. **Check:** `test_machine_view_mill`, `test_machine_view_lathe`.
+- **Then** the setup's direction is up on screen (Setup 2 "from −X": the part's −X side faces the top of the screen, as in the mock-up's "the pocket faces up"), so the spindle comes down from the top; `__dfma.view().up` equals that direction in file axes within 0.1°; tapping a tool row (a `<button>` at least 32 px tall) lights the faces it cuts in that setup and shows a placeholder spindle whose cutter diameter is the tool's `diameter_in` × 25.4 mm (`__dfma.spindle()` = `{ diameter_mm }`). For `slender_shaft.step` (Turning) `turn_axis` lies across the screen and a placeholder chuck (`__dfma.chuck()` true) sits at the end with the smaller coordinate along `turn_axis`. Part keeps today's behaviour. **Check:** `test_machine_view_mill`, `test_machine_view_lathe` (fail now: no switch).
 
 ## Decisions
 
 - Two slices, A before B, B after A merges (D-076).
 - Orbit about the file's +Z (turntable), up kept +Z; free orbit rejected (Alternatives). **Escalated:** confirm (Open question 2).
-- View directions and the opening view in the file's axes; triad in part.frame (D-076). **Escalated:** confirm (Open question 1).
+- View directions and the opening view in file axes; triad in part axes (D-076), with a small "Part axes" caption under it. **Escalated:** confirm (Open question 1).
 - Pins hidden while the camera moves, back 150 ms after the last change (D-076, round 1 `pinmode`).
-- Any selection greys every other face (D-076, round 1 `picked`).
+- Any selection greys every other face (D-076, round 1 `picked`); the PDF pictures follow (they use the same paint).
+- Wall-clock tests are tagged `@timed`; estimated added check time for S1 about 2 min (6 new e2e tests at 10-20 s each; estimate), measured and reported in the PR against the 900 s budget (D-073).
 
 ## Alternatives rejected
 
@@ -106,6 +114,7 @@ Each check fails at `d42fcfd`. E2E tests run in the test build (`web/dist-pages-
 - **Measuring each pin once instead of per spot:** 354 ms vs 352 ms. No gain.
 - **Placing pins every Nth frame while moving:** still stalls 350+ ms frames on big parts; rejected by `pinmode`.
 - **View cube:** Morgan "no" (`p_cube`).
+- **Keep pins visible and re-project cached spots while moving** (ray tests only at rest): cheaper than hiding, but pins would float over faces that turned away until the part stops. Round 1 `pinmode` chose hiding; a possible follow-up if Morgan misses the pins.
 
 ## Risks
 
@@ -118,7 +127,7 @@ Each check fails at `d42fcfd`. E2E tests run in the test build (`web/dist-pages-
 
 ### Slice A
 
-- **A1 Controls** (`viewer.ts`): before building OrbitControls set `camera.up` to (0, 0, 1); `place()` keeps setting (0, 0, 1). `mouseButtons = { LEFT: ROTATE, MIDDLE: PAN, RIGHT: PAN }` (three swaps rotate and pan with Shift, Ctrl or Meta held, `OrbitControls.js:1695,1717`, so Shift + left moves and Shift + middle rotates with no code). `zoomToCursor = true`. Wheel direction is three's default (forward zooms in). `mousedown` and `auxclick` with `button === 1` on the canvas call `preventDefault()`. Touch unchanged.
+- **A1 Controls** (`viewer.ts`): controls are built by `private buildControls(up: THREE.Vector3)`, which disposes any old controls, sets `camera.up` to `up` first, builds OrbitControls with the settings below and attaches the listeners of A4. The constructor calls it with (0, 0, 1); slice B calls it again for the Machine view (B3). `place()` sets `camera.up` to the controls' up, not a fixed +Z. `mouseButtons = { LEFT: ROTATE, MIDDLE: PAN, RIGHT: PAN }` (three swaps rotate and pan with Shift, Ctrl or Meta held, `OrbitControls.js:1695,1717`, so Shift + left moves and Shift + middle rotates with no code). `zoomToCursor = true`. Wheel direction is three's default (forward zooms in). `mousedown` and `auxclick` with `button === 1` on the canvas call `preventDefault()`. Touch unchanged.
 - **A2 Views** (buttons, file axes, direction from the part's centre to the camera, then up):
 
   | Button | Direction | Up |
@@ -130,21 +139,22 @@ Each check fails at `d42fcfd`. E2E tests run in the test build (`web/dist-pages-
   | Iso | (1, −1, 1) normalized | +Z |
 
   Each frames the whole part as `fit()` does (`place()`), immediately, no animation. Top sits at the orbit's pole: place the camera 0.001 rad off +Z towards −Y so OrbitControls' angles are defined and screen-up is +Y. Buttons: `<div class="views" role="group" aria-label="Views">` with five `<button type="button" data-testid="view-home|view-front|view-top|view-right|view-iso">`, at the model's bottom right, 8 px in, chip look (UI_STYLE "Chips": 32 px, 44 px below 900 px). Hidden with no part.
-- **A3 Triad** (`viewer.ts`): drawn after the scene in the same canvas, in a 96 × 96 CSS px square 8 px from the bottom-left corner (scissor viewport; `mockups/ui-fixes/proto.diff` `protoDrawGizmo` shows the idea), its own orthographic camera turned like the main one. Arrows along `result.part.frame` x, y, z (file coordinates; `api.ts:109`), coloured #c62828, #2e7d32, #1565c0; letters X, Y, Z in `--ink`, bold, beyond each tip. No origin marker (Morgan: "just the triad is fine"). `setFrame(frame)` is called with each result; no frame → no triad. Hook `__dfma.triad(): { axis: "X" | "Y" | "Z"; dx: number; dy: number }[]` gives each arrow's on-screen unit direction (dy up positive). For J3 the expected directions come from projecting `part.frame` with the Front and Top views of A2.
-- **A4 Pins while moving** (`viewer.ts`): the controls' `start` and `change` events and the key handler (A6) mark the camera as moving: the host gets class `moving` (CSS hides `.flag` and `.leaders`), `render()` draws without `placeFlags()`, and a 150 ms timer, restarted by each change, clears `moving` and renders once with placement. `place()` (views, row picks, setup chips, new parts) does not set `moving`. `snapshot()` unchanged. Hook `__dfma.placements(): number` counts `placeFlags()` runs. Constant `PIN_REST_MS = 150`.
-- **A5 One feature at a time** (`main.ts` `pickOf`, `viewer.ts` `paint`): a row's pick is the shown finding: `{ id, faces: finding.faces }` (falls back to `rowFaces` only for a passed row, which has no findings). In `paint()`, while anything is selected (row, finding, pass, setup, thread, hf, hfh, bl), every face not chosen is `--part`; ghosting and the sharp-corner walls kept solid stay as today; other edge bars `--part` at 0.35. Hook `__dfma.faceColours(): Record<number, string>` (hex). Tests that assert a row lights its union change to the shown finding's faces: `steps.spec.ts:323`, `browser_engine.spec.ts:359`, `:390`, `:420` (a behaviour change D-076 approved, not a weakened check, VER-01). UI_STYLE "Selected finding" and D-017's "nothing else dims" are amended in the same PR.
-- **A6 Keys** (`viewer.ts`): canvas `tabindex="0"`, `role="application"`, `aria-label="3D model of the part. Arrows rotate, Shift and arrows move, plus and minus zoom, H goes home."`. Keydown on the canvas only: ← → turn about +Z by ±10°, ↑ ↓ tilt by ±10° (OrbitControls' polar limits apply), Shift + arrows pan 10% of the view height, `+`/`=`/NumpadAdd and `-`/NumpadSubtract dolly by 1.25 about the target, `h`/`H` Home; each calls `preventDefault()` and `controls.update()` (so A4 hides pins). Focus ring: `.viewer canvas:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }`.
-- **A7 Row keys** (`steps.ts` `renderRows`): keydown ArrowLeft / ArrowRight on the open row's button, its ‹ or › calls `onStep(−1 / +1)`, as ‹ › do (no wrap).
+- **A3 Triad** (`viewer.ts`): drawn after the scene in the same canvas, in a 96 × 96 CSS px square 8 px from the bottom-left corner (scissor viewport, as `protoDrawGizmo` in `mockups/ui-fixes/proto.diff`), with its own orthographic camera (±1.55) placed along the main camera's view direction with the main camera's up. Arrows: `THREE.ArrowHelper` of length 1, head 0.28 long and 0.16 wide, along the part axes (file coordinates), coloured #c62828, #2e7d32, #1565c0; letters X, Y, Z as canvas-texture sprites drawn in the `--ink` colour, bold, at 1.32 along each arrow (as `Viewer.label` in the prototype, which used the arrow colour instead). No origin marker (Morgan: "just the triad is fine"). `setFrame(frame)` is called with each result; no frame → no triad. Hook `__dfma.triad(): { axis: "X" | "Y" | "Z"; dx: number; dy: number }[]` gives each arrow's on-screen unit direction (dy up positive). For J3 the expected directions come from projecting `part.frame` with the Front and Top views of A2.
+- **A4 Pins while moving** (`viewer.ts`): only user input moves: the controls' `start` event (a press, a touch, and each wheel notch: `OrbitControls.js:1783-1793` fires `start` then `end`) and each handled key (A6) set `moving`; the controls' `end` event and each handled key arm a 150 ms timer (`PIN_REST_MS = 150`); a new `start` cancels it, so the timer never fires while a button is held. When it fires, `moving` clears and `render()` runs once with placement. While `moving`, the stage has class `moving` (CSS hides `.flag` and `.leaders`) and `render()` draws without `placeFlags()`. The controls' `change` event only calls `render()`, as today, so `place()` and `snapshot()` (which call `controls.update()`) never set `moving`. A font `loadingdone` render while moving also skips placement. Hook `__dfma.placements(): number` counts `placeFlags()` runs.
+- **A5 One feature at a time** (`main.ts` `pickOf`, `viewer.ts` `paint`): a row's pick is the shown finding: `{ id: r.findings[at], faces: thatFinding.faces }` (a passed row, which has no findings, keeps `rowFaces`). In `paint()`, while anything is selected (any `Sel` kind: a row, a finding, a passed feature, a setup, a thread, a Hole feature, one of its holes, a blend), every face not chosen is `--part`: no severity colour, no Show OK colour. As today, faces not chosen are drawn at opacity 0.35 (`GHOST_OPACITY`), except the two walls of a selected sharp corner, which stay solid. Other edge bars `--part` at 0.35. Hooks: `__dfma.faceColours(): Record<number, string>` and `__dfma.barColours(): Record<string, { colour: string; opacity: number }>` (by finding id), colours as lower-case `#rrggbb`. Tests whose expectation changes from the row's union to the shown finding's faces: `steps.spec.ts:323` (F4's faces), `browser_engine.spec.ts:359`, `:390`, `:420` (the first finding's faces), `pdf.spec.ts:112` (F2's faces). This is the behaviour D-076 approved, not a weakened check (VER-01). Unchanged: `steps.spec.ts:458` and `lathe_plan.spec.ts:63` (setups light all their faces), `findings.spec.ts:89`, `:123` (one finding per row). UI_STYLE "Selected finding" and D-017's "nothing else dims" are amended in the same PR.
+- **A6 Keys** (`viewer.ts`): canvas `tabindex="0"`, `role="application"`, `aria-label="3D model of the part. Arrows rotate, Shift and arrows move, plus and minus zoom, H goes home."`. OrbitControls' own keys stay off (no `listenToKeyEvents`). Keydown on the canvas only, Ctrl, Alt and Meta presses ignored, key repeat allowed: ← turns the camera −10° about the controls' up through the target and → +10° (the part appears to turn the other way); ↑ tilts the camera 10° towards the up axis and ↓ away, clamped so the angle between camera − target and up stays within [0.001, π − 0.001] rad; Shift + arrows move camera and target together by 10% of the view height (← left, ↑ up on screen); `+`/`=`/NumpadAdd moves the camera to target + (camera − target) / 1.25, `-`/NumpadSubtract × 1.25; `h`/`H` Home. Each calls `preventDefault()`, then `controls.update()`, and counts as a move for A4. Focus ring: `.stage canvas:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }`.
+- **A7 Row keys** (`steps.ts` `renderRows`, `main.ts` `onStep`): keydown ArrowLeft / ArrowRight on the open row's button, its ‹ or › calls `onStep(−1 / +1)` with `preventDefault()`, as ‹ › do. `onStep` clamps `at` to [0, findings − 1] (today only the lower end is clamped, `main.ts:188`; the upper end is clamped later in `pickOf`). Focus stays where it was (the redraw keeps focus by `data-testid`, `main.ts` `showFindings`).
 - **A8 Words** (`index.html` `.hint`): "Drag to rotate. Middle-drag or Shift + drag to move. The wheel zooms to the mouse. Tab to the model for keys."
-- **A9 Markup**: wrap the canvas and the views group in `<div class="stage">` (position relative, flex 1) inside `.viewer`; pins and leaders follow `canvas.parentElement`.
-- **A10 `__dfma.view()`**: `{ position, target, up }` as number triples; `__dfma.facePositions()`: a hash of all face position buffers.
-- **A11 `web/scripts/pin-lag.mjs`**: the measurement above (production build served by `vite preview`, CTC 02, drag and wheel, 3 runs, prints median, p90, max frame gap). Not in `npm run check`.
+- **A9 Markup**: wrap the canvas, the views group and the triad caption in `<div class="stage">` inside `.viewer`. CSS: `.stage { position: relative; flex: 1; display: flex; min-height: 0; }`; the rules on `.viewer canvas` (`style.css:101`, and the 900 px rule at `:180`) move to `.stage canvas` unchanged; below 900 px `.stage { flex: none; }`. `.viewer-note` and `.setupchips` stay positioned against `.viewer` (`style.css:97`, `:243`). Pins and leaders attach to `canvas.parentElement`, now `.stage`; their offsets use `canvas.offsetLeft/Top` within it (0, 0). The audit F27 overlap tests (`audit_2026_11_09.spec.ts`) and the pin tests in `findings.spec.ts` must pass unchanged.
+- **A10 Hooks** (test build `window.__dfma`, `main.ts:59`): `view(): { position: [n, n, n]; target: [n, n, n]; up: [n, n, n] }`; `facePositions(): number` (the sum of every face position value, a checksum); `triad()`, `placements()`, `faceColours()`, `barColours()` as above.
+- **A11 `web/scripts/pin-lag.mjs`**: serves `web/dist-pages` with `vite preview` on port 8790, opens Chromium (`DFMA_CHROMIUM` if set, with the software WebGL flags of `playwright.config.ts`) at 1280 × 800, uploads `tests/nist/.cache/NIST-PMI-STEP-Files/**/nist_ctc_02_asme1_ap242-e2.stp` (run `npm run nist` first), waits for the first `.flag` and 3 s, then 3 runs each of a drag (40 moves of 6 px right with a ±30 px sine from the centre) and a wheel (20 notches alternating ±60), and prints median, p90 and max gaps between animation frames. The scratch version that measured the Problem's numbers is the model. Not in `npm run check`.
+- **A12 Triad caption**: "Part axes" under the triad, `--muted`, 0.75 rem, `aria-hidden` (the triad is a picture).
 
 ### Slice B (detail re-checked against merged A before it starts, write-spec step 8)
 
-- **B1 Examples**: the four files served at `examples/<name>.step` from `tests/parts` by a Vite plugin in `web/vite.config.ts` (copied into every build's output; one home, SRC-01). Each fetched, wrapped as a `File` and analysed through the same path as an upload. Start form: a list "Or try an example" with the 4 names as buttons; top bar: `<button aria-haspopup="menu">Examples ▾</button>` with a menu of the same 4 (Esc closes, focus returns). Process set before analysing: `slender_shaft` → `turn`, others → `mill`. Sizes 33.7-54.0 kB.
-- **B2 Top bar**: Open… (a button that clicks one `<input type="file" multiple accept=".step,.stp,.ipt">`, keeps `data-testid="upload-file"`); the files are sorted by extension into the STEP and the `.ipt`; two STEPs or two `.ipt`s → the error "Choose one STEP file and, if you have it, its .ipt.". The start form's two pickers become this one. `#top-file` and "Change file" go; the status line keeps the name.
-- **B3 Machine view**: a Part / Machine switch (`role="radiogroup"`, two radio buttons) over the model on Machining only, default Part. In Machine, a setup chip places the camera looking against the setup's direction with that direction on screen-up; the tool rows in the setup become `<button>`s (min 32 px) that light `operations[i].faces` for that setup and tool and show the placeholder spindle (cutter diameter `diameter_in` × 25.4 / file unit factor; length 3 diameters; holder and nose generic, `proto.diff` `protoSpindle`). Turning: the camera looks along the part's −Y of its frame with `turn_axis` horizontal; a three-jaw placeholder chuck at the axis's lower-coordinate end (`protoChuck`). Leaving Machine or Machining removes spindle and chuck and restores Part's camera behaviour.
+- **B1 Examples**: `report_sample`, `angled_hole_in_pocket`, `slender_shaft`, `clean_one_setup` (`.step`, 33.7-54.0 kB), served at `${import.meta.env.BASE_URL}examples/<name>.step` from `tests/parts` by a Vite plugin in `web/vite.config.ts` (dev server and every build's output; one home, SRC-01). Each is fetched, wrapped as a `File` and analysed through the same path as an upload. A failed fetch shows "The example could not be loaded. Try again." in the error box with the retry line. Start form: "Or try an example" and the 4 names as buttons; top bar: `<button aria-haspopup="menu" aria-expanded>Examples ▾</button>` with a `role="menu"` of the same 4 (↑ ↓ move, Enter picks, Esc and a click outside close, focus returns to the button). Picking one sets Process (`slender_shaft` → `turn`, others → `mill`), keeps Material, and clears any `.ipt`.
+- **B2 Top bar**: Open… (a button that clicks one `<input type="file" multiple accept=".step,.stp,.ipt">`, keeping `data-testid="upload-file"`); the files are sorted by extension into the STEP and the `.ipt`; three or more files, two STEPs or two `.ipt`s → the error box (as today, under the picker) shows "Choose one STEP file and, if you have it, its .ipt."; an `.ipt` alone → today's status line "Now choose the STEP file that Inventor exported from this .ipt." (`main.ts` `analyse`). The start form's two pickers become this one. `#top-file` and "Change file" go; `#status` keeps "Showing <name>.".
+- **B3 Machine view**: a Part / Machine switch (`role="radiogroup"`, two radio buttons) over the model on Machining only, default Part. In Machine, a setup chip turns the setup's direction name (`"+Z"`, `"-X"`…, part axes, `plan.ts:12`) into file coordinates `d` through `part.frame`, calls `buildControls(d)` (A1), and places the camera with `d` as up on screen, looking from the side and a little above: the view direction (part centre to camera) is `normalize(h + 0.6 d)`, where `h` is the Home direction of A2 with its component along `d` removed and normalized (if that is under 0.1 long, the file axis least aligned with `d`, made perpendicular to it); the orbit then turns about `d`. The tool lines in that setup become `<button>`s (min 32 px) that select a new `Sel` kind `op:<setup>:<tool id>` (added to `kindOf`, `main.ts:118`) lighting that operation's `faces`, and show the placeholder spindle with its tip at the centre of those faces' box, axis along `d` (cutter diameter `diameter_in` × 25.4 mm, cutter length 3 diameters; holder 2.2 r × 1.6 d, cone and nose as `protoSpindle`). Turning: `u` = the file axis among +Z, +Y least aligned with `turn_axis`, made perpendicular to it; `buildControls(u)`; the view direction is `normalize(turn_axis × u)`, so `turn_axis` lies across the screen and `u` is up; a three-jaw placeholder chuck (`protoChuck`) at the end with the smaller coordinate along `turn_axis`. Hooks: `spindle(): { diameter_mm: number } | null`, `chuck(): boolean`. Leaving Machine or Machining removes spindle and chuck and calls `buildControls(+Z)` and Home.
 - **B4 Amends**: D-042 (one picker, "Change file" gone), D-023 (Machine view), UI_STYLE top bar and Machining.
 
 ## Slices
@@ -152,8 +162,8 @@ Each check fails at `d42fcfd`. E2E tests run in the test build (`web/dist-pages-
 ### S1 (slice A) The model
 
 - **Morgan tries:** on the work copy, report_sample: pick Deep hole ×2, one hole lit, › lights the other; spin with wheel and drag, no pins while moving; middle-drag moves, Shift + middle-drag rotates; Tab to the model, arrows rotate, H home; press each view button; watch the triad.
-- **Checks that fail now:** J1-J6 tests in `web/e2e/model.spec.ts`; the four changed row assertions (A5).
-- **Files:** `web/src/viewer.ts`: A1, A3, A4, A5 paint, A6, hooks. `web/src/main.ts`: A5 `pickOf`, `setFrame`, view buttons, hooks. `web/src/steps.ts`: A7. `web/index.html`: A2 group, A6 attributes, A8, A9. `web/src/style.css`: views, stage, `.moving`, focus ring. `web/e2e/model.spec.ts`: new. `web/e2e/steps.spec.ts`, `web/e2e/browser_engine.spec.ts`: A5 changes. `web/scripts/pin-lag.mjs`: A11. `docs/UI_STYLE.md`, `docs/DECISIONS.md` (D-017, D-076 built), `docs/HANDOFF.md`.
+- **Checks that fail now:** J1-J6 tests in `web/e2e/model.spec.ts`; the five changed assertions (A5).
+- **Files:** `web/src/viewer.ts`: A1, A3, A4, A5 paint, A6, hooks. `web/src/main.ts`: A5 `pickOf`, `setFrame`, view buttons, hooks. `web/src/steps.ts`: A7. `web/index.html`: A2 group, A6 attributes, A8, A9. `web/src/style.css`: views, stage, `.moving`, focus ring. `web/e2e/model.spec.ts`: new. `web/e2e/steps.spec.ts`, `web/e2e/browser_engine.spec.ts`, `web/e2e/pdf.spec.ts`: A5 changes. `web/scripts/pin-lag.mjs`: A11. `docs/UI_STYLE.md`, `docs/DECISIONS.md` (D-017, D-076 built), `docs/HANDOFF.md`.
 - **Waits on:** Open questions 1 and 2.
 
 ### S2 (slice B) The screens
@@ -161,6 +171,7 @@ Each check fails at `d42fcfd`. E2E tests run in the test build (`web/dist-pages-
 - **Morgan tries:** Examples ▾ loads each of the four; Open… with a STEP and its .ipt together; Machining, Machine: each setup chip puts the spindle on top, a tool row lights its faces in the spindle; slender_shaft lies across with a chuck.
 - **Checks that fail now:** J7-J9 in `web/e2e/screens.spec.ts`; `upload_pair.spec.ts`, `threads.spec.ts`, `hole_features.spec.ts`, `blends.spec.ts`, `pdf.spec.ts` moved from `upload-ipt` to the one picker; `steps.spec.ts`, `audit_2026_11_09.spec.ts` lose "Change file" / `top-file` assertions in favour of Open….
 - **Files:** `web/vite.config.ts` (B1 plugin), `web/index.html`, `web/src/main.ts`, `web/src/findings.ts` (tool rows as buttons), `web/src/viewer.ts` (spindle, chuck, setup camera), `web/src/style.css`, the e2e files above, `docs/UI_STYLE.md`, `docs/DECISIONS.md` (D-023, D-042), `docs/HANDOFF.md`.
+- **Needs from S1:** `buildControls` (A1), `.stage` (A9), the hooks of A10, the A5 paint for tool lighting, and A4's rule that only user input hides pins.
 - **Waits on:** S1 merged.
 
 ## Verification
@@ -171,5 +182,5 @@ Each check fails at `d42fcfd`. E2E tests run in the test build (`web/dist-pages-
 
 ## Open questions
 
-1. **Which axes do the views use?** Recommended: Front, Top, Right, Iso and Home in the file's own axes (Top looks down the file's +Z, as Inventor shows it), and the triad in the part's axes (D-076), so the triad matches the setup names ("from −X") but not always the view names. Alternatives: everything in the part's axes (Top shows the underside of 26 of 42 sample parts); everything in the file's axes (the triad then disagrees with the setup names on 41 of 42).
+1. **Which axes do the views use?** Recommended: Front, Top, Right, Iso and Home in the file's own axes (Top looks down the file's +Z, as Inventor shows it), and the triad in the part's axes (D-076) with a "Part axes" caption, so the triad matches the setup names ("from −X") but not always the view names. Alternatives: everything in the part's axes (Top shows the underside of 26 of 42 sample parts); everything in the file's axes (the triad then disagrees with the setup names on 41 of 42).
 2. **Turntable orbit?** Recommended: the part turns about the file's +Z and never rolls. Alternative: free orbit, Inventor's default.
