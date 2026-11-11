@@ -42,7 +42,7 @@ li { margin:4px 0; } .muted { color:var(--muted); font-size:0.875rem; }
 <h2>Slice A: the model</h2>
 <h3>1. One feature at a time</h3>
 ${fig("02-row-before.png", "Today: Deep hole ×2 picked, both holes blue", "<b>Today.</b> report_sample.step, Features, Deep hole ×2 picked: both holes light up in blue, and the other findings keep their colour, faded. A row with many copies, such as thin walls, lights them all; I think that is the all-blue part in your photo (inference: I haven't seen the photo).")}
-${fig("03-row-after.png", "Proposed: only hole 1 blue, the rest grey", "<b>Proposed.</b> The same pick lights only the hole the row shows (F1, 1 of 2); the rest of the part is plain grey. The model zooms to it, as today. View buttons sit at the model's bottom left.")}
+${fig("03-row-after.png", "Proposed: only hole 1 blue, the rest grey", "<b>Proposed.</b> The same pick lights only the hole the row shows (F1, 1 of 2); the rest of the part is plain grey. The model zooms to it, as today. View buttons sit at the model's bottom right.")}
 ${fig("03b-row-after-next.png", "Proposed: after › the second hole is lit", "<b>Proposed, after ›.</b> The second hole (F2, 2 of 2) is lit instead. ‹ › or ← → with the row focused step through them.")}
 
 <h3>2. Pins while the part moves</h3>
@@ -59,14 +59,18 @@ ${fig("04-moving.png", "Proposed: the part while it moves, no pins", "<b>Propose
 </table></div>
 <p class="muted">Touch stays as today: one finger rotates, two move and zoom. Middle-click's autoscroll (Windows) and paste (Linux) are blocked over the model. The model gets a visible focus ring when tabbed to.</p>
 
+<h3>4. Axis triad and origin</h3>
+<p>Every picture that shows a model has an <b>axis triad</b> in the model's bottom-left corner: X, Y and Z arrows, each labelled, that turn with the part as you rotate it. The axes are the part's own axes, the ones the setups name ("from −X"). A small triad with a dot marks the part's <b>origin</b> (0, 0, 0) on the model itself; on report_sample it sits on the bottom corner.</p>
+<p class="muted">Arrow colours follow the usual X red, Y green, Z blue, and the corner triad's arrows carry their letters, so colour isn't the only cue there (X red is close to the Fix red; the letter tells them apart). The origin marker on the part has no letters in these pictures; the build labels it too and checks the letters' contrast (Y and Z read pale here).</p>
+
 <h2>Slice B: the screens</h2>
-<h3>4. Start form with examples</h3>
+<h3>5. Start form with examples</h3>
 ${fig("01-start.png", "Proposed start form: one Open… and four examples", "<b>Proposed.</b> One Open… takes the STEP and its .ipt together. Four examples underneath; an example sets Process itself (slender_shaft to Turning). The top bar has Open… and Examples ▾ from the start.")}
-<h3>5. Top bar with Open… and Examples</h3>
+<h3>6. Top bar with Open… and Examples</h3>
 ${fig("07-examples-menu.png", "Proposed: Examples menu open over a loaded part", "<b>Proposed.</b> Open…, Examples ▾ and Export PDF. To fit, the file name leaves the bar; it stays in the line under it (“Showing angled_hole_in_pocket.step.”). “Change file” goes from the overview.")}
-<h3>6. Machine view on Machining</h3>
-${fig("05-machine-mill.png", "Proposed machine view, mill, setup 2 from −X", "<b>Proposed, mill.</b> Part / Machine switch over the model. A setup chip turns the part so its spindle is on top (Setup 2 from −X: the pocket faces up). Tapping a tool row lights the faces it cuts: tool 3, the 3/4 in end mill, lights pocket-1.")}
-${fig("06-machine-lathe.png", "Proposed machine view, lathe", "<b>Proposed, lathe.</b> slender_shaft.step: the turning axis lies across the screen, as a lathe looks from the front. The whole part is red because Slender part (F1, Fix) is about the whole part, as today.")}
+<h3>7. Machine view on Machining</h3>
+${fig("05-machine-mill.png", "Proposed machine view, mill, setup 2 from −X", "<b>Proposed, mill.</b> Part / Machine switch over the model. A setup chip turns the part so its spindle is on top (Setup 2 from −X: the pocket faces up). Tapping a tool row lights the faces it cuts and puts that tool in a placeholder spindle above them: tool 3, the 3/4 in end mill, over pocket-1. The cutter's diameter is to scale (from the plan); its length (3 diameters), the holder and the spindle nose are generic shapes, not to scale and not your machines'.")}
+${fig("06-machine-lathe.png", "Proposed machine view, lathe", "<b>Proposed, lathe.</b> slender_shaft.step: the turning axis lies across the screen, as a lathe looks from the front, with a placeholder three-jaw chuck on the left (generic shape, not to scale; which end it holds is arbitrary here). The whole part is red because Slender part (F1, Fix) is about the whole part, as today.")}
 
 <h2>Settled rules this changes</h2>
 <p class="muted">Each becomes a Proposed entry in DECISIONS with the final plan; none changes until you approve it.</p>
@@ -75,6 +79,7 @@ ${fig("06-machine-lathe.png", "Proposed machine view, lathe", "<b>Proposed, lath
 <li><b>D-042</b>: "Change file" leaves the Part overview; Open… in the top bar replaces it, and the start form's two pickers become one.</li>
 <li><b>D-023</b> (selectable setups): in the Machine view a setup chip also turns the part so the spindle is on top, and a tool row lights the faces that tool cuts in that setup.</li>
 <li><b>D-017</b> pins: unchanged when the part is still; hidden while it moves (new).</li>
+<li><b>Axis triad and origin marker</b>: new; no settled rule touched.</li>
 <li><b>Mouse</b>: today middle-drag zooms (three.js default); it becomes move, as in Inventor.</li>
 </ul>
 <p class="muted">Tap sizes: the tool rows on Machining are about 22 px tall today, under the 32 px minimum (UI_STYLE); as buttons they grow to at least 32 px. The ‹ › buttons and "Show on model ›" are checked against 32 px in the build too.</p>
@@ -89,7 +94,8 @@ ${fig("06-machine-lathe.png", "Proposed machine view, lathe", "<b>Proposed, lath
 <li>Middle-drag moves, Shift + middle-drag rotates, the wheel zooms to the mouse, in Chrome or Edge at work; no autoscroll circle.</li>
 <li>Tab to the model: arrows rotate, + − zoom, H goes home.</li>
 <li>Open… with a STEP and its .ipt picked together; Examples ▾ loads each of the four.</li>
-<li>Machining, Machine: each setup chip puts the spindle on top; tapping a tool lights its faces.</li>
+<li>Machining, Machine: each setup chip puts the spindle on top; tapping a tool lights its faces and shows it in the spindle.</li>
+<li>Rotate the part: the corner triad turns with it, and the origin marker stays on the part's (0, 0, 0).</li>
 </ul>
 
 ${record}

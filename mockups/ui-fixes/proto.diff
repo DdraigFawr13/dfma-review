@@ -1,12 +1,12 @@
 diff --git a/web/src/main.ts b/web/src/main.ts
-index 4fe9b8d..5f8683d 100644
+index 4fe9b8d..4e1385a 100644
 --- a/web/src/main.ts
 +++ b/web/src/main.ts
 @@ -70,6 +70,7 @@ declare global {
      };
    }
  }
-+(window as any).__proto = { look: (d: number[], up: number[]) => viewer.protoLook(d, up), select: (id: string, faces: number[]) => viewer.select({ id, faces } as any, false) };
++(window as any).__proto = { look: (d: number[], up: number[]) => viewer.protoLook(d, up), frame: (x: number[], y: number[], z: number[]) => viewer.protoFrame(x, y, z), spindle: (d: number[], tip: number[], dia: number) => viewer.protoSpindle(d, tip, dia), chuck: (d: number[], at: number[], r: number) => viewer.protoChuck(d, at, r), box: () => viewer.protoBox(), select: (id: string, faces: number[]) => viewer.select({ id, faces } as any, false) };
  window.__dfma = {
    highlightedFaces: () => viewer.highlightedFaces(),
    cameraTarget: () => viewer.cameraTarget(),
@@ -22,16 +22,17 @@ index 4fe9b8d..5f8683d 100644
    return stillThere(result, s.id);
  }
 diff --git a/web/src/viewer.ts b/web/src/viewer.ts
-index 6cfba70..a890c51 100644
+index 6cfba70..858f749 100644
 --- a/web/src/viewer.ts
 +++ b/web/src/viewer.ts
-@@ -216,6 +216,16 @@ export class Viewer {
+@@ -216,6 +216,17 @@ export class Viewer {
  
    /** Select a finding (or clear with null): accent on its faces, the rest faded, camera framed.
     *  frame = false keeps the camera (restoring a selection after the material changes). */
 +  /** PROTO: look from a direction with a given up, the whole part framed. */
 +  protoLook(d: number[], up: number[]): void {
 +    const box = new THREE.Box3().setFromObject(this.part);
++    if (this.protoTool) box.expandByObject(this.protoTool);
 +    this.place(box.getBoundingSphere(new THREE.Sphere()), new THREE.Vector3(d[0], d[1], d[2]).normalize());
 +    this.camera.up.set(up[0], up[1], up[2]);
 +    this.camera.lookAt(this.controls.target);
@@ -42,7 +43,7 @@ index 6cfba70..a890c51 100644
    select(finding: Selection | null, frame = true): void {
      this.selected = finding;
      this.paint();
-@@ -309,7 +319,7 @@ export class Viewer {
+@@ -309,7 +320,7 @@ export class Viewer {
        const sev = severity.get(id);
        const kind = this.checked.get(id);
        const ok = kind !== undefined && this.showChecked[kind] && this.okStep;
@@ -51,3 +52,97 @@ index 6cfba70..a890c51 100644
        const ghost = this.selected !== null && !chosen.has(id) && !kept.has(id);
        material.transparent = ghost;
        material.opacity = ghost ? GHOST_OPACITY : 1;
+@@ -557,7 +568,93 @@ export class Viewer {
+     cancelAnimationFrame(this.frame);
+     this.frame = requestAnimationFrame(() => {
+       this.renderer.render(this.scene, this.camera);
++      this.protoDrawGizmo();
+       this.placeFlags();
+     });
+   }
++
++  // ---- PROTO (mock-up only): axis triad, origin marker, placeholder spindle and chuck ----
++  private gizmo: { scene: THREE.Scene; cam: THREE.OrthographicCamera } | null = null;
++  private protoAxes: THREE.Vector3[] = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)];
++  protoTool: THREE.Group | null = null;
++
++  private static label(text: string, color: string): THREE.Sprite {
++    const c = document.createElement("canvas"); c.width = 64; c.height = 64;
++    const g = c.getContext("2d")!; g.font = "bold 44px IBM Plex Sans, sans-serif"; g.fillStyle = color; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(text, 32, 34);
++    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
++    return s;
++  }
++
++  /** The axes the review names (+X, −X…): the part's own frame. */
++  protoFrame(x: number[], y: number[], z: number[]): void {
++    this.protoAxes = [x, y, z].map((a) => new THREE.Vector3(a[0], a[1], a[2]).normalize());
++    const scene = new THREE.Scene();
++    const cols = ["#c62828", "#2e7d32", "#1565c0"], names = ["X", "Y", "Z"];
++    this.protoAxes.forEach((a, i) => {
++      scene.add(new THREE.ArrowHelper(a, new THREE.Vector3(), 1, cols[i], 0.28, 0.16));
++      const s = Viewer.label(names[i], cols[i]); s.position.copy(a.clone().multiplyScalar(1.32)); s.scale.setScalar(0.55); scene.add(s);
++    });
++    scene.add(new THREE.Mesh(new THREE.SphereGeometry(0.07), new THREE.MeshBasicMaterial({ color: "#333" })));
++    const cam = new THREE.OrthographicCamera(-1.55, 1.55, 1.55, -1.55, 0.1, 10);
++    this.gizmo = { scene, cam };
++    // origin marker: a small triad at the file's origin, in the main scene
++    const box = new THREE.Box3().setFromObject(this.part); const size = box.getSize(new THREE.Vector3()).length();
++    const o = new THREE.Group();
++    this.protoAxes.forEach((a, i) => o.add(new THREE.ArrowHelper(a, new THREE.Vector3(), size * 0.12, cols[i], size * 0.03, size * 0.018)));
++    o.add(new THREE.Mesh(new THREE.SphereGeometry(size * 0.008), new THREE.MeshBasicMaterial({ color: "#222" })));
++    this.scene.add(o);
++    this.render();
++  }
++
++  private protoDrawGizmo(): void {
++    if (!this.gizmo) return;
++    const { scene, cam } = this.gizmo;
++    const dir = this.camera.position.clone().sub(this.controls.target).normalize();
++    cam.position.copy(dir.multiplyScalar(4)); cam.up.copy(this.camera.up); cam.lookAt(0, 0, 0);
++    const r = this.renderer, px = 150, pad = 6;
++    r.autoClear = false; r.setScissorTest(true);
++    r.setViewport(pad, pad, px, px); r.setScissor(pad, pad, px, px);
++    r.clearDepth(); r.render(scene, cam);
++    r.setScissorTest(false); r.setViewport(0, 0, this.canvas.clientWidth, this.canvas.clientHeight); r.autoClear = true;
++  }
++
++  /** A placeholder spindle: nose, holder and the tool (diameter in scene units), tool tip at `tip`, axis along `d` (away from the part). */
++  protoSpindle(d: number[], tip: number[], toolDia: number): void {
++    if (this.protoTool) this.scene.remove(this.protoTool);
++    const g = new THREE.Group();
++    const steel = new THREE.MeshStandardMaterial({ color: "#b8c0c8", metalness: 0.3, roughness: 0.5 });
++    const dark = new THREE.MeshStandardMaterial({ color: "#5d6873", metalness: 0.3, roughness: 0.6 });
++    const tool = new THREE.MeshStandardMaterial({ color: "#d9a441", metalness: 0.4, roughness: 0.4 });
++    const r = toolDia / 2, stick = toolDia * 3;
++    const add = (rad: number, len: number, at: number, m: THREE.Material) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, len, 40), m); c.position.y = at + len / 2; g.add(c); return at + len; };
++    let y = add(r, stick, 0, tool);
++    y = add(r * 2.2, toolDia * 1.6, y, steel);
++    const cone = new THREE.Mesh(new THREE.CylinderGeometry(r * 3.2, r * 2.2, toolDia * 1.0, 40), steel); cone.position.y = y + toolDia * 0.5; g.add(cone); y += toolDia * 1.0;
++    add(r * 4.2, toolDia * 1.2, y, dark);
++    g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(d[0], d[1], d[2]).normalize());
++    g.position.set(tip[0], tip[1], tip[2]);
++    this.protoTool = g; this.scene.add(g);
++    const far = this.camera.far; this.camera.far = far * 3; this.camera.updateProjectionMatrix();
++    this.render();
++  }
++
++  /** A placeholder lathe chuck with three jaws, its face at `at`, axis along `d` (away from the part). */
++  protoChuck(d: number[], at: number[], partRadius: number): void {
++    if (this.protoTool) this.scene.remove(this.protoTool);
++    const g = new THREE.Group();
++    const steel = new THREE.MeshStandardMaterial({ color: "#5d6873", metalness: 0.3, roughness: 0.6 });
++    const jawM = new THREE.MeshStandardMaterial({ color: "#b8c0c8", metalness: 0.3, roughness: 0.5 });
++    const R = partRadius * 3, L = partRadius * 2;
++    const body = new THREE.Mesh(new THREE.CylinderGeometry(R, R, L, 48), steel); body.position.y = L / 2 + partRadius * 1.2; g.add(body);
++    for (let i = 0; i < 3; i++) {
++      const jaw = new THREE.Mesh(new THREE.BoxGeometry(partRadius * 1.4, partRadius * 1.6, partRadius * 1.0), jawM);
++      const a = (i * 2 * Math.PI) / 3; jaw.position.set(Math.cos(a) * partRadius * 1.6, partRadius * 0.8, Math.sin(a) * partRadius * 1.6); jaw.rotation.y = -a; g.add(jaw);
++    }
++    g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(d[0], d[1], d[2]).normalize());
++    g.position.set(at[0], at[1], at[2]);
++    this.protoTool = g; this.scene.add(g);
++    this.render();
++  }
++
++  protoBox(): number[] { const b = new THREE.Box3().setFromObject(this.part); return [...b.min.toArray(), ...b.max.toArray()]; }
+ }

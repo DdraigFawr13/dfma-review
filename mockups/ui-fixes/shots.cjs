@@ -16,6 +16,7 @@ async function load(p, file, process = 'mill') {
   await p.getByTestId('upload-process').selectOption(process);
   await p.getByTestId('upload-file').setInputFiles(PARTS + file);
   await p.getByTestId('overview').waitFor({ timeout: 180000 });
+  await p.evaluate(() => { const a = window.__dfma.analysis(); window.__proto?.frame(a.part.frame.x, a.part.frame.y, a.part.frame.z); });
 }
 const settle = (p) => p.waitForTimeout(900);
 
@@ -26,7 +27,7 @@ async function css(p) {
     .mk-menu button{display:grid;grid-template-columns:1fr;gap:2px;text-align:left;width:100%;border:0;border-bottom:1px solid var(--line);background:none;padding:10px 14px;font:inherit;cursor:pointer;min-height:44px}
     .mk-menu button:first-child{outline:3px solid var(--accent);outline-offset:-3px}
     .mk-menu b{font-family:var(--mono);font-size:.875rem}.mk-menu span,.mk-ex span{font-size:.875rem;color:var(--muted)}
-    .mk-views{position:absolute;left:12px;bottom:44px;display:flex;gap:6px;z-index:5}
+    .mk-views{position:absolute;right:12px;bottom:44px;display:flex;gap:6px;z-index:5}
     .mk-views button,.mk-sw button{font:600 .875rem var(--sans);min-height:32px;padding:4px 10px;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:var(--radius)}
     .mk-sw{position:absolute;right:12px;top:12px;display:flex;z-index:6}
     .mk-sw button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
@@ -130,8 +131,19 @@ async function highlightOp(p, text) {
   const s2 = a.setups[1].direction; const { d, a1, a2 } = basis(a, s2.replace('−', '-'));
   const op = a.operations.find((o) => o.setup === 1 && o.tool === 'em-0.750');
   await p.getByTestId('setup-chip-2').click(); await settle(p);
-  await p.evaluate(({ v, up, faces }) => { window.__proto.look(v, up); window.__proto.select('op', faces); }, { v: comb([0.55, d], [0.8, a1], [0.6, a2]), up: d, faces: op.faces });
-  await p.evaluate(() => document.querySelector('.mk-views')?.remove()); await machineSwitch(p, `Spindle ↓ · Setup 2 from ${s2.replace('-', '−')}`); await views(p); await views(p); await highlightOp(p, '3/4 in end mill'); await settle(p);
+  await p.evaluate(({ v, up, faces, d, dia }) => {
+    window.__proto.look(v, up); window.__proto.select('op', faces);
+    const A = window.__dfma.analysis(); const pts = [];
+    for (const f of A.faces) for (let i = 0; i < f.positions.length; i += 3) pts.push([f.positions[i], f.positions[i + 1], f.positions[i + 2]]);
+    const dot = (p) => p[0] * d[0] + p[1] * d[1] + p[2] * d[2];
+    const top = Math.max(...pts.map(dot));
+    const mine = A.faces.filter((f) => faces.includes(f.id)).flatMap((f) => { const o = []; for (let i = 0; i < f.positions.length; i += 3) o.push([f.positions[i], f.positions[i + 1], f.positions[i + 2]]); return o; });
+    const c = [0, 1, 2].map((k) => mine.reduce((s, p) => s + p[k], 0) / mine.length);
+    const lift = top - dot(c) + 4;
+    window.__proto.spindle(d, c.map((x, k) => x + d[k] * lift), dia * 25.4);
+    window.__proto.look(v, up);
+  }, { v: comb([0.55, d], [0.8, a1], [0.6, a2]), up: d, faces: op.faces, d, dia: 0.75 });
+  await p.evaluate(() => document.querySelector('.mk-views')?.remove()); await machineSwitch(p, `Setup 2 from ${s2.replace('-', '−')} · placeholder spindle; 3/4 in end mill to scale`); await views(p); await views(p); await highlightOp(p, '3/4 in end mill'); await settle(p);
   await p.screenshot({ path: '05-machine-mill.png' }); await p.close();
 
   // 6 machine view, lathe: slender_shaft, the turning axis across the screen
@@ -142,8 +154,18 @@ async function highlightOp(p, text) {
   const ax = t.turn_axis; const frame = [t.part.frame.x, t.part.frame.y, t.part.frame.z];
   const dot = (u, v) => u.reduce((s, c, i) => s + c * v[i], 0);
   const perp = frame.filter((f) => Math.abs(dot(f, ax)) < 0.5);
-  await p.evaluate(({ v, up }) => window.__proto.look(v, up), { v: comb([1, perp[0]], [0.35, perp[1]]), up: perp[1] });
-  await machineSwitch(p, 'Lathe · turning axis across the screen'); await views(p); await settle(p);
+  const u = perp[1]; const cross = (x, y) => [x[1] * y[2] - x[2] * y[1], x[2] * y[0] - x[0] * y[2], x[0] * y[1] - x[1] * y[0]];
+  await p.evaluate(({ v, up, ax, r }) => {
+    const A = window.__dfma.analysis(); const pts = [];
+    for (const f of A.faces) for (let i = 0; i < f.positions.length; i += 3) pts.push([f.positions[i], f.positions[i + 1], f.positions[i + 2]]);
+    const dot = (p) => p[0] * ax[0] + p[1] * ax[1] + p[2] * ax[2];
+    const lo = Math.min(...pts.map(dot));
+    const c = [0, 1, 2].map((k) => pts.reduce((s, p) => s + p[k], 0) / pts.length);
+    const at = c.map((x, k) => x + ax[k] * (lo - dot(c)));
+    window.__proto.chuck(ax.map((x) => -x), at, r);
+    window.__proto.look(v, up);
+  }, { v: comb([1, cross(ax, u)], [0.35, u]), up: u, ax, r: (t.stock.diameter_in / 2) * 25.4 });
+  await machineSwitch(p, 'Lathe · turning axis across · placeholder chuck on the left'); await views(p); await settle(p);
   await p.screenshot({ path: '06-machine-lathe.png' }); await p.close();
 
   // 7 Examples menu open over a loaded part
