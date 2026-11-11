@@ -25,9 +25,8 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-11 S8a (D-072): merged the D-071 docs from `port-s8-retire-python` here (that branch is unmerged; left as is). Quick parity 122 of 122, 4 shards, 236.7 s. Scorer and harness match Python (numbers in D-072). Stale EDMR line: `tests/edmr/scorecard.toml` `nasty_cheese` 386, both engines 387 (open).
-
-
+- 2026-11-11 S8b in progress on `port-s8b-retire-python` (WIP commits, not green; no PR yet). Measured: D-073 (both diffs tessellation). Python baseline 867 passed (not timed), 928 collected, 36 files. Frozen key 19.33 MiB (20.27 MB). Ported so far: e2e groups 2 and 3 and most of group 1 (55 + 23 tests pass); vitest group C (184 tests). Python still present: delete after the ports report and `npm run check` passes.
+- Status page for Morgan: https://claude.ai/artifact/MgtFDYNREZzpeUP9b4cdn5 (update before approval).
 
 ## Next
 

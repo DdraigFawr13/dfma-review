@@ -13,7 +13,7 @@ test("pocket cut by a pocket a hair deeper is still a pocket", async () => {
   const found = await pocketsOf(cut(o, box(o, ...BLOCK), box(o, ...POCKET), deeper));
   const floorsAt = found.map((f) => Math.round(f.dims_mm.depth * 100) / 100).sort((a, b) => a - b);
   expect(floorsAt).toEqual([Math.round(0.5 * IN * 100) / 100, Math.round((0.5 * IN + 0.03) * 100) / 100]);
-}, 60_000);
+});
 
 test("pocket with a floor sliver under 0.05 mm is still a pocket", async () => {
   const o = await oc();
@@ -22,7 +22,7 @@ test("pocket with a floor sliver under 0.05 mm is still a pocket", async () => {
   const found = await pocketsOf(cut(o, box(o, ...BLOCK), box(o, ...POCKET), passage));
   expect(found.length).toBe(1);
   close(found[0].dims_mm.depth, 0.5 * IN, 0.01);
-}, 60_000);
+});
 
 test("chamfer between floor and wall is kept out of the pocket", async () => {
   const o = await oc();
@@ -31,7 +31,7 @@ test("chamfer between floor and wall is kept out of the pocket", async () => {
   const found = await pocketsOf(part);
   expect(found.length).toBe(1);
   expect(found[0].faces.length).toBe(5); // floor and 4 walls, not the chamfer
-}, 60_000);
+});
 
 test("chamfer on a pocket corner is kept out of the pocket", async () => {
   const o = await oc();
@@ -40,7 +40,7 @@ test("chamfer on a pocket corner is kept out of the pocket", async () => {
   const found = await pocketsOf(part);
   expect(found.length).toBe(1);
   expect(found[0].faces.length).toBe(5);
-}, 60_000);
+});
 
 test("hexagon pocket keeps all six walls", async () => {
   const o = await oc();
@@ -48,4 +48,4 @@ test("hexagon pocket keeps all six walls", async () => {
   const found = await pocketsOf(cut(o, box(o, ...BLOCK), prism(o, pts, 0.5, 1)));
   expect(found.length).toBe(1);
   expect(found[0].faces.length).toBe(7);
-}, 60_000);
+});

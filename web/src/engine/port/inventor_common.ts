@@ -122,3 +122,7 @@ export async function holePairs(): Promise<[string, any, import("../inventor/hol
   }
   return out;
 }
+
+/** The frozen hostile .ipt of tests/service/test_inventor_safety.py (tests/parity/key/ipt, written by key.py --freeze
+ *  from the same cases, gzipped). */
+export const hostileBytes = (name: string): Uint8Array => new Uint8Array(gunzipSync(readFileSync(resolve(KEYS, "ipt", `${name}.ipt.gz`))));

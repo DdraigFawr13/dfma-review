@@ -5,6 +5,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parse } from "smol-toml";
+import { expect } from "vitest";
 import type { Material, Process } from "../../api";
 import { analyze } from "../analyze";
 import type { IptPart } from "../inventor/part";
@@ -165,4 +166,33 @@ export function prism(o: OC, points: number[][], z0: number, h: number): Shape {
   poly.Close();
   const face = new o.BRepBuilderAPI_MakeFace(poly.Wire(), false).Face();
   return new o.BRepPrimAPI_MakePrism(face, new o.gp_Vec(0, 0, h * IN), false, true).Shape();
+}
+
+const PLANNED = ["hole", "pocket", "profile", "bore", "groove"]; // what a setup holds (S5 mill, S6 lathe)
+
+/** test_expected.check_plan: machine, setups (each holding the features its probes name, in order), tools and tool loads,
+ *  for entries that list them. `bytes` is the STEP file the probes are measured on. */
+export async function checkPlan(bytes: Uint8Array, entry: Expected, result: Result): Promise<void> {
+  if ("machine" in entry) expect(result.machine).toEqual(entry.machine);
+  if ("setups" in entry) {
+    expect(result.setups.map((s: Feat) => s.direction)).toEqual(entry.setups.map((s: Feat) => s.dir));
+    const planned = result.features.filter((f: Feat) => PLANNED.includes(f.kind));
+    for (let i = 0; i < entry.setups.length; i++) {
+      const want = entry.setups[i];
+      const got = result.setups[i];
+      const named = new Set<string>();
+      for (const probe of want.probes as number[][]) {
+        const near = await facesNear(bytes, probe);
+        const hit = planned.filter((f: Feat) => f.faces.some((x: number) => near.has(x))).map((f: Feat) => f.id);
+        expect(hit.length, `probe ${probe} names ${hit}`).toBe(1);
+        named.add(hit[0]);
+      }
+      expect(new Set(got.features), `${want.dir}: ${got.features} vs ${[...named]}`).toEqual(named);
+    }
+  }
+  if ("tools" in entry) expect(result.tools.map((t: Feat) => t.id)).toEqual(entry.tools);
+  if ("tool_changes" in entry) {
+    expect(result.tool_changes).toEqual(entry.tool_changes);
+    expect(entry.tool_changes).toEqual(result.operations.length);
+  }
 }

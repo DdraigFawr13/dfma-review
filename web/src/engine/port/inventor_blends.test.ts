@@ -126,17 +126,17 @@ describe("built block (spec Builder defaults): the built block's fillet r 3 and 
       }
       throw new Error(`no edge at ${mid}`);
     };
-    const box = new oc.BRepPrimAPI_MakeBox_2(40.0, 30.0, 20.0).Shape();
-    const f = new oc.BRepFilletAPI_MakeFillet(box, oc.ChFi3d_FilletShape.ChFi3d_Rational);
-    f.Add_2(3.0, edgeAt(box, [0.0, 0.0, 10.0]));
-    f.Build(new oc.Message_ProgressRange_1());
+    const box = new oc.BRepPrimAPI_MakeBox(40.0, 30.0, 20.0).Shape();
+    const f = new oc.BRepFilletAPI_MakeFillet(box);
+    f.Add(3.0, edgeAt(box, [0.0, 0.0, 10.0]));
+    f.Build(new oc.Message_ProgressRange());
     const shape = f.Shape();
     const c = new oc.BRepFilletAPI_MakeChamfer(shape);
-    c.Add_2(2.0, edgeAt(shape, [20.0, 30.0, 20.0]));
-    c.Build(new oc.Message_ProgressRange_1());
-    const w = new oc.STEPControl_Writer_1();
-    w.Transfer(c.Shape(), oc.STEPControl_StepModelType.STEPControl_AsIs, true, new oc.Message_ProgressRange_1());
-    expect(w.Write("/block.step")).toBe(oc.IFSelect_ReturnStatus.IFSelect_RetDone);
+    c.Add(2.0, edgeAt(shape, [20.0, 30.0, 20.0]));
+    c.Build(new oc.Message_ProgressRange());
+    const w = new oc.STEPControl_Writer();
+    w.Transfer(c.Shape(), "STEPControl_AsIs", true, new oc.Message_ProgressRange());
+    expect(String(w.Write("/block.step"))).toBe("IFSelect_RetDone"); // the engine's enums are strings
     const part = readStep(oc, "/block.step");
     topo = new Topology(oc, part.solid, part.faces);
   });
