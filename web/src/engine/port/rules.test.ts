@@ -580,7 +580,7 @@ async function withIpt(step: string, threads: Thread[], holeFeatures: ReturnType
 }
 const withThreads = (step: string, threads: Thread[]) => withIpt(step, threads);
 const withHoles = (step: string, feats: ReturnType<typeof holeFeature>[], threads: Thread[] = []) => withIpt(step, threads, feats);
-const mismatches = (r: Result) => r.findings.filter((f: Feat) => f.rule === "thread_mismatch");
+const mismatches = (r: Result): Feat[] => r.findings.filter((f: Feat) => f.rule === "thread_mismatch");
 
 for (const kase of ["axis", "diameter", "depth", "centred"] as const) {
   test(`thread mismatch (${kase})`, async () => {
