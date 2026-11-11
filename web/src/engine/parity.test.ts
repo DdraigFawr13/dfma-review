@@ -14,6 +14,14 @@ import { parseShard, shardOf } from "./parity-shard";
 
 const ROOT = resolve(__dirname, "../../..");
 const KEY_DIR = resolve(ROOT, process.env.PARITY_KEY_DIR ?? "tests/parity/key");
+// S8b (D-074): the faces whose point positions differ from the frozen Python key by tessellation only (measured per
+// face on 2026-11-11 with Python OCC and the browser engine; both on the surface within 1.3e-4 mm). Keyed by the
+// entry's path in tests/parity/key/index-*.json, by face index.
+const KNOWN_TESSELLATION: Record<string, number[]> = {
+  "tests/grading/sets/bullnose_draft/bn_ball6.step": [14, 18],
+  "tests/edmr/models/STEP/STI/nasty_cheese/nasty_cheese.stp": [202],
+};
+
 const SET = process.env.PARITY_SET ?? "quick";
 const { k, n } = parseShard(process.env.PARITY_SHARD ?? "0/1");
 const RESULTS = process.env.PARITY_RESULTS;
@@ -26,7 +34,7 @@ type Entry = { path: string; process: Process; key: string; ipt?: string; harnes
 
 test(`S${SLICE} keys: the browser engine equals the key on the ${SET} set (shard ${k}/${n})`, async () => {
   const indexPath = resolve(KEY_DIR, `index-${SET}.json`);
-  expect(existsSync(indexPath), `${indexPath} is missing: the frozen key is tests/parity/key/ (python tests/parity/key.py --freeze)`).toBe(true);
+  expect(existsSync(indexPath), `${indexPath} is missing: the frozen key is tests/parity/key/ (S8b: the frozen key)`).toBe(true);
   const index = JSON.parse(readFileSync(indexPath, "utf8")) as Entry[];
   // Each entry's size: its STEP and its .ipt, so the shards get about the same bytes
   const sizeOf = (e: Entry) => readFileSync(resolve(ROOT, e.path)).length + (e.ipt ? readBytes(resolve(ROOT, e.ipt)).length : 0);
@@ -36,6 +44,7 @@ test(`S${SLICE} keys: the browser engine equals the key on the ${SET} set (shard
   const bad: string[] = [];
   const crashed: string[] = [];
   let same = 0;
+  let known = 0;
   const leftOut = new Map<string, number>();
   const started = performance.now();
   for (const [entry, i] of mine) {
@@ -50,22 +59,32 @@ test(`S${SLICE} keys: the browser engine equals the key on the ${SET} set (shard
     if (outcome.status === "python_crashed") crashed.push(entry.path);
     for (const kk of new Set(outcome.leftOut)) leftOut.set(kk, (leftOut.get(kk) ?? 0) + 1);
     const label = entry.ipt ? `${entry.path} + ${entry.ipt}${entry.harness ? " (harness)" : ""}` : entry.path;
-    if (outcome.diffs.length) bad.push(`${label}:\n    ${outcome.diffs.join("\n    ")}`);
+    // S8b (D-074, measured 2026-11-11): these faces' points differ between the frozen Python key and the browser's
+    // OpenCascade (8.0.0 vs pythonocc's 8.0.1); the same points lie on the surface within 1.3e-4 mm. Only the position
+    // compare of these named faces is exempt; every other key and face of the file is still compared.
+    const exempt = KNOWN_TESSELLATION[entry.path] ?? [];
+    const diffs = outcome.diffs.filter((d) => {
+      const m = /^faces\[(\d+)\]\.positions:/.exec(d);
+      return !(m && exempt.includes(Number(m[1])));
+    });
+    const tessellation = outcome.diffs.length > 0 && diffs.length === 0;
+    if (tessellation) known++;
+    if (diffs.length) bad.push(`${label}:\n    ${diffs.join("\n    ")}`);
     // One line per file, as it finishes (Morgan, 2026-11-10: a long run shows it is moving, and a stopped run keeps its
     // results so far)
     const secs = (x: number) => (x / 1000).toFixed(1);
-    console.log(`parity ${SET} [${i + 1}/${index.length}] shard ${k}/${n} ${outcome.diffs.length ? "DIFFERENT" : outcome.status} ` +
+    console.log(`parity ${SET} [${i + 1}/${index.length}] shard ${k}/${n} ${diffs.length ? "DIFFERENT" : tessellation ? "KNOWN TESSELLATION" : outcome.status} ` +
       `${secs(performance.now() - t0)} s (total ${secs(performance.now() - started)} s): ${label}` +
-      (outcome.diffs.length ? `\n    ${outcome.diffs.slice(0, 5).join("\n    ")}` : ""));
-    if (!outcome.diffs.length && outcome.status === "same") same++;
+      (diffs.length ? `\n    ${diffs.slice(0, 5).join("\n    ")}` : ""));
+    if (!diffs.length && outcome.status === "same") same++;
   }
   if (RESULTS) {
     writeFileSync(RESULTS, JSON.stringify({
-      files: mine.length, same, bad, crashed,
+      files: mine.length, same, known, bad, crashed,
       leftOut: Object.fromEntries(leftOut),
       keys: Object.entries(PORTED_KEYS).filter(([s]) => Number(s) <= SLICE).flatMap(([, ks]) => ks),
     }));
   }
-  console.log(`parity ${SET} shard ${k}/${n}: ${mine.length} files, ${same} the same, ${bad.length} different, ${crashed.length} Python crashed`);
+  console.log(`parity ${SET} shard ${k}/${n}: ${mine.length} files, ${same} the same, ${known} known tessellation, ${bad.length} different, ${crashed.length} Python crashed`);
   expect(bad, bad.join("\n")).toEqual([]);
 }, 3_600_000);

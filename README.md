@@ -6,45 +6,39 @@ Your file is analyzed on this computer and deleted straight after the analysis. 
 
 ## Set up (once)
 
-1. Install [Miniforge](https://github.com/conda-forge/miniforge) (conda from conda-forge). No Docker is needed.
-2. In this folder, build the environment. It takes a few minutes the first time:
+Install [Node.js](https://nodejs.org/) 22 (the version in CI). Then, in this folder:
 
-   ```
-   conda env create -f environment.yml
-   conda activate dfma
-   python -m playwright install chromium
-   ```
+```
+npm --prefix web ci
+npm --prefix web exec -- playwright install chromium
+```
 
-   The last line is only needed to run the browser tests.
-
-To update an existing environment after `environment.yml` changes: `conda env update -f environment.yml --prune`.
+The second line is only needed to run the browser tests. To use a Chromium that is already installed, set `DFMA_CHROMIUM` to its path.
 
 ## Start
 
 ```
-conda activate dfma
-python -m dfma start
+npm --prefix web run build:pages
+cd web && npx vite preview --outDir dist-pages --port 8000
 ```
 
-The first start builds the web page (`npm ci` and `npm run build` in `web/`). Then open <http://localhost:8000>, choose a STEP file, and drag the part to rotate it.
-
-Options: `--port 8001` for another port, `--no-build` to skip building the page.
+Then open <http://localhost:8000>, choose a STEP file, and drag the part to rotate it. The analysis runs in your browser (a worker), so no server is needed.
 
 ## Checks
 
 ```
-python scripts/check.py
+npm run check
 ```
 
-This runs, in order: the master drift check, the service tests (`pytest tests/service`), the web type check and unit tests, the web build, and the browser tests (`pytest -m e2e`). It stops at the first failure.
+This runs, in order: the master drift check, the NIST unpack, the web type check and unit tests (`vitest`), the web build, the test build, the parity run against the frozen key (`tests/parity/key/`), the browser e2e tests (Playwright, not timed), and the timed tests alone. It stops at the first failure.
 
-Test parts are generated: `python tests/parts/make_parts.py` writes `tests/parts/*.step` and `tests/parts/expected.toml`. Both are committed.
+The EDMR tests (114 files, about 9 minutes) are not in `npm run check`. Run `npm --prefix web run edmr` before a PR is marked ready, as with `npm --prefix web run parity:full`.
 
-To run the browser tests with a Chromium that is already installed, set `DFMA_CHROMIUM` to its path.
+The part generators are Python and optional: `tests/parts/environment.yml` pins them. `python tests/parts/make_parts.py` writes `tests/parts/*.step` and `tests/parts/expected.toml`. Both are committed.
 
 ## Packages and licences
 
-Approved in D-004, D-007, D-008 and D-031; versions are pinned in `environment.yml` and `web/package-lock.json`. Licences checked on conda-forge and npm on 2026-11-06.
+Approved in D-004, D-007, D-008 and D-031; versions are pinned in `tests/parts/environment.yml` (optional Python part generators) and `web/package-lock.json`. Licences checked on conda-forge and npm on 2026-11-06.
 
 | Package | Version | Licence | Use |
 |---|---|---|---|

@@ -1,14 +1,14 @@
-// settings.ts must hold settings.py's names and values (port spec Design "settings.ts"), until S8. scripts/check.py
-// writes tests/parity/.cache/settings.json with `python tests/parity/key.py --settings` before the web tests.
+// settings.ts must hold the names and values of settings.py as the Python app had them (port spec Design "settings.ts").
+// S8b: settings.py is retired; its dump is frozen in tests/parity/key/settings.json (written by key.py --settings before S8b).
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test } from "vitest";
 import * as settings from "./settings";
 
-const DUMP = resolve(__dirname, "../../../tests/parity/.cache/settings.json");
+const DUMP = resolve(__dirname, "../../../tests/parity/key/settings.json");
 
-test("settings.ts equals settings.py", () => {
-  expect(existsSync(DUMP), `${DUMP} is missing: run python tests/parity/key.py --settings`).toBe(true);
+test("settings.ts equals the frozen settings.py dump", () => {
+  expect(existsSync(DUMP), `${DUMP} is missing (the frozen settings dump)`).toBe(true);
   const python = JSON.parse(readFileSync(DUMP, "utf8")) as Record<string, unknown>;
   const ours = Object.fromEntries(Object.entries(settings).filter(([k]) => /^[A-Z][A-Z0-9_]*$/.test(k)));
   expect(Object.keys(ours).sort()).toEqual(Object.keys(python).sort());

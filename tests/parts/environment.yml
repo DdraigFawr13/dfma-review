@@ -1,0 +1,10 @@
+# Optional: the Python part generators (tests/parts/make_parts.py, tests/grading/sets/*/make.py, tests/inventor/
+# hostile.py and make_fixture.py, tests/grading/qchild.py for the Quiddity grader). Not used by `npm run check` or CI.
+# Pins from the old environment.yml (S8b retired Python from the checks; these are kept for regenerating parts).
+name: dfma-parts
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12.16
+  - pythonocc-core=8.0.1.2
+  - olefile=0.47

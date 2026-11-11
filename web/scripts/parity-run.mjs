@@ -24,18 +24,18 @@ function runShard(k) {
 }
 
 const results = await Promise.all(Array.from({ length: shards }, (_, k) => runShard(k)));
-const total = { files: 0, same: 0, bad: [], crashed: [], leftOut: {}, keys: [] };
+const total = { files: 0, same: 0, known: 0, bad: [], crashed: [], leftOut: {}, keys: [] };
 const failed = [];
 for (const r of results) {
   if (r.code !== 0) failed.push(r.k); // a failed shard still reports its counts: the summary must cover every file
   if (!existsSync(r.out)) continue;
   const s = JSON.parse(readFileSync(r.out, "utf8"));
-  total.files += s.files; total.same += s.same; total.bad.push(...s.bad); total.crashed.push(...s.crashed);
+  total.files += s.files; total.same += s.same; total.known += s.known ?? 0; total.bad.push(...s.bad); total.crashed.push(...s.crashed);
   for (const [key, n] of Object.entries(s.leftOut)) total.leftOut[key] = (total.leftOut[key] ?? 0) + n;
   total.keys = s.keys;
 }
 const left = Object.keys(total.leftOut).length ? Object.entries(total.leftOut).map(([k, n]) => `${k} ${n}`).join(", ") : "none";
-console.log(`\nparity ${set}: ${total.files} files compared, ${total.same} the same, ${total.bad.length} different, ` +
+console.log(`\nparity ${set}: ${total.files} files compared, ${total.same} the same, ${total.known} known tessellation, ${total.bad.length} different, ` +
   `${total.crashed.length} Python crashed${total.crashed.length ? ` (${total.crashed.join(", ")})` : ""}; ` +
   `keys: ${total.keys.join(", ")}; files left out per key: ${left}; ` +
   `${shards} shards in ${((Date.now() - started) / 1000).toFixed(1)} s`);
