@@ -1,14 +1,13 @@
 // Port of tests/service/test_inventor_pair.py: checkPair's reasons on built inputs (an IptPart made from
 // box_through_hole.step's own corners).
+import { resolve } from "node:path";
 import { beforeAll, expect, test } from "vitest";
 import { checkPair, stepCorners } from "../inventor/pair";
 import { PLAIN_PART, type IptPart } from "../inventor/part";
 import type { Vec } from "../inventor/sab";
 import { readStep, ReadError, type ReadResult } from "../read";
 import { MSG_PAIR_MISMATCH } from "../settings";
-import { bytesOf, getOc } from "./inventor_common";
-import { resolve } from "node:path";
-import { PARTS } from "./inventor_common";
+import { bytesOf, getOc, PARTS } from "./inventor_common";
 
 let oc: any;
 let step: ReadResult;

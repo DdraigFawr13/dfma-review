@@ -42,7 +42,7 @@ test("sheet metal refused", async () => {
 });
 
 test("an .ipt given as the STEP is refused before any worker starts (the page's guard, engine-client.ts)", async () => {
-  const file = new File([bytesOf(resolve(FILES, "INV_nist_ftc_11_asme1_2021.ipt"))], "part.stp");
+  const file = new File([bytesOf(resolve(FILES, "INV_nist_ftc_11_asme1_2021.ipt")) as BlobPart], "part.stp");
   const e = await analyzeInBrowser(file, null, "mill", "al6061").catch((x) => x);
   expect(e).toBeInstanceOf(EngineError);
   expect((e as Error).message).toBe(MSG_IPT_NEEDS_STEP);
@@ -54,7 +54,7 @@ test("a STEP given as the .ipt is refused", async () => {
 
 test("an .ipt over the upload limit is refused before any worker starts (the page's guard, engine-client.ts)", async () => {
   const big = { size: MAX_UPLOAD_BYTES + 1 } as File; // the guard reads only the size
-  const e = await analyzeInBrowser(new File([bytesOf(BOX)], "box_through_hole.step"), big, "mill", "al6061").catch((x) => x);
+  const e = await analyzeInBrowser(new File([bytesOf(BOX) as BlobPart], "box_through_hole.step"), big, "mill", "al6061").catch((x) => x);
   expect(e).toBeInstanceOf(EngineError);
   expect((e as Error).message).toBe(MSG_TOO_LARGE);
 });
