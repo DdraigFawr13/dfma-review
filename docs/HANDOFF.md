@@ -25,13 +25,14 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-10 Port S7 (Inventor pairs): `web/src/engine/inventor/` (ole, sab, tags, topo, surfaces, names, part, pair, threads, holes, blends), the three `.ipt` rules; `cfb` 1.2.2 (+ adler-32, crc-32) on the Licenses page; the `.ipt` field back; `checks_not_run` and `browser_pending.txt` empty. Quick parity 122/122 the same, every key (16 NIST pairs through the app and lined up by the harness, 13 hostile files incl. a planted fillet for `blend_mismatch`). Builder defaults in the spec (S7). Re-check: no gap for Morgan. PR #41 (draft); [status](https://claude.ai/artifact/7ouNdQhJ24G6WoYfbYx4Ey), [demo](https://claude.ai/artifact/NHpR9Vby8YbvUaV3pPuDWJ).
+- 2026-11-11 S8a (D-072): merged the D-071 docs from `port-s8-retire-python` here (that branch is unmerged; left as is). Quick parity 122 of 122, 4 shards, 236.7 s. Scorer and harness match Python (numbers in D-072). Stale EDMR line: `tests/edmr/scorecard.toml` `nasty_cheese` 386, both engines 387 (open).
+
 
 
 ## Next
 
-00. Port S8 (retire Python) on `port-s8-retire-python` (D-071: before the UI list). Morgan approved the [S8 file list](https://claude.ai/artifact/ExT2DS3QeAL7bRas5LJLRT) and its split (2026-11-11); build S8a next in a new session (S8a: parity on 4 processes, key cache, frozen key, scorer and Inventor harness on the engine, `local_pairs` first; S8b: Playwright and vitest ports, Python deleted). Morgan: turn on GitHub Pages if not yet; tell IT before the work copy (D-055).
-000a. UI fixes (Morgan, 2026-11-10, after S7; 4 photos of the work copy): example parts (an "Or look at an example" list on the start form); no pins while the part rotates (lag); Inventor-style rotate and move; a top bar with Open… and Examples once a part is loaded; a machine-tooling view on the Machining step (how the machine is set up); one feature at a time (many walls paint the whole part blue). Later: a slice / cutaway toggle, and dimensions on the part for the stock and the picked feature (e.g. a thin wall's distance). Idea to workshop: a tool-access check, a generic holder or chuck plus the needed tool, flagging a tool that hits the part or sticks out too far for its diameter (ratios to research). Plan with `planning-interview` and a mock-up first (WS-02, ui-mockups); Proposed until Morgan approves.
+00. S8b (retire Python) in a new session, after Morgan approves the S8a PR: `service/`, the Python tests, `environment.yml`, `tests/e2e/` ported to `web/e2e/` (Playwright) and vitest; `scripts/make_demo.py` to Node; CI on Node only (D-071, spec S8). S8a is built (D-072): the four-shard parity, the frozen key in `tests/parity/key/`, the scorer and harness on the engine. Morgan: turn on GitHub Pages if not yet; tell IT before the work copy (D-055).
+000a. UI fixes (Morgan, 2026-11-10; 4 photos of the work copy): example parts on the start form; no pins while the part rotates; Inventor-style rotate and move; a top bar with Open… and Examples; a machine-tooling view on Machining; one feature at a time. Later: slice/cutaway, dimensions on the part, a tool-access check (ideas). After S8b. Plan with `planning-interview` and a mock-up first (WS-02, ui-mockups); Proposed until Morgan approves.
 000. Steps and slots (D-068): Morgan added slot recognition in another copy without full testing (2026-11-10) and wants it redone here, tested; spec with `write-spec` after the port; start with a labelled `steps_slots` set, then NIST and EDMR, then MFCAD++ classes 5-10 and 17-22.
 0. Now: plainer sentences for the rule cases that still read as titles, each shown to Morgan first (D-045). Follow-up from the audit fixes: Hole feature rows still carry aria-pressed and aria-expanded (F15's pattern, out of its scope).
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `python tests/inventor/local_pairs.py` (now prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
@@ -52,7 +53,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - 2026-11-10 D-069: S7 approved; merge when ready; S8 in a new session.
 - 2026-11-10 D-068: steps and slots named and scored by MFCAD++'s classes (no open-pocket kind); plan and tools first; slot depth over 6× width a finding.
 - 2026-11-10 D-067: S6 approved; merge when CI is done; S7 in a new session.
-- 2026-11-10 D-066: S6 resumed; steps, slots and open pockets added to the plan (research done, proposals Proposed).
+- 2026-11-11 D-072: S8a built (four-shard parity, frozen key 13.61 MB, scorer and harness on the engine); S8b next.
 
 - 2026-11-10 D-065: faster `check.py` (lanes, timed tests alone, pytest-xdist); approved and merged in PR #39.
 - 2026-11-10 D-059: J4 (big plate) dropped; S3 makes the Machining setups distinct, with a mock-up first.
