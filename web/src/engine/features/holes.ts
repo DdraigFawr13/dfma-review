@@ -674,6 +674,11 @@ function chains(segs: Segment[]): number[][] {
   return out;
 }
 
+/** Where the segment's middle lies along v (the segments of one chain share an axis line). */
+function along(s: Segment, v: Vec): number {
+  return ((s.lo + s.hi) / 2) * dot(s.axis, v);
+}
+
 export function frameDir(v: Vec, frame: Frame): string | null {
   for (const [name, [key, sign]] of Object.entries(DIRS)) if (dot(v, scale(sign, frame[key])) >= Math.cos(ANGLE_TOL)) return name;
   return null;
@@ -702,6 +707,7 @@ export interface Hole {
   axis: number[];
   open_dirs: string[];
   open_vectors: number[][];
+  tool_dirs?: string[]; // P0 (D-085): the open_dirs a tool this wide can enter from, when fewer (a counterbore's)
   blind: boolean;
   dims_mm: Record<string, number>;
   chain: number;
@@ -754,6 +760,14 @@ export function holes(oc: OC, solid: OC, faces: OC[], frame: Frame): Hole[] {
         dims.small_diameter = 2 * s.smallRadius!;
       }
       const dirs = vectors.map((v) => frameDir(v, frame)).filter((d): d is string => d !== null);
+      // P0 (D-085): a tool as wide as this segment enters only from an open end it can pass through: no narrower
+      // segment of the chain lies between. A counterbore is cut from its large end. Recorded only when it differs.
+      const reach = vectors.filter((v) => chain.every((j) => {
+        const u = segs[j];
+        if (u === s || u.radius >= s.radius - RADIUS_TOL) return true;
+        return along(u, v) < along(s, v); // a narrower segment behind this one along v does not block it
+      })).map((v) => frameDir(v, frame)).filter((d): d is string => d !== null);
+      const toolDirs = [...new Set(reach)];
       let csk = {};
       if (s.countersinks.length) { // D-022: the cone stays out of `faces`; the hole records it
         dims.countersink_diameter = Math.max(...s.countersinks.map((c) => c[2]));
@@ -771,6 +785,7 @@ export function holes(oc: OC, solid: OC, faces: OC[], frame: Frame): Hole[] {
         axis: [...(vectors.length ? vectors[0] : s.axis)],
         open_dirs: [...new Set(dirs)],
         open_vectors: vectors.map((v) => [...v]),
+        ...(toolDirs.length && toolDirs.length !== new Set(dirs).size ? { tool_dirs: toolDirs } : {}), // none: keep open_dirs
         blind: s.bottom.length > 0, // a bottom closes this segment (I2; open_vectors are the whole chain's)
         dims_mm: dims,
         chain: nChain, // the same for every segment of one stepped hole (renumbered below)

@@ -24,3 +24,11 @@ export function parseShard(spec: string): { k: number; n: number } {
   if (n < 1 || k >= n) throw new Error(`PARITY_SHARD ${spec}: k must be below n`);
   return { k, n };
 }
+
+// S8b (D-074): the faces whose point positions differ from the frozen Python key by tessellation only (measured per
+// face on 2026-11-11 with Python OCC and the browser engine; both on the surface within 1.3e-4 mm). Keyed by the
+// entry's path in tests/parity/key/index-*.json, by face index.
+export const KNOWN_TESSELLATION: Record<string, number[]> = {
+  "tests/grading/sets/bullnose_draft/bn_ball6.step": [14, 18],
+  "tests/edmr/models/STEP/STI/nasty_cheese/nasty_cheese.stp": [202],
+};

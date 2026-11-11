@@ -2,7 +2,8 @@
 // Setups are the smallest set of directions (+-X +-Y +-Z of the part frame) that reaches every hole and pocket the
 // `access` rule did not flag, by brute force over the 63 non-empty subsets; ties go to the subset whose directions
 // come first in the order +Z -Z +X -X +Y -Y. A countersink (D-022) is cut from its own end, so each countersunk end is
-// one more thing to reach, in that end's direction only. Pockets reach the plan from S4 (pocketTools).
+// one more thing to reach, in that end's direction only. A counterbore is cut from its large end (P0, D-085): a hole
+// segment with `tool_dirs` is reached only from those, not from an end past a narrower segment. Pockets reach the plan from S4 (pocketTools).
 import { frameDir, type Frame } from "./features/holes";
 import type { Feature } from "./rules/types";
 import { toolsConfig } from "./settings";
@@ -111,7 +112,8 @@ export function plan(features: Feature[], findings: { rule: string; feature?: st
   const jobs: [string, Set<string>, Tool, number[]][] = []; // feature id, the directions it can be cut from, tool, its faces
   for (const f of features) {
     if ((f.kind !== "hole" && f.kind !== "pocket") || flagged.has(f.id) || !f.open_dirs?.length) continue;
-    for (const tool of f.kind === "hole" ? [holeTool(f, unitsInFile)] : pocketTools(f)) jobs.push([f.id, new Set(f.open_dirs), tool, f.faces]);
+    const dirs = new Set<string>(f.tool_dirs ?? f.open_dirs); // P0 (D-085): a counterbore from its large end only
+    for (const tool of f.kind === "hole" ? [holeTool(f, unitsInFile)] : pocketTools(f)) jobs.push([f.id, dirs, tool, f.faces]);
     const vecs: number[][] = f.countersink_vectors ?? [], degs: number[] = f.countersink_degs ?? [], cones: number[][] = f.countersink_end_faces ?? [];
     for (let i = 0; i < Math.min(vecs.length, degs.length, cones.length); i++) {
       const d = frameDir(vecs[i] as [number, number, number], frame);

@@ -13,6 +13,7 @@
     "dev": "vite",
     "parity": "node scripts/parity-run.mjs",
     "parity:full": "node scripts/parity-full.mjs",
+    "parity:refreeze": "node scripts/parity-refreeze.mjs",
     "e2e": "playwright test -c e2e/playwright.config.ts --trace off",
     "edmr": "vitest run --config vitest.parity.config.ts src/engine/port/edmr.test.ts",
     "grading": "node scripts/grading.mjs",

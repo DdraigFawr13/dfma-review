@@ -10,17 +10,10 @@ import { expect, test } from "vitest";
 import type { Process } from "../api";
 import { compare, PORTED_KEYS, SLICE } from "./compare";
 import { analyzeOrRefuse, loadNodeOc } from "./node";
-import { parseShard, shardOf } from "./parity-shard";
+import { KNOWN_TESSELLATION, parseShard, shardOf } from "./parity-shard";
 
 const ROOT = resolve(__dirname, "../../..");
 const KEY_DIR = resolve(ROOT, process.env.PARITY_KEY_DIR ?? "tests/parity/key");
-// S8b (D-074): the faces whose point positions differ from the frozen Python key by tessellation only (measured per
-// face on 2026-11-11 with Python OCC and the browser engine; both on the surface within 1.3e-4 mm). Keyed by the
-// entry's path in tests/parity/key/index-*.json, by face index.
-const KNOWN_TESSELLATION: Record<string, number[]> = {
-  "tests/grading/sets/bullnose_draft/bn_ball6.step": [14, 18],
-  "tests/edmr/models/STEP/STI/nasty_cheese/nasty_cheese.stp": [202],
-};
 
 const SET = process.env.PARITY_SET ?? "quick";
 const { k, n } = parseShard(process.env.PARITY_SHARD ?? "0/1");
