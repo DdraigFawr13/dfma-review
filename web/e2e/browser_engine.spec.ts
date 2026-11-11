@@ -189,6 +189,24 @@ test("test_ui_responsive", { tag: "@timed" }, async ({ page }) => {
   // limited: it is the shared 3D viewer (the service app: 1,144 and 1,387 ms on this file, 2026-11-10).
   await page.goto("/");
   await page.waitForFunction("window.__dfmaEngineReady === true", undefined, { timeout: 120_000 }); // compiled while idle
+  // Start timing once the page has finished loading: Chromium tears down a load-time compositor about 1 s after the
+  // page opens, a 90-300 ms pause that belongs to loading, not to the analysis (traced 2026-11-11: WidgetBase::Shutdown,
+  // LayerTreeHost::~LayerTreeHost). Quiet means 1 s of 10 ms heartbeats with no gap over 50 ms; the limits below are unchanged.
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        let last = performance.now(), quietSince = last;
+        const t = setInterval(() => {
+          const now = performance.now();
+          if (now - last > 50) quietSince = now;
+          last = now;
+          if (now - quietSince >= 1000) {
+            clearInterval(t);
+            resolve();
+          }
+        }, 10);
+      }),
+  );
   await page.evaluate(() => {
     const w = window as any;
     const beat = (w.__beat = { last: performance.now(), worst: 0, beats: 0, replied: false, draw: 0 });
