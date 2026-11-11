@@ -49,4 +49,6 @@ jobs:
       - if: steps.scope.outputs.light != 'true'
         run: npm --prefix web exec -- playwright install chromium
       - if: steps.scope.outputs.light != 'true'
+        env: # scripts/scope.mjs (D-082): a UI-only PR skips the engine-only steps; a push to main runs all of them
+          CI_EVENT: ${{ github.event_name }}
         run: npm run check
