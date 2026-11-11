@@ -6,9 +6,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const DEMO = "https://claude.ai/artifact/NLELKgNM6cXgeW21VcaVoH";
+const DEMO = "https://claude.ai/artifact/D4wrFp3MAWt3EwN2SqYJsy";
 const MOCK = "https://claude.ai/artifact/9AyZ9UKCJRt3PKZA4yLJnM";
-const PR = "https://github.com/DdraigFawr13/dfma-review/pulls"; // set to the PR once open
+const PR = "https://github.com/DdraigFawr13/dfma-review/pull/61";
 const shot = (name, alt, caption, dir = "p1-s2-status") => `<figure><img src="data:image/png;base64,${
   fs.readFileSync(path.join(HERE, dir, name)).toString("base64")}" alt="${alt}"><figcaption>${caption}</figcaption></figure>`;
 
