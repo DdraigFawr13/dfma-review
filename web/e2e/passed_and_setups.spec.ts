@@ -5,15 +5,31 @@
 // the same engine) is read once the part is shown.
 import { resolve } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+import { existsSync, readFileSync } from "node:fs";
+import { gunzipSync } from "node:zlib";
 import { PARTS, openStep, reanalysis, shown } from "./helpers";
+
+const ROOT = resolve(PARTS, "../..");
+const KEY_DIR = resolve(ROOT, "tests/parity/key");
+const KEY_INDEX: { path: string; process: string; key: string }[] = JSON.parse(readFileSync(resolve(KEY_DIR, "index-full.json"), "utf8"));
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const sorted = (a: number[]) => [...a].sort((x, y) => x - y);
 const highlighted = (page: Page) => page.evaluate("window.__dfma.highlightedFaces()");
 
-/** The feature of `kind` (or id) in the result on screen. */
-async function featureOf(page: Page, match: { id?: string; kind?: string }): Promise<any> {
-  const result: any = await page.evaluate("window.__dfma.analysis()");
+/** The frozen Python answer for a part (tests/parts/<name>.step, Mill, aluminium 6061; S8b, D-072). */
+function frozenAnswer(part: string): any {
+  const rel = `tests/parts/${part}.step`;
+  const entry = KEY_INDEX.find((e) => e.path === rel && e.process === "mill");
+  if (!entry) throw new Error(`${rel} is not in the frozen key`);
+  const file = resolve(KEY_DIR, entry.key);
+  if (!existsSync(file)) throw new Error(`${file} is missing from the frozen key`);
+  return JSON.parse(gunzipSync(readFileSync(file)).toString("utf8"));
+}
+
+/** The feature of `kind` (or id) in the part's frozen Python answer. */
+function featureOf(part: string, match: { id?: string; kind?: string }): any {
+  const result = frozenAnswer(part);
   return result.features.find((f: any) => (match.id ? f.id === match.id : f.kind === match.kind));
 }
 
@@ -21,7 +37,7 @@ test("test_passed_list", async ({ page }) => {
   await page.goto("/");
   await page.getByTestId("upload-file").setInputFiles(resolve(PARTS, "clean_one_setup.step"));
   await shown(page, "clean_one_setup.step");
-  const hole = await featureOf(page, { id: "hole-2" });
+  const hole = await featureOf("clean_one_setup", { id: "hole-2" });
   await expect(page.getByTestId("chip-passed")).toHaveText("Passed 16"); // 16 features, as before
   await expect(page.getByTestId("chip-issues")).toHaveAttribute("aria-pressed", "true"); // issues first
   await expect(page.getByTestId("passed-hole-2")).toHaveCount(0); // passed rows wait behind their chip
@@ -77,7 +93,7 @@ test("test_setup_select_shows_why", async ({ page }) => {
   await page.goto("/");
   await page.getByTestId("upload-file").setInputFiles(resolve(PARTS, "two_sided_block.step"));
   await shown(page, "two_sided_block.step", "machining");
-  const hole = await featureOf(page, { kind: "hole" });
+  const hole = await featureOf("two_sided_block", { kind: "hole" });
   await expect(page.getByTestId("plan-why")).toContainText("The fewest directions that reach them all: +Z, −Z, −X.");
   await page.getByTestId("plan-setup-3").click();
   await expect(page.getByTestId("plan-setup-why-3")).toContainText("hole-1 opens −X. 0.250 in (1/4) drill: matches its 0.250 in diameter.");
@@ -91,7 +107,7 @@ test("test_setup_select_lights_the_countersink", async ({ page }) => {
   await page.goto("/");
   await page.getByTestId("upload-file").setInputFiles(resolve(PARTS, "countersunk_hole.step"));
   await shown(page, "countersunk_hole.step", "machining");
-  const hole = await featureOf(page, { kind: "hole" });
+  const hole = await featureOf("countersunk_hole", { kind: "hole" });
   await expect(page.getByTestId("plan-setup-1")).toBeVisible();
   await page.getByTestId("plan-setup-1").click();
   expect(await highlighted(page)).toEqual(sorted([...hole.faces, ...hole.countersink_faces]));

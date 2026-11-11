@@ -1,9 +1,15 @@
 // Ported from tests/e2e/test_findings.py (S8b): J2 in the browser, on the Features rows (review-steps S2): the row
 // shows the finding; tapping it highlights and frames its faces; the Show OK switches; pins and labels.
-import { readdirSync } from "node:fs";
-import { basename, resolve } from "node:path";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { gunzipSync } from "node:zlib";
+import { basename, relative, resolve } from "node:path";
 import { expect, test, type Browser } from "@playwright/test";
 import { openStep, PARTS, reanalysis, shown as partShown } from "./helpers";
+
+const ROOT = resolve(PARTS, "../..");
+const KEY_DIR = resolve(ROOT, "tests/parity/key");
+// The frozen Python key (S8b, D-072): the answer for each file in the full set, Mill and aluminium 6061.
+const KEY_INDEX: { path: string; process: string; key: string }[] = JSON.parse(readFileSync(resolve(KEY_DIR, "index-full.json"), "utf8"));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Result = any;
@@ -12,6 +18,15 @@ const results = new Map<string, Promise<Result>>();
 /** Local helper (the Python tests called dfma.analyze): the browser engine's result for a part, read back from the
  *  page's own test hook in a throwaway page (`window.__dfma.analysis()`). */
 function analysisOf(browser: Browser, file: string, process = "mill", material = "al6061"): Promise<Result> {
+  // The frozen Python answer where the key has this file, Mill and aluminium 6061 (the only setting the key holds);
+  // otherwise the browser engine's own answer, read back from the page.
+  const rel = relative(ROOT, file).split("\\").join("/");
+  const entry = KEY_INDEX.find((e) => e.path === rel && e.process === process);
+  if (process === "mill" && material === "al6061" && entry) {
+    const file = resolve(KEY_DIR, entry.key);
+    if (!existsSync(file)) throw new Error(`${file} is missing from the frozen key`);
+    return Promise.resolve(JSON.parse(gunzipSync(readFileSync(file)).toString("utf8")));
+  }
   const key = `${file}|${process}|${material}`;
   let p = results.get(key);
   if (!p) {

@@ -6,8 +6,13 @@
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { gunzipSync } from "node:zlib";
 import { expect, test } from "@playwright/test";
-import { PARTS, shown } from "./helpers";
+import { PARTS } from "./helpers";
+
+const ROOT = resolve(PARTS, "../..");
+const KEY_DIR = resolve(ROOT, "tests/parity/key"); // the frozen Python key (S8b, D-072)
+const KEY_INDEX: { path: string; process: string; key: string }[] = JSON.parse(readFileSync(resolve(KEY_DIR, "index-full.json"), "utf8"));
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const INV = resolve(PARTS, "..", "inventor", "files");
@@ -56,14 +61,10 @@ test("test_nist_pair_refused", async ({ page }, testInfo) => {
   await expect(page.getByTestId("start-form")).toBeVisible();
 });
 
-test("test_pair_shown", async ({ page, context }) => {
+test("test_pair_shown", async ({ page }) => {
   // A passing pair, answered through page.route (no work pair in the repo, D-032): the bar shows the build.
-  const other = await context.newPage();
-  await other.goto("/");
-  await other.getByTestId("upload-file").setInputFiles(BOX);
-  await shown(other, "box_through_hole.step", null);
-  const result: any = await other.evaluate("window.__dfma.analysis()");
-  await other.close();
+  // The frozen Python answer for the box (S8b, D-072): the page then shows the bar for this build.
+  const result: any = JSON.parse(gunzipSync(readFileSync(resolve(KEY_DIR, KEY_INDEX.find((e) => e.path === "tests/parts/box_through_hole.step" && e.process === "mill")!.key))).toString("utf8"));
   result.inventor = {
     name: "box.ipt", saved_with: "2024.1 (Build 281209000, 209)", acis_version: "229.6.0.65535",
     checks: { faces: [8, 8], corners: [10, 10], worst_corner_gap_mm: 0.0 },
