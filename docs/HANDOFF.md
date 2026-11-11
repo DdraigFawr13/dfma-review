@@ -1,6 +1,6 @@
 # Handoff
 
-Updated: 2026-11-11 (UI fixes slice A approved, D-080, merged in PR #51; next: slice B in a new session). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
+Updated: 2026-11-11 (slice A merged, #51; D-082 UI-only check scope on `ci-ui-only-scope`; next: slice B in a new session). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
 
 ## Phase
 
@@ -48,6 +48,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-11 D-082: a UI-only change skips the parity run and timed engine tests (Morgan); branch `ci-ui-only-scope`.
 - 2026-11-11 D-080: UI fixes slice A approved after the demo; merged in PR #51; open calls stand as built.
 - 2026-11-11 D-078: UI fixes spec approved; view buttons in file axes, triad in part axes (as recommended); free rotation with ArcballControls (Morgan changed it from turntable).
 - 2026-11-11 D-077: checks follow what changed (docs- or mockups-only: drift check only, CI still reports); Morgan checks each slice by using it. Approved by Morgan; merged in PR #48.
@@ -55,6 +56,5 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - 2026-11-11 D-075: edge treatments (chamfers, fillets), then pocket shapes, join the recognition plan after steps and slots.
 - 2026-11-11 D-074: S8b approved: Python retired; tessellation is a named 3-face exemption (OCCT 8.0.1 vs 8.0.0).
 - 2026-11-11 D-073: harness v4.14.0 (testing rules) and the 900 s check budget; approved, merged in PR #44.
-- 2026-11-11 D-071: S8 before the UI list; faster checks on the S8 branch; S8 file list and two-PR split approved.
 - 2026-11-10 D-068: steps and slots named and scored by MFCAD++'s classes (no open-pocket kind); plan and tools first; slot depth over 6× width a finding.
 - D-001 to D-037: see `docs/DECISIONS.md` (`grep '^## D-'`).
