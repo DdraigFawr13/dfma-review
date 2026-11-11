@@ -14,7 +14,8 @@ Shared rules come from AI-Master-Instructions and load through CLAUDE.md (`.clau
 
 ## Local checks (run before pushing)
 
-- Every push: `npm run check` at the repo root (drift check, NIST unpack, web type check and vitest, web build and test build, parity against the frozen key, browser e2e, timed tests). Python is retired (S8b, D-073); the EDMR tests run by `npm --prefix web run edmr` before a PR is marked ready.
+- Every push: `npm run check` at the repo root (drift check, NIST unpack, web type check and vitest, web build and test build, parity against the frozen key, browser e2e, timed tests). Python is retired (S8b, D-074); the EDMR tests run by `npm --prefix web run edmr` before a PR is marked ready.
+- Time budget (D-073): `npm run check` under 900 s here, and CI under its 20-minute `timeout-minutes`. Report the check time against it; over budget means find the slow step (test-design skill, "Time budgets").
 - Mark any test that asserts a wall-clock limit `timed` (Vitest test name, or Playwright `{ tag: "@timed" }`), so the timed run covers it.
 - Cloud sessions: Node 22 is preinstalled; set `DFMA_CHROMIUM` to the preinstalled Chromium (`/opt/pw-browsers/chromium-*/chrome-linux64/chrome`).
 

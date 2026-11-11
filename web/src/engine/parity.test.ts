@@ -14,7 +14,7 @@ import { parseShard, shardOf } from "./parity-shard";
 
 const ROOT = resolve(__dirname, "../../..");
 const KEY_DIR = resolve(ROOT, process.env.PARITY_KEY_DIR ?? "tests/parity/key");
-// S8b (D-073): the faces whose point positions differ from the frozen Python key by tessellation only (measured per
+// S8b (D-074): the faces whose point positions differ from the frozen Python key by tessellation only (measured per
 // face on 2026-11-11 with Python OCC and the browser engine; both on the surface within 1.3e-4 mm). Keyed by the
 // entry's path in tests/parity/key/index-*.json, by face index.
 const KNOWN_TESSELLATION: Record<string, number[]> = {
@@ -59,7 +59,7 @@ test(`S${SLICE} keys: the browser engine equals the key on the ${SET} set (shard
     if (outcome.status === "python_crashed") crashed.push(entry.path);
     for (const kk of new Set(outcome.leftOut)) leftOut.set(kk, (leftOut.get(kk) ?? 0) + 1);
     const label = entry.ipt ? `${entry.path} + ${entry.ipt}${entry.harness ? " (harness)" : ""}` : entry.path;
-    // S8b (D-073, measured 2026-11-11): these faces' points differ between the frozen Python key and the browser's
+    // S8b (D-074, measured 2026-11-11): these faces' points differ between the frozen Python key and the browser's
     // OpenCascade (8.0.0 vs pythonocc's 8.0.1); the same points lie on the surface within 1.3e-4 mm. Only the position
     // compare of these named faces is exempt; every other key and face of the file is still compared.
     const exempt = KNOWN_TESSELLATION[entry.path] ?? [];
