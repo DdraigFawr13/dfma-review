@@ -17,7 +17,7 @@ const SHA256 = "8fa78429e6d8d9b0d7681d223b6aa9ec98c3772185c55b1a0e3679b21c181911
 
 interface Card { name: string; face_count: number; not_analysed: number; features: number }
 const SCORECARD = Object.fromEntries(
-  ((parse(readFileSync(join(NIST_DIR, "scorecard.toml"), "utf8")) as { file: Card[] }).file).map((f) => [f.name, f]));
+  ((parse(readFileSync(join(NIST_DIR, "scorecard.toml"), "utf8")) as unknown as { file: Card[] }).file).map((f) => [f.name, f]));
 
 /** nist_files.ap242_files: unpack the zip once into tests/nist/.cache (a private folder renamed into place). */
 function unpackOnce() {

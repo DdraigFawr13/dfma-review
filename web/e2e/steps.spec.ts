@@ -313,7 +313,7 @@ test("test_feature_rows", async ({ page, browser }) => {
   await expect(page.getByTestId("legend")).toHaveCount(0); // the 7-entry legend is gone (D-014 amended)
 
   const f4 = sample.findings.find((f: Result) => f.id === "F4");
-  const faces = [...new Set(sample.findings.filter((f: Result) => f.rule === "corner_radius").flatMap((f: Result) => f.faces as number[]))].sort((a, b) => a - b);
+  const faces = [...new Set<number>(sample.findings.filter((f: Result) => f.rule === "corner_radius").flatMap((f: Result) => f.faces as number[]))].sort((a: number, b: number) => a - b);
   await row.click();
   await expect(row).toHaveAttribute("aria-expanded", "true");
   const detail = page.getByTestId("row-detail");

@@ -10,11 +10,11 @@ import { loadNodeOc } from "../engine/node";
 import { transform } from "./nistPair";
 
 const ROOT = resolve(__dirname, "../../..");
-const KEY_DIR = resolve(ROOT, process.env.PARITY_KEY_DIR ?? "tests/parity/.cache/key");
+const KEY_DIR = resolve(ROOT, process.env.PARITY_KEY_DIR ?? "tests/parity/key");
 
 test("the Node transform equals the Python one on every NIST pair", async () => {
   const indexPath = resolve(KEY_DIR, "index-quick.json");
-  expect(existsSync(indexPath), `${indexPath} is missing: run python tests/parity/key.py --set quick`).toBe(true);
+  expect(existsSync(indexPath), `${indexPath} is missing: the frozen key is tests/parity/key/`).toBe(true);
   const index = (JSON.parse(readFileSync(indexPath, "utf8")) as { path: string; ipt?: string; harness?: boolean; key: string }[])
     .filter((e) => e.ipt && e.harness && e.ipt.startsWith("tests/inventor/files/"));
   const oc = await loadNodeOc();

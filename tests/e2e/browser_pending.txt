@@ -1,8 +1,0 @@
-# Port spec "Browser tests": e2e tests deselected in the browser-engine run until the slice that ports their
-# feature. One pytest node id per line, then " # S<n>". Written from the first browser run (2026-11-10: 65 failed,
-# 13 passed). The list only shrinks: a slice runs its tests and removes them, or moves a test still failing to the
-# slice it needs. S7 empties it (the tests that fake the service's /api/analyze are rewritten or marked service-only
-# there); S8 deletes it.
-
-# Empty from S7 (2026-11-10): the tests that fake the service's /api/analyze run on the browser copy through the test
-# build's flag (conftest.py _faked_service_in_browser).

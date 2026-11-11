@@ -11,7 +11,7 @@ const ROOT = resolve(__dirname, "../../..");
 
 test("demo results", async () => {
   const input = process.env.DEMO_IN, output = process.env.DEMO_OUT;
-  expect(input && output, "set DEMO_IN and DEMO_OUT (scripts/make_demo.py does)").toBeTruthy();
+  expect(input && output, "set DEMO_IN and DEMO_OUT (scripts/make-demo.mjs does)").toBeTruthy();
   const jobs = JSON.parse(readFileSync(input!, "utf8")) as { path: string; process: Process; material: Material;
     ipt?: string; shown?: string; transform?: [number[][], number[]] }[];
   const oc = await loadNodeOc();

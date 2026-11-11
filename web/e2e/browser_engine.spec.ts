@@ -26,14 +26,14 @@ function setting(name: string): string | number {
 
 function nist(name: string): string {
   const path = resolve(NIST, name);
-  if (!existsSync(path)) throw new Error(`${path} is missing: run python tests/nist/nist_files.py (scripts/check.py does)`);
+  if (!existsSync(path)) throw new Error(`${path} is missing: run npm run nist`);
   return path;
 }
 
 /** The frozen key of a file given by its path relative to the repo ("tests/parts/x.step"). */
 function frozenKey(rel: string): any {
   const file = resolve(KEY_DIR, rel.replaceAll("/", "__") + ".json.gz");
-  if (!existsSync(file)) throw new Error(`${file} is missing from the frozen key: run python tests/parity/key.py --freeze`);
+  if (!existsSync(file)) throw new Error(`${file} is missing from the frozen key: the frozen key is committed in tests/parity/key/`);
   return JSON.parse(gunzipSync(readFileSync(file)).toString("utf8"));
 }
 const analyze = (name: string): any => frozenKey(`tests/parts/${name}.step`);

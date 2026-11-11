@@ -26,7 +26,7 @@ type Entry = { path: string; process: Process; key: string; ipt?: string; harnes
 
 test(`S${SLICE} keys: the browser engine equals the key on the ${SET} set (shard ${k}/${n})`, async () => {
   const indexPath = resolve(KEY_DIR, `index-${SET}.json`);
-  expect(existsSync(indexPath), `${indexPath} is missing: the frozen key is tests/parity/key/ (python tests/parity/key.py --freeze)`).toBe(true);
+  expect(existsSync(indexPath), `${indexPath} is missing: the frozen key is tests/parity/key/ (S8b: the frozen key)`).toBe(true);
   const index = JSON.parse(readFileSync(indexPath, "utf8")) as Entry[];
   // Each entry's size: its STEP and its .ipt, so the shards get about the same bytes
   const sizeOf = (e: Entry) => readFileSync(resolve(ROOT, e.path)).length + (e.ipt ? readBytes(resolve(ROOT, e.ipt)).length : 0);

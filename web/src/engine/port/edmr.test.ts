@@ -10,7 +10,7 @@ import { edmrFiles } from "../../grading/scorecard";
 
 const HERE = join(resolve(__dirname, "../../../.."), "tests", "edmr");
 interface Card { path: string; status: string; face_count: number; not_analysed: number; features: number }
-const SCORECARD = Object.fromEntries(((parse(readFileSync(join(HERE, "scorecard.toml"), "utf8")) as { file: Card[] }).file).map((f) => [f.path, f]));
+const SCORECARD = Object.fromEntries(((parse(readFileSync(join(HERE, "scorecard.toml"), "utf8")) as unknown as { file: Card[] }).file).map((f) => [f.path, f]));
 const FILES = edmrFiles();
 const RANK: Record<string, number> = { crash: 0, read_error: 1, ok: 2 };
 const rel = (p: string) => relative(HERE, p).split("\\").join("/");

@@ -68,5 +68,5 @@ export default defineConfig(ENGINE === "demo"
   : {
       build: { outDir: "dist", emptyOutDir: true },
       server: { proxy: { "/api": "http://127.0.0.1:8000" }, fs: { allow: [".."] } },
-      test: { exclude: ["**/node_modules/**", "e2e/**", "src/engine/parity.test.ts", "src/engine/demo-results.test.ts"] },
+      test: { exclude: ["**/node_modules/**", "e2e/**", "src/engine/parity.test.ts", "src/engine/demo-results.test.ts", "src/engine/port/edmr.test.ts"] },
     });
