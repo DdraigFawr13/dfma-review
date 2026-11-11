@@ -198,3 +198,14 @@ Build, first usable version: all seven slices merged. S1 to S6 in #3 to #17 (his
 
 - 2026-11-11 D-078: UI fixes spec approved; view buttons in file axes, triad in part axes (as recommended); free rotation with ArcballControls (Morgan changed it from turntable).
 - 2026-11-10 D-068: steps and slots named and scored by MFCAD++'s classes (no open-pocket kind); plan and tools first; slot depth over 6× width a finding.
+
+## Moved 2026-11-11 (P1+P2 planning session)
+
+- 2026-11-11 Steps and slots spec approved (D-081) and merged in PR #50: planned with D-079 (Morgan: research, then the recommendations); checked 6 times ([approval page](https://claude.ai/artifact/G38mPz8nx9BMCwwYR39hqc)). Baseline: MFCAD++ first 500 holes 12/602 missed, pockets 78/3,745, 1 wrong (716 s, 4 jobs); check set holes 23/666, pockets 112/3,872, 1 wrong.
+- 2026-11-11 D-082: a UI-only change skips the parity run and timed engine tests (Morgan); merged in PR #54.
+- 2026-11-11 D-081: steps and slots spec approved; merged after UI fixes B (Morgan: "You merge after pr 53").
+- 2026-11-11 D-080: UI fixes slice A approved after the demo; merged in PR #51; open calls stand as built.
+- 2026-11-11 D-079: steps and slots planned: step cut from floor or wall, slot from floor only (amends D-068); slot rougher ≤ 0.75 width then finisher; step rougher 1 in then corner finisher; deep check on both and slot over 6× width; target fixed before the first run.
+- 2026-11-11 UI fixes slice B (the screens) merged in PR #53: Examples, one Open… picker, Part / Machine switch; `web/e2e/screens.spec.ts`.
+- (open question, moved: Python retired in S8b, D-074) `test_nist.py` ctc_02 took 5.8-7.07 s here and once 10.4 s in a busier container, against a 10 s limit; limit unchanged (VER-04); detail in the archive. 2026-11-10: 10.2 s once inside a full `check.py`, 7.9-8.3 s alone (3 runs); S5: 10.1 s once inside `check.py`, alone 8.66-8.81 s on the branch and 9.17-9.36 s on main's code.
+- 2026-11-11 D-083: research comes first in every major module (Morgan). D-084: machining and DFMA rework, Inventor-only, then Vault; machining is P1 removal volume, P2 reach check, P3 Xometry checks, P4 time (Morgan: "make this the plan").
