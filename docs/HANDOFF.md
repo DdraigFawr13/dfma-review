@@ -30,7 +30,6 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - 2026-11-11 Auto-CAM research (D-083, D-084): `docs/research/auto-cam.html`. Xometry prices by ML on past jobs (US10281902B2), no auto-CAM; no open auto-CAM picks operations; proposals P1 removal volume (stock minus part), P2 GPU height-map reach check (OpenCAMLib to check it), P3 17 missing Xometry checks, P4 time later. Open: Morgan's parts where features were missed.
 - 2026-11-11 Steps and slots spec approved (D-081) and merged in PR #50: planned with D-079 (Morgan: research, then the recommendations); checked 6 times ([approval page](https://claude.ai/artifact/G38mPz8nx9BMCwwYR39hqc)). Baseline: MFCAD++ first 500 holes 12/602 missed, pockets 78/3,745, 1 wrong (716 s, 4 jobs); check set holes 23/666, pockets 112/3,872, 1 wrong.
 - 2026-11-11 UI fixes slice B (the screens) merged in PR #53: Examples, one Open… picker, Part / Machine switch; `web/e2e/screens.spec.ts`.
-- 2026-11-11 Shape-from-`.ipt` spike in TypeScript (PR #52; research only, outside `npm run check`; next steps in its README are Proposed, nothing decided).
 - Earlier (UI fixes spec #49, D-077 #48, plan, S8b, harness v4.14.0): archive "Moved 2026-11-11 (spec session)", "(slice A session)" and "(steps-slots planning session)".
 
 ## Next
