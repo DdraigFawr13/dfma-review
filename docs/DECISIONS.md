@@ -533,3 +533,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Why:** Morgan's D-071 approval; the measurements are from this session.
 - **Measured:** quick parity 122 of 122 the same, 0 different, 0 Python crashed, 4 shards in 236.7 s. Harness: 16 of 16 NIST transforms equal Python's; `built` 7 of 7 equal. Scorer: all 100 MFCAD++ records on 6 labelled sets equal Python's; NIST scorecard equal.
 - **Not done:** `local_pairs` on Morgan's real pairs (absent here; fixtures only). The pair check's passing line is untested on real data. The committed `tests/edmr/scorecard.toml` says `nasty_cheese` features 386; both engines give 387 (left as committed; open question).
+
+## D-073 Harness v4.14.0 and the check time budget
+
+- **Status:** Accepted (2026-11-11). Morgan, on PR #44: "Go ahead and merge all when ready".
+- **Decision:** the shared harness moves to v4.14.0 (master D-068): the `test-design` skill and rules VER-10 and VER-11 load here. `python scripts/check.py` has a time budget of 900 s in a cloud session, and CI stays under its 20-minute `timeout-minutes`.
+- **Why:** this repo's test lessons (LESSONS:29, :43, :45, :14, :23, :27, :30, :42, :53, :55) became the master rules. The budget leaves a margin over the 639.2 s measured on 2026-11-11 (lanes 511.5 s, then timed tests 63.5 s, 21.7 s, 33.8 s).

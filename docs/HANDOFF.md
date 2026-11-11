@@ -25,7 +25,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-11 Harness upgraded v4.12.0 → v4.14.0 (master D-068): the `test-design` skill, VER-10 (see a test fail first) and VER-11 (real samples, time tests, fixed waits are wall-clock limits) now load here; check time budget in AGENTS.md. Draft PR, waits on Morgan.
+- 2026-11-11 Harness upgraded v4.12.0 → v4.14.0 (master D-068): the `test-design` skill, VER-10 (see a test fail first) and VER-11 (real samples, time tests, fixed waits are wall-clock limits) now load here; check time budget in AGENTS.md (D-073). Merged as #44 by auto-merge on green (Morgan approved 2026-11-11).
 - 2026-11-11 S8a (D-072): merged the D-071 docs from `port-s8-retire-python` here (that branch is unmerged; left as is). Quick parity 122 of 122, 4 shards, 236.7 s. Scorer and harness match Python (numbers in D-072). Stale EDMR line: `tests/edmr/scorecard.toml` `nasty_cheese` 386, both engines 387 (open).
 
 
@@ -48,6 +48,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-11 D-073: harness v4.14.0 (testing rules) and the 900 s check budget; approved, merged in PR #44.
 - 2026-11-11 D-071: S8 before the UI list; faster checks on the S8 branch; S8 file list and two-PR split approved.
 - 2026-11-10 D-070: S7 merges without the full-set parity (stopped, no result); parity prints a line per file.
 - 2026-11-10 D-069: S7 approved; merge when ready; S8 in a new session.
@@ -56,5 +57,4 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - 2026-11-11 D-072: S8a built (four-shard parity, frozen key 13.61 MB, scorer and harness on the engine); S8b next.
 
 - 2026-11-10 D-065: faster `check.py` (lanes, timed tests alone, pytest-xdist); approved and merged in PR #39.
-- 2026-11-10 D-059: J4 (big plate) dropped; S3 makes the Machining setups distinct, with a mock-up first.
 - D-001 to D-037: see `docs/DECISIONS.md` (`grep '^## D-'`).
