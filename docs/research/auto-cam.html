@@ -1,0 +1,181 @@
+<title>Auto-CAM for DFM</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one reading column. The answer first, then one panel per topic with its sources, then the proposals. */
+:root{--bg:#eef2f6;--panel:#ffffff;--ink:#16263d;--muted:#55657a;--line:#c4cfdc;--accent:#1f5fa8;--good:#3f6b2a;--warn:#a35a00;
+--sans:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1824;--panel:#172334;--ink:#e3eaf2;--muted:#9fb0c4;--line:#2c3c52;--accent:#7fb0ea;--good:#8cc47a;--warn:#e0a050;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1824;--panel:#172334;--ink:#e3eaf2;--muted:#9fb0c4;--line:#2c3c52;--accent:#7fb0ea;--good:#8cc47a;--warn:#e0a050;color-scheme:dark}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+<style>
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--sans);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+main{max-width:44rem;margin:0 auto;display:grid;gap:20px}
+h1{font-size:1.5rem;margin:0;text-wrap:balance}h2{font-size:1.125rem;margin:0 0 8px;text-wrap:balance}
+p,ul,ol{margin:0}ul,ol{padding-left:1.2em;display:grid;gap:6px}
+.muted{color:var(--muted);font-size:.875rem}
+a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.85em;overflow-wrap:anywhere}
+.lead{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:2px;padding:14px;display:grid;gap:8px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:12px 14px;display:grid;gap:8px;min-width:0}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font-size:.9rem;font-variant-numeric:tabular-nums;width:100%}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{font-weight:600}
+.num{font-family:var(--mono);font-weight:600}
+.tag{font-family:var(--mono);font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;border:1px solid currentColor;border-radius:2px;padding:0 5px;white-space:nowrap}
+.est{color:var(--warn)}.ok{color:var(--good)}
+.prop{border-left:4px solid var(--warn)}
+.ask{border-left:4px solid var(--accent)}
+li>b{font-weight:600}
+</style>
+<main>
+<header style="display:grid;gap:6px">
+<h1>Auto-CAM for DFM: what Xometry does and what we can use</h1>
+<p class="muted">Research for D-083 and D-084, 2026-11-11. Five web surveys plus checks of the cloned code in this session. Nothing here is decided; the proposals are for Morgan.</p>
+</header>
+
+<div class="lead">
+<p><b>Answer.</b> No open-source program goes from a solid model to setups, operations and toolpaths without a person picking the operations. We don't need one. You asked for CAM only as a DFM aid: find all the material to cut and check that the tools can reach it. Two methods do that without recognising any feature, and both run in the browser:</p>
+<ol>
+<li><b>Removal volume:</b> stock minus part, with the OpenCascade boolean we already ship. Every bit of material to cut shows up, named or not.</li>
+<li><b>Tool reach:</b> one height map per setup direction, offset by each tool's shape and holder ("inverse offset", Inui 2003). Where the lowest point a tool can reach sits above the part, material is left behind. Protolabs shows this as its "as-milled" view.</li>
+</ol>
+<p>The best open code to help is <b>OpenCAMLib</b>, which already builds to WASM; we would use it to check our height maps. <b>Manifold</b> (Apache-2.0, WASM) can measure the volume left over. <b>FreeCAD's adaptive clearing</b> is worth porting only if we later want time from real toolpaths.</p>
+<p><b>Xometry does not use auto-CAM.</b> Its patent prices with machine-learning models trained on "recorded manufacture times and CNC operations of known physical objects". Its DFM thresholds are published in its design guides. We match 7 of its checks and lack 17.</p>
+</div>
+
+<section>
+<h2>What the app does today (read in this repo)</h2>
+<ul>
+<li>Stock is the part's own bounding box, with no allowance (<code>web/src/engine/analyze.ts:160-163</code>, Morgan 2026-11-08). Nothing computes the removal volume (grep of <code>web/src/engine</code> for stock, removal and <code>BRepAlgoAPI_Cut</code>: the cut appears only in port tests).</li>
+<li>Features come from face patterns: holes, pockets, walls, turning (<code>web/src/engine/features/</code>). A shape outside that list is never seen, which matches the engineer's point that features are missed.</li>
+<li>Setups are the fewest of the six axis directions (±X ±Y ±Z) that reach every recognised hole and pocket (<code>web/src/engine/plan.ts:1-4</code>). Tools are picked per feature. There is no cycle time yet.</li>
+<li>15 DFM rules (<code>web/src/engine/rules/</code>).</li>
+</ul>
+</section>
+
+<section>
+<h2>1. How instant quoters work</h2>
+<ul>
+<li><b>Xometry:</b> machine learning on past jobs. Patent <a href="https://patents.google.com/patent/US10281902B2/en">US10281902B2</a> predicts "set-up time, cycle time, number of Computer Numerical Control (CNC) operations" from geometric descriptors ("a number of manufacture tool directions", "non-planar surface area", "a number of holes") and point-cloud shape histograms. The models are random forests, extra-trees and logistic regression. No toolpaths appear in the text read.</li>
+<li><b>Proto Labs:</b> real toolpaths. Patent <a href="https://patents.google.com/patent/US8239284B2/en">US8239284B2</a>: "tool selection and tool path computation". The quote may rest on "a total of estimated durations of material removal". The user sees an "as-milled" view with the material left behind <a href="https://www.protolabs.com/en-gb/resources/blog/a-deep-dive-into-design-analysis-accessing-analysis-interpreting-feedback-optimising-your-cad-model/">highlighted in blue</a>.</li>
+<li><b>Toolpath.com:</b> real machining strategies; "the fewest number of setups", workholding "access and collision aware".</li>
+<li><b>Paperless Parts:</b> geometry, not toolpaths: "setup count", "setups, holes, pockets, and 3D features", "volume removal that drive costs"; "52 different manufacturability warnings".</li>
+<li><b>aPriori:</b> "volumetric material removal features", which drive roughing tool size and cycle time.</li>
+<li><b>Hubs:</b> machine learning against "millions of previously manufactured parts". <b>CloudNC CAM Assist</b> is a CAM add-in for Fusion, NX and SolidCAM, not a quoter.</li>
+<li><b>What needs past-job data</b> (inference): market price, margin, lead time and a shop's real cycle times. Setups, reach, removal volume and DFM warnings need only geometry.</li>
+</ul>
+</section>
+
+<section>
+<h2>2. Xometry's DFM checks against ours</h2>
+<p>Xometry doesn't publish what its upload check runs; its site says only that DFM results "will be displayed here". The thresholds below are from its design guides: the 2023 Europe guide (<a href="https://xometry.pro/wp-content/uploads/2023/07/TR-EN-CNC-Machining-Design-Guide.pdf">G23</a>) and a 2018 US copy (<a href="https://people.wallawalla.edu/~ralph.stirling/classes/engr480/examples/nvx/NVX/Helpful%20Docs/Xometry_DesignGuide_CNCMachining.pdf">G18</a>). I re-read four of them in the extracted text: 0.794 mm, "six times", 75%, and "4 times for pockets".</p>
+<p><b>Covered by our rules</b> (we still compare the numbers): inside corner radius (theirs: 1.3 × the tool radius, depth ÷ radius ≤ 4; <code>corner_radius</code>) · cavity depth ("greater than six times deep than they are wide are considered too deep", ideal under 4 × width; <code>pocket_depth</code>) · hole depth (1:4 ideal, 1:10 limit; <code>hole_depth</code>) · drill sizes (0.1 mm steps to 13 mm, then 0.5 mm; <code>hole_size</code>) · wall thickness (0.794 mm metal, 1.5 mm plastic; <code>thin_wall</code>) · undercuts (<code>undercut</code>) · inaccessible areas (snippet only; <code>access</code>).</p>
+<p><b>Xometry checks we lack (17):</b></p>
+<ul>
+<li>Thread length over 2 × diameter.</li>
+<li>Blind tapped hole without an unthreaded length of 0.5 × diameter at the bottom.</li>
+<li>Thread smaller than M2.</li>
+<li>Custom thread, which needs "a manual quote review".</li>
+<li>Blind hole without a 25% depth allowance.</li>
+<li>Edge hole with less than 75% inside the part.</li>
+<li>Hole or pocket closer than 0.8 mm to a wall (double in plastic).</li>
+<li>Hole entering a sloped or curved face.</li>
+<li>Hole crossing a cavity.</li>
+<li>Curved hole.</li>
+<li>Floor fillet not smaller than the wall fillet.</li>
+<li>Corner radius equal to a standard tool radius.</li>
+<li>Feature under 0.5 mm, or needing a tool under 2.5 mm.</li>
+<li>Part bigger than the machine: mill 80 × 48 × 24 in; turn 62 in long, 32 in diameter; height over 24 in needs manual review.</li>
+<li>Text smaller than 20 pt, or raised rather than cut in.</li>
+<li>Tolerance tier: auto-quoted to ±0.001 in in metal, tighter needs review.</li>
+<li>Many different radii and thread sizes, which mean more tool changes (advice, no number).</li>
+</ul>
+<p class="muted">Ours with no Xometry counterpart: blend, hole and thread mismatch, bore depth, and the turning rules. Severities are not published; uploading a test part to Xometry would show them. That is publishing a file to an outside service, so it needs Morgan's OK (SAFE-01).</p>
+</section>
+
+<section>
+<h2>3. Open-source CAM engines</h2>
+<p>Ranked for our case: a browser app, a DFM aid, no G-code. Licences are from the licence files in clones made this session.</p>
+<ol>
+<li><b>OpenCAMLib</b> (<a href="https://github.com/aewallin/opencamlib">aewallin/opencamlib</a>): C++, with an emscripten build (<code>src/emscriptenlib/emscriptenlib.cpp:165</code>, <code>BatchDropCutter</code>) and npm <code>@opencamlib/opencamlib</code> (last published 2023). Drop-cutter and waterline for cylinder, ball, bull and cone tools. Licence file LGPL-2.1, but the npm <code>package.json:30</code> says LGPL-3.0; the two need settling. It works on meshes and has no holder model. Use: check our height maps against it.</li>
+<li><b>FreeCAD CAM, Adaptive clearing</b> (<a href="https://github.com/FreeCAD/FreeCAD">FreeCAD</a>): <code>libarea/Adaptive.cpp</code> is 4,360 lines and includes only Clipper2 and the C++ standard library (checked). LGPL-2.1-or-later. It would compile to WASM; the step-down logic around it is about 2,000 lines of Python to port. A person picks every operation. Time comes from path length against feed. Use: later, if we want toolpath-based time.</li>
+<li><b>Manifold</b> (<a href="https://github.com/elalish/manifold">elalish/manifold</a>): Apache-2.0, WASM on npm (<code>manifold-3d</code>). Fast mesh booleans with <code>MinkowskiSum</code> and <code>MinkowskiDifference</code> (<code>manifold.h:244-245</code>, checked). Use: subtract the space a tool can sweep from the removal volume to measure what is left. Kiri:Moto uses it for stock simulation.</li>
+</ol>
+<p><b>Ruled out or reference only:</b></p>
+<ul>
+<li><b>Kiri:Moto:</b> a browser CAM. Its licence file says MIT, but 256 source files say "All Rights Reserved" (counted); don't take its code without the author's written word. It reads meshes, and a person picks the operations.</li>
+<li><b>Clipper2</b> (BSL-1.0, permissive): 2D offsets. A dependency, not a CAM.</li>
+<li><b>GPL, so not for our bundle:</b> CAMotics (no release since 2019), PyCAM (stale since 2021), BlenderCAM/Fabex (runs inside Blender), jscut (2D only).</li>
+<li><b>HeeksCNC/libarea:</b> stale; FreeCAD carries its successor.</li>
+<li><b>ocp-freecad-cam:</b> a Python wrapper, "fairly experimental".</li>
+<li>No academic auto-CAM with released code was found.</li>
+</ul>
+<p class="muted">Licences (inference, not legal advice): LGPL obligations start on distribution; use inside one company is generally not distribution (<a href="https://www.gnu.org/licenses/gpl-faq.html#InternalDistribution">FSF FAQ</a>). We already ship OCCT under LGPL-2.1, so an LGPL module kept as its own replaceable <code>.wasm</code> follows the same pattern. Any new runtime dependency needs Morgan's OK (SAFE-01).</p>
+</section>
+
+<section>
+<h2>4. Finding all the material to cut</h2>
+<ul>
+<li><b>Stock minus part</b> (<code>BRepAlgoAPI_Cut</code>, in opencascade.js already). Split the result into separate solids and take each one's volume (<code>BRepGProp</code>). This finds every region to cut. It doesn't say which tool or direction cuts it.</li>
+<li><b>Splitting the removal volume into features</b> (Woo's ASV 1982; Kim and Wilde's ASVP 1992; Sakurai and Dave 1995–96; Woo and Sakurai 2002): no public code found. Most of it is for flat-faced parts, and on filleted parts the cell count and boolean failures grow (inference). Use it only to group what is left over, not to decide reach.</li>
+<li>Our feature recognition stays, to name regions and pick tools. Any removal volume no feature explains becomes a finding of its own: "unrecognised material, X in³, here".</li>
+</ul>
+</section>
+
+<section>
+<h2>5. Checking tool reach</h2>
+<ul>
+<li><b>Inverse offset on a height map</b>: Inui, "Fast inverse offset computation using polygon rendering hardware", CAD 2003. Render the part from a setup direction, then offset by the tool's shape. The result is the lowest height the tool tip can reach at each point. It works for any feature shape.</li>
+<li><b>Holder and reach</b>: Kaneko, Yamauchi and Horio, <a href="https://www.jstage.jst.go.jp/article/ijat/8/3/8_420/_article/-char/en">IJAT 8(3) 2014</a>. Inverse offset plus shadow mapping shows the unreachable area and the shortest shank needed, in "a few dozen ms" on a GPU.</li>
+<li><b>Other methods, no code found:</b> GPU ray tracing (Inui 2021) needs ray-tracing cores, which browsers can't use. Voxel collision checks (Chen et al.; <a href="https://par.nsf.gov/servlets/purl/10131371">NSF</a>). Behandish et al. (<a href="https://arxiv.org/pdf/1805.07035">arXiv 1805.07035</a>), which includes the holder.</li>
+<li><b>Setup directions beyond ±X ±Y ±Z:</b> visibility maps on the Gauss sphere (Gan, Woo and Tang 1994; Chen, Chou and Woo 1993). These pick 3+2 orientations from face normals. No open code found.</li>
+<li><b>Grid size</b> (computed here): a 12 in part at 0.005 in spacing is 2,400 × 2,400 = 5.8 million points, 22 MiB as float32. 0.0025 in spacing is 23 million points, 88 MiB. That is enough to see a 0.01 in feature at 2–4 points across (inference). GPU speed in the browser is not measured.</li>
+<li><b>Limits:</b> a height map can't see undercuts or walls seen edge-on, so steep walls need the side directions (or tri-dexels later). Features under 2 points wide are lost. Headless Chromium in CI may lack WebGL (inference, to test).</li>
+<li><b>Reporting (D-001):</b> per leftover region, give volume, footprint, deepest gap, faces touched, the tool and direction tried, and why: tool too wide, flute too short, or holder hits. Also give "X % of the removal volume is reachable with this tool set". Mark faces with a hatch as well as a colour (APP-02).</li>
+</ul>
+</section>
+
+<section>
+<h2>6. Time, feeds and data</h2>
+<ul>
+<li><b>Time without toolpaths</b>: Boothroyd and Dewhurst, "Early cost estimating in product design" (<a href="https://digitalcommons.uri.edu/mcise_facpubs/189">J. Manuf. Systems 1988</a>), uses removal volume and shop rate. Shehab and Abdalla (RCIM 2001) is a feature-level cross-check. Both would need the removal volume from section 4.</li>
+<li><b>No public answer key</b> of parts with real cycle times or quotes was found. Nearest: <a href="https://zenodo.org/records/17035762">Zenodo 17035762</a> (CC-BY-4.0): 10 STEP parts with G-code for single-setup 3-axis milling, no times. Timing its G-code with <a href="https://github.com/arhi/gcodestat">gcodestat</a> (Unlicense, acceleration-aware) would give our own key. That key is ours, so we can fail it (REP-05).</li>
+<li><b>Feeds and speeds:</b> no openly licensed cutting-data table found. CUTDATA is paid. The FreeCAD FeedsAndSpeeds addon (LGPL-2.1) doesn't state its data source.</li>
+<li><b>Tool library formats:</b> FreeCAD toolbit JSON (<a href="https://wiki.freecad.org/CAM_ToolBit">documented</a>) and LinuxCNC <code>tool.tbl</code> are open. Fusion's format "is not published and could change".</li>
+<li><b>DFM rule sources:</b> the Hubs guide (cavity ≤ 4 × width, internal radius ≥ ⅓ depth) and Protolabs' guide. CADEX MTK's published check list (commercial) is a useful coverage checklist.</li>
+<li><b>Datasets:</b> AAGNet/MFInstSeg has over 60,000 STEP files with machining-feature labels; code MIT, data licence not stated. Fusion 360 Gallery is "only for non-commercial research purposes".</li>
+</ul>
+</section>
+
+<section>
+<h2>7. Inventor and Vault</h2>
+<ul>
+<li><b>Vault Data API</b> (REST), since Vault 2025.2 (<a href="https://aps.autodesk.com/blog/become-early-adopter-new-vault-data-apis">APS blog</a>). It works "via a Vault server address or a Vault Gateway address"; the focus is on reading, and writing is limited (snippet). A browser app calling it needs CORS set up on the Vault server's IIS.</li>
+<li><b>Vault Gateway</b> requires "A subscription to Vault Professional" (<a href="https://help.autodesk.com/cloudhelp/2025/ENU/Vault-Admin/files/GUID-49EC8651-D072-40DF-B6FB-5335631327E7.htm">Autodesk help</a>).</li>
+<li><b>Vault Data Standard</b> is free and PowerShell-based. It runs inside the Vault desktop client (Workgroup or Professional): a desktop route, not a web one.</li>
+<li><b>Inventor CAM and Fusion CAM APIs</b> can generate toolpaths. Both need a paid desktop seat, so they can't run in our server-free app and would lock us to one vendor (D-001; inference).</li>
+<li>What Vault edition and version the company runs decides the route. That needs IT's answer.</li>
+</ul>
+</section>
+
+<section class="prop">
+<h2>Proposals (not decided; for Morgan)</h2>
+<ol>
+<li><b>P1, removal volume first:</b> stock (bounding box plus a set allowance, or the user's stock) minus part. Show the volume of each region, and flag any region no feature explains. This fixes "doesn't find all features" without new recognisers.</li>
+<li><b>P2, a reach check:</b> GPU height maps per setup direction with each tool's diameter, corner radius, flute length and a simple holder. Report material left behind per tool and direction, with its size. Check it against OpenCAMLib on the NIST parts.</li>
+<li><b>P3, the missing Xometry checks</b>, as new rules with test parts. Thread checks and wall distance first, since they need only features we already find.</li>
+<li><b>P4, later:</b> time from removal volume (Boothroyd–Dewhurst), checked against the Zenodo G-code times. FreeCAD Adaptive in WASM only if that falls short.</li>
+<li><b>Not proposed:</b> Kiri:Moto code (licence conflict), GPL engines, Inventor or Fusion CAM (paid seat, lock-in), machine learning (D-001).</li>
+</ol>
+<p class="muted">New dependencies (OpenCAMLib, Manifold) need your OK first (SAFE-01). The next step after your answers is a plan with <code>planning-interview</code> (D-083).</p>
+</section>
+
+<section class="ask">
+<h2>First question for Morgan</h2>
+<p>Can you send one or two parts where the engineer saw features missed, with what he said was missing? The removal-volume check (P1) would be tested first on those parts, then on the NIST set.</p>
+</section>
+
+<p class="muted">Not reached: Paperless Parts' Medium posts and the Autodesk add-in blog (HTTP 403; search summaries only, marked "snippet"); community.xometry.com (bot check); full texts of the Kim, Sakurai, Kaneko and Inui papers (abstracts only). Some quotes from Xometry's and Protolabs' pages came through a fetch tool's extract and should be re-read before a spec relies on them. GitHub counts came from github.com pages, because the GitHub API refused these repositories. Clones are in the session scratchpad, not the repo.</p>
+</main>
