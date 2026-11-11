@@ -675,3 +675,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Dependencies (SAFE-01, asked separately):** Manifold (`manifold-3d`, Apache-2.0) approved at runtime, only for leftover volume per tool, on a welded mesh, volumes labelled approximate; carry its licence (SAFE-05). OpenCAMLib approved as a test-time dependency only, with a build check that it never reaches the built site; settle LGPL-2.1 vs LGPL-3.0 from its source before adding it.
 - **Still open (Morgan):** which free options the engineer meant; which setup issues the shop runs into most; when the engineer's parts arrive.
 - **Why:** the engineer's two named misses need P0 and slots S2, not P1 alone; P1 then measures what slots explain; reach timing and the assumed tool geometry are the main risks, so a spike measures first and assumed-length findings stay Medium.
+
+## D-086 P0 approved: a counterbore is cut from its large end; merge when ready
+
+- **Status:** Accepted (2026-11-11). Morgan, in chat: "Approved", after the [status page](https://claude.ai/artifact/5SEUuurhd1gxJLdXH2hiYq) and [demo](https://claude.ai/artifact/8iYnMCsrzFsHYtkQoELg4i) of PR #57.
+- **Decision:** a hole segment records `tool_dirs`, the open ends it can be reached from past no narrower segment of its hole, when fewer than `open_dirs`; the mill plan uses them. The guarded `parity:refreeze` (steps-slots spec design) is the way the frozen key changes; P0's re-freeze changed 60 of 335 files, none refused. The drill picked for a flat-bottom counterbore of a drill's size stays as it is until Morgan asks.
+- **Why:** the engineer's report (D-085); the `.ipt`'s own counterbore ends agree on the 14 mapped NIST counterbores.

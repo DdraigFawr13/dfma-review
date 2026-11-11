@@ -1,0 +1,306 @@
+## shard 0/4: 17 changed, 0 refused
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_02_asme1_ap242-e2.stp
+    5 setups, 9 tool loads -> 6 setups, 12 tool loads; keys changed: setups, operations, tool_changes, cost_drivers, cost_total
+    features: hole-5 tool_dirs=["-Z"]; hole-6 tool_dirs=["-Z"]; hole-7 tool_dirs=["-Z"]; hole-8 tool_dirs=["-Z"]; hole-10 tool_dirs=["+X"]; hole-12 tool_dirs=["+Y"]; hole-43 tool_dirs=["-Z"]; hole-54 tool_dirs=["-Y"]; hole-77 tool_dirs=["+Y"]; hole-89 tool_dirs=["+X"]; hole-90 tool_dirs=["-Y"]; hole-93 tool_dirs=["+Y"]; hole-94 tool_dirs=["-X"]; hole-95 tool_dirs=["-X"]; hole-96 tool_dirs=["-Z"]; hole-97 tool_dirs=["-Y"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24 hole-25 hole-26 hole-27 hole-28 hole-29 hole-30 hole-31 hole-32 hole-33 hole-34 hole-35 hole-36 hole-37 hole-38 hole-39 hole-40 hole-41 hole-42 hole-43 hole-96 hole-98 hole-99 hole-100 hole-101], -Z [hole-55 hole-56 hole-57 hole-58 hole-59 hole-60 hole-61 hole-62 hole-63 hole-64 hole-65 hole-66 hole-67 hole-68 hole-69 hole-70 hole-71 hole-72 hole-73 hole-74 hole-75 hole-76 pocket-1], +X [hole-10 hole-11 hole-79 hole-80 hole-81 hole-82 hole-83 hole-84 hole-85 hole-86 hole-87 hole-88 hole-89 hole-92 hole-94 hole-95], -X [hole-44 hole-45 hole-46 hole-47 hole-48 hole-49 hole-50 hole-51 hole-52 hole-53], +Y [hole-12 hole-54 hole-77 hole-78 hole-90 hole-91 hole-93 hole-97]
+    setups after:  +Z [hole-1 hole-2 hole-3 hole-4 hole-9 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24 hole-25 hole-26 hole-27 hole-28 hole-29 hole-30 hole-31 hole-32 hole-33 hole-34 hole-35 hole-36 hole-37 hole-38 hole-39 hole-40 hole-41 hole-42 hole-98 hole-99 hole-100 hole-101], -Z [hole-5 hole-6 hole-7 hole-8 hole-43 hole-55 hole-56 hole-57 hole-58 hole-59 hole-60 hole-61 hole-62 hole-63 hole-64 hole-65 hole-66 hole-67 hole-68 hole-69 hole-70 hole-71 hole-72 hole-73 hole-74 hole-75 hole-76 hole-96 pocket-1], +X [hole-10 hole-11 hole-79 hole-80 hole-81 hole-82 hole-83 hole-84 hole-85 hole-86 hole-87 hole-88 hole-89 hole-92], -X [hole-44 hole-45 hole-46 hole-47 hole-48 hole-49 hole-50 hole-51 hole-52 hole-53 hole-94 hole-95], +Y [hole-12 hole-77 hole-78 hole-91 hole-93], -Y [hole-54 hole-90 hole-97]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_05_asme1_ap242-e1.stp
+    4 setups, 8 tool loads -> 4 setups, 9 tool loads; keys changed: setups, operations, tool_changes
+    features: hole-7 tool_dirs=["-Z"]; hole-9 tool_dirs=["-Z"]; hole-11 tool_dirs=["-Z"]; hole-13 tool_dirs=["-Z"]; hole-15 tool_dirs=["-Z"]; hole-17 tool_dirs=["-Z"]; hole-19 tool_dirs=["-Z"]; hole-21 tool_dirs=["-Z"]; hole-23 tool_dirs=["-Z"]; hole-25 tool_dirs=["-Z"]
+    setups before: +Z [hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24 hole-25], -Z [hole-1 hole-2 hole-3 hole-4], +X [hole-29 hole-30 hole-31], -X [hole-26 hole-27 hole-28 pocket-1 pocket-2]
+    setups after:  +Z [hole-5 hole-6 hole-8 hole-10 hole-12 hole-14 hole-16 hole-18 hole-20 hole-22 hole-24], -Z [hole-1 hole-2 hole-3 hole-4 hole-7 hole-9 hole-11 hole-13 hole-15 hole-17 hole-19 hole-21 hole-23 hole-25], +X [hole-29 hole-30 hole-31], -X [hole-26 hole-27 hole-28 pocket-1 pocket-2]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_07_asme1_ap242-e2.stp
+    3 setups, 6 tool loads -> 3 setups, 6 tool loads; keys changed: none
+    features: hole-1 tool_dirs=["-Z"]; hole-11 tool_dirs=["-Z"]; hole-12 tool_dirs=["-Z"]; hole-13 tool_dirs=["-Z"]
+    setups before: -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 pocket-1], +X [hole-19 hole-20 hole-21], +Y [hole-17 hole-18 hole-26 hole-27]
+    setups after:  -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 pocket-1], +X [hole-19 hole-20 hole-21], +Y [hole-17 hole-18 hole-26 hole-27]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_10_asme1_ap242-e2.stp
+    4 setups, 10 tool loads -> 5 setups, 11 tool loads; keys changed: setups, operations, tools, tool_changes, cost_drivers, cost_total
+    features: hole-12 tool_dirs=["+X"]; hole-14 tool_dirs=["+X"]; hole-16 tool_dirs=["+X"]; hole-18 tool_dirs=["+X"]; hole-20 tool_dirs=["-Z"]; hole-21 tool_dirs=["-Z"]; hole-22 tool_dirs=["-Z"]; hole-23 tool_dirs=["-Z"]; hole-24 tool_dirs=["-X"]; hole-25 tool_dirs=["-X"]; hole-26 tool_dirs=["-X"]; hole-27 tool_dirs=["-X"]
+    setups before: +Z [hole-9 hole-10 hole-11 hole-20 hole-21 hole-22 hole-23 hole-28 hole-29 hole-30 hole-31 hole-32 hole-33 hole-34 hole-35 hole-36 hole-37 hole-38 hole-39 hole-40 hole-41 hole-42 pocket-1], -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6], +X [hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-24 hole-25 hole-26 hole-27], +Y [hole-7 hole-8]
+    setups after:  +Z [hole-9 hole-10 hole-11 hole-28 hole-29 hole-30 hole-31 hole-32 hole-33 hole-34 hole-35 hole-36 hole-37 hole-38 hole-39 hole-40 hole-41 hole-42 pocket-1], -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-20 hole-21 hole-22 hole-23], +X [hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19], -X [hole-24 hole-25 hole-26 hole-27], +Y [hole-7 hole-8]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_06_asme1_ap242-e3.stp
+    2 setups, 9 tool loads -> 2 setups, 9 tool loads; keys changed: none
+    features: hole-4 tool_dirs=["-Z"]; hole-6 tool_dirs=["-X"]; hole-8 tool_dirs=["-X"]; hole-10 tool_dirs=["-X"]; hole-12 tool_dirs=["-X"]; hole-14 tool_dirs=["-X"]; hole-16 tool_dirs=["-Z"]; hole-18 tool_dirs=["-Z"]; hole-20 tool_dirs=["-Z"]; hole-22 tool_dirs=["-X"]
+    setups before: -Z [hole-1 hole-2 hole-3 hole-4 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20], -X [hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-21 hole-22 pocket-1 pocket-2]
+    setups after:  -Z [hole-1 hole-2 hole-3 hole-4 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20], -X [hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-21 hole-22 pocket-1 pocket-2]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/flange_pt202_16/flange_pt202_16.hh.sat.stp
+    3 setups, 8 tool loads -> 4 setups, 9 tool loads; keys changed: setups, operations, tools, tool_changes, cost_drivers, cost_total
+    features: hole-7 tool_dirs=["+Z"]; hole-8 tool_dirs=["-Z"]; hole-9 tool_dirs=["-Z"]; hole-19 tool_dirs=["-Z"]; hole-24 tool_dirs=["-Z"]
+    setups before: -Z [hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24], +X [hole-1 hole-2], -X [hole-3 hole-4]
+    setups after:  +Z [hole-5 hole-6 hole-7 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18], -Z [hole-8 hole-9 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24], +X [hole-1 hole-2], -X [hole-3 hole-4]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/linkage_arm_42/linkage_arm_42.hh.sat.stp
+    1 setups, 2 tool loads -> 1 setups, 2 tool loads; keys changed: setups
+    features: hole-3 tool_dirs=["-Z"]; hole-4 tool_dirs=["-Z"]; hole-10 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10]
+    setups after:  -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/linkage_arm_43/linkage_arm_43.prt.hh.sat.stp
+    1 setups, 6 tool loads -> 1 setups, 6 tool loads; keys changed: setups
+    features: hole-1 tool_dirs=["-Z"]; hole-2 tool_dirs=["-Z"]; hole-3 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14]
+    setups after:  -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/rear_plate_36/rear_plate_36.prt.hh.sat.stp
+    1 setups, 5 tool loads -> 1 setups, 5 tool loads; keys changed: none
+    features: hole-3 tool_dirs=["+Z"]; hole-4 tool_dirs=["+Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20]
+    setups after:  +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer_67/spacer_67.hh.sat.stp
+    2 setups, 3 tool loads -> 2 setups, 3 tool loads; keys changed: none
+    features: hole-4 tool_dirs=["+Z"]; hole-5 tool_dirs=["+Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9], +X [hole-10]
+    setups after:  +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9], +X [hole-10]
+CHANGED tests/edmr/models/STEP/STI/2827056/2827056.stp
+    3 setups, 6 tool loads -> 3 setups, 7 tool loads; keys changed: setups, operations, tool_changes
+    features: hole-78 tool_dirs=["-Y"]; hole-80 tool_dirs=["-Y"]; hole-82 tool_dirs=["-Y"]; hole-86 tool_dirs=["-Y"]; hole-87 tool_dirs=["-Y"]; hole-91 tool_dirs=["+Y"]; hole-92 tool_dirs=["+Y"]; hole-93 tool_dirs=["+Y"]
+    setups before: -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24 hole-25 hole-26 hole-27 hole-28 hole-29 hole-30 hole-31 hole-32 hole-33 hole-34 hole-35 hole-36 hole-37 hole-38 hole-39 hole-40 hole-41 hole-42 hole-43 hole-44 hole-45 hole-46 hole-47 hole-48 hole-49 hole-50 hole-51 hole-52 hole-53 hole-54 hole-55 hole-56 hole-57 hole-58 hole-59 hole-60 hole-61 hole-62 hole-63 hole-64 hole-65 hole-66 hole-67 hole-68 hole-69 hole-70 hole-71 hole-72 hole-73 hole-74 pocket-1 pocket-2 pocket-3 pocket-4 pocket-5], +Y [hole-75 hole-76 hole-77 hole-78 hole-79 hole-80 hole-81 hole-82 hole-83 hole-84 hole-85 hole-86 hole-87 hole-88 hole-89 hole-90 hole-91 hole-92 hole-93], -Y [hole-86 hole-87]
+    setups after:  -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24 hole-25 hole-26 hole-27 hole-28 hole-29 hole-30 hole-31 hole-32 hole-33 hole-34 hole-35 hole-36 hole-37 hole-38 hole-39 hole-40 hole-41 hole-42 hole-43 hole-44 hole-45 hole-46 hole-47 hole-48 hole-49 hole-50 hole-51 hole-52 hole-53 hole-54 hole-55 hole-56 hole-57 hole-58 hole-59 hole-60 hole-61 hole-62 hole-63 hole-64 hole-65 hole-66 hole-67 hole-68 hole-69 hole-70 hole-71 hole-72 hole-73 hole-74 pocket-1 pocket-2 pocket-3 pocket-4 pocket-5], +Y [hole-75 hole-76 hole-77 hole-79 hole-81 hole-83 hole-84 hole-85 hole-88 hole-89 hole-90 hole-91 hole-92 hole-93], -Y [hole-78 hole-80 hole-82 hole-86 hole-87]
+CHANGED tests/edmr/models/STEP/STI/nasty_cheese/nasty_cheese.stp
+    3 setups, 3 tool loads -> 3 setups, 3 tool loads; keys changed: none
+    features: none
+    setups before: +Z [hole-4 hole-7 hole-10 hole-11 hole-14 hole-18 hole-20 hole-23 hole-24 hole-26 hole-27 hole-28 hole-30 hole-31 hole-32 hole-38 hole-45 hole-54], +X [hole-5 hole-8 hole-13 hole-15 hole-17 hole-19 hole-21 hole-34 hole-35 hole-39 hole-40 hole-41 hole-42 hole-46 hole-47 hole-49 hole-50 hole-51 hole-52 hole-53], +Y [hole-1 hole-2 hole-3 hole-6 hole-9 hole-12 hole-16 hole-22 hole-25 hole-29 hole-33 hole-36 hole-37 hole-43 hole-44 hole-48]
+    setups after:  +Z [hole-4 hole-7 hole-10 hole-11 hole-14 hole-18 hole-20 hole-23 hole-24 hole-26 hole-27 hole-28 hole-30 hole-31 hole-32 hole-38 hole-45 hole-54], +X [hole-5 hole-8 hole-13 hole-15 hole-17 hole-19 hole-21 hole-34 hole-35 hole-39 hole-40 hole-41 hole-42 hole-46 hole-47 hole-49 hole-50 hole-51 hole-52 hole-53], +Y [hole-1 hole-2 hole-3 hole-6 hole-9 hole-12 hole-16 hole-22 hole-25 hole-29 hole-33 hole-36 hole-37 hole-43 hole-44 hole-48]
+CHANGED tests/grading/sets/hole_joins/cb_both.step
+    1 setups, 2 tool loads -> 1 setups, 2 tool loads; keys changed: setups
+    features: hole-1 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2]
+    setups after:  -Z [hole-1 hole-2]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_02_asme1_ap242-e2.stp + tests/inventor/files/INV_nist_ctc_02_asme1_2021.ipt
+    5 setups, 9 tool loads -> 6 setups, 12 tool loads; keys changed: setups, operations, tool_changes, cost_drivers, cost_total
+    features: hole-5 tool_dirs=["-Z"]; hole-6 tool_dirs=["-Z"]; hole-7 tool_dirs=["-Z"]; hole-8 tool_dirs=["-Z"]; hole-10 tool_dirs=["+X"]; hole-12 tool_dirs=["+Y"]; hole-43 tool_dirs=["-Z"]; hole-54 tool_dirs=["-Y"]; hole-77 tool_dirs=["+Y"]; hole-89 tool_dirs=["+X"]; hole-90 tool_dirs=["-Y"]; hole-93 tool_dirs=["+Y"]; hole-94 tool_dirs=["-X"]; hole-95 tool_dirs=["-X"]; hole-96 tool_dirs=["-Z"]; hole-97 tool_dirs=["-Y"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24 hole-25 hole-26 hole-27 hole-28 hole-29 hole-30 hole-31 hole-32 hole-33 hole-34 hole-35 hole-36 hole-37 hole-38 hole-39 hole-40 hole-41 hole-42 hole-43 hole-96 hole-98 hole-99 hole-100 hole-101], -Z [hole-55 hole-56 hole-57 hole-58 hole-59 hole-60 hole-61 hole-62 hole-63 hole-64 hole-65 hole-66 hole-67 hole-68 hole-69 hole-70 hole-71 hole-72 hole-73 hole-74 hole-75 hole-76 pocket-1], +X [hole-10 hole-11 hole-79 hole-80 hole-81 hole-82 hole-83 hole-84 hole-85 hole-86 hole-87 hole-88 hole-89 hole-92 hole-94 hole-95], -X [hole-44 hole-45 hole-46 hole-47 hole-48 hole-49 hole-50 hole-51 hole-52 hole-53], +Y [hole-12 hole-54 hole-77 hole-78 hole-90 hole-91 hole-93 hole-97]
+    setups after:  +Z [hole-1 hole-2 hole-3 hole-4 hole-9 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24 hole-25 hole-26 hole-27 hole-28 hole-29 hole-30 hole-31 hole-32 hole-33 hole-34 hole-35 hole-36 hole-37 hole-38 hole-39 hole-40 hole-41 hole-42 hole-98 hole-99 hole-100 hole-101], -Z [hole-5 hole-6 hole-7 hole-8 hole-43 hole-55 hole-56 hole-57 hole-58 hole-59 hole-60 hole-61 hole-62 hole-63 hole-64 hole-65 hole-66 hole-67 hole-68 hole-69 hole-70 hole-71 hole-72 hole-73 hole-74 hole-75 hole-76 hole-96 pocket-1], +X [hole-10 hole-11 hole-79 hole-80 hole-81 hole-82 hole-83 hole-84 hole-85 hole-86 hole-87 hole-88 hole-89 hole-92], -X [hole-44 hole-45 hole-46 hole-47 hole-48 hole-49 hole-50 hole-51 hole-52 hole-53 hole-94 hole-95], +Y [hole-12 hole-77 hole-78 hole-91 hole-93], -Y [hole-54 hole-90 hole-97]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_07_asme1_ap242-e2.stp + tests/inventor/files/INV_nist_ftc_07_asme1_2021.ipt
+    3 setups, 6 tool loads -> 3 setups, 6 tool loads; keys changed: none
+    features: hole-1 tool_dirs=["-Z"]; hole-11 tool_dirs=["-Z"]; hole-12 tool_dirs=["-Z"]; hole-13 tool_dirs=["-Z"]
+    setups before: -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 pocket-1], +X [hole-19 hole-20 hole-21], +Y [hole-17 hole-18 hole-26 hole-27]
+    setups after:  -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 pocket-1], +X [hole-19 hole-20 hole-21], +Y [hole-17 hole-18 hole-26 hole-27]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_07_asme1_ap242-e3.stp + tests/inventor/files/INV_nist_ftc_07_asme1_2024.ipt
+    3 setups, 6 tool loads -> 3 setups, 6 tool loads; keys changed: none
+    features: hole-1 tool_dirs=["-Z"]; hole-11 tool_dirs=["-Z"]; hole-12 tool_dirs=["-Z"]; hole-13 tool_dirs=["-Z"]
+    setups before: -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 pocket-1], +X [hole-19 hole-20 hole-21], +Y [hole-17 hole-18 hole-26 hole-27]
+    setups after:  -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 pocket-1], +X [hole-19 hole-20 hole-21], +Y [hole-17 hole-18 hole-26 hole-27]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_10_asme1_ap242-e2.stp + tests/inventor/files/INV_nist_ftc_10_asme1_2024.ipt
+    4 setups, 11 tool loads -> 5 setups, 12 tool loads; keys changed: setups, operations, tools, tool_changes, cost_drivers, cost_total
+    features: hole-2 tool_dirs=["-Z"]; hole-4 tool_dirs=["-Z"]; hole-13 tool_dirs=["+X"]; hole-15 tool_dirs=["+X"]; hole-17 tool_dirs=["+X"]; hole-19 tool_dirs=["+X"]; hole-20 tool_dirs=["-X"]; hole-21 tool_dirs=["-X"]; hole-22 tool_dirs=["-X"]; hole-23 tool_dirs=["-X"]; hole-40 tool_dirs=["-Z"]; hole-42 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-8 hole-9 hole-10 hole-11 hole-24 hole-25 hole-26 hole-27 hole-28 hole-29 hole-30 hole-31 hole-32 hole-33 hole-39 hole-40 hole-41 hole-42 pocket-1], -Z [hole-5 hole-34 hole-35 hole-36 hole-37 hole-38], +X [hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23], +Y [hole-6 hole-7 pocket-2 pocket-3]
+    setups after:  +Z [hole-1 hole-3 hole-8 hole-9 hole-10 hole-11 hole-24 hole-25 hole-26 hole-27 hole-28 hole-29 hole-30 hole-31 hole-32 hole-33 hole-39 hole-41 pocket-1], -Z [hole-2 hole-4 hole-5 hole-34 hole-35 hole-36 hole-37 hole-38 hole-40 hole-42], +X [hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19], -X [hole-20 hole-21 hole-22 hole-23], +Y [hole-6 hole-7 pocket-2 pocket-3]
+## shard 1/4: 16 changed, 0 refused
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ftc_07_asme1_rd.stp
+    3 setups, 6 tool loads -> 3 setups, 6 tool loads; keys changed: none
+    features: hole-16 tool_dirs=["-Z"]; hole-18 tool_dirs=["-Z"]; hole-20 tool_dirs=["-Z"]; hole-22 tool_dirs=["-Z"]
+    setups before: -Z [hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24 hole-25 hole-26 hole-27 pocket-1], +X [hole-5 hole-6 hole-7], +Y [hole-8 hole-9 hole-10 hole-11]
+    setups after:  -Z [hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24 hole-25 hole-26 hole-27 pocket-1], +X [hole-5 hole-6 hole-7], +Y [hole-8 hole-9 hole-10 hole-11]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ftc_10_asme1_rb.stp
+    4 setups, 10 tool loads -> 5 setups, 11 tool loads; keys changed: setups, operations, tools, tool_changes, cost_drivers, cost_total
+    features: hole-9 tool_dirs=["-Z"]; hole-11 tool_dirs=["-Z"]; hole-13 tool_dirs=["-Z"]; hole-15 tool_dirs=["-Z"]; hole-17 tool_dirs=["+X"]; hole-18 tool_dirs=["+X"]; hole-19 tool_dirs=["+X"]; hole-20 tool_dirs=["+X"]; hole-21 tool_dirs=["-X"]; hole-22 tool_dirs=["-X"]; hole-23 tool_dirs=["-X"]; hole-24 tool_dirs=["-X"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-31 hole-32 hole-33 hole-40 hole-41 hole-42 pocket-1], -Z [hole-34 hole-35 hole-36 hole-37 hole-38 hole-39], +X [hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24 hole-25 hole-26 hole-27 hole-28], +Y [hole-29 hole-30]
+    setups after:  +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-10 hole-12 hole-14 hole-16 hole-31 hole-32 hole-33 hole-40 hole-41 hole-42 pocket-1], -Z [hole-9 hole-11 hole-13 hole-15 hole-34 hole-35 hole-36 hole-37 hole-38 hole-39], +X [hole-17 hole-18 hole-19 hole-20 hole-25 hole-26 hole-27 hole-28], -X [hole-21 hole-22 hole-23 hole-24], +Y [hole-29 hole-30]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/AP203 with PMI/nist_ctc_02_asme1_ap203.stp
+    5 setups, 9 tool loads -> 6 setups, 12 tool loads; keys changed: setups, operations, tool_changes, cost_drivers, cost_total
+    features: hole-9 tool_dirs=["-Y"]; hole-11 tool_dirs=["-Y"]; hole-12 tool_dirs=["+Y"]; hole-13 tool_dirs=["+Y"]; hole-14 tool_dirs=["-Y"]; hole-15 tool_dirs=["+Y"]; hole-16 tool_dirs=["+X"]; hole-18 tool_dirs=["-X"]; hole-19 tool_dirs=["+X"]; hole-20 tool_dirs=["-X"]; hole-94 tool_dirs=["-Z"]; hole-95 tool_dirs=["-Z"]; hole-96 tool_dirs=["-Z"]; hole-97 tool_dirs=["-Z"]; hole-98 tool_dirs=["-Z"]; hole-99 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-21 hole-22 hole-23 hole-24 hole-25 hole-26 hole-27 hole-28 hole-29 hole-30 hole-31 hole-32 hole-33 hole-34 hole-35 hole-36 hole-37 hole-38 hole-39 hole-40 hole-41 hole-42 hole-43 hole-44 hole-45 hole-46 hole-47 hole-48 hole-49 hole-50 hole-93 hole-94 hole-95 hole-96 hole-97 hole-98 hole-99 hole-100 hole-101], -Z [hole-71 hole-72 hole-73 hole-74 hole-75 hole-76 hole-77 hole-78 hole-79 hole-80 hole-81 hole-82 hole-83 hole-84 hole-85 hole-86 hole-87 hole-88 hole-89 hole-90 hole-91 hole-92 pocket-1], +X [hole-7 hole-16 hole-17 hole-18 hole-19 hole-20 hole-61 hole-62 hole-63 hole-64 hole-65 hole-66 hole-67 hole-68 hole-69 hole-70], -X [hole-51 hole-52 hole-53 hole-54 hole-55 hole-56 hole-57 hole-58 hole-59 hole-60], +Y [hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15]
+    setups after:  +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-21 hole-22 hole-23 hole-24 hole-25 hole-26 hole-27 hole-28 hole-29 hole-30 hole-31 hole-32 hole-33 hole-34 hole-35 hole-36 hole-37 hole-38 hole-39 hole-40 hole-41 hole-42 hole-43 hole-44 hole-45 hole-46 hole-47 hole-48 hole-49 hole-50 hole-93 hole-100 hole-101], -Z [hole-71 hole-72 hole-73 hole-74 hole-75 hole-76 hole-77 hole-78 hole-79 hole-80 hole-81 hole-82 hole-83 hole-84 hole-85 hole-86 hole-87 hole-88 hole-89 hole-90 hole-91 hole-92 hole-94 hole-95 hole-96 hole-97 hole-98 hole-99 pocket-1], +X [hole-7 hole-16 hole-17 hole-19 hole-61 hole-62 hole-63 hole-64 hole-65 hole-66 hole-67 hole-68 hole-69 hole-70], -X [hole-18 hole-20 hole-51 hole-52 hole-53 hole-54 hole-55 hole-56 hole-57 hole-58 hole-59 hole-60], +Y [hole-8 hole-10 hole-12 hole-13 hole-15], -Y [hole-9 hole-11 hole-14]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_07_asme1_ap242-e3.stp
+    3 setups, 6 tool loads -> 3 setups, 6 tool loads; keys changed: none
+    features: hole-1 tool_dirs=["-Z"]; hole-11 tool_dirs=["-Z"]; hole-12 tool_dirs=["-Z"]; hole-13 tool_dirs=["-Z"]
+    setups before: -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 pocket-1], +X [hole-19 hole-20 hole-21], +Y [hole-17 hole-18 hole-26 hole-27]
+    setups after:  -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 pocket-1], +X [hole-19 hole-20 hole-21], +Y [hole-17 hole-18 hole-26 hole-27]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_10_asme1_ap242-e2.stp
+    4 setups, 11 tool loads -> 5 setups, 12 tool loads; keys changed: setups, operations, tools, tool_changes, cost_drivers, cost_total
+    features: hole-2 tool_dirs=["-Z"]; hole-4 tool_dirs=["-Z"]; hole-13 tool_dirs=["+X"]; hole-15 tool_dirs=["+X"]; hole-17 tool_dirs=["+X"]; hole-19 tool_dirs=["+X"]; hole-20 tool_dirs=["-X"]; hole-21 tool_dirs=["-X"]; hole-22 tool_dirs=["-X"]; hole-23 tool_dirs=["-X"]; hole-40 tool_dirs=["-Z"]; hole-42 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-8 hole-9 hole-10 hole-11 hole-24 hole-25 hole-26 hole-27 hole-28 hole-29 hole-30 hole-31 hole-32 hole-33 hole-39 hole-40 hole-41 hole-42 pocket-1], -Z [hole-5 hole-34 hole-35 hole-36 hole-37 hole-38], +X [hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23], +Y [hole-6 hole-7 pocket-2 pocket-3]
+    setups after:  +Z [hole-1 hole-3 hole-8 hole-9 hole-10 hole-11 hole-24 hole-25 hole-26 hole-27 hole-28 hole-29 hole-30 hole-31 hole-32 hole-33 hole-39 hole-41 pocket-1], -Z [hole-2 hole-4 hole-5 hole-34 hole-35 hole-36 hole-37 hole-38 hole-40 hole-42], +X [hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19], -X [hole-20 hole-21 hole-22 hole-23], +Y [hole-6 hole-7 pocket-2 pocket-3]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/linkage_arm1_42/linkage_arm1_42.hh.sat.stp
+    1 setups, 2 tool loads -> 1 setups, 2 tool loads; keys changed: setups
+    features: hole-3 tool_dirs=["-Z"]; hole-4 tool_dirs=["-Z"]; hole-10 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10]
+    setups after:  -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/main_linkage_arm_6/main_linkage_arm_6.hh.sat.stp
+    2 setups, 4 tool loads -> 3 setups, 5 tool loads; keys changed: setups, operations, tool_changes, cost_drivers, cost_total
+    features: hole-14 tool_dirs=["-Y"]
+    setups before: +X [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-9 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23], +Y [hole-8 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17]
+    setups after:  +X [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-9 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23], +Y [hole-8 hole-10 hole-11 hole-12 hole-13 hole-15 hole-16 hole-17], -Y [hole-14]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer1_67/spacer1_67.prt.hh.sat.stp
+    2 setups, 5 tool loads -> 2 setups, 5 tool loads; keys changed: none
+    features: hole-4 tool_dirs=["+Z"]; hole-5 tool_dirs=["+Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-9 hole-10], +X [hole-8]
+    setups after:  +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-9 hole-10], +X [hole-8]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer_66/spacer_66.prt.hh.sat.stp
+    2 setups, 5 tool loads -> 2 setups, 5 tool loads; keys changed: none
+    features: hole-1 tool_dirs=["+X"]; hole-2 tool_dirs=["+X"]
+    setups before: +Z [hole-6], +X [hole-1 hole-2 hole-3 hole-4 hole-5 hole-7 hole-8 hole-9 hole-10]
+    setups after:  +Z [hole-6], +X [hole-1 hole-2 hole-3 hole-4 hole-5 hole-7 hole-8 hole-9 hole-10]
+CHANGED tests/edmr/models/STEP/STI/unterlaf/unterlaf.stp
+    3 setups, 4 tool loads -> 3 setups, 4 tool loads; keys changed: setups, operations
+    features: hole-1 tool_dirs=["+Z"]; hole-4 tool_dirs=["-Z"]; hole-14 tool_dirs=["+Z"]; hole-15 tool_dirs=["-Z"]; hole-17 tool_dirs=["+Z"]
+    setups before: +Z [hole-1 hole-2 hole-4 hole-14 hole-15 hole-16 hole-17 pocket-1 pocket-3 pocket-4 pocket-6 pocket-7 pocket-9 pocket-10 pocket-12 pocket-13 pocket-15 pocket-16 pocket-18 pocket-19 pocket-21 pocket-22 pocket-24 pocket-25 pocket-27 pocket-28 pocket-30 pocket-32 pocket-42 pocket-43 pocket-44 pocket-45 pocket-46 pocket-47 pocket-48 pocket-49 pocket-50 pocket-51 pocket-52 pocket-53 pocket-54 pocket-55 pocket-56 pocket-57 pocket-58 pocket-59 pocket-60], -Z [pocket-2 pocket-5 pocket-8 pocket-11 pocket-14 pocket-17 pocket-20 pocket-23 pocket-26 pocket-29 pocket-31 pocket-33 pocket-34 pocket-35 pocket-36 pocket-37 pocket-38 pocket-39 pocket-40 pocket-41], +X [hole-3 hole-9]
+    setups after:  +Z [hole-1 hole-2 hole-14 hole-16 hole-17 pocket-1 pocket-3 pocket-4 pocket-6 pocket-7 pocket-9 pocket-10 pocket-12 pocket-13 pocket-15 pocket-16 pocket-18 pocket-19 pocket-21 pocket-22 pocket-24 pocket-25 pocket-27 pocket-28 pocket-30 pocket-32 pocket-42 pocket-43 pocket-44 pocket-45 pocket-46 pocket-47 pocket-48 pocket-49 pocket-50 pocket-51 pocket-52 pocket-53 pocket-54 pocket-55 pocket-56 pocket-57 pocket-58 pocket-59 pocket-60], -Z [hole-4 hole-15 pocket-2 pocket-5 pocket-8 pocket-11 pocket-14 pocket-17 pocket-20 pocket-23 pocket-26 pocket-29 pocket-31 pocket-33 pocket-34 pocket-35 pocket-36 pocket-37 pocket-38 pocket-39 pocket-40 pocket-41], +X [hole-3 hole-9]
+CHANGED tests/grading/sets/hole_joins/cb_chamfer.step
+    1 setups, 2 tool loads -> 1 setups, 2 tool loads; keys changed: setups
+    features: hole-1 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2]
+    setups after:  -Z [hole-1 hole-2]
+CHANGED tests/grading/sets/hole_joins/cb_plain.step
+    1 setups, 2 tool loads -> 1 setups, 2 tool loads; keys changed: setups
+    features: hole-1 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2]
+    setups after:  -Z [hole-1 hole-2]
+CHANGED tests/grading/sets/hole_joins/ng_cb_both_ends.step
+    1 setups, 2 tool loads -> 2 setups, 3 tool loads; keys changed: setups, operations, tool_changes, cost_drivers, cost_total
+    features: hole-1 tool_dirs=["+Z"]; hole-2 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2 hole-3]
+    setups after:  +Z [hole-1 hole-3], -Z [hole-2]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_05_asme1_ap242-e1.stp + tests/inventor/files/INV_nist_ctc_05_asme1_2021.ipt
+    4 setups, 8 tool loads -> 4 setups, 9 tool loads; keys changed: setups, operations, tool_changes
+    features: hole-7 tool_dirs=["-Z"]; hole-9 tool_dirs=["-Z"]; hole-11 tool_dirs=["-Z"]; hole-13 tool_dirs=["-Z"]; hole-15 tool_dirs=["-Z"]; hole-17 tool_dirs=["-Z"]; hole-19 tool_dirs=["-Z"]; hole-21 tool_dirs=["-Z"]; hole-23 tool_dirs=["-Z"]; hole-25 tool_dirs=["-Z"]
+    setups before: +Z [hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24 hole-25], -Z [hole-1 hole-2 hole-3 hole-4], +X [hole-29 hole-30 hole-31], -X [hole-26 hole-27 hole-28 pocket-1 pocket-2]
+    setups after:  +Z [hole-5 hole-6 hole-8 hole-10 hole-12 hole-14 hole-16 hole-18 hole-20 hole-22 hole-24], -Z [hole-1 hole-2 hole-3 hole-4 hole-7 hole-9 hole-11 hole-13 hole-15 hole-17 hole-19 hole-21 hole-23 hole-25], +X [hole-29 hole-30 hole-31], -X [hole-26 hole-27 hole-28 pocket-1 pocket-2]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_06_asme1_ap242-e2.stp + tests/inventor/files/INV_nist_ftc_06_asme1_2021.ipt
+    2 setups, 9 tool loads -> 2 setups, 9 tool loads; keys changed: none
+    features: hole-3 tool_dirs=["-Z"]; hole-4 tool_dirs=["-Z"]; hole-5 tool_dirs=["-Z"]; hole-6 tool_dirs=["-Z"]; hole-7 tool_dirs=["-X"]; hole-8 tool_dirs=["-X"]; hole-16 tool_dirs=["-X"]; hole-18 tool_dirs=["-X"]; hole-20 tool_dirs=["-X"]; hole-22 tool_dirs=["-X"]
+    setups before: -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-11 hole-12 hole-13 hole-14], -X [hole-7 hole-8 hole-9 hole-10 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 pocket-1 pocket-2]
+    setups after:  -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-11 hole-12 hole-13 hole-14], -X [hole-7 hole-8 hole-9 hole-10 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 pocket-1 pocket-2]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_06_asme1_ap242-e3.stp + tests/inventor/files/INV_nist_ftc_06_asme1_2024.ipt
+    2 setups, 9 tool loads -> 2 setups, 9 tool loads; keys changed: none
+    features: hole-4 tool_dirs=["-Z"]; hole-6 tool_dirs=["-X"]; hole-8 tool_dirs=["-X"]; hole-10 tool_dirs=["-X"]; hole-12 tool_dirs=["-X"]; hole-14 tool_dirs=["-X"]; hole-16 tool_dirs=["-Z"]; hole-18 tool_dirs=["-Z"]; hole-20 tool_dirs=["-Z"]; hole-22 tool_dirs=["-X"]
+    setups before: -Z [hole-1 hole-2 hole-3 hole-4 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20], -X [hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-21 hole-22 pocket-1 pocket-2]
+    setups after:  -Z [hole-1 hole-2 hole-3 hole-4 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20], -X [hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-21 hole-22 pocket-1 pocket-2]
+## shard 2/4: 16 changed, 0 refused
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/AP203 with PMI/nist_ctc_05_asme1_ap203.stp
+    4 setups, 8 tool loads -> 4 setups, 9 tool loads; keys changed: setups, operations, tool_changes
+    features: hole-7 tool_dirs=["-Z"]; hole-9 tool_dirs=["-Z"]; hole-11 tool_dirs=["-Z"]; hole-13 tool_dirs=["-Z"]; hole-15 tool_dirs=["-Z"]; hole-17 tool_dirs=["-Z"]; hole-19 tool_dirs=["-Z"]; hole-21 tool_dirs=["-Z"]; hole-23 tool_dirs=["-Z"]; hole-25 tool_dirs=["-Z"]
+    setups before: +Z [hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24 hole-25], -Z [hole-1 hole-2 hole-3 hole-4], +X [hole-29 hole-30 hole-31], -X [hole-26 hole-27 hole-28 pocket-1 pocket-2]
+    setups after:  +Z [hole-5 hole-6 hole-8 hole-10 hole-12 hole-14 hole-16 hole-18 hole-20 hole-22 hole-24], -Z [hole-1 hole-2 hole-3 hole-4 hole-7 hole-9 hole-11 hole-13 hole-15 hole-17 hole-19 hole-21 hole-23 hole-25], +X [hole-29 hole-30 hole-31], -X [hole-26 hole-27 hole-28 pocket-1 pocket-2]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/flange_pt201_11/flange_pt201_11.hh.sat.stp
+    3 setups, 6 tool loads -> 4 setups, 6 tool loads; keys changed: setups, operations, tools, cost_drivers, cost_total
+    features: hole-2 tool_dirs=["-Z"]; hole-3 tool_dirs=["+Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15], +X [hole-4 hole-5 hole-6 hole-7], -X [hole-16 hole-17 hole-18 hole-19]
+    setups after:  +Z [hole-1 hole-3 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15], -Z [hole-2], +X [hole-4 hole-5 hole-6 hole-7], -X [hole-16 hole-17 hole-18 hole-19]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/linkage_arm_42/linkage_arm_42.prt.hh.sat.stp
+    1 setups, 5 tool loads -> 1 setups, 5 tool loads; keys changed: setups
+    features: hole-1 tool_dirs=["-Z"]; hole-2 tool_dirs=["-Z"]; hole-3 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10]
+    setups after:  -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/linkage_arm_43/linkage_arm_43.hh.sat.stp
+    1 setups, 2 tool loads -> 1 setups, 2 tool loads; keys changed: setups
+    features: hole-3 tool_dirs=["-Z"]; hole-4 tool_dirs=["-Z"]; hole-14 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14]
+    setups after:  -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/rear_plate_36/rear_plate_36.hh.sat.stp
+    1 setups, 1 tool loads -> 1 setups, 1 tool loads; keys changed: none
+    features: hole-3 tool_dirs=["+Z"]; hole-4 tool_dirs=["+Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20]
+    setups after:  +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer1_66/spacer1_66.prt.hh.sat.stp
+    2 setups, 5 tool loads -> 2 setups, 5 tool loads; keys changed: none
+    features: hole-4 tool_dirs=["+X"]; hole-5 tool_dirs=["+X"]
+    setups before: +Z [hole-8], +X [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-9 hole-10]
+    setups after:  +Z [hole-8], +X [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-9 hole-10]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer1_67/spacer1_67.hh.sat.stp
+    2 setups, 3 tool loads -> 2 setups, 3 tool loads; keys changed: none
+    features: hole-4 tool_dirs=["+Z"]; hole-5 tool_dirs=["+Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9], +X [hole-10]
+    setups after:  +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9], +X [hole-10]
+CHANGED tests/edmr/models/STEP/STI/1797609in/1797609in.stp
+    2 setups, 6 tool loads -> 2 setups, 6 tool loads; keys changed: none
+    features: hole-25 tool_dirs=["+Z"]; hole-26 tool_dirs=["+Z"]; hole-28 tool_dirs=["+Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24 hole-25 hole-26 hole-27 hole-28 pocket-2], -Z [hole-13 hole-14 hole-15 hole-16 hole-17 hole-19 pocket-1]
+    setups after:  +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24 hole-25 hole-26 hole-27 hole-28 pocket-2], -Z [hole-13 hole-14 hole-15 hole-16 hole-17 hole-19 pocket-1]
+CHANGED tests/edmr/models/STEP/STI/clevis23/clevis23.stp
+    2 setups, 4 tool loads -> 2 setups, 4 tool loads; keys changed: setups
+    features: hole-5 tool_dirs=["-Z"]; hole-7 tool_dirs=["-Z"]; hole-9 tool_dirs=["-Z"]; hole-11 tool_dirs=["-Z"]; hole-13 tool_dirs=["-Z"]; hole-15 tool_dirs=["-Z"]
+    setups before: +Z [hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15], +X [hole-1 hole-2 hole-3]
+    setups after:  -Z [hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15], +X [hole-1 hole-2 hole-3]
+CHANGED tests/edmr/models/STEP/STI/mohne/mohne.stp
+    3 setups, 14 tool loads -> 4 setups, 16 tool loads; keys changed: setups, operations, tools, tool_changes, cost_drivers, cost_total
+    features: hole-23 tool_dirs=["+Z"]; hole-24 tool_dirs=["-Z"]
+    setups before: -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-12 hole-14 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24 hole-25 hole-26 hole-27 pocket-1 pocket-2 pocket-4 pocket-5], -X [pocket-3], +Y [hole-11 hole-13 hole-15]
+    setups after:  +Z [hole-10 hole-23 hole-25], -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-12 hole-14 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-24 hole-26 hole-27 pocket-1 pocket-2 pocket-4 pocket-5], -X [pocket-3], +Y [hole-11 hole-13 hole-15]
+CHANGED tests/edmr/models/STEP/STI/team/team.stp
+    3 setups, 10 tool loads -> 3 setups, 10 tool loads; keys changed: none
+    features: hole-2 tool_dirs=["-Z"]; hole-4 tool_dirs=["-Z"]; hole-6 tool_dirs=["-Z"]; hole-8 tool_dirs=["-Z"]; hole-10 tool_dirs=["-Z"]; hole-12 tool_dirs=["-Z"]
+    setups before: -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 pocket-1 pocket-2 pocket-3 pocket-4 pocket-5], +Y [hole-18 hole-20 hole-21], -Y [hole-19]
+    setups after:  -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 pocket-1 pocket-2 pocket-3 pocket-4 pocket-5], +Y [hole-18 hole-20 hole-21], -Y [hole-19]
+CHANGED tests/grading/sets/bullnose_draft/bn_ball6.step
+    1 setups, 2 tool loads -> 1 setups, 2 tool loads; keys changed: none
+    features: none
+    setups before: -Z [pocket-1]
+    setups after:  -Z [pocket-1]
+CHANGED tests/grading/sets/hole_joins/cb_corner.step
+    1 setups, 2 tool loads -> 1 setups, 2 tool loads; keys changed: setups
+    features: hole-1 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2]
+    setups after:  -Z [hole-1 hole-2]
+CHANGED tests/grading/sets/hole_joins/cb_fillet.step
+    1 setups, 2 tool loads -> 1 setups, 2 tool loads; keys changed: setups
+    features: hole-2 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2]
+    setups after:  -Z [hole-1 hole-2]
+CHANGED tests/grading/sets/hole_joins/ng_cb_facing.step
+    1 setups, 2 tool loads -> 2 setups, 3 tool loads; keys changed: setups, operations, tool_changes, cost_drivers, cost_total
+    features: hole-2 tool_dirs=["-Y"]; hole-4 tool_dirs=["+Y"]
+    setups before: +Y [hole-1 hole-2 hole-3 hole-4]
+    setups after:  +Y [hole-1 hole-3 hole-4], -Y [hole-2]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_10_asme1_ap242-e2.stp + tests/inventor/files/INV_nist_ftc_10_asme1_2021.ipt
+    4 setups, 10 tool loads -> 5 setups, 11 tool loads; keys changed: setups, operations, tools, tool_changes, cost_drivers, cost_total
+    features: hole-12 tool_dirs=["+X"]; hole-14 tool_dirs=["+X"]; hole-16 tool_dirs=["+X"]; hole-18 tool_dirs=["+X"]; hole-20 tool_dirs=["-Z"]; hole-21 tool_dirs=["-Z"]; hole-22 tool_dirs=["-Z"]; hole-23 tool_dirs=["-Z"]; hole-24 tool_dirs=["-X"]; hole-25 tool_dirs=["-X"]; hole-26 tool_dirs=["-X"]; hole-27 tool_dirs=["-X"]
+    setups before: +Z [hole-9 hole-10 hole-11 hole-20 hole-21 hole-22 hole-23 hole-28 hole-29 hole-30 hole-31 hole-32 hole-33 hole-34 hole-35 hole-36 hole-37 hole-38 hole-39 hole-40 hole-41 hole-42 pocket-1], -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6], +X [hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-24 hole-25 hole-26 hole-27], +Y [hole-7 hole-8]
+    setups after:  +Z [hole-9 hole-10 hole-11 hole-28 hole-29 hole-30 hole-31 hole-32 hole-33 hole-34 hole-35 hole-36 hole-37 hole-38 hole-39 hole-40 hole-41 hole-42 pocket-1], -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-20 hole-21 hole-22 hole-23], +X [hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19], -X [hole-24 hole-25 hole-26 hole-27], +Y [hole-7 hole-8]
+## shard 3/4: 11 changed, 0 refused
+CHANGED tests/parts/stepped_hole.step
+    1 setups, 2 tool loads -> 1 setups, 2 tool loads; keys changed: setups
+    features: hole-1 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2]
+    setups after:  -Z [hole-1 hole-2]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ctc_02_asme1_rc.stp
+    5 setups, 9 tool loads -> 6 setups, 12 tool loads; keys changed: setups, operations, tool_changes, cost_drivers, cost_total
+    features: hole-31 tool_dirs=["+Y"]; hole-32 tool_dirs=["-Y"]; hole-33 tool_dirs=["+Y"]; hole-35 tool_dirs=["-Y"]; hole-36 tool_dirs=["+X"]; hole-38 tool_dirs=["-X"]; hole-39 tool_dirs=["+X"]; hole-42 tool_dirs=["-Z"]; hole-43 tool_dirs=["-Z"]; hole-44 tool_dirs=["-Z"]; hole-45 tool_dirs=["-Z"]; hole-46 tool_dirs=["-Z"]; hole-47 tool_dirs=["-Z"]; hole-50 tool_dirs=["-X"]; hole-63 tool_dirs=["+Y"]; hole-65 tool_dirs=["-Y"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24 hole-25 hole-26 hole-27 hole-28 hole-29 hole-30 hole-40 hole-41 hole-42 hole-43 hole-44 hole-45 hole-46 hole-47 hole-48 hole-49 hole-62 hole-66 hole-67 hole-100 hole-101], -Z [hole-68 hole-69 hole-70 hole-71 hole-72 hole-73 hole-74 hole-75 hole-76 hole-77 hole-78 hole-79 hole-80 hole-81 hole-82 hole-83 hole-84 hole-85 hole-86 hole-87 hole-88 hole-89 pocket-1], +X [hole-36 hole-37 hole-38 hole-39 hole-50 hole-51 hole-90 hole-91 hole-92 hole-93 hole-94 hole-95 hole-96 hole-97 hole-98 hole-99], -X [hole-52 hole-53 hole-54 hole-55 hole-56 hole-57 hole-58 hole-59 hole-60 hole-61], +Y [hole-31 hole-32 hole-33 hole-34 hole-35 hole-63 hole-64 hole-65]
+    setups after:  +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 hole-23 hole-24 hole-25 hole-26 hole-27 hole-28 hole-29 hole-30 hole-40 hole-41 hole-48 hole-49 hole-62 hole-66 hole-67 hole-100 hole-101], -Z [hole-42 hole-43 hole-44 hole-45 hole-46 hole-47 hole-68 hole-69 hole-70 hole-71 hole-72 hole-73 hole-74 hole-75 hole-76 hole-77 hole-78 hole-79 hole-80 hole-81 hole-82 hole-83 hole-84 hole-85 hole-86 hole-87 hole-88 hole-89 pocket-1], +X [hole-36 hole-37 hole-39 hole-51 hole-90 hole-91 hole-92 hole-93 hole-94 hole-95 hole-96 hole-97 hole-98 hole-99], -X [hole-38 hole-50 hole-52 hole-53 hole-54 hole-55 hole-56 hole-57 hole-58 hole-59 hole-60 hole-61], +Y [hole-31 hole-33 hole-34 hole-63 hole-64], -Y [hole-32 hole-35 hole-65]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ctc_05_asme1_rd.stp
+    4 setups, 8 tool loads -> 4 setups, 9 tool loads; keys changed: setups, operations, tool_changes
+    features: hole-1 tool_dirs=["-Z"]; hole-3 tool_dirs=["-Z"]; hole-5 tool_dirs=["-Z"]; hole-7 tool_dirs=["-Z"]; hole-9 tool_dirs=["-Z"]; hole-11 tool_dirs=["-Z"]; hole-13 tool_dirs=["-Z"]; hole-15 tool_dirs=["-Z"]; hole-17 tool_dirs=["-Z"]; hole-19 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-31], -Z [hole-27 hole-28 hole-29 hole-30], +X [hole-24 hole-25 hole-26], -X [hole-21 hole-22 hole-23 pocket-1 pocket-2]
+    setups after:  +Z [hole-2 hole-4 hole-6 hole-8 hole-10 hole-12 hole-14 hole-16 hole-18 hole-20 hole-31], -Z [hole-1 hole-3 hole-5 hole-7 hole-9 hole-11 hole-13 hole-15 hole-17 hole-19 hole-27 hole-28 hole-29 hole-30], +X [hole-24 hole-25 hole-26], -X [hole-21 hole-22 hole-23 pocket-1 pocket-2]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ftc_06_asme1_rd.stp
+    2 setups, 9 tool loads -> 2 setups, 9 tool loads; keys changed: none
+    features: hole-2 tool_dirs=["-Z"]; hole-4 tool_dirs=["-Z"]; hole-6 tool_dirs=["-Z"]; hole-8 tool_dirs=["-Z"]; hole-10 tool_dirs=["-X"]; hole-12 tool_dirs=["-X"]; hole-14 tool_dirs=["-X"]; hole-16 tool_dirs=["-X"]; hole-18 tool_dirs=["-X"]; hole-20 tool_dirs=["-X"]
+    setups before: -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-21 hole-22], -X [hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 pocket-1 pocket-2]
+    setups after:  -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-21 hole-22], -X [hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 pocket-1 pocket-2]
+CHANGED tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_06_asme1_ap242-e2.stp
+    2 setups, 9 tool loads -> 2 setups, 9 tool loads; keys changed: none
+    features: hole-3 tool_dirs=["-Z"]; hole-4 tool_dirs=["-Z"]; hole-5 tool_dirs=["-Z"]; hole-6 tool_dirs=["-Z"]; hole-7 tool_dirs=["-X"]; hole-8 tool_dirs=["-X"]; hole-16 tool_dirs=["-X"]; hole-18 tool_dirs=["-X"]; hole-20 tool_dirs=["-X"]; hole-22 tool_dirs=["-X"]
+    setups before: -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-11 hole-12 hole-13 hole-14], -X [hole-7 hole-8 hole-9 hole-10 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 pocket-1 pocket-2]
+    setups after:  -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-11 hole-12 hole-13 hole-14], -X [hole-7 hole-8 hole-9 hole-10 hole-15 hole-16 hole-17 hole-18 hole-19 hole-20 hole-21 hole-22 pocket-1 pocket-2]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/linkage_arm1_43/linkage_arm1_43.hh.sat.stp
+    1 setups, 2 tool loads -> 1 setups, 2 tool loads; keys changed: setups
+    features: hole-3 tool_dirs=["-Z"]; hole-4 tool_dirs=["-Z"]; hole-14 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14]
+    setups after:  -Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer1_66/spacer1_66.hh.sat.stp
+    2 setups, 3 tool loads -> 2 setups, 3 tool loads; keys changed: none
+    features: hole-4 tool_dirs=["+X"]; hole-5 tool_dirs=["+X"]
+    setups before: +Z [hole-10], +X [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9]
+    setups after:  +Z [hole-10], +X [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer_66/spacer_66.hh.sat.stp
+    2 setups, 3 tool loads -> 2 setups, 3 tool loads; keys changed: none
+    features: hole-4 tool_dirs=["+X"]; hole-5 tool_dirs=["+X"]
+    setups before: +Z [hole-10], +X [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9]
+    setups after:  +Z [hole-10], +X [hole-1 hole-2 hole-3 hole-4 hole-5 hole-6 hole-7 hole-8 hole-9]
+CHANGED tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer_67/spacer_67.prt.hh.sat.stp
+    2 setups, 5 tool loads -> 2 setups, 5 tool loads; keys changed: none
+    features: hole-1 tool_dirs=["+Z"]; hole-2 tool_dirs=["+Z"]
+    setups before: +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-7 hole-8 hole-9 hole-10], +X [hole-6]
+    setups after:  +Z [hole-1 hole-2 hole-3 hole-4 hole-5 hole-7 hole-8 hole-9 hole-10], +X [hole-6]
+CHANGED tests/edmr/models/STEP/STI/clevis22/clevis22.stp
+    2 setups, 4 tool loads -> 2 setups, 4 tool loads; keys changed: none
+    features: hole-5 tool_dirs=["-X"]; hole-7 tool_dirs=["-X"]; hole-9 tool_dirs=["-X"]
+    setups before: -Z [hole-1 hole-2 hole-3], -X [hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15]
+    setups after:  -Z [hole-1 hole-2 hole-3], -X [hole-4 hole-5 hole-6 hole-7 hole-8 hole-9 hole-10 hole-11 hole-12 hole-13 hole-14 hole-15]
+CHANGED tests/grading/sets/hole_joins/cb_chamfer_1.step
+    1 setups, 2 tool loads -> 1 setups, 2 tool loads; keys changed: setups
+    features: hole-1 tool_dirs=["-Z"]
+    setups before: +Z [hole-1 hole-2]
+    setups after:  -Z [hole-1 hole-2]
+parity:refreeze full: 60 key file(s) changed; no change refused; 164.5 s
+wrote 60 key file(s) to tests/parity/key/

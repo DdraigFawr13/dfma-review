@@ -6,7 +6,7 @@ import { expect, test } from "vitest";
 import { cover, ORDER, pocketTools, rank, type Tool } from "../plan";
 import * as access from "../rules/access";
 import type { Feature, PartSummary } from "../rules/types";
-import { analyzeBytes, checkPlan, expected, partBytes, ROOT, run, type Feat, type Result } from "./groupb_common";
+import { analyzeBytes, analyzeShape, box, checkPlan, cut, cyl, expected, oc, partBytes, ROOT, run, type Feat, type Result } from "./groupb_common";
 
 const approx = (v: number, want: number, abs: number) => expect(Math.abs(v - want)).toBeLessThanOrEqual(abs);
 
@@ -201,3 +201,47 @@ test("angled holes square to their face are review", async () => {
   const ids = new Set(found.map((x: Feat) => x.feature));
   expect(new Set(r.features.filter((f: Feat) => ids.has(f.id)).map((f: Feat) => f.entry_deg))).toEqual(new Set([0.0]));
 }, 30_000); // the browser engine takes about 5.2 s here; the Python twin 3.8 s (S8b, measured): a 30 s limit, not a looser check
+
+// P0 (D-085): the engineer's report, "a counter bore was saying it could be machined from the wrong side". A counterbore
+// is cut from its large end; the small hole through it can still be drilled from either end. Built here: a 2 x 2 x 1 in
+// block, a 0.250 in hole through, a 7/16 in counterbore 0.250 in deep at the end named.
+async function counterbored(ends: ("top" | "bottom")[]): Promise<Result> {
+  const o = await oc();
+  const tools = [cyl(o, 1, 1, -0.1, 0.125, 1.2)];
+  for (const end of ends) tools.push(cyl(o, 1, 1, end === "top" ? 0.75 : -0.1, 0.4375 / 2, 0.35));
+  return analyzeShape(cut(o, box(o, 0, 0, 0, 2, 2, 1), ...tools));
+}
+const cboreOf = (r: Result) => r.features.filter((f: Feat) => f.kind === "hole" && Math.abs(f.dims_mm.diameter - 0.4375 * 25.4) < 0.01);
+/** The part-frame name of a world direction, read off the hole's own open ends (the frame can flip the part, as it
+ *  does stepped_hole: world +Z is its "-Z"). */
+const named = (r: Result, world: number[]) => {
+  const hole = r.features.find((f: Feat) => f.kind === "hole");
+  const k = hole.open_vectors.findIndex((v: number[]) => v.every((x, i) => Math.abs(x - world[i]) < 1e-9));
+  return hole.open_dirs[k];
+};
+const UP = [0, 0, 1], DOWN = [0, 0, -1];
+
+test("counterbore at the bottom is cut from the bottom", async () => {
+  const r = await counterbored(["bottom"]);
+  expect(r.setups.map((s: Feat) => s.direction)).toEqual([named(r, DOWN)]);
+  const [cbore] = cboreOf(r);
+  expect(cbore.tool_dirs).toEqual([named(r, DOWN)]);
+  expect(r.setups[0].features).toContain(cbore.id);
+  const small = r.features.find((f: Feat) => f.kind === "hole" && f.id !== cbore.id);
+  expect(small.tool_dirs).toBeUndefined(); // the 0.250 in hole can still be drilled from either end
+});
+
+for (const [label, make] of [["built", () => counterbored(["top"])], ["stepped_hole", () => run("stepped_hole")]] as const) {
+  test(`counterbore at the top is cut from the top (${label})`, async () => {
+    const r = await make();
+    expect(r.setups.map((s: Feat) => s.direction)).toEqual([named(r, UP)]);
+  });
+}
+
+test("a counterbore at each end takes a setup at each end", async () => {
+  const r = await counterbored(["top", "bottom"]);
+  const cbores = cboreOf(r);
+  expect(cbores.length).toBe(2);
+  expect(new Set(r.setups.map((s: Feat) => s.direction))).toEqual(new Set([named(r, UP), named(r, DOWN)]));
+  for (const s of r.setups) expect(cbores.filter((f: Feat) => s.features.includes(f.id)).length, s.direction).toBe(1);
+});
