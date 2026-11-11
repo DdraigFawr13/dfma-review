@@ -12,7 +12,8 @@
     "demo-results": "vitest run --silent=false --config vitest.parity.config.ts src/engine/demo-results.test.ts",
     "dev": "vite",
     "parity": "node scripts/parity-run.mjs",
-    "parity:full": "node scripts/parity-full.mjs"
+    "parity:full": "node scripts/parity-full.mjs",
+    "e2e": "playwright test -c e2e/playwright.config.ts --trace off"
   },
   "dependencies": {
     "@taucad/opencascade.js": "3.0.0-beta.3",
@@ -22,6 +23,7 @@
     "three": "0.187.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@types/node": "22.20.5",
     "@types/three": "0.187.0",
     "typescript": "7.0.2",

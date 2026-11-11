@@ -533,3 +533,14 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Why:** Morgan's D-071 approval; the measurements are from this session.
 - **Measured:** quick parity 122 of 122 the same, 0 different, 0 Python crashed, 4 shards in 236.7 s. Harness: 16 of 16 NIST transforms equal Python's; `built` 7 of 7 equal. Scorer: all 100 MFCAD++ records on 6 labelled sets equal Python's; NIST scorecard equal.
 - **Not done:** `local_pairs` on Morgan's real pairs (absent here; fixtures only). The pair check's passing line is untested on real data. The committed `tests/edmr/scorecard.toml` says `nasty_cheese` features 386; both engines give 387 (left as committed; open question).
+
+## D-073 S8b: the two full-set position diffs are tessellation; Python retired
+
+- **Status:** Measured 2026-11-11 (S8b, before any Python is deleted); PR for S8b is a draft until Morgan approves. Morgan's approval of the S8 file list: D-071.
+- **Decision:** the two full-set differences in `faces[].positions` (bn_ball6, nasty_cheese; D-072) are tessellation, not geometry. No engine change. The frozen key keeps `faces[].positions` as it is (D-072).
+- **Measured** (scratch measure run, Python OCC in `/opt/mamba/envs/dfma` against the key and the browser engine's output; numbers from that run):
+  - `bn_ball6.step`, faces 14 and 18 (B-spline/revolution surfaces): 153 points and 822 indices on each side; Hausdorff 0.3490 mm (face 14) and 0.3374 mm (face 18); each point within 7.44e-6 mm of the face surface on both sides. Also faces 2 and 22 (planes) differ in index order only (deviation 0).
+  - `nasty_cheese.stp`, face 202 (cylinder): 74 points and 216 indices on each side; Hausdorff 0 (the same 72 distinct points). One seam point is duplicated at a different position on each side (3.5355 mm apart along Y); each point within 4.31e-6 mm of the surface.
+  - `nasty_cheese.stp` also has 64 faces that differ in triangulation (63 with identical point sets). The largest surface deviation of any of them is 1.23e-4 mm (face 152), so all are tessellation under the 1e-3 mm rule.
+- **Why:** the approved S8 list required the measurement before Python could no longer regenerate the key; the answer is tessellation for every differing face measured.
+- **Open:** the nasty_cheese measurement lists 64 faces, not one; the 63 identical-point faces are tessellation only. The compare is unchanged (positions rounded to 1e-5 mm, D-055 tolerance): the full-set parity still lists these two files as different, so `parity:full` exits non-zero until Morgan decides whether tessellation is accepted by the compare. Not changed here.

@@ -1,5 +1,5 @@
 // Port of service/dfma/settings.py (port spec Design "settings.ts"). The constants below must equal
-// settings.py's (settings.test.ts compares them with `python tests/parity/key.py --settings` until S8).
+// settings.py's (settings.test.ts compares them with the frozen dump tests/parity/key/settings.json; S8b retired settings.py).
 // The config loaders read config/*.toml as text and parse it with smol-toml, so the shop's TOML stays the one source.
 import { parse } from "smol-toml";
 import thresholdsToml from "../../../config/thresholds.toml?raw";

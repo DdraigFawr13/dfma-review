@@ -1,7 +1,6 @@
-# From the AI-Master-Instructions template, adapted with the efficient-github-actions skill.
-# One Linux job runs scripts/check.py: the master drift check, service tests, web check and
-# build, the browser tests, the parity run and the browser-engine tests (port S1). The conda environment, the npm
-# cache, and the parity key are cached.
+# One Linux job runs `npm run check` at the repo root (S8b: Node only, no conda): the master drift check, the NIST
+# unpack, the web check and build, the parity run against the frozen key, the browser e2e tests and the timed ones.
+# Pinned runner: ubuntu-latest moved to 26.04 on 2026-11-09, where Playwright 1.60 can't install Chromium (LESSONS "ci").
 name: CI
 
 on:
@@ -24,21 +23,15 @@ jobs:
   check:
     # Draft PRs don't run CI; marking one ready does (CI-06).
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
-    # Pinned: ubuntu-latest moved to 26.04 on 2026-11-09, where Playwright 1.60 can't install Chromium (LESSONS "ci").
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    defaults:
-      run:
-        shell: bash -el {0} # login shell so the micromamba environment is active
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: mamba-org/setup-micromamba@f457c30a868e4760d3a6fcea5f25dc655b8edf39 # v3.2.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          environment-file: environment.yml
-          cache-environment: true
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.npm
-          key: npm-${{ runner.os }}-${{ hashFiles('web/package-lock.json') }}
-      - run: python -m playwright install --with-deps chromium
-      - run: python scripts/check.py
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm --prefix web ci
+      - run: npm --prefix web exec -- playwright install --with-deps chromium
+      - run: npm run check
