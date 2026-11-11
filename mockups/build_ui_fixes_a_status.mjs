@@ -35,16 +35,16 @@ th, td { border-top:1px solid var(--line); padding:6px 8px; text-align:left; ver
 </style>
 <main>
 <h1>UI fixes, slice A: the model</h1>
-<p class="muted">DFMA Review · 2026-11-11 · <a href="${PR}">draft PR #51</a> (not merged) · spec <code>docs/specs/ui-fixes.md</code> S1</p>
+<p class="muted">DFMA Review · 2026-11-11 · <a href="${PR}">PR #51</a> (approved, D-079) · spec <code>docs/specs/ui-fixes.md</code> S1</p>
 
 <div class="answer">
 <p><strong>Slice A is built and every check passes.</strong> The part now turns freely, like Inventor's free orbit. Five view buttons put it back. A small XYZ in the corner shows the part's own axes. Pins hide while the part moves. Picking a row lights one feature, and the rest of the part goes grey.</p>
 <p><strong>Try it:</strong> the <a href="${DEMO}">demo</a>, or the work copy once this merges. Tap report_sample, then Features. Open "Deep hole ×2": one hole lights, and › lights the other. Drag to spin the part and watch the pins go and come back. Press each view button.</p>
 </div>
 
-<h2>To decide</h2>
+<h2>Decided, and still open</h2>
 <div class="answer decide">
-<p><strong>1. Approve PR #51 to merge, or tell me what to change.</strong> Slice B (examples, Open…, the machine view) starts in a new session once it merges.</p>
+<p><strong>1. Approved</strong> after the demo (D-079). Slice B (examples, Open…, the machine view) starts in a new session once it merges.</p>
 <p><strong>2. Drag speed on big parts.</strong> The spec's goal was a frame every 50 ms or less while turning CTC 02. Here it is about 190 ms, down from 310-420 ms. The page itself now does almost no work while you drag: 0.2 s against 11-15 s before. What's left looks like this container drawing in software. Your PC's graphics card should be much faster. Please tell me how it feels at work.</p>
 <p><strong>3. Arrow keys.</strong> I made each arrow move the camera that way: ← goes round to the left, so the part seems to turn right. If you'd rather the part follows the arrow, it's a one-line change.</p>
 </div>
