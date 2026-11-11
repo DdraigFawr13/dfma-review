@@ -524,7 +524,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 
 ## D-072 S8a built: four-shard parity, frozen key, harness and scorer on the engine
 
-- **Status:** Built 2026-11-11 on `ccr-bd6f31ec-kskq1t` (S8a of D-071). Draft PR; Morgan approves before S8b.
+- **Status:** Approved 2026-11-11 (owner, in chat); PR #42 marked ready with auto-merge on. Built on `ccr-bd6f31ec-kskq1t` (S8a of D-071). Known: the full-set parity has 2 files that differ in `faces[].positions` (bn_ball6, nasty_cheese), unmeasured and pre-existing from S1-S7 (D-070); to be measured in a later slice.
 - **Decision:** S8a as approved in D-071: parity split over 4 processes; key cache not rebuilt on harness-only edits; the final Python key frozen into `tests/parity/key/`; the scorer, scorecards, and Inventor harness (`local_pairs` first) run on the browser engine. Python stays until S8b.
 - **Builder choices (not in the spec):**
   1. The frozen key keeps `faces[].positions` (gzipped), so parity still checks positions. Measured: 335 keys, 13.61 MB, under the spec's 20 MB assumption.
