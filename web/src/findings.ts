@@ -154,7 +154,8 @@ function issuesBlock(lines: HTMLElement[], label: string, testid: string): HTMLE
 
 export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analysis | null,
                            onSelect: (p: Pick) => void = () => {}, selected: string | null = null,
-                           placed: PlacedLines = () => []): void {
+                           placed: PlacedLines = () => [],
+                           machine: { onTool: (setup: number, tool: string) => void } | null = null): void {
   host.replaceChildren();
   count.textContent = "";
   if (!result || !result.machine) return;
@@ -198,8 +199,16 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
     box.append(head);
     const ops = result.operations.filter((o) => o.setup === i);
     if (ops.length === 0) box.append(el("span", "note", "Nothing to cut from this side.")); // a button holds no <p>
+    const toolRows: HTMLElement[] = []; // the Machine view's tool rows: buttons beside the setup's, not in it (UI fixes B3)
     for (const o of ops) {
-      const line = el("span", "op");
+      const line = machine ? el("button", "op toolrow") : el("span", "op");
+      if (machine) {
+        const b = line as HTMLButtonElement;
+        b.type = "button";
+        b.dataset.testid = `plan-op-${i + 1}-${o.tool}`;
+        b.setAttribute("aria-pressed", String(selected === `op:${i}:${o.tool}`));
+        b.addEventListener("click", () => machine.onTool(i, o.tool));
+      }
       const t = tools.get(o.tool);
       const name = el("span");
       // Operations numbered in the order they run, across all setups (Morgan, 2026-11-08)
@@ -207,7 +216,8 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
       name.append(el("span", "onum", `${result.operations.indexOf(o) + 1}.`), document.createTextNode(" "),
         document.createTextNode(t ? toolName(t) : o.tool));
       line.append(name, el("span", "ofeat", o.features.join(", ")));
-      box.append(line);
+      if (machine) toolRows.push(line);
+      else box.append(line);
     }
     if (selected === id) {
       const why = el("span", "swhy");
@@ -238,6 +248,11 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
     // the issues sit beside the setup's button, not in it: each is a button of its own (audit F27)
     const wrap = el("div", "setupbox");
     wrap.append(box);
+    if (toolRows.length) {
+      const rows = el("div", "toolrows");
+      rows.append(...toolRows);
+      wrap.append(rows);
+    }
     if (issues) wrap.append(issues);
     host.append(wrap);
   });

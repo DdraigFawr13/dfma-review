@@ -186,8 +186,8 @@ async function pairPdf(page: Page, testInfo: import("@playwright/test").TestInfo
   await page.addInitScript("window.__dfmaFakeService = true");
   await page.route("**/api/analyze", fulfilling(result));
   await page.goto("/");
-  await page.getByTestId("upload-ipt").setInputFiles({ name: iptName, mimeType: "application/octet-stream", buffer: Buffer.from("placeholder") });
-  await page.getByTestId("upload-file").setInputFiles({ name: stepName, mimeType: "application/octet-stream", buffer: Buffer.from("placeholder") });
+  const file = (name: string) => ({ name, mimeType: "application/octet-stream", buffer: Buffer.from("placeholder") });
+  await page.getByTestId("upload-file").setInputFiles([file(stepName), file(iptName)]); // the one picker (UI fixes B2)
   await shown(page, stepName);
   await expect(page.getByTestId(panel)).toBeVisible();
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("export-pdf").click()]);

@@ -19,8 +19,7 @@ async function openPair(page: Page, result: any, names: [string, string]): Promi
   await page.addInitScript("window.__dfmaFakeService = true");
   await page.route("**/api/analyze", answer(result));
   await page.goto("/");
-  await page.getByTestId("upload-ipt").setInputFiles(placeholder(names[1]));
-  await page.getByTestId("upload-file").setInputFiles(placeholder(names[0]));
+  await page.getByTestId("upload-file").setInputFiles([placeholder(names[0]), placeholder(names[1])]); // the one picker (UI fixes B2)
   await expect(page.locator("#status")).toHaveText(`Showing ${result.part.name} with ${names[1]}.`);
   await openStep(page, "features"); // the .ipt panels are groups in the Features step (review-steps J6)
 }
@@ -106,7 +105,6 @@ test("test_no_threads_and_no_ipt", async ({ page }) => {
   delete result.inventor;
   await page.unroute("**/api/analyze");
   await page.route("**/api/analyze", answer(result));
-  await page.getByTestId("upload-ipt").setInputFiles([]);
   await page.getByTestId("upload-file").setInputFiles(resolve(PARTS, "box_through_hole.step"));
   await expect(page.locator("#status")).toHaveText(`Showing ${result.part.name}.`);
   await openStep(page, "features");

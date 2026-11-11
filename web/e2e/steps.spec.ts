@@ -80,8 +80,7 @@ test("test_part_step", async ({ page, browser }) => {
   await expect(page.getByTestId("part-units")).toHaveText("inch");
   await expect(page.getByTestId("upload-process")).toHaveValue("mill");
   await expect(page.getByTestId("upload-material")).toHaveValue("al6061");
-  await expect(page.getByTestId("change-file")).toBeVisible();
-  await expect(page.getByTestId("top-file")).toHaveText("report_sample.step");
+  await expect(page.getByRole("button", { name: "Open…" })).toBeVisible(); // UI fixes B2: Open… in the bar, no "Change file", no name
   await expect(page.getByTestId("export-pdf")).toBeEnabled();
 
   const feats = page.getByTestId("overview-features");
@@ -405,13 +404,13 @@ test("test_show_ok", async ({ page, browser }) => {
   expect(await page.evaluate("window.__dfma.checkedFaces()")).toEqual([]);
 });
 
-test("test_change_file_then_back", async ({ page }) => {
-  // S1 review: Change file, then the browser's Back, leaves the start form showing and no part on screen.
+test("test_refused_file_then_back", async ({ page }) => {
+  // S1 review, on Open… since UI fixes B2: a refused file, then the browser's Back, leaves the start form showing and no part on screen.
   await load(page, SAMPLE);
   await openStep(page, "features");
   await openStep(page, "part");
-  await page.getByTestId("change-file").click();
-  await expect(page.getByTestId("start-form")).toBeVisible();
+  await page.getByTestId("upload-file").setInputFiles(resolve(PARTS, "not_step.step"));
+  await expect(page.getByTestId("start-form")).toBeVisible({ timeout: 30_000 });
   await page.goBack();
   await page.waitForTimeout(300);
   await expect(page.getByTestId("start-form")).toBeVisible();
@@ -471,7 +470,6 @@ test("test_machining_whole_part_and_no_setup", async ({ page }) => {
   expect(await whole.evaluate((e) => !!(e.compareDocumentPosition(document.querySelector("[data-testid=plan-setup-1]")!)
     & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true); // "Whole part" comes before the setups
   await openStep(page, "part");
-  await page.getByTestId("change-file").click();
   await page.getByTestId("upload-file").setInputFiles(resolve(PARTS, "angled_hole.step"));
   await expect(page.getByTestId("overview")).toBeVisible({ timeout: 30_000 });
   await openStep(page, "machining");

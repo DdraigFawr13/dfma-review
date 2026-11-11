@@ -88,6 +88,9 @@ export class Viewer {
   private readonly showChecked: Record<CheckedKind, boolean> = { hole: false, pocket: false, corner: false, wall: false };
   private okStep = false; // review-steps S2: OK tints only while the Features step shows
   private selected: Selection | null = null;
+  private spindleGroup: THREE.Group | null = null; // the placeholder spindle (B3)
+  private spindleDiameter: number | null = null;
+  private chuckGroup: THREE.Group | null = null; // the placeholder chuck (B3)
   private frame = 0;
   // UI fixes A4: while the camera moves, pins are hidden and not placed
   private moving = false;
@@ -161,6 +164,10 @@ export class Viewer {
       this.part.remove(mesh);
     }
     this.meshes.clear();
+    if (this.spindleGroup || this.chuckGroup) { // a new part: no spindle or chuck left over (B3)
+      this.setSpindle(null);
+      this.setChuck(null);
+    }
     if (this.edgeLines) {
       this.edgeLines.geometry.dispose();
       this.part.remove(this.edgeLines);
@@ -482,6 +489,126 @@ export class Viewer {
       const dx = a.dot(right), dy = a.dot(up), n = Math.hypot(dx, dy);
       return { axis: "XYZ"[i] as "X" | "Y" | "Z", dx: n > 1e-9 ? dx / n : 0, dy: n > 1e-9 ? dy / n : 0 };
     });
+  }
+
+  // --- UI fixes B3: the Machine view ---
+
+  /** A setup's view (B3): `d`, the setup's direction in file axes, is up on screen; the camera looks from the side and a
+   *  little above (the Home direction with its part along `d` removed, plus 0.6 of `d`). */
+  showSetup(d: [number, number, number]): void {
+    const box = new THREE.Box3().setFromObject(this.part);
+    if (box.isEmpty()) return;
+    const up = new THREE.Vector3(...d).normalize();
+    let h = new THREE.Vector3(...VIEWS.home.direction).normalize();
+    h.addScaledVector(up, -h.dot(up));
+    if (h.length() < 0.1) { // looking along `d` already: the file axis least aligned with it, made square to it
+      const axes = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)];
+      h = axes.sort((a, b) => Math.abs(a.dot(up)) - Math.abs(b.dot(up)))[0].clone();
+      h.addScaledVector(up, -h.dot(up));
+    }
+    const direction = h.normalize().addScaledVector(up, 0.6).normalize();
+    this.place(this.boundsWithTools(box), direction, up);
+  }
+
+  /** The lathe's view (B3): the turning axis lies across the screen, +Z (or +Y) up. */
+  showLathe(axis: [number, number, number]): void {
+    const box = new THREE.Box3().setFromObject(this.part);
+    if (box.isEmpty()) return;
+    const a = new THREE.Vector3(...axis).normalize();
+    const ups = [new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 1, 0)];
+    const u = ups.sort((p, q) => Math.abs(p.dot(a)) - Math.abs(q.dot(a)))[0].clone();
+    u.addScaledVector(a, -u.dot(a)).normalize();
+    this.place(this.boundsWithTools(box), a.clone().cross(u).normalize(), u);
+  }
+
+  /** The part's box with the chuck in it, so the chuck is inside the frame. */
+  private boundsWithTools(box: THREE.Box3): THREE.Sphere {
+    if (this.chuckGroup) box.expandByObject(this.chuckGroup);
+    return box.getBoundingSphere(new THREE.Sphere());
+  }
+
+  /** The placeholder spindle (B3): the cutter's tip at the centre of `faces`, its axis along `axis`, away from the part. */
+  setSpindle(spec: { diameterMm: number; axis: [number, number, number]; faces: number[] } | null): void {
+    if (this.spindleGroup) this.scene.remove(this.spindleGroup);
+    this.spindleGroup = null;
+    this.spindleDiameter = null;
+    const box = spec ? this.boxOf(spec.faces) : null;
+    if (spec && box && !box.isEmpty()) {
+      const g = new THREE.Group();
+      const steel = new THREE.MeshStandardMaterial({ color: "#b8c0c8", metalness: 0.3, roughness: 0.5 });
+      const dark = new THREE.MeshStandardMaterial({ color: "#5d6873", metalness: 0.3, roughness: 0.6 });
+      const cutter = new THREE.MeshStandardMaterial({ color: "#d9a441", metalness: 0.4, roughness: 0.4 });
+      const dia = spec.diameterMm, r = dia / 2;
+      const add = (rad: number, len: number, at: number, m: THREE.Material): number => {
+        const c = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, len, 40), m);
+        c.position.y = at + len / 2;
+        g.add(c);
+        return at + len;
+      };
+      let y = add(r, dia * 3, 0, cutter); // the cutter, 3 diameters long
+      y = add(r * 2.2, dia * 1.6, y, steel); // the holder
+      const cone = new THREE.Mesh(new THREE.CylinderGeometry(r * 3.2, r * 2.2, dia, 40), steel);
+      cone.position.y = y + dia / 2;
+      g.add(cone);
+      y += dia;
+      add(r * 4.2, dia * 1.2, y, dark); // the spindle nose
+      g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(...spec.axis).normalize());
+      g.position.copy(box.getCenter(new THREE.Vector3()));
+      this.spindleGroup = g;
+      this.spindleDiameter = dia;
+      this.scene.add(g);
+      // keep the whole spindle in sight: frame the part and the spindle together, same direction and up
+      const all = new THREE.Box3().setFromObject(this.part).expandByObject(g);
+      this.place(all.getBoundingSphere(new THREE.Sphere()), this.viewDirection());
+      return;
+    }
+    this.render();
+  }
+
+  /** The placeholder three-jaw chuck (B3) at the end of the part with the smaller coordinate along `axis`; null removes it. */
+  setChuck(axis: [number, number, number] | null): void {
+    if (this.chuckGroup) this.scene.remove(this.chuckGroup);
+    this.chuckGroup = null;
+    const box = new THREE.Box3().setFromObject(this.part);
+    if (axis && !box.isEmpty()) {
+      const a = new THREE.Vector3(...axis).normalize();
+      const c = box.getCenter(new THREE.Vector3());
+      let lo = Infinity, across = 0;
+      for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) {
+        const p = new THREE.Vector3(x, y, z).sub(c), along = p.dot(a);
+        lo = Math.min(lo, along);
+        across = Math.max(across, p.addScaledVector(a, -along).length());
+      }
+      const r = Math.max(across, 1);
+      const g = new THREE.Group();
+      const dark = new THREE.MeshStandardMaterial({ color: "#5d6873", metalness: 0.3, roughness: 0.6 });
+      const jawM = new THREE.MeshStandardMaterial({ color: "#b8c0c8", metalness: 0.3, roughness: 0.5 });
+      const R = r * 3, L = r * 2;
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(R, R, L, 48), dark);
+      body.position.y = L / 2 + r * 1.2;
+      g.add(body);
+      for (let i = 0; i < 3; i++) {
+        const jaw = new THREE.Mesh(new THREE.BoxGeometry(r * 1.4, r * 1.6, r), jawM);
+        const t = (i * 2 * Math.PI) / 3;
+        jaw.position.set(Math.cos(t) * r * 1.6, r * 0.8, Math.sin(t) * r * 1.6);
+        jaw.rotation.y = -t;
+        g.add(jaw);
+      }
+      g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), a.clone().negate()); // away from the part
+      g.position.copy(c).addScaledVector(a, lo);
+      this.chuckGroup = g;
+      this.scene.add(g);
+    }
+    this.render();
+  }
+
+  /** Test hooks (B3). */
+  spindle(): { diameter_mm: number } | null {
+    return this.spindleDiameter === null ? null : { diameter_mm: this.spindleDiameter };
+  }
+
+  chuck(): boolean {
+    return this.chuckGroup !== null;
   }
 
   /** Show the part from one of the view buttons' directions (UI fixes A2): the whole part, at once. */
