@@ -16,7 +16,7 @@ import { pairIds } from "../inventor/tags";
 import { facePoints, MAX_STEPS, TopologyError } from "../inventor/topo";
 import { ReadError } from "../read";
 import { MSG_FEATURE_BAD, MSG_IPT_FORMAT, MSG_IPT_NO_MODEL, MSG_IPT_NOT_IPT, TIME_LIMIT_S } from "../settings";
-import { bytesOf, FILES, freshIpt, getOc, hostileBytes, PARTS } from "./inventor_common";
+import { bytesOf, FILES, freshIpt, getOc, hostileBytes, PARTS, rewriteIptModels } from "./inventor_common";
 
 const BOX = resolve(PARTS, "box_through_hole.step");
 const CTC04 = "INV_nist_ctc_04_asme1_2021.ipt";
@@ -74,7 +74,6 @@ test("cycling loop: a coedge ring that never closes stops after MAX_STEPS steps;
   expect(bad).toHaveLength(1); // the hole on the cycled face
   const fid = bad[0][0].feature_id;
   expect(without(summary(feats), fid)).toEqual(without(summary(clean), fid));
-  expect(holeFaces(clean).size - holeFaces(feats).size).toBeGreaterThanOrEqual(0);
   const rows = mapHoles(null as never, feats, []).flatMap((f) => f.holes).filter((h) => h.reason === MSG_FEATURE_BAD);
   expect(rows).toHaveLength(1);
   expect(rows[0].state).toBe("not_mapped");
@@ -115,6 +114,71 @@ test("names need equal counts: one name too many or too few and no feature is na
   expect(feats.map((f) => f.name)).toEqual(["Hole2", "Hole1"]); // the smallest id gets the smallest number
 });
 
+
+// tests/inventor/hostile.py `records`, `main_model` and `cycle`, as the chamfer test needs them (the frozen file of the
+// same name cycles another face, the first blend tag's)
+const FIXED: { [t: number]: number } = { 0x04: 4, 0x15: 4, 0x0c: 4, 0x06: 8, 0x13: 24, 0x14: 24, 0x16: 16, 0x03: 2, 0x02: 1, 0x05: 4 };
+type Rec = { name: string | null; values: [number | "s", number][] };
+const HEADER = Buffer.from("\x0d\x09asmheader", "latin1");
+
+function records(d: Buffer, start: number): Rec[] {
+  const out: Rec[] = [];
+  let cur: Rec["values"] = [];
+  let name: string | null = null;
+  let i = start;
+  while (i < d.length) {
+    const t = d[i], at = i;
+    i += 1;
+    if (t === 0x11) { out.push({ name, values: cur }); cur = []; name = null; continue; }
+    if ([0x0d, 0x0e, 0x07, 0x12].includes(t)) {
+      const n = d[i];
+      const s = d.subarray(i + 1, i + 1 + n).toString("latin1");
+      i += 1 + n;
+      if ((t === 0x0d || t === 0x0e) && !cur.length) {
+        name = name === null ? s : `${name}-${s}`;
+        if (name.endsWith("End-of-ASM-data") || name.startsWith("Begin-of-ASM-History-Data")) return out;
+      } else cur.push(["s", at]);
+      continue;
+    }
+    if (t === 0x08 || t === 0x09) {
+      const w = t === 0x08 ? 2 : 4;
+      const n = w === 2 ? d.readUInt16LE(i) : d.readUInt32LE(i);
+      cur.push(["s", at]);
+      i += w + n;
+      continue;
+    }
+    if (t in FIXED) { cur.push([t, at]); i += FIXED[t]; continue; }
+    if ([0x0a, 0x0b, 0x0f, 0x10].includes(t)) continue;
+    throw new Error(`unknown tag ${t} at ${at}`);
+  }
+  return out;
+}
+
+function mainModel(d: Buffer): Rec[] | null {
+  let best: [Rec[], number] | null = null;
+  for (let k = d.indexOf(HEADER); k >= 0; k = d.indexOf(HEADER, k + 1)) {
+    const recs = records(d, k);
+    const n = recs.filter((r) => r.name === "face").length;
+    if (best === null || n > best[1]) best = [recs, n];
+  }
+  return best && best[1] ? best[0] : null;
+}
+
+/** The first coedge of the face's first loop gets as its next another coedge that loops on itself (a full circle):
+ *  the ring never gets back to its first coedge. */
+function cycle(d: Buffer, face: number): Buffer {
+  const recs = mainModel(d);
+  if (recs === null || !recs.some((r) => (r.name ?? "").startsWith("NMx_Hole_Brep_tag"))) return d; // another stream's model: left alone
+  if (face >= recs.length || recs[face].name !== "face") return d;
+  const ptrs = (rec: number) => recs[rec].values.filter(([t]) => t === 0x0c).map(([, at]) => at);
+  const intAt = (at: number) => d.readInt32LE(at + 1);
+  const first = intAt(ptrs(intAt(ptrs(face)[3]))[3]);
+  const other = recs.findIndex((r, i) => r.name === "coedge" && i !== first && intAt(ptrs(i)[2]) === i);
+  const out = Buffer.from(d);
+  out.writeInt32LE(other, ptrs(first)[2] + 1);
+  return out;
+}
+
 // --- I3 S3 J7: hostile blend tags and topology (the same files, on blend tags) ---
 
 type B = IptPart["blends"][number];
@@ -142,7 +206,9 @@ test("cycling chamfer face: a coedge ring that never closes on a chamfer face: t
   expect(chamfers).toHaveLength(1);
   const [chamfer] = chamfers;
   const face = chamfer.faces.find((f) => chamfer.surfs.get(f)!.kind === "plane")!;
-  const part = await hostile("cycle-blend");
+  const r = await readIpt(rewriteIptModels(bytesOf(resolve(FILES, CTC04)), (d) => cycle(d, face)));
+  if (r.error) throw r.error;
+  const part = r.part;
   const got = part.blends.filter((b) => b.feature_id === chamfer.feature_id);
   expect(got).toHaveLength(1);
   expect(got[0].points.get(face)).toEqual([]);

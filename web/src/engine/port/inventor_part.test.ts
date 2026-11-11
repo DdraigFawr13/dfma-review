@@ -4,14 +4,12 @@
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { deflateSync, inflateSync } from "node:zlib";
-import CFB from "cfb";
 import { describe, expect, test } from "vitest";
 import { checkPartType } from "../inventor/pair";
 import { modelStates, readIpt } from "../inventor/part";
 import { ReadError } from "../read";
 import { MSG_IPT_FORMAT, MSG_IPT_NO_MODEL, MSG_IPT_NOT_IPT, MSG_IPT_TOO_BIG, MSG_IPT_TYPE } from "../settings";
-import { bytesOf, FILES, freshIpt, INV, ipt, PARTS } from "./inventor_common";
+import { bytesOf, FILES, freshIpt, INV, ipt, PARTS, rewriteIptModels } from "./inventor_common";
 
 // (faces, corners, Model State names) measured 2026-11-08; CTC 04 368/506 and FTC 07 2021 210 corners
 // (from 346 point records) as in the spec, J3
@@ -117,26 +115,6 @@ test("model states layout: after the marker's second copy, a count, a byte, then
 });
 
 // J6 reader cases: hostile and broken files, built here from a NIST copy (no outside binaries)
-
-/** Replace each model stream's inflated data with change(data), recompressed into the same size (tests/helpers.py
- *  rewrite_ipt_models, with cfb in place of olefile). */
-function rewriteIptModels(bytes: Uint8Array, change: (d: Buffer) => Buffer): Uint8Array {
-  const c = CFB.read(Buffer.from(bytes), { type: "buffer" });
-  c.FileIndex.forEach((e, i) => {
-    const name = c.FullPaths[i].split("/").filter((x) => x !== "").slice(1).join("/");
-    if (e.type !== 2 || !name.startsWith("RSeStorage/B")) return;
-    const raw = Buffer.from(e.content as Uint8Array);
-    const k = raw.indexOf("x^");
-    if (k < 0) return;
-    const data = inflateSync(raw.subarray(k), { finishFlush: 2 }); // Z_SYNC_FLUSH: stops at the stream's end
-    const changed = change(data);
-    if (changed.equals(data)) return; // a stream the change leaves alone stays byte for byte (Node's zlib may deflate it larger than Python's did)
-    const out = Buffer.concat([raw.subarray(0, k), deflateSync(changed, { level: 5 })]); // level 2-5 writes the header `x^`, as Inventor does
-    expect(out.length, "the changed model must fit its stream").toBeLessThanOrEqual(raw.length);
-    e.content = Buffer.concat([out, Buffer.alloc(raw.length - out.length)]) as never;
-  });
-  return new Uint8Array(CFB.write(c, { type: "buffer" }) as Buffer);
-}
 
 const FTC11 = resolve(FILES, "INV_nist_ftc_11_asme1_2021.ipt");
 
