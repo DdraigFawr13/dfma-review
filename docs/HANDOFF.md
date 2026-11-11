@@ -30,7 +30,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Next
 
-00. Port S8 (retire Python) on `port-s8-retire-python` (D-071: before the UI list). Waiting for Morgan to approve the [S8 file list](https://claude.ai/artifact/ExT2DS3QeAL7bRas5LJLRT) and its split (S8a: parity on 4 processes, key cache, frozen key, scorer and Inventor harness on the engine, `local_pairs` first; S8b: Playwright and vitest ports, Python deleted). Morgan: turn on GitHub Pages if not yet; tell IT before the work copy (D-055).
+00. Port S8 (retire Python) on `port-s8-retire-python` (D-071: before the UI list). Morgan approved the [S8 file list](https://claude.ai/artifact/ExT2DS3QeAL7bRas5LJLRT) and its split (2026-11-11); build S8a next in a new session (S8a: parity on 4 processes, key cache, frozen key, scorer and Inventor harness on the engine, `local_pairs` first; S8b: Playwright and vitest ports, Python deleted). Morgan: turn on GitHub Pages if not yet; tell IT before the work copy (D-055).
 000a. UI fixes (Morgan, 2026-11-10, after S7; 4 photos of the work copy): example parts (an "Or look at an example" list on the start form); no pins while the part rotates (lag); Inventor-style rotate and move; a top bar with Open… and Examples once a part is loaded; a machine-tooling view on the Machining step (how the machine is set up); one feature at a time (many walls paint the whole part blue). Later: a slice / cutaway toggle, and dimensions on the part for the stock and the picked feature (e.g. a thin wall's distance). Idea to workshop: a tool-access check, a generic holder or chuck plus the needed tool, flagging a tool that hits the part or sticks out too far for its diameter (ratios to research). Plan with `planning-interview` and a mock-up first (WS-02, ui-mockups); Proposed until Morgan approves.
 000. Steps and slots (D-068): Morgan added slot recognition in another copy without full testing (2026-11-10) and wants it redone here, tested; spec with `write-spec` after the port; start with a labelled `steps_slots` set, then NIST and EDMR, then MFCAD++ classes 5-10 and 17-22.
 0. Now: plainer sentences for the rule cases that still read as titles, each shown to Morgan first (D-045). Follow-up from the audit fixes: Hole feature rows still carry aria-pressed and aria-expanded (F15's pattern, out of its scope).
@@ -47,7 +47,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
-- 2026-11-11 D-071: S8 before the UI list; faster checks on the S8 branch; S8 file list Proposed.
+- 2026-11-11 D-071: S8 before the UI list; faster checks on the S8 branch; S8 file list and two-PR split approved.
 - 2026-11-10 D-070: S7 merges without the full-set parity (stopped, no result); parity prints a line per file.
 - 2026-11-10 D-069: S7 approved; merge when ready; S8 in a new session.
 - 2026-11-10 D-068: steps and slots named and scored by MFCAD++'s classes (no open-pocket kind); plan and tools first; slot depth over 6× width a finding.
@@ -55,6 +55,5 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - 2026-11-10 D-066: S6 resumed; steps, slots and open pockets added to the plan (research done, proposals Proposed).
 
 - 2026-11-10 D-065: faster `check.py` (lanes, timed tests alone, pytest-xdist); approved and merged in PR #39.
-- 2026-11-10 D-063: S5 stop answered: whole-degree bins snap to 9 decimals in Python and the port; 7 Python answers move (no finding or cost).
 - 2026-11-10 D-059: J4 (big plate) dropped; S3 makes the Machining setups distinct, with a mock-up first.
 - D-001 to D-037: see `docs/DECISIONS.md` (`grep '^## D-'`).
