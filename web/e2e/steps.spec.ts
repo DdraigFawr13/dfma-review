@@ -80,8 +80,7 @@ test("test_part_step", async ({ page, browser }) => {
   await expect(page.getByTestId("part-units")).toHaveText("inch");
   await expect(page.getByTestId("upload-process")).toHaveValue("mill");
   await expect(page.getByTestId("upload-material")).toHaveValue("al6061");
-  await expect(page.getByTestId("change-file")).toBeVisible();
-  await expect(page.getByTestId("top-file")).toHaveText("report_sample.step");
+  await expect(page.getByRole("button", { name: "Open…" })).toBeVisible(); // UI fixes B2: Open… in the bar, no "Change file", no name
   await expect(page.getByTestId("export-pdf")).toBeEnabled();
 
   const feats = page.getByTestId("overview-features");
@@ -313,14 +312,13 @@ test("test_feature_rows", async ({ page, browser }) => {
   await expect(page.getByTestId("legend")).toHaveCount(0); // the 7-entry legend is gone (D-014 amended)
 
   const f4 = sample.findings.find((f: Result) => f.id === "F4");
-  const faces = [...new Set<number>(sample.findings.filter((f: Result) => f.rule === "corner_radius").flatMap((f: Result) => f.faces as number[]))].sort((a: number, b: number) => a - b);
   await row.click();
   await expect(row).toHaveAttribute("aria-expanded", "true");
   const detail = page.getByTestId("row-detail");
   await expect(detail).toContainText("F4 · corner-1 · 1 of 4");
   await expect(detail).toContainText("radius 0.000 in, pocket 0.250 in deep");
   await expect(detail).toContainText(`What to do${f4.suggestion}`);
-  expect(sortNum(await page.evaluate("window.__dfma.highlightedFaces()") as number[])).toEqual(faces); // all its findings' faces
+  expect(sortNum(await page.evaluate("window.__dfma.highlightedFaces()") as number[])).toEqual(sortNum(f4.faces)); // the shown finding's faces (UI fixes A5, D-076)
   await expect(page.locator(".viewer .flag.chosen")).toHaveAttribute("data-id", "F4");
   await page.getByTestId("row-next").click();
   await expect(detail).toContainText("F5 · corner-2 · 2 of 4");
@@ -406,13 +404,13 @@ test("test_show_ok", async ({ page, browser }) => {
   expect(await page.evaluate("window.__dfma.checkedFaces()")).toEqual([]);
 });
 
-test("test_change_file_then_back", async ({ page }) => {
-  // S1 review: Change file, then the browser's Back, leaves the start form showing and no part on screen.
+test("test_refused_file_then_back", async ({ page }) => {
+  // S1 review, on Open… since UI fixes B2: a refused file, then the browser's Back, leaves the start form showing and no part on screen.
   await load(page, SAMPLE);
   await openStep(page, "features");
   await openStep(page, "part");
-  await page.getByTestId("change-file").click();
-  await expect(page.getByTestId("start-form")).toBeVisible();
+  await page.getByTestId("upload-file").setInputFiles(resolve(PARTS, "not_step.step"));
+  await expect(page.getByTestId("start-form")).toBeVisible({ timeout: 30_000 });
   await page.goBack();
   await page.waitForTimeout(300);
   await expect(page.getByTestId("start-form")).toBeVisible();
@@ -472,7 +470,6 @@ test("test_machining_whole_part_and_no_setup", async ({ page }) => {
   expect(await whole.evaluate((e) => !!(e.compareDocumentPosition(document.querySelector("[data-testid=plan-setup-1]")!)
     & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true); // "Whole part" comes before the setups
   await openStep(page, "part");
-  await page.getByTestId("change-file").click();
   await page.getByTestId("upload-file").setInputFiles(resolve(PARTS, "angled_hole.step"));
   await expect(page.getByTestId("overview")).toBeVisible({ timeout: 30_000 });
   await openStep(page, "machining");

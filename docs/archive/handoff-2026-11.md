@@ -180,9 +180,16 @@ Build, first usable version: all seven slices merged. S1 to S6 in #3 to #17 (his
 - 2026-11-11 Harness upgraded v4.12.0 → v4.14.0 (master D-068): the `test-design` skill, VER-10 (see a test fail first) and VER-11 (real samples, time tests, fixed waits are wall-clock limits) now load here; check time budget in AGENTS.md (D-073). Merged as #44 by auto-merge on green (Morgan approved 2026-11-11).
 - 00. `main` after #43: CI red on the timed e2e step (`test_ui_responsive` stalled 298 ms > 200 ms; it ran beside a PDF test with 2 workers); fixed in #47: timed e2e with 1 worker, and the test times only once the page is quiet (the stall was Chromium's page-load teardown, not the analysis; LESSONS "tests"); owner approved 2026-11-11; check `main`'s CI after it merges. Pages deploy 404: Morgan to turn Pages on (Settings → Pages → Source: GitHub Actions). Checks: `npm run check` at the root; before a PR is marked ready also `npm --prefix web run edmr` and `parity:full`. Morgan: turn on GitHub Pages if not yet; tell IT before the work copy (D-055).
 
-## Moved 2026-11-11 (steps-slots planning session)
+## Moved 2026-11-11 (slice A session)
 
 - 2026-11-11 Spec UI fixes A and B approved (D-078) and merged in PR #49 (`docs/specs/ui-fixes.md`; [approval page](https://claude.ai/artifact/SYV9w7ZZmAXFArnEu7dKvh)): before-numbers on CTC 02 (drag frame gap p90 344-466 ms; pin placement 420 ms a frame, drawing 3.3 ms); orbit-axis bug confirmed in three.js; 41 of 42 sample parts' part axes differ from the file's. D-077 (checks follow what changed) merged in PR #48 (`npm run check` 661 s).
+
+## Moved 2026-11-11 (steps-slots planning session)
+
 - 2026-11-10 D-065: faster `check.py` (lanes, timed tests alone, pytest-xdist); approved and merged in PR #39.
 - 2026-11-11 D-073: harness v4.14.0 (testing rules) and the 900 s check budget; approved, merged in PR #44.
 - 2026-11-11 D-071: S8 before the UI list; faster checks on the S8 branch; S8 file list and two-PR split approved.
+- 2026-11-11 D-077: checks follow what changed (docs- or mockups-only: drift check only, CI still reports); Morgan checks each slice by using it. Approved by Morgan; merged in PR #48.
+- 2026-11-11 D-076: UI fixes plan and mock-up approved: slice A model, slice B screens; tool-access check after steps and slots.
+- 2026-11-11 D-075: edge treatments (chamfers, fillets), then pocket shapes, join the recognition plan after steps and slots.
+- 2026-11-11 D-074: S8b approved: Python retired; tessellation is a named 3-face exemption (OCCT 8.0.1 vs 8.0.0).

@@ -228,10 +228,11 @@ test("test_sharp_corner_is_drawn_on_its_edge", async ({ page, browser }) => {
   await page.goto("/");
   await page.getByTestId("upload-file").setInputFiles(file);
   await partShown(page, "pocket_sharp.step");
-  await page.getByTestId("row-F1").click(); // the Sharp corner row: all its corners, its pin F1's
+  await page.getByTestId("row-F1").click(); // the Sharp corner row, at its first corner F1
   const result = await analysisOf(browser, file);
   const row = result.rows.find((r: Result) => r.id === "row:F1");
-  const walls = sortNum([...new Set<number>(result.findings.filter((f: Result) => row.findings.includes(f.id)).flatMap((f: Result) => f.faces))]);
+  // the row shows its first corner, F1: its two walls (UI fixes A5, D-076; the row's other corners are grey)
+  const walls = sortNum(result.findings.find((f: Result) => f.id === row.findings[0]).faces);
   expect(await page.evaluate("window.__dfma.paintedFaces()")).toEqual([]);
   const opacities = await page.evaluate("window.__dfma.opacities()") as Record<string, number>;
   expect(walls.every((w) => opacities[String(w)] === 1)).toBe(true);
@@ -325,6 +326,9 @@ test("test_pins_behind_the_part_are_hidden", async ({ page }) => {
   await page.mouse.down();
   await page.mouse.move(cx, cy - box.height * 0.9, { steps: 12 }); // orbit to look up at the bottom face
   await page.mouse.up();
-  await page.waitForTimeout(300);
+  // pins are hidden while the camera moves (UI fixes A4): judge them once it rests and they are placed again
+  await expect(page.locator(".stage.moving")).toHaveCount(0);
+  const up = await page.evaluate("window.__dfma.view()") as { position: number[]; target: number[] };
+  expect(up.position[2] - up.target[2]).toBeLessThan(0); // the camera is under the part (free orbit, D-078)
   expect(await page.evaluate("window.__dfma.flagBoxes()")).toEqual([]);
 });

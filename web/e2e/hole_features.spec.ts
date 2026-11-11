@@ -22,8 +22,8 @@ async function fakeAnalyze(page: Page, result: any): Promise<void> {
 async function openPair(page: Page, result: any, names: [string, string]): Promise<void> {
   await fakeAnalyze(page, result);
   await page.goto("/");
-  await page.getByTestId("upload-ipt").setInputFiles({ name: names[1], mimeType: "application/octet-stream", buffer: Buffer.from("placeholder") });
-  await page.getByTestId("upload-file").setInputFiles({ name: names[0], mimeType: "application/octet-stream", buffer: Buffer.from("placeholder") });
+  const file = (name: string) => ({ name, mimeType: "application/octet-stream", buffer: Buffer.from("placeholder") });
+  await page.getByTestId("upload-file").setInputFiles([file(names[0]), file(names[1])]); // the one picker (UI fixes B2)
   await expect(page.locator("#status")).toHaveText(`Showing ${result.part.name} with ${names[1]}.`);
   await openStep(page, "features"); // the .ipt panels are groups in the Features step (review-steps J6)
 }
