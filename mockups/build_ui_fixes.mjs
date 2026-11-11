@@ -59,9 +59,9 @@ ${fig("04-moving.png", "Proposed: the part while it moves, no pins", "<b>Propose
 </table></div>
 <p class="muted">Touch stays as today: one finger rotates, two move and zoom. Middle-click's autoscroll (Windows) and paste (Linux) are blocked over the model. The model gets a visible focus ring when tabbed to.</p>
 
-<h3>4. Axis triad and origin</h3>
-<p>Every picture that shows a model has an <b>axis triad</b> in the model's bottom-left corner: X, Y and Z arrows, each labelled, that turn with the part as you rotate it. The axes are the part's own axes, the ones the setups name ("from −X"). A small triad with a dot marks the part's <b>origin</b> (0, 0, 0) on the model itself; on report_sample it sits on the bottom corner.</p>
-<p class="muted">Arrow colours follow the usual X red, Y green, Z blue, and the corner triad's arrows carry their letters, so colour isn't the only cue there (X red is close to the Fix red; the letter tells them apart). The origin marker on the part has no letters in these pictures; the build labels it too and checks the letters' contrast (Y and Z read pale here).</p>
+<h3>4. Axis triad</h3>
+<p>Every picture that shows a model has an <b>axis triad</b> in the model's bottom-left corner: X, Y and Z arrows, each labelled, that turn with the part as you rotate it. The axes are the part's own axes, the ones the setups name ("from −X").</p>
+<p class="muted">Arrow colours follow the usual X red, Y green, Z blue, and the corner triad's arrows carry their letters, so colour isn't the only cue there (X red is close to the Fix red; the letter tells them apart). The build checks the letters' contrast (Y and Z read pale here).</p>
 
 <h2>Slice B: the screens</h2>
 <h3>5. Start form with examples</h3>
@@ -79,7 +79,7 @@ ${fig("06-machine-lathe.png", "Proposed machine view, lathe", "<b>Proposed, lath
 <li><b>D-042</b>: "Change file" leaves the Part overview; Open… in the top bar replaces it, and the start form's two pickers become one.</li>
 <li><b>D-023</b> (selectable setups): in the Machine view a setup chip also turns the part so the spindle is on top, and a tool row lights the faces that tool cuts in that setup.</li>
 <li><b>D-017</b> pins: unchanged when the part is still; hidden while it moves (new).</li>
-<li><b>Axis triad and origin marker</b>: new; no settled rule touched.</li>
+<li><b>Axis triad</b>: new; no settled rule touched.</li>
 <li><b>Mouse</b>: today middle-drag zooms (three.js default); it becomes move, as in Inventor.</li>
 </ul>
 <p class="muted">Tap sizes: the tool rows on Machining are about 22 px tall today, under the 32 px minimum (UI_STYLE); as buttons they grow to at least 32 px. The ‹ › buttons and "Show on model ›" are checked against 32 px in the build too.</p>
@@ -95,7 +95,7 @@ ${fig("06-machine-lathe.png", "Proposed machine view, lathe", "<b>Proposed, lath
 <li>Tab to the model: arrows rotate, + − zoom, H goes home.</li>
 <li>Open… with a STEP and its .ipt picked together; Examples ▾ loads each of the four.</li>
 <li>Machining, Machine: each setup chip puts the spindle on top; tapping a tool lights its faces and shows it in the spindle.</li>
-<li>Rotate the part: the corner triad turns with it, and the origin marker stays on the part's (0, 0, 0).</li>
+<li>Rotate the part: the corner triad turns with it.</li>
 </ul>
 
 ${record}
