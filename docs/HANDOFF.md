@@ -1,10 +1,10 @@
 # Handoff
 
-Updated: 2026-11-11 (port S8b approved, D-074; merging in PR #43). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
+Updated: 2026-11-11 (port S8b merged in PR #43, D-074; D-075 recorded). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
 
 ## Phase
 
-Build. First usable version, Inventor parts I1-I3, review steps and the UX audit fixes are merged (#3 to #32). GitLab Pages port S1-S7 and S8a merged (#34 to #42; D-060 to D-072). S8b (retire Python) approved, merging in #43 (D-074); harness v4.14.0 merged in #44 (D-073). Now: UI fixes (Next 000a), and the work-pair check from 2026-11-12. History: [docs/archive/handoff-2026-11.md](archive/handoff-2026-11.md) (grep it; "Moved 2026-11-09" holds the long entries cut from here).
+Build. First usable version, Inventor parts I1-I3, review steps and the UX audit fixes are merged (#3 to #32). GitLab Pages port S1-S7 and S8a merged (#34 to #42; D-060 to D-072). S8b (retire Python) merged in #43 (D-074); harness v4.14.0 merged in #44 (D-073). Now: UI fixes (Next 000a), and the work-pair check from 2026-11-12. History: [docs/archive/handoff-2026-11.md](archive/handoff-2026-11.md) (grep it; "Moved 2026-11-09" holds the long entries cut from here).
 
 ## Plan map
 
@@ -25,7 +25,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-11 S8b approved (PR #43; GitHub refused auto-merge, merge when CI is green). First Node CI run failed: NIST 10 s limits in the parallel vitest run (11.7 s, 13.3 s); fixed by a timed vitest lane run alone (reproduced: 14.9 s under 4 workers on 2 cores); `npm run check` 421 s. Python retired; `npm run check` at the root passes (exit 0): drift, NIST unpack, web check (901 vitest), build and test build, parity quick 122 of 122 the same (4 shards, 99.7 s), e2e 101 passed, timed 4 passed. Then run: edmr 114 of 114 pass; parity:full 335 files, 327 the same, 2 different (bn_ball6, nasty_cheese: D-073 tessellation), 6 Python crashed (the UMD files, S1). plan.test.ts angled-holes test has a 30 s limit (engine 5.2 s vs Python 3.8 s).
+- 2026-11-11 S8b merged in #43 (06:19 UTC, `43c4caf`; PR CI green, 12.8 min). First Node CI run failed: NIST 10 s limits in the parallel vitest run (11.7 s, 13.3 s); fixed by a timed vitest lane run alone (reproduced: 14.9 s under 4 workers on 2 cores); `npm run check` 421 s. Python retired; `npm run check` at the root passes (exit 0): drift, NIST unpack, web check (901 vitest), build and test build, parity quick 122 of 122 the same (4 shards, 99.7 s), e2e 101 passed, timed 4 passed. Then run: edmr 114 of 114 pass; parity:full 335 files, 327 the same, 2 different (bn_ball6, nasty_cheese: D-073 tessellation), 6 Python crashed (the UMD files, S1). plan.test.ts angled-holes test has a 30 s limit (engine 5.2 s vs Python 3.8 s).
 - Tessellation (D-074): named exemption for 3 faces (bn_ball6 14, 18; nasty_cheese 202); parity:full exit 0 (327 same, 2 known, 0 different). Cause: OCCT 8.0.1 (pythonocc) vs 8.0.0 (opencascade.js).
 - 2026-11-11 Harness upgraded v4.12.0 → v4.14.0 (master D-068): the `test-design` skill, VER-10 (see a test fail first) and VER-11 (real samples, time tests, fixed waits are wall-clock limits) now load here; check time budget in AGENTS.md (D-073). Merged as #44 by auto-merge on green (Morgan approved 2026-11-11).
 
