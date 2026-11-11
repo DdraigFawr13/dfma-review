@@ -21,6 +21,7 @@ const PROCESSES = ["mill", "turn"];
 const MATERIALS = ["al6061", "steel1018", "ss304", "plastic"]; // web/src/engine/settings.ts
 const PARTS = "tests/parts", SET3 = "tests/grading/sets/hole_ends_walls";
 const DEMO = [ // [file, what Morgan looks for, the process a tap picks: turning parts open on Turning]
+  [`${PARTS}/clean_pocket.step`, "P1 S1: Machining shows Removal and Not explained under Stock (also the PDF, and every NIST part)"],
   [`${PARTS}/report_sample.step`, "Review steps S1: the overview, then walk Part · Features · Machining · Cost · Report"],
   [`${PARTS}/slender_shaft.step`, "S6: opens on Turning; switch to Milling to compare", "turn"],
   [`${PARTS}/flange_bolt_hole.step`, "S6 (Turning): off-centre bolt hole", "turn"],

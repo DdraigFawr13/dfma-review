@@ -3,6 +3,7 @@
 // finding highlighted; the assumptions come last. Built in the browser with jsPDF, so the file never leaves the computer (APP-01).
 
 // Imported up front, not on demand: the view-only demo page inlines one script and has no chunks to load (D-009).
+import { volumeText } from "./removal";
 import { NOT_WORKED_OUT, noChecksRun, notCheckedLine, partial, planNotWorkedOut } from "./notrun";
 import { jsPDF } from "jspdf";
 import type { Analysis, Finding } from "./api";
@@ -110,7 +111,10 @@ function summaryPage(p: Page, input: ReportInput): void {
   p.text(`Size: ${formatSize(part.bbox_in)}`);
   p.text(`Faces: ${part.face_count}`);
   p.text(`Units in file: ${part.units_in_file}`);
-  if (result.stock && !planNotWorkedOut(result)) p.text(`Stock: ${stockText(result.stock)}`); // the plan's (D-057)
+  if (result.stock && !planNotWorkedOut(result)) {
+    p.text(`Stock: ${stockText(result.stock)}`); // the plan's (D-057)
+    for (const line of removalPdfLines(result)) p.text(line); // P1 (D-088, D-089)
+  }
 
   p.heading("Machine plan");
   if (planNotWorkedOut(result)) {
@@ -270,6 +274,14 @@ function findingPage(p: Page, f: Finding, input: ReportInput): void {
 }
 
 /** Build the whole report. */
+/** The Part summary's removal lines, after Stock (P1, D-089); none for a part with no removal. */
+export function removalPdfLines(result: Analysis): string[] {
+  const m = result.removal;
+  if (!m) return [];
+  return [`Removal: ${volumeText(m.total_mm3)}, the stock block minus the part`,
+    `Not explained by a found feature: ${volumeText(m.unexplained_mm3)}, ${m.unexplained_pct.toFixed(2)} % of the removal`];
+}
+
 export function buildReport(input: ReportInput): jsPDF {
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   doc.setProperties({ title: `DFMA Review: ${input.result.part.name}`, creator: "DFMA Review" });
