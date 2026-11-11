@@ -17,7 +17,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ✔ Build slice by slice: S1 to S7, grading spike, recognition rounds, stress-test, undercut and turning sets (#3 to #18).
 - ○ Assemblies and DFA · history and compare · time and $.
 - ▶ Inventor parts (Morgan, 2026-11-08): ✔ research · ✔ own reader (D-031) · ✔ plan (D-032) · ✔ spec I1 (D-033) · ✔ I1 S1 #21, S2 #22, S3 #23 · ✔ spec I2+I3 (D-039) · ✔ I2 S1 hole features #24 (D-041) · ✔ S2 names and copies and S3 fillets and chamfers, merged in #27 (D-043, D-046) · ▶ work-pair check owed (from 2026-11-12).
-- ○ Inventor shape from the `.ipt` alone (D-035; after I1).
+- ▶ Inventor shape from the `.ipt` alone (D-035): ✔ TypeScript spike, closed solid for 7 of 16 files, same features as the STEP route on CTC 04 and FTC 06 (draft PR #52, [README](research/inventor-shape-ts/README.md)) · ○ spline surfaces and edges, FTC 09, FTC 11 · ○ plan the phase with `planning-interview` first.
 - ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ✔ spec approved (D-045, #28) · ✔ S1 merged in #29 (D-047) · ✔ S2 + S3 merged in #30 (D-048 to D-052) · ✔ UX audit #31 · ✔ audit fixes #32 (D-053) ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
 - ▶ GitLab Pages port (Morgan, 2026-11-09; D-054, D-055, D-056): ✔ trial · ✔ spec approved (PR #33) · ✔ S1 site, viewer, parity (PR #34) · ✔ S2 holes (PR #35) · ✔ S3 plan, cost, PDF (PR #36; work release possible) · ✔ S4 pockets (PR #37) · ✔ S5 walls (PR #38) · ✔ S6 turning (PR #40) · ✔ S7 Inventor (PR #41) · ✔ S8a (PR #42) · ✔ S8b retire Python (PR #43).
 - ▶ UI fixes (Morgan, 2026-11-10; D-076): ✔ round 1 and review · ✔ mock-up approved (PR #46) · ✔ spec A+B (D-078, #49) · ▶ slice A model · ○ slice B screens · ○ later: cutaway, dimensions; tool-access check after steps and slots.
@@ -27,7 +27,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 ## Just done
 
 - 2026-11-11 Spec UI fixes A and B approved (D-078) and merged in PR #49 (`docs/specs/ui-fixes.md`; [approval page](https://claude.ai/artifact/SYV9w7ZZmAXFArnEu7dKvh)): before-numbers on CTC 02 (drag frame gap p90 344-466 ms; pin placement 420 ms a frame, drawing 3.3 ms); orbit-axis bug confirmed in three.js; 41 of 42 sample parts' part axes differ from the file's. D-077 (checks follow what changed) merged in PR #48 (`npm run check` 661 s).
-- Earlier (UI fixes plan, S8b, tessellation, harness v4.14.0, #47): archive "Moved 2026-11-11 (spec session)".
+- 2026-11-11 Shape-from-`.ipt` spike in TypeScript (PR #52, draft; research only, not in `npm run check`; Proposed next steps in its README, nothing decided). Earlier (UI fixes plan, S8b, tessellation, harness v4.14.0, #47): archive "Moved 2026-11-11 (spec session)".
 
 ## Next
 
