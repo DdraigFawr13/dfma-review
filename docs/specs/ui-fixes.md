@@ -1,7 +1,7 @@
 # UI fixes: the model (A) and the screens (B)
 
-- **Status:** Draft (2026-11-11)
-- **Planned in:** [round 1](https://claude.ai/artifact/TC6zxWereXxzeVBLG4MtLE) (collection `round1`), [review](https://claude.ai/artifact/N8rWXXux4n2VWqNhkDzEUB) (collection `review1`), approved [mock-up](https://claude.ai/artifact/Adh7jrTqHCskfymUbrPkc4) (`mockups/ui-fixes.html`; prototype `mockups/ui-fixes/proto.diff`, reference only). **Decisions:** D-076; amends D-017, D-023, D-042 and UI_STYLE "Selected finding" when built.
+- **Status:** Approved 2026-11-11 (Morgan: "I approve both"; Open questions 1 and 2 taken as recommended, D-078)
+- **Planned in:** [round 1](https://claude.ai/artifact/TC6zxWereXxzeVBLG4MtLE) (collection `round1`), [review](https://claude.ai/artifact/N8rWXXux4n2VWqNhkDzEUB) (collection `review1`), approved [mock-up](https://claude.ai/artifact/Adh7jrTqHCskfymUbrPkc4) (`mockups/ui-fixes.html`; prototype `mockups/ui-fixes/proto.diff`, reference only). **Decisions:** D-076, D-078; amends D-017, D-023, D-042 and UI_STYLE "Selected finding" when built.
 
 ## Terms
 
@@ -100,8 +100,8 @@ Each check has at least one assertion that fails at `d42fcfd`; assertions marked
 ## Decisions
 
 - Two slices, A before B, B after A merges (D-076).
-- Orbit about the file's +Z (turntable), up kept +Z; free orbit rejected (Alternatives). **Escalated:** confirm (Open question 2).
-- View directions and the opening view in file axes; triad in part axes (D-076), with a small "Part axes" caption under it. **Escalated:** confirm (Open question 1).
+- Orbit about the file's +Z (turntable), up kept +Z; free orbit rejected (Alternatives). Settled as recommended (D-078).
+- View directions and the opening view in file axes; triad in part axes (D-076), with a small "Part axes" caption under it. Settled as recommended (D-078).
 - Pins hidden while the camera moves, back 150 ms after the last mouse or wheel move and 600 ms after the last key (D-076, round 1 `pinmode`).
 - Any selection greys every other face (D-076, round 1 `picked`); the PDF pictures follow (they use the same paint).
 - Wall-clock tests are tagged `@timed`; estimated added check time for S1 about 3 min (9 new e2e tests, the 8 of J1-J6 plus `test_row_arrow_keys` for A7, at 10-20 s each; estimate), measured and reported in the PR against the 900 s budget (D-073).
@@ -167,7 +167,7 @@ Each check has at least one assertion that fails at `d42fcfd`; assertions marked
 - **Morgan tries:** on the work copy, report_sample: pick Deep hole ×2, one hole lit, › lights the other; spin with wheel and drag, no pins while moving; middle-drag moves, Shift + middle-drag rotates; Tab to the model, arrows rotate, H home; press each view button; watch the triad.
 - **Checks that fail now:** J1-J6 tests in `web/e2e/model.spec.ts`; the five changed assertions (A5).
 - **Files:** `web/src/viewer.ts`: A1, A3, A4, A5 paint, A6, hooks. `web/src/main.ts`: A5 `pickOf`, `setFrame`, view buttons, hooks. `web/src/steps.ts`: A7. `web/index.html`: A2 group, A6 attributes, A8, A9. `web/src/style.css`: views, stage, `.moving`, focus ring. `web/e2e/model.spec.ts`: new. `web/e2e/steps.spec.ts`, `web/e2e/browser_engine.spec.ts`, `web/e2e/pdf.spec.ts`: A5 changes. `web/scripts/pin-lag.mjs`: A11. `docs/UI_STYLE.md`, `docs/DECISIONS.md` (D-017, D-076 built), `docs/HANDOFF.md`.
-- **Waits on:** Open questions 1 and 2.
+- **Waits on:** none.
 
 ### S2 (slice B) The screens
 
@@ -184,6 +184,9 @@ Each check has at least one assertion that fails at `d42fcfd`; assertions marked
 - Screenshots at 2× of J2, J3, J5 (and J9 for B) on the status page; Morgan's own check on the work copy (VER-07).
 
 ## Open questions
+
+Both settled on 2026-11-11 as recommended (D-078); kept for the reasons.
+
 
 1. **Which axes do the views use?** Recommended: Front, Top, Right, Iso and Home in the file's own axes (Top looks down the file's +Z, as Inventor shows it), and the triad in the part's axes (D-076) with a "Part axes" caption, so the triad matches the setup names ("from −X") but not always the view names. Alternatives: everything in the part's axes (Top shows the underside of 26 of 42 sample parts); everything in the file's axes (the triad then disagrees with the setup names on 41 of 42).
 2. **Turntable orbit?** Recommended: the part turns about the file's +Z and never rolls. Alternative: free orbit, Inventor's default.
