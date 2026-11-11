@@ -128,6 +128,11 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 .plan dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: var(--space-1) var(--space-3); font-size: 0.875rem; }
 .plan dt { color: var(--muted); }
 .plan dd { margin: 0; font-variant-numeric: tabular-nums; }
+/* machining P1 S2 (mock-up p1-removal, D-089): your stock, three sizes and Apply under Stock */
+.plan .your-stock { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) 6px; margin: 0; }
+.plan .your-stock input { width: 5.5em; min-height: 32px; padding: 2px 6px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); color: var(--ink); font: 500 0.875rem var(--mono); }
+.plan .your-stock button { min-height: 32px; padding: 4px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); color: var(--ink); font: 600 0.875rem var(--sans); cursor: pointer; }
+.plan .stock-error { margin: var(--space-1) 0 0; color: var(--high); }
 /* D-061 (mock-up port-s3-setups, option A): each setup a card; its head a band saying what a tap does */
 .plan .setupbox { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); margin-top: var(--space-2); overflow: hidden; }
 .plan .setupbox:has(.setup[aria-pressed="true"]) { border: 2px solid var(--accent); }
@@ -289,7 +294,7 @@ div.thread-row { text-align: left; }
 .plan .toolrow:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
 /* Below 900 px, after every rule above: touch-sized targets (F16), Show OK under the chips (F18), setup chips above the model (F33) */
 @media (max-width: 900px) {
-  .stepper, .chip, .pfeat { min-height: 44px; } .stepper { min-width: 44px; }
+  .stepper, .chip, .pfeat, .plan .your-stock input, .plan .your-stock button { min-height: 44px; } .stepper { min-width: 44px; }
   #page-features .showok { padding: 8px 12px; border-bottom: 1px solid var(--line); }
   .toolrow, .exmenu button, .modeswitch span { min-height: 44px; }
   .setupchips { position: static; order: -1; } /* above the model, not over it (audit F33) */

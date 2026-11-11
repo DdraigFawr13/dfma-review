@@ -8,6 +8,7 @@ import { analyze, ApiError, type Analysis, type Material, type Process } from ".
 import { blendKinds, renderBlends, renderHoleFeatures, renderPlan, renderThreads, setupHead, type Pick } from "./findings";
 import { formatSize } from "./format";
 import { buildReport, reportName } from "./report";
+import { typedStock, type Typed } from "./removal";
 import { STEPS, STEP_NAMES, groupTally, placeRows, placedLine, renderChips, renderCost, renderOverview, renderReport,
   renderRows, renderSetupChips, rowFaces, stepCounts, type Placed, type RowFilter, type Step } from "./steps";
 import { Viewer, VIEWS, type CheckedKind, type ViewName } from "./viewer";
@@ -57,6 +58,10 @@ let shownIpt: File | null = null;
 let stepFile: File | null = null; // what was picked or loaded as an example: a material or process change reads it again
 let iptFile: File | null = null;
 let machine = false; // UI fixes B3: the Machine view, on the Machining step only
+let stockOn = true; // machining P1 S2: the ghost stock, on by default
+let stockState: { raw: string[]; typed: Typed | null; error: string | null; fresh?: boolean } = { raw: ["", "", ""], typed: null, error: null };
+let stockKey = "";
+let stockFor: Analysis | null = null;
 
 declare global {
   interface Window {
@@ -78,6 +83,7 @@ declare global {
       placements(): number;
       faceColours(): Record<number, string>;
       barColours(): Record<string, { colour: string; opacity: number }>;
+      stock(): { shown: boolean; size_mm: [number, number, number]; center: [number, number, number] };
       spindle(): { diameter_mm: number } | null;
       chuck(): boolean;
     };
@@ -100,6 +106,7 @@ window.__dfma = {
   placements: () => viewer.placements(),
   faceColours: () => viewer.faceColours(),
   barColours: () => viewer.barColours(), // test hook: drawn in a kind's "checked" colour
+  stock: () => viewer.stock(), // test hook (machining P1 S2): the ghost stock drawn, and its sides in mm
   spindle: () => viewer.spindle(), // test hooks (UI fixes B3): the placeholder spindle and chuck
   chuck: () => viewer.chuck(),
   // test hook: the result on screen, without the view buffers the worker adds (port J4, J6b; the test build adds
@@ -283,6 +290,33 @@ function overlays(): void {
   byId("setup-chips").hidden = !here;
   byId("mode-switch").hidden = !here;
   byId("views").hidden = !shown || machine;
+  syncStock();
+}
+
+/** The ghost stock (machining P1 S2, D-089): its button on Machining for a milled part, beside the view buttons and
+ *  hidden with them in the Machine view; the box shows while the button is on, at your stock's size once applied. */
+function syncStock(): void {
+  const here = !!shown?.removal && step === "machining" && !machine;
+  const toggle = byId("stock-toggle");
+  toggle.hidden = !here;
+  toggle.setAttribute("aria-pressed", String(stockOn));
+  const frame = shown?.part.frame ?? null;
+  const sizeIn = stockState.typed ?? shown?.stock?.size_in ?? null;
+  const size = here && stockOn && frame && sizeIn?.length === 3 ? (sizeIn.map((v) => v * 25.4) as Typed) : null;
+  const key = JSON.stringify(size);
+  if (key === stockKey && stockFor === shown) return;
+  stockKey = key;
+  stockFor = shown;
+  viewer.showStock(size && frame, size);
+}
+
+/** Apply in Your stock: the typed size in use, or the line that says what is wrong (the size in use stays). */
+function applyStock(raw: string[]): void {
+  if (!shown) return;
+  const r = typedStock(shown, raw);
+  stockState = "typed" in r ? { raw, typed: r.typed, error: null } : { raw, typed: stockState.typed, error: r.error, fresh: true };
+  showFindings(shown, ""); // focus stays on Apply (showFindings keeps it by test id)
+  stockState.fresh = false; // the line is read out once, when Apply makes it, not on each redraw
 }
 
 const rowHandlers = {
@@ -354,7 +388,7 @@ function showFindings(result: Analysis | null, message: string): void {
   const placed = result ? placeRows(result) : new Map();
   renderPlan(byId("plan"), byId("plan-count"), result, selectSetup, selected,
     (where) => (placed.get(where) ?? []).map((p: Placed) => placedLine(p, openPlaced)),
-    machine ? { onTool: selectTool } : null);
+    machine ? { onTool: selectTool } : null, { ...stockState, onApply: applyStock, onInput: (raw) => { stockState.raw = raw; } });
   const later = !!result && planNotWorkedOut(result); // the browser copy until S3 (D-057)
   byId("plan-notrun").hidden = !later;
   byId("plan-notrun").textContent = later ? NOT_WORKED_OUT : "";
@@ -518,6 +552,8 @@ async function analyse(): Promise<void> {
     shownIpt = ipt;
     if (!samePart) {
       machine = false; // a new part opens in the Part view (B3)
+      stockOn = true; // P1 S2: the ghost stock on, and your stock gone, for each new part (D-089)
+      stockState = { raw: ["", "", ""], typed: null, error: null };
       byId<HTMLInputElement>("mode-part").checked = true;
       rowFilter = "issues"; // a new part opens on its issues, no row open
       openRow = null;
@@ -661,6 +697,7 @@ exMenu.addEventListener("keydown", (e) => {
 document.addEventListener("click", (e) => {
   if (!exMenu.hidden && !(e.target as Element).closest(".exwrap")) closeMenu(false);
 });
+byId("stock-toggle").addEventListener("click", () => { stockOn = !stockOn; syncStock(); });
 for (const id of ["mode-part", "mode-machine"]) byId<HTMLInputElement>(id).addEventListener("change", (e) => setMachine((e.target as HTMLInputElement).value === "machine"));
 startForm.addEventListener("submit", (e) => e.preventDefault());
 

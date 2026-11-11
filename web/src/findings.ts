@@ -1,7 +1,7 @@
 // Words for findings, the machine plan and the .ipt groups (spec "Web page", D-012), shown in the Features and
 // Machining steps (review-steps S1-S3, D-045); the rows themselves are in steps.ts.
 
-import { removalLines } from "./removal";
+import { removalLines, type Typed } from "./removal";
 import type { Analysis, Blend, CostDriver, Feature, Finding, HoleFeature, IptHole, Thread, Tool } from "./api";
 
 const KIND_NAMES: [string, string, string][] = [["profile", "turned profile", "turned profiles"], ["hole", "hole", "holes"], ["bore", "bore", "bores"], ["groove", "groove", "grooves"],
@@ -153,10 +153,55 @@ function issuesBlock(lines: HTMLElement[], label: string, testid: string): HTMLE
   return box;
 }
 
+/** Your stock in the plan list (machining P1 S2, J2): what was typed, the size in use, a line saying what is wrong. */
+export interface YourStock {
+  raw: string[];
+  typed: Typed | null;
+  error: string | null;
+  fresh?: boolean; // the error was just made by Apply: read it out
+  onApply: (raw: string[]) => void;
+  onInput: (raw: string[]) => void; // what is typed, kept when the plan list redraws before Apply
+}
+
+/** Three sizes in inches and Apply, as the P1 mock-up (D-089); Enter applies too. Session only, not stored (R6). */
+function yourStock(s: YourStock): HTMLElement {
+  const dd = el("dd");
+  dd.dataset.testid = "plan-your-stock";
+  const form = el("form", "your-stock");
+  form.noValidate = true;
+  const names = ["first", "second", "third"];
+  const inputs = names.map((n, i) => {
+    const input = el("input");
+    input.type = "text";
+    input.inputMode = "decimal";
+    input.autocomplete = "off";
+    input.value = s.raw[i] ?? "";
+    input.dataset.testid = `stock-size-${i + 1}`;
+    input.setAttribute("aria-label", `Your stock, ${n} size in inches`);
+    return input;
+  });
+  inputs.forEach((input, i) => form.append(input, el("span", "muted", i < 2 ? "×" : "in")));
+  const apply = el("button", undefined, "Apply");
+  apply.type = "submit";
+  apply.dataset.testid = "stock-apply";
+  form.append(apply);
+  for (const input of inputs) input.addEventListener("input", () => s.onInput(inputs.map((x) => x.value)));
+  form.addEventListener("submit", (e) => { e.preventDefault(); s.onApply(inputs.map((x) => x.value)); });
+  dd.append(form);
+  if (s.error) {
+    const msg = el("p", "stock-error", s.error);
+    msg.dataset.testid = "stock-error";
+    if (s.fresh) msg.setAttribute("role", "alert");
+    dd.append(msg);
+  }
+  return dd;
+}
+
 export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analysis | null,
                            onSelect: (p: Pick) => void = () => {}, selected: string | null = null,
                            placed: PlacedLines = () => [],
-                           machine: { onTool: (setup: number, tool: string) => void } | null = null): void {
+                           machine: { onTool: (setup: number, tool: string) => void } | null = null,
+                           stock: YourStock | null = null): void {
   host.replaceChildren();
   count.textContent = "";
   if (!result || !result.machine) return;
@@ -170,9 +215,11 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
   };
   row("Machine", result.machine, "plan-machine");
   if (result.stock) row("Stock", stockText(result.stock), "plan-stock");
-  const [removalRow, unexplainedRow] = removalLines(result); // P1 (D-088, D-089): under Stock
-  if (removalRow) row(...removalRow, "plan-removal");
-  if (unexplainedRow) row(...unexplainedRow, "plan-unexplained");
+  const lines = removalLines(result, stock?.typed ?? undefined); // P1 (D-088, D-089): under Stock
+  if (lines.length && stock) dl.append(el("dt", undefined, "Your stock"), yourStock(stock)); // P1 S2: milled parts only
+  const ids: Record<string, string> = { Removal: "plan-removal", "Not explained": "plan-unexplained", "Facing Z": "plan-facing-z",
+                                        "Facing X": "plan-facing-x", "Facing Y": "plan-facing-y" };
+  for (const [term, text] of lines) row(term, text, ids[term]);
   const lathe = result.setups.length === 1 && result.setups[0].direction === "turn";
   if (lathe && result.turn_axis) row("Turning axis", axisText(result.turn_axis, result), "plan-turn-axis");
   row("Tool loads", `${result.tool_changes} (the first in each setup counts)`, "plan-loads"); // frame r3-mach

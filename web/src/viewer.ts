@@ -91,6 +91,8 @@ export class Viewer {
   private spindleGroup: THREE.Group | null = null; // the placeholder spindle (B3)
   private spindleDiameter: number | null = null;
   private chuckGroup: THREE.Group | null = null; // the placeholder chuck (B3)
+  private stockGroup: THREE.Group | null = null; // the ghost stock box (machining P1 S2)
+  private stockSize: [number, number, number] | null = null;
   private frame = 0;
   // UI fixes A4: while the camera moves, pins are hidden and not placed
   private moving = false;
@@ -307,8 +309,13 @@ export class Viewer {
     this.paint();
     if (finding) this.frameFaces(finding.faces, this.edges.get(finding.id));
     this.triadOff = true; // the PDF picture has no triad (A13)
-    this.renderer.render(this.scene, this.camera); // now: the queued frame would come after the read
-    this.triadOff = false;
+    if (this.stockGroup) this.stockGroup.visible = false; // nor the ghost stock (the PDF is the file's own review, R6)
+    try {
+      this.renderer.render(this.scene, this.camera); // now: the queued frame would come after the read
+    } finally {
+      this.triadOff = false;
+      if (this.stockGroup) this.stockGroup.visible = true;
+    }
     const url = this.canvas.toDataURL("image/jpeg", 0.85);
     // Where the finding's centre lands in the picture (0-1 across, 0-1 down), for the report's ring (D-017's pin)
     let spot: [number, number] | null = null;
@@ -600,6 +607,54 @@ export class Viewer {
       this.scene.add(g);
     }
     this.render();
+  }
+
+  /** The ghost stock (machining P1 S2, D-089): a box of `sizeMm` along the part frame's axes, centred on the part's
+   *  extents along them, its edges drawn, at GHOST_OPACITY without writing depth; null removes it. */
+  showStock(frame: { x: number[]; y: number[]; z: number[] } | null, sizeMm: [number, number, number] | null): void {
+    if (this.stockGroup) {
+      this.scene.remove(this.stockGroup);
+      this.stockGroup.traverse((o) => {
+        if (o instanceof THREE.Mesh || o instanceof THREE.LineSegments) {
+          o.geometry.dispose();
+          if (o.material !== this.edgeMaterial) (o.material as THREE.Material).dispose();
+        }
+      });
+    }
+    this.stockGroup = null;
+    this.stockSize = null;
+    if (frame && sizeMm && this.meshes.size) {
+      const ax = [frame.x, frame.y, frame.z].map((a) => new THREE.Vector3(a[0], a[1], a[2]).normalize());
+      const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+      const v = new THREE.Vector3();
+      for (const m of this.meshes.values()) {
+        const pos = m.geometry.getAttribute("position");
+        for (let i = 0; i < pos.count; i++) {
+          v.fromBufferAttribute(pos, i);
+          ax.forEach((a, k) => { const d = v.dot(a); lo[k] = Math.min(lo[k], d); hi[k] = Math.max(hi[k], d); });
+        }
+      }
+      const geo = new THREE.BoxGeometry(...sizeMm);
+      const mat = new THREE.MeshStandardMaterial({ color: token("--part"), transparent: true, opacity: GHOST_OPACITY, depthWrite: false });
+      const g = new THREE.Group();
+      g.add(new THREE.Mesh(geo, mat), new THREE.LineSegments(new THREE.EdgesGeometry(geo), this.edgeMaterial));
+      const centre = new THREE.Vector3();
+      ax.forEach((a, k) => centre.addScaledVector(a, (lo[k] + hi[k]) / 2));
+      this.part.updateMatrixWorld();
+      g.matrixAutoUpdate = false; // the part frame's axes, in the part group's place
+      g.matrix.makeBasis(ax[0], ax[1], ax[2]).setPosition(centre).premultiply(this.part.matrixWorld);
+      g.renderOrder = 2; // after the part, so the part shows through it
+      this.stockGroup = g;
+      this.stockSize = [...sizeMm];
+      this.scene.add(g);
+    }
+    this.render();
+  }
+
+  /** Test hook (machining P1 S2): the ghost stock drawn, its sides in mm along the part frame's x, y, z, and its centre. */
+  stock(): { shown: boolean; size_mm: [number, number, number]; center: [number, number, number] } {
+    const c = this.stockGroup ? new THREE.Vector3().setFromMatrixPosition(this.stockGroup.matrix) : new THREE.Vector3();
+    return { shown: this.stockGroup !== null, size_mm: this.stockSize ?? [0, 0, 0], center: [c.x, c.y, c.z] };
   }
 
   /** Test hooks (B3). */
