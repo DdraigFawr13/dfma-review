@@ -5,6 +5,7 @@ Run with `pytest -m e2e --engine browser` (scripts/check.py does); deselected in
 
 from __future__ import annotations
 
+import gzip
 import json
 import subprocess
 import sys
@@ -25,7 +26,7 @@ from dfma.rows import checks_run  # noqa: E402
 from dfma.rules import RULES  # noqa: E402
 
 NIST = ROOT / "tests" / "nist" / ".cache" / "NIST-PMI-STEP-Files"
-KEY_DIR = ROOT / "tests" / "parity" / ".cache" / "key"
+KEY_DIR = ROOT / "tests" / "parity" / "key"  # S8a: the frozen key, committed (python tests/parity/key.py --freeze)
 BIG_PLATE = PARTS / ".cache" / "big_plate.step"
 WASM_LIMIT = 2 * 1024**3  # J4: the worker's wasm memory stays under 2 GB
 
@@ -231,15 +232,17 @@ def test_licences(page: Page, base_url: str):
 def test_worker_parity(page: Page, base_url: str, path: str, tmp_path):
     """J6b: the real worker in Chromium gives the key's answer, by the same compare rules as the Node parity."""
     nist("nist_ctc_01_asme1_ap242-e1.stp")
-    key = KEY_DIR / (path.replace("/", "__") + ".json")
+    key = KEY_DIR / (path.replace("/", "__") + ".json.gz")  # the frozen key is gzipped (S8a)
     if not key.exists():
-        pytest.fail(f"{key} is missing: run python tests/parity/key.py --set quick (scripts/check.py does)")
+        pytest.fail(f"{key} is missing from the frozen key: run python tests/parity/key.py --freeze")
+    key_json = tmp_path / "key.json"
+    key_json.write_bytes(gzip.decompress(key.read_bytes()))
     page.goto(base_url)
     result = read(page, ROOT / path)
     out = tmp_path / "result.json"
     out.write_text(json.dumps(result), encoding="utf-8")
     npm = "npm.cmd" if sys.platform == "win32" else "npm"
-    run = subprocess.run([npm, "--prefix", "web", "run", "-s", "compare", "--", str(out), str(key)], cwd=ROOT,
+    run = subprocess.run([npm, "--prefix", "web", "run", "-s", "compare", "--", str(out), str(key_json)], cwd=ROOT,
                          capture_output=True, text=True)
     assert run.returncode == 0, run.stdout + run.stderr
 

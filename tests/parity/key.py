@@ -2,6 +2,7 @@
 
     python tests/parity/key.py --set quick|full [--out DIR]     (default DIR: tests/parity/.cache/key)
     python tests/parity/key.py --settings                       (writes tests/parity/.cache/settings.json)
+    python tests/parity/key.py --freeze                         (S8a: copies the quick and full keys to tests/parity/key/)
 
 Each file runs `dfma.analyze.analyze` (Aluminum 6061; the process tests/parts/expected.toml gives a part, else
 Milling) in its own process (the tests/grading/child.py pattern: some files crash pythonocc) and is written to
@@ -64,15 +65,21 @@ def process_of(path: Path, processes: dict[str, str]) -> str:
     return "mill"
 
 
+KEY_FORMAT = "1"  # bump when the child's JSON or the file layout changes: this script is no longer hashed (S8a)
+HARNESS = ("register.py", "nist_pair.py")  # the modules a harness key's transform comes from
+
+
 def code_hash() -> bytes:
-    """Path and bytes of every file the key depends on, then the pythonocc version."""
+    """Path and bytes of every file the key depends on (the app: service/, config/, the part table), the key format
+    and the pythonocc version. This script is not hashed: an edit to it, or to the harness (tests/inventor), does not
+    rebuild the app's keys (S8a)."""
     h = hashlib.sha256()
     files = [p for d in ("service", "config") for p in (ROOT / d).rglob("*") if p.is_file() and "__pycache__" not in p.parts]
-    files += [Path(__file__).resolve(), EXPECTED]
+    files += [EXPECTED]
     for p in sorted(files, key=rel):
         h.update(rel(p).encode() + b"\0" + p.read_bytes() + b"\0")
     import OCC
-    h.update(OCC.VERSION.encode())
+    h.update(OCC.VERSION.encode() + b"\0" + KEY_FORMAT.encode())
     return h.digest()
 
 
@@ -232,8 +239,9 @@ def write_set(name: str, out: Path) -> int:
             return file_hash(j[0], code)
         h = hashlib.sha256(file_hash(j[0], code).encode() + rel(j[2]).encode() + b"\0" + j[2].read_bytes() + b"\0")
         h.update(b"harness" if j[3] else b"app")
-        for p in sorted((ROOT / "tests" / "inventor").glob("*.py")):  # the harness: register, nist_pair
-            h.update(p.read_bytes())
+        if j[3]:  # only a harness key depends on the harness modules (S8a: other tests/inventor edits keep the cache)
+            for name in HARNESS:
+                h.update(rel(ROOT / "tests" / "inventor" / name).encode() + b"\0" + (ROOT / "tests" / "inventor" / name).read_bytes())
         return h.hexdigest()
 
     with ThreadPoolExecutor(max_workers=os.cpu_count() or 2) as pool:
@@ -256,6 +264,45 @@ def write_settings() -> int:
     return 0
 
 
+FROZEN = ROOT / "tests" / "parity" / "key"
+
+
+def write_freeze() -> int:
+    """S8a: copy the quick and full keys the cache holds into tests/parity/key/ (committed): only the files the two
+    indexes name, so a stale cache entry stays out. Run it after `--set quick` and `--set full`."""
+    import gzip
+    import shutil
+    cache = CACHE / "key"
+    indexes = [cache / f"index-{s}.json" for s in ("quick", "full")]
+    if not all(i.exists() for i in indexes):
+        sys.exit("freeze: run python tests/parity/key.py --set quick and --set full first")
+    names = {n for i in indexes for e in json.loads(i.read_text(encoding="utf-8")) for n in [e["key"]]}
+    import gzip
+    FROZEN.mkdir(parents=True, exist_ok=True)
+    for old in FROZEN.glob("*.json.gz"):
+        if old.name[:-3] not in names:
+            old.unlink()
+    for n in sorted(names):  # gzipped (mtime 0, so the same key gives the same bytes): the frozen set is ~5x smaller
+        (FROZEN / (n + ".gz")).write_bytes(gzip.compress((cache / n).read_bytes(), 9, mtime=0))
+    # The hostile .ipt inputs live in the git-ignored cache; CI has no cache, so they are copied in (S8a CI fix)
+    (FROZEN / "ipt").mkdir(exist_ok=True)
+    for old in (FROZEN / "ipt").glob("*.ipt.gz"):
+        old.unlink()
+    for i in indexes:  # the index names the gzipped keys and the frozen .ipt inputs
+        index = []
+        for e in json.loads(i.read_text(encoding="utf-8")):
+            e = {**e, "key": e["key"] + ".gz"}
+            if "ipt" in e and (ROOT / e["ipt"]).is_relative_to(CACHE):
+                src = ROOT / e["ipt"]
+                (FROZEN / "ipt" / (src.name + ".gz")).write_bytes(gzip.compress(src.read_bytes(), 9, mtime=0))
+                e["ipt"] = rel(FROZEN / "ipt" / (src.name + ".gz"))
+            index.append(e)
+        (FROZEN / i.name).write_text(json.dumps(index, indent=1), encoding="utf-8")
+    size = sum(p.stat().st_size for p in FROZEN.rglob("*") if p.is_file())
+    print(f"freeze: {len(names)} keys (gzipped) and 2 indexes in {rel(FROZEN)}: {size / 1e6:.2f} MB")
+    return 0
+
+
 def main() -> int:
     if len(sys.argv) in (4, 6) and sys.argv[1] == "--child":
         child(sys.argv[2], sys.argv[3], *((sys.argv[4], sys.argv[5] == "harness") if len(sys.argv) == 6 else ()))
@@ -264,9 +311,12 @@ def main() -> int:
     ap.add_argument("--set", choices=("quick", "full"))
     ap.add_argument("--out", type=Path, default=CACHE / "key")
     ap.add_argument("--settings", action="store_true")
+    ap.add_argument("--freeze", action="store_true", help="copy the cached quick and full keys into tests/parity/key/")
     args = ap.parse_args()
     if args.settings:
         return write_settings()
+    if args.freeze:
+        return write_freeze()
     if not args.set:
         ap.error("give --set quick|full or --settings")
     return write_set(args.set, args.out.resolve())

@@ -515,3 +515,21 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-10). Morgan, in chat: "Skip the rule. End the testing and analyze the results so far. Also when doing runs like this I want to make sure to receive at least some indication of progress so we know it is not hung up. Merge when ready to do so".
 - **Decision:** S7's full-set parity was stopped after 64 min of CPU with no result (it printed only at the end). PR #41 merges on the quick parity (122 of 122) and green CI; the spec's "full set before ready" rule is waived for S7 only. From now on the parity run prints one line per file (`parity <set> [n/N] <status> <s> (total <s>): <file>`), and a long run is watched on those lines.
 - **Why:** Morgan's call; S7's new code runs only with an `.ipt`, and the full set's extra files have none.
+
+## D-071 S8 before the UI list; faster checks on the S8 branch
+
+- **Status:** Accepted (2026-11-11). Morgan, in chat: "yes do both on the S8 branch and do what you recommend. If retiring python reduces the work load for testing further changes then do that first".
+- **Decision:** S8 (retire Python) comes before the UI list (HANDOFF 000a), because it drops the Python service tests, the service-copy e2e run and the Python key from every later check. The parity run is split across processes and the key cache stops rebuilding on harness-only edits, on the S8 branch. **Approved 2026-11-11** (Morgan, on the question form: "Two PRs (Recommended)"): the S8 file list and its split into S8a (speed-ups, frozen key, scorer and Inventor harness on the engine) and S8b (Playwright and vitest ports, Python deleted), [S8 file list](https://claude.ai/artifact/ExT2DS3QeAL7bRas5LJLRT).
+- **Why:** Morgan's call; the spec's S8 list missed the scorer, the Inventor harness and the part generators, which also run on Python.
+
+## D-072 S8a built: four-shard parity, frozen key, harness and scorer on the engine
+
+- **Status:** Approved 2026-11-11 (owner, in chat); PR #42 marked ready with auto-merge on. Built on `ccr-bd6f31ec-kskq1t` (S8a of D-071). Known: the full-set parity has 2 files that differ in `faces[].positions` (bn_ball6, nasty_cheese), unmeasured and pre-existing from S1-S7 (D-070); to be measured in a later slice.
+- **Decision:** S8a as approved in D-071: parity split over 4 processes; key cache not rebuilt on harness-only edits; the final Python key frozen into `tests/parity/key/`; the scorer, scorecards, and Inventor harness (`local_pairs` first) run on the browser engine. Python stays until S8b.
+- **Builder choices (not in the spec):**
+  1. The frozen key keeps `faces[].positions` (gzipped), so parity still checks positions. Measured: 335 keys, 13.61 MB, under the spec's 20 MB assumption.
+  2. `olefile` 0.47 and `pytest-xdist` 3.8.0 (both pinned in `environment.yml`) were installed with pip, because micromamba is not on this machine. The env had been built before those pins.
+  3. The key cache no longer hashes `tests/parity/key.py`; a `KEY_FORMAT` constant stands in. Only harness keys hash `register.py` and `nist_pair.py`.
+- **Why:** Morgan's D-071 approval; the measurements are from this session.
+- **Measured:** quick parity 122 of 122 the same, 0 different, 0 Python crashed, 4 shards in 236.7 s. Harness: 16 of 16 NIST transforms equal Python's; `built` 7 of 7 equal. Scorer: all 100 MFCAD++ records on 6 labelled sets equal Python's; NIST scorecard equal.
+- **Not done:** `local_pairs` on Morgan's real pairs (absent here; fixtures only). The pair check's passing line is untested on real data. The committed `tests/edmr/scorecard.toml` says `nasty_cheese` features 386; both engines give 387 (left as committed; open question).

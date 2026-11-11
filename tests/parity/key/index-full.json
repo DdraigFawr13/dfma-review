@@ -1,0 +1,1767 @@
+[
+ {
+  "path": "tests/parts/angled_hole.step",
+  "process": "mill",
+  "key": "tests__parts__angled_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/angled_hole_in_pocket.step",
+  "process": "mill",
+  "key": "tests__parts__angled_hole_in_pocket.step.json.gz"
+ },
+ {
+  "path": "tests/parts/block_as_turn.step",
+  "process": "turn",
+  "key": "tests__parts__block_as_turn.step.json.gz"
+ },
+ {
+  "path": "tests/parts/box_inch.step",
+  "process": "mill",
+  "key": "tests__parts__box_inch.step.json.gz"
+ },
+ {
+  "path": "tests/parts/box_through_hole.step",
+  "process": "mill",
+  "key": "tests__parts__box_through_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/clean_holes.step",
+  "process": "mill",
+  "key": "tests__parts__clean_holes.step.json.gz"
+ },
+ {
+  "path": "tests/parts/clean_one_setup.step",
+  "process": "mill",
+  "key": "tests__parts__clean_one_setup.step.json.gz"
+ },
+ {
+  "path": "tests/parts/clean_pocket.step",
+  "process": "mill",
+  "key": "tests__parts__clean_pocket.step.json.gz"
+ },
+ {
+  "path": "tests/parts/clean_shaft.step",
+  "process": "turn",
+  "key": "tests__parts__clean_shaft.step.json.gz"
+ },
+ {
+  "path": "tests/parts/clean_walls.step",
+  "process": "mill",
+  "key": "tests__parts__clean_walls.step.json.gz"
+ },
+ {
+  "path": "tests/parts/countersunk_hole.step",
+  "process": "mill",
+  "key": "tests__parts__countersunk_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/deep_hole.step",
+  "process": "mill",
+  "key": "tests__parts__deep_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/drill_point_hole.step",
+  "process": "mill",
+  "key": "tests__parts__drill_point_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/fillet_not_hole.step",
+  "process": "mill",
+  "key": "tests__parts__fillet_not_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/flange_bolt_hole.step",
+  "process": "turn",
+  "key": "tests__parts__flange_bolt_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/flat_bottom_hole.step",
+  "process": "mill",
+  "key": "tests__parts__flat_bottom_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/hole_near_edge.step",
+  "process": "mill",
+  "key": "tests__parts__hole_near_edge.step.json.gz"
+ },
+ {
+  "path": "tests/parts/holes_close.step",
+  "process": "mill",
+  "key": "tests__parts__holes_close.step.json.gz"
+ },
+ {
+  "path": "tests/parts/metric_hole.step",
+  "process": "mill",
+  "key": "tests__parts__metric_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/no_solid.step",
+  "process": "mill",
+  "key": "tests__parts__no_solid.step.json.gz"
+ },
+ {
+  "path": "tests/parts/not_step.step",
+  "process": "mill",
+  "key": "tests__parts__not_step.step.json.gz"
+ },
+ {
+  "path": "tests/parts/odd_hole.step",
+  "process": "mill",
+  "key": "tests__parts__odd_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/odd_metric_hole.step",
+  "process": "mill",
+  "key": "tests__parts__odd_metric_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/pocket_deep.step",
+  "process": "mill",
+  "key": "tests__parts__pocket_deep.step.json.gz"
+ },
+ {
+  "path": "tests/parts/pocket_deep_wide.step",
+  "process": "mill",
+  "key": "tests__parts__pocket_deep_wide.step.json.gz"
+ },
+ {
+  "path": "tests/parts/pocket_island.step",
+  "process": "mill",
+  "key": "tests__parts__pocket_island.step.json.gz"
+ },
+ {
+  "path": "tests/parts/pocket_long_thin_tool.step",
+  "process": "mill",
+  "key": "tests__parts__pocket_long_thin_tool.step.json.gz"
+ },
+ {
+  "path": "tests/parts/pocket_sharp.step",
+  "process": "mill",
+  "key": "tests__parts__pocket_sharp.step.json.gz"
+ },
+ {
+  "path": "tests/parts/pocket_small_radius.step",
+  "process": "mill",
+  "key": "tests__parts__pocket_small_radius.step.json.gz"
+ },
+ {
+  "path": "tests/parts/report_sample.step",
+  "process": "mill",
+  "key": "tests__parts__report_sample.step.json.gz"
+ },
+ {
+  "path": "tests/parts/rotated_block.step",
+  "process": "mill",
+  "key": "tests__parts__rotated_block.step.json.gz"
+ },
+ {
+  "path": "tests/parts/shaft_with_groove_and_bore.step",
+  "process": "turn",
+  "key": "tests__parts__shaft_with_groove_and_bore.step.json.gz"
+ },
+ {
+  "path": "tests/parts/slender_shaft.step",
+  "process": "turn",
+  "key": "tests__parts__slender_shaft.step.json.gz"
+ },
+ {
+  "path": "tests/parts/slot_not_wall.step",
+  "process": "mill",
+  "key": "tests__parts__slot_not_wall.step.json.gz"
+ },
+ {
+  "path": "tests/parts/split_hole.step",
+  "process": "mill",
+  "key": "tests__parts__split_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/stepped_hole.step",
+  "process": "mill",
+  "key": "tests__parts__stepped_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/stout_shaft.step",
+  "process": "turn",
+  "key": "tests__parts__stout_shaft.step.json.gz"
+ },
+ {
+  "path": "tests/parts/thin_drill_point.step",
+  "process": "mill",
+  "key": "tests__parts__thin_drill_point.step.json.gz"
+ },
+ {
+  "path": "tests/parts/thin_floor.step",
+  "process": "mill",
+  "key": "tests__parts__thin_floor.step.json.gz"
+ },
+ {
+  "path": "tests/parts/thin_rib.step",
+  "process": "mill",
+  "key": "tests__parts__thin_rib.step.json.gz"
+ },
+ {
+  "path": "tests/parts/through_hole_two_dirs.step",
+  "process": "mill",
+  "key": "tests__parts__through_hole_two_dirs.step.json.gz"
+ },
+ {
+  "path": "tests/parts/two_holes_web.step",
+  "process": "mill",
+  "key": "tests__parts__two_holes_web.step.json.gz"
+ },
+ {
+  "path": "tests/parts/two_sided_block.step",
+  "process": "mill",
+  "key": "tests__parts__two_sided_block.step.json.gz"
+ },
+ {
+  "path": "tests/parts/very_deep_hole.step",
+  "process": "mill",
+  "key": "tests__parts__very_deep_hole.step.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ctc_01_asme1_rd.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ctc_01_asme1_rd.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ctc_02_asme1_rc.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ctc_02_asme1_rc.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ctc_03_asme1_rc.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ctc_03_asme1_rc.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ctc_04_asme1_rd.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ctc_04_asme1_rd.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ctc_05_asme1_rd.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ctc_05_asme1_rd.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ftc_06_asme1_rd.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ftc_06_asme1_rd.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ftc_07_asme1_rd.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ftc_07_asme1_rd.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ftc_08_asme1_rc.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ftc_08_asme1_rc.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ftc_09_asme1_rd.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ftc_09_asme1_rd.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ftc_10_asme1_rb.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ftc_10_asme1_rb.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ftc_11_asme1_rb.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ftc_11_asme1_rb.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 with PMI/nist_ctc_01_asme1_ap203.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 with PMI__nist_ctc_01_asme1_ap203.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 with PMI/nist_ctc_02_asme1_ap203.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 with PMI__nist_ctc_02_asme1_ap203.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 with PMI/nist_ctc_03_asme1_ap203.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 with PMI__nist_ctc_03_asme1_ap203.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 with PMI/nist_ctc_04_asme1_ap203.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 with PMI__nist_ctc_04_asme1_ap203.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 with PMI/nist_ctc_05_asme1_ap203.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 with PMI__nist_ctc_05_asme1_ap203.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_01_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_01_asme1_ap242-e1.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_02_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_02_asme1_ap242-e2.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_03_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_03_asme1_ap242-e2.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_05_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_05_asme1_ap242-e1.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_06_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_06_asme1_ap242-e2.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_07_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_07_asme1_ap242-e2.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_08_asme1_ap242-e1-tg.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_08_asme1_ap242-e1-tg.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_08_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_08_asme1_ap242-e2.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_09_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_09_asme1_ap242-e1.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_10_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_10_asme1_ap242-e2.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_11_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_11_asme1_ap242-e2.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_06_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_06_asme1_ap242-e3.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_07_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_07_asme1_ap242-e3.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_08_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_08_asme1_ap242-e3.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_09_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_09_asme1_ap242-e3.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_10_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_10_asme1_ap242-e2.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/WELDMENT/weldment.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__WELDMENT__weldment.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/ballnut/ballnut.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__ballnut__ballnut.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/ballnut/ballnut.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__ballnut__ballnut.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/bearing_208/bearing_208.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__bearing_208__bearing_208.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/bearing_208/bearing_208.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__bearing_208__bearing_208.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/bearing_209/bearing_209.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__bearing_209__bearing_209.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/bearing_209/bearing_209.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__bearing_209__bearing_209.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/bearing_nut_support_plate_31/bearing_nut_support_plate_31.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__bearing_nut_support_plate_31__bearing_nut_support_plate_31.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/bearing_post1_56/bearing_post1_56.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__bearing_post1_56__bearing_post1_56.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/bearing_post_56/bearing_post_56.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__bearing_post_56__bearing_post_56.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/bearing_shaft1_57/bearing_shaft1_57.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__bearing_shaft1_57__bearing_shaft1_57.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/bearing_shaft2_57/bearing_shaft2_57.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__bearing_shaft2_57__bearing_shaft2_57.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/bearing_shaft_57/bearing_shaft_57.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__bearing_shaft_57__bearing_shaft_57.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/bellow/bellow.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__bellow__bellow.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/bellow/bellow.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__bellow__bellow.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/bellows_attach_ring_21/bellows_attach_ring_21.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__bellows_attach_ring_21__bellows_attach_ring_21.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/bellows_attach_ring_26/bellows_attach_ring_26.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__bellows_attach_ring_26__bellows_attach_ring_26.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/bellows_long/bellows_long.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__bellows_long__bellows_long.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/bellows_long/bellows_long.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__bellows_long__bellows_long.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/flange_pt201_11/flange_pt201_11.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__flange_pt201_11__flange_pt201_11.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/flange_pt202_16/flange_pt202_16.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__flange_pt202_16__flange_pt202_16.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/linkage_arm1_42/linkage_arm1_42.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__linkage_arm1_42__linkage_arm1_42.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/linkage_arm1_43/linkage_arm1_43.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__linkage_arm1_43__linkage_arm1_43.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/linkage_arm_42/linkage_arm_42.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__linkage_arm_42__linkage_arm_42.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/linkage_arm_42/linkage_arm_42.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__linkage_arm_42__linkage_arm_42.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/linkage_arm_43/linkage_arm_43.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__linkage_arm_43__linkage_arm_43.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/linkage_arm_43/linkage_arm_43.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__linkage_arm_43__linkage_arm_43.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/linkage_arm_short_46/linkage_arm_short_46.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__linkage_arm_short_46__linkage_arm_short_46.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/main_block/main_block.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__main_block__main_block.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/main_block/main_block.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__main_block__main_block.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/main_linkage_arm_6/main_linkage_arm_6.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__main_linkage_arm_6__main_linkage_arm_6.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/new_main/new_main.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__new_main__new_main.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/nut_244/nut_244.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__nut_244__nut_244.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/nut_244/nut_244.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__nut_244__nut_244.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/rear_plate_36/rear_plate_36.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__rear_plate_36__rear_plate_36.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/rear_plate_36/rear_plate_36.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__rear_plate_36__rear_plate_36.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/screw_81/screw_81.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__screw_81__screw_81.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/screw_81/screw_81.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__screw_81__screw_81.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/shaft_62/shaft_62.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__shaft_62__shaft_62.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/shaft_62/shaft_62.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__shaft_62__shaft_62.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer1_66/spacer1_66.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__spacer1_66__spacer1_66.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer1_66/spacer1_66.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__spacer1_66__spacer1_66.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer1_67/spacer1_67.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__spacer1_67__spacer1_67.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer1_67/spacer1_67.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__spacer1_67__spacer1_67.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer_220/spacer_220.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__spacer_220__spacer_220.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer_220/spacer_220.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__spacer_220__spacer_220.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer_223/spacer_223.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__spacer_223__spacer_223.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer_223/spacer_223.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__spacer_223__spacer_223.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer_66/spacer_66.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__spacer_66__spacer_66.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer_66/spacer_66.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__spacer_66__spacer_66.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer_67/spacer_67.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__spacer_67__spacer_67.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer_67/spacer_67.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__spacer_67__spacer_67.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer_87/spacer_87.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__spacer_87__spacer_87.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/NIST/Manfred_Osti/spectrometer/spacer_87/spacer_87.prt.hh.sat.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__NIST__Manfred_Osti__spectrometer__spacer_87__spacer_87.prt.hh.sat.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/1797609in/1797609in.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__1797609in__1797609in.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/2827056/2827056.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__2827056__2827056.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/boeing_part/boeing_part.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__boeing_part__boeing_part.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/bracket1-Part/bracket1-Part.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__bracket1-Part__bracket1-Part.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/clevis21/clevis21.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__clevis21__clevis21.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/clevis22/clevis22.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__clevis22__clevis22.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/clevis23/clevis23.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__clevis23__clevis23.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/daratech/daratech.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__daratech__daratech.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/gear/gear.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__gear__gear.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/gehaeuse/gehaeuse.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__gehaeuse__gehaeuse.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/interactingPockets/interactingPockets.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__interactingPockets__interactingPockets.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/mohne/mohne.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__mohne__mohne.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/monster4/monster4.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__monster4__monster4.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/mycami2/mycami2.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__mycami2__mycami2.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/nasty_cheese/nasty_cheese.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__nasty_cheese__nasty_cheese.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/piston/piston.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__piston__piston.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/simple_boeing_part/simple_boeing_part.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__simple_boeing_part__simple_boeing_part.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/socket/socket.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__socket__socket.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/team/team.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__team__team.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/unterlaf/unterlaf.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__unterlaf__unterlaf.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/vaccase_asm_solid/vaccase_asm_solid.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__vaccase_asm_solid__vaccase_asm_solid.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/valve/valve.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__valve__valve.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/vs_training/vs_training.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__vs_training__vs_training.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/STEP/STI/weldment_asm_solid/weldment_asm_solid.stp",
+  "process": "mill",
+  "key": "tests__edmr__models__STEP__STI__weldment_asm_solid__weldment_asm_solid.stp.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/AES94/AES94.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__AES94__AES94.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/AES94_stock/AES94_stock.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__AES94_stock__AES94_stock.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/base1-Part/base1-Part.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__base1-Part__base1-Part.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/base1-Stock/base1-Stock.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__base1-Stock__base1-Stock.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/base2-Part/base2-Part.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__base2-Part__base2-Part.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/base2-Stock/base2-Stock.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__base2-Stock__base2-Stock.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/bottomed_pocket1/bottomed_pocket1.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__bottomed_pocket1__bottomed_pocket1.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/bottomless_pocket1/bottomless_pocket1.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__bottomless_pocket1__bottomless_pocket1.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/bracket1-Part/bracket1-Part.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__bracket1-Part__bracket1-Part.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/bracket1-Stock/bracket1-Stock.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__bracket1-Stock__bracket1-Stock.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/bracket2-Part/bracket2-Part.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__bracket2-Part__bracket2-Part.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/bracket2-Stock/bracket2-Stock.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__bracket2-Stock__bracket2-Stock.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/bracket3-Part/bracket3-Part.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__bracket3-Part__bracket3-Part.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/bracket3-Stock/bracket3-Stock.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__bracket3-Stock__bracket3-Stock.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/bracket4-Part/bracket4-Part.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__bracket4-Part__bracket4-Part.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/bracket4-Stock/bracket4-Stock.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__bracket4-Stock__bracket4-Stock.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/castle/castle.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__castle__castle.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/ex1/ex1.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__ex1__ex1.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/ex1_stock/ex1_stock.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__ex1_stock__ex1_stock.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/ex2/ex2.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__ex2__ex2.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/ex2_stock/ex2_stock.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__ex2_stock__ex2_stock.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/pathological/pathological.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__pathological__pathological.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/polyh_castle/polyh_castle.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__polyh_castle__polyh_castle.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/regli_pathological1/regli_pathological1.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__regli_pathological1__regli_pathological1.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/socket1-Part/socket1-Part.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__socket1-Part__socket1-Part.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/socket1-Stock/socket1-Stock.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__socket1-Stock__socket1-Stock.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/socket2-Part/socket2-Part.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__socket2-Part__socket2-Part.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/socket2-Stock/socket2-Stock.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__socket2-Stock__socket2-Stock.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/swivel1-Part/swivel1-Part.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__swivel1-Part__swivel1-Part.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/swivel1-Stock/swivel1-Stock.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__swivel1-Stock__swivel1-Stock.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/swivel2-Part/swivel2-Part.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__swivel2-Part__swivel2-Part.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/swivel2-Stock/swivel2-Stock.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__swivel2-Stock__swivel2-Stock.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/through_pocket1/through_pocket1.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__through_pocket1__through_pocket1.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/vand1/vand1.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__vand1__vand1.step.json.gz"
+ },
+ {
+  "path": "tests/edmr/models/UMD/vand1_stock/vand1_stock.step",
+  "process": "mill",
+  "key": "tests__edmr__models__UMD__vand1_stock__vand1_stock.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/bn_ball6.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__bn_ball6.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/bn_blind_hole_r1.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__bn_blind_hole_r1.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/bn_hole.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__bn_hole.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/bn_island.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__bn_island.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/bn_obround.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__bn_obround.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/bn_one_edge.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__bn_one_edge.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/bn_r1.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__bn_r1.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/bn_r2.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__bn_r2.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/bn_r3.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__bn_r3.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/bn_r5p5.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__bn_r5p5.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/bn_round_d40.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__bn_round_d40.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/bn_shallow.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__bn_shallow.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/bn_sharp_r2.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__bn_sharp_r2.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/c01_plain.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__c01_plain.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/c02_corner6.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__c02_corner6.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/dr_10deg.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__dr_10deg.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/dr_1deg.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__dr_1deg.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/dr_2deg.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__dr_2deg.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/dr_3deg.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__dr_3deg.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/dr_3deg_corner6.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__dr_3deg_corner6.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/dr_3deg_corner6_r2.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__dr_3deg_corner6_r2.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/dr_5deg.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__dr_5deg.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/dr_5deg_hole.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__dr_5deg_hole.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/dr_round_1deg.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__dr_round_1deg.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/dr_two_walls.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__dr_two_walls.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/ng_passage_3deg.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__ng_passage_3deg.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/ng_slot_3deg.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__ng_slot_3deg.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/ng_slot_r2.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__ng_slot_r2.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/ng_step_3deg.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__ng_step_3deg.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/ng_step_r2.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__ng_step_r2.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/bullnose_draft/ng_uslot.step",
+  "process": "mill",
+  "key": "tests__grading__sets__bullnose_draft__ng_uslot.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_ends_walls/ch_entry.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_ends_walls__ch_entry.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_ends_walls/cs_100.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_ends_walls__cs_100.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_ends_walls/cs_120.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_ends_walls__cs_120.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_ends_walls/cs_82.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_ends_walls__cs_82.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_ends_walls/cs_90.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_ends_walls__cs_90.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_ends_walls/cs_blind.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_ends_walls__cs_blind.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_ends_walls/cs_both.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_ends_walls__cs_both.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_ends_walls/cs_mixed.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_ends_walls__cs_mixed.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_ends_walls/hw_bottom.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_ends_walls__hw_bottom.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_ends_walls/hw_mid.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_ends_walls__hw_mid.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_ends_walls/hw_top.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_ends_walls__hw_top.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_ends_walls/hw_two_sides.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_ends_walls__hw_two_sides.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_ends_walls/ng_drill_point.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_ends_walls__ng_drill_point.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_ends_walls/sx_bottom_20.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_ends_walls__sx_bottom_20.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_ends_walls/sx_bottom_45.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_ends_walls__sx_bottom_45.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_ends_walls/sx_control.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_ends_walls__sx_control.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_ends_walls/sx_top_30.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_ends_walls__sx_top_30.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/cb_blind_chamfer.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__cb_blind_chamfer.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/cb_both.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__cb_both.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/cb_chamfer.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__cb_chamfer.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/cb_chamfer_1.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__cb_chamfer_1.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/cb_corner.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__cb_corner.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/cb_fillet.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__cb_fillet.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/cb_plain.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__cb_plain.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/ng_blind_opposite.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__ng_blind_opposite.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/ng_cb_both_ends.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__ng_cb_both_ends.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/ng_cb_facing.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__ng_cb_facing.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/ng_far_walls.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__ng_far_walls.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/r_blind.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__r_blind.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/r_offset.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__r_offset.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/r_through.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__r_through.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/x_blind.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__x_blind.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/x_clevis.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__x_clevis.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/x_equal.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__x_equal.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/x_small.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__x_small.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/hole_joins/x_snap_ring.step",
+  "process": "mill",
+  "key": "tests__grading__sets__hole_joins__x_snap_ring.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/pocket_edges/boss_gap_1p27.step",
+  "process": "mill",
+  "key": "tests__grading__sets__pocket_edges__boss_gap_1p27.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/pocket_edges/boss_gap_4p0.step",
+  "process": "mill",
+  "key": "tests__grading__sets__pocket_edges__boss_gap_4p0.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/pocket_edges/boss_pair.step",
+  "process": "mill",
+  "key": "tests__grading__sets__pocket_edges__boss_pair.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/pocket_edges/c01_plain.step",
+  "process": "mill",
+  "key": "tests__grading__sets__pocket_edges__c01_plain.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/pocket_edges/ch_top_0p5.step",
+  "process": "mill",
+  "key": "tests__grading__sets__pocket_edges__ch_top_0p5.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/pocket_edges/ch_top_1p0.step",
+  "process": "mill",
+  "key": "tests__grading__sets__pocket_edges__ch_top_1p0.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/pocket_edges/ch_top_2p0.step",
+  "process": "mill",
+  "key": "tests__grading__sets__pocket_edges__ch_top_2p0.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/pocket_edges/ch_top_sharp.step",
+  "process": "mill",
+  "key": "tests__grading__sets__pocket_edges__ch_top_sharp.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/pocket_edges/fl_top_r1.step",
+  "process": "mill",
+  "key": "tests__grading__sets__pocket_edges__fl_top_r1.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/pocket_edges/fl_top_r2.step",
+  "process": "mill",
+  "key": "tests__grading__sets__pocket_edges__fl_top_r2.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/pocket_edges/split_obround.step",
+  "process": "mill",
+  "key": "tests__grading__sets__pocket_edges__split_obround.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/tapered_holes/ng_boss_3deg.step",
+  "process": "mill",
+  "key": "tests__grading__sets__tapered_holes__ng_boss_3deg.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/tapered_holes/ng_chamfer.step",
+  "process": "mill",
+  "key": "tests__grading__sets__tapered_holes__ng_chamfer.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/tapered_holes/ng_csink.step",
+  "process": "mill",
+  "key": "tests__grading__sets__tapered_holes__ng_csink.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/tapered_holes/ng_drill_point.step",
+  "process": "mill",
+  "key": "tests__grading__sets__tapered_holes__ng_drill_point.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/tapered_holes/tp_blind_10deg.step",
+  "process": "mill",
+  "key": "tests__grading__sets__tapered_holes__tp_blind_10deg.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/tapered_holes/tp_blind_1deg.step",
+  "process": "mill",
+  "key": "tests__grading__sets__tapered_holes__tp_blind_1deg.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/tapered_holes/tp_blind_3deg.step",
+  "process": "mill",
+  "key": "tests__grading__sets__tapered_holes__tp_blind_3deg.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/tapered_holes/tp_blind_3deg_r1.step",
+  "process": "mill",
+  "key": "tests__grading__sets__tapered_holes__tp_blind_3deg_r1.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/tapered_holes/tp_blind_5deg.step",
+  "process": "mill",
+  "key": "tests__grading__sets__tapered_holes__tp_blind_5deg.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/tapered_holes/tp_pin_through.step",
+  "process": "mill",
+  "key": "tests__grading__sets__tapered_holes__tp_pin_through.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/tapered_holes/tp_pipe.step",
+  "process": "mill",
+  "key": "tests__grading__sets__tapered_holes__tp_pipe.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/tapered_holes/tp_small_3deg.step",
+  "process": "mill",
+  "key": "tests__grading__sets__tapered_holes__tp_small_3deg.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/undercuts/dt_blind.step",
+  "process": "mill",
+  "key": "tests__grading__sets__undercuts__dt_blind.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/undercuts/dt_through.step",
+  "process": "mill",
+  "key": "tests__grading__sets__undercuts__dt_through.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/undercuts/pk_control.step",
+  "process": "mill",
+  "key": "tests__grading__sets__undercuts__pk_control.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/undercuts/pk_groove.step",
+  "process": "mill",
+  "key": "tests__grading__sets__undercuts__pk_groove.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/undercuts/pk_lip.step",
+  "process": "mill",
+  "key": "tests__grading__sets__undercuts__pk_lip.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/undercuts/ts_blind.step",
+  "process": "mill",
+  "key": "tests__grading__sets__undercuts__ts_blind.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/undercuts/ts_blind_round.step",
+  "process": "mill",
+  "key": "tests__grading__sets__undercuts__ts_blind_round.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/undercuts/ts_closed.step",
+  "process": "mill",
+  "key": "tests__grading__sets__undercuts__ts_closed.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/undercuts/ts_through.step",
+  "process": "mill",
+  "key": "tests__grading__sets__undercuts__ts_through.step.json.gz"
+ },
+ {
+  "path": "tests/grading/sets/undercuts/ts_two.step",
+  "process": "mill",
+  "key": "tests__grading__sets__undercuts__ts_two.step.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_01_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_01_asme1_ap242-e1.stp+INV_nist_ctc_01_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_01_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_01_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_01_asme1_ap242-e1.stp+INV_nist_ctc_01_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_01_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_02_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_02_asme1_ap242-e2.stp+INV_nist_ctc_02_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_02_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_02_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_02_asme1_ap242-e2.stp+INV_nist_ctc_02_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_02_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_03_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_03_asme1_ap242-e2.stp+INV_nist_ctc_03_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_03_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_03_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_03_asme1_ap242-e2.stp+INV_nist_ctc_03_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_03_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+INV_nist_ctc_04_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_04_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+INV_nist_ctc_04_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_04_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_05_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_05_asme1_ap242-e1.stp+INV_nist_ctc_05_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_05_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_05_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_05_asme1_ap242-e1.stp+INV_nist_ctc_05_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_05_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_06_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_06_asme1_ap242-e2.stp+INV_nist_ftc_06_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_06_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_06_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_06_asme1_ap242-e2.stp+INV_nist_ftc_06_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_06_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_06_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_06_asme1_ap242-e3.stp+INV_nist_ftc_06_asme1_2024.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_06_asme1_2024.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_06_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_06_asme1_ap242-e3.stp+INV_nist_ftc_06_asme1_2024.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_06_asme1_2024.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_07_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_07_asme1_ap242-e2.stp+INV_nist_ftc_07_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_07_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_07_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_07_asme1_ap242-e2.stp+INV_nist_ftc_07_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_07_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_07_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_07_asme1_ap242-e3.stp+INV_nist_ftc_07_asme1_2024.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_07_asme1_2024.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_07_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_07_asme1_ap242-e3.stp+INV_nist_ftc_07_asme1_2024.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_07_asme1_2024.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_08_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_08_asme1_ap242-e2.stp+INV_nist_ftc_08_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_08_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_08_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_08_asme1_ap242-e2.stp+INV_nist_ftc_08_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_08_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_08_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_08_asme1_ap242-e3.stp+INV_nist_ftc_08_asme1_2024.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_08_asme1_2024.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_08_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_08_asme1_ap242-e3.stp+INV_nist_ftc_08_asme1_2024.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_08_asme1_2024.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_09_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_09_asme1_ap242-e1.stp+INV_nist_ftc_09_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_09_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_09_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_09_asme1_ap242-e1.stp+INV_nist_ftc_09_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_09_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_09_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_09_asme1_ap242-e3.stp+INV_nist_ftc_09_asme1_2024.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_09_asme1_2024.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_09_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_09_asme1_ap242-e3.stp+INV_nist_ftc_09_asme1_2024.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_09_asme1_2024.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_10_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_10_asme1_ap242-e2.stp+INV_nist_ftc_10_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_10_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_10_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_10_asme1_ap242-e2.stp+INV_nist_ftc_10_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_10_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_10_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_10_asme1_ap242-e2.stp+INV_nist_ftc_10_asme1_2024.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_10_asme1_2024.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_10_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_10_asme1_ap242-e2.stp+INV_nist_ftc_10_asme1_2024.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_10_asme1_2024.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_11_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_11_asme1_ap242-e2.stp+INV_nist_ftc_11_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_11_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_11_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_11_asme1_ap242-e2.stp+INV_nist_ftc_11_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_11_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/parts/box_through_hole.step",
+  "process": "mill",
+  "key": "tests__parts__box_through_hole.step+no-model.ipt.json.gz",
+  "ipt": "tests/parity/key/ipt/no-model.ipt.gz",
+  "harness": false
+ },
+ {
+  "path": "tests/parts/box_through_hole.step",
+  "process": "mill",
+  "key": "tests__parts__box_through_hole.step+unknown-tag.ipt.json.gz",
+  "ipt": "tests/parity/key/ipt/unknown-tag.ipt.gz",
+  "harness": false
+ },
+ {
+  "path": "tests/parts/box_through_hole.step",
+  "process": "mill",
+  "key": "tests__parts__box_through_hole.step+cut-short.ipt.json.gz",
+  "ipt": "tests/parity/key/ipt/cut-short.ipt.gz",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+hole-no_end.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/hole-no_end.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+hole-long_list.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/hole-long_list.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+hole-owner_off.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/hole-owner_off.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+blend-no_end.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/blend-no_end.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+blend-long_list.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/blend-long_list.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+blend-owner_off.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/blend-owner_off.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+cycle-hole.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/cycle-hole.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+cycle-blend.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/cycle-blend.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+fillet-radius.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/fillet-radius.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/parts/box_through_hole.step",
+  "process": "mill",
+  "key": "tests__parts__box_through_hole.step+not-an-ipt.ipt.json.gz",
+  "ipt": "tests/parity/key/ipt/not-an-ipt.ipt.gz",
+  "harness": false
+ }
+]

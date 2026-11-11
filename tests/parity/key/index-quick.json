@@ -1,0 +1,702 @@
+[
+ {
+  "path": "tests/parts/angled_hole.step",
+  "process": "mill",
+  "key": "tests__parts__angled_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/angled_hole_in_pocket.step",
+  "process": "mill",
+  "key": "tests__parts__angled_hole_in_pocket.step.json.gz"
+ },
+ {
+  "path": "tests/parts/block_as_turn.step",
+  "process": "turn",
+  "key": "tests__parts__block_as_turn.step.json.gz"
+ },
+ {
+  "path": "tests/parts/box_inch.step",
+  "process": "mill",
+  "key": "tests__parts__box_inch.step.json.gz"
+ },
+ {
+  "path": "tests/parts/box_through_hole.step",
+  "process": "mill",
+  "key": "tests__parts__box_through_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/clean_holes.step",
+  "process": "mill",
+  "key": "tests__parts__clean_holes.step.json.gz"
+ },
+ {
+  "path": "tests/parts/clean_one_setup.step",
+  "process": "mill",
+  "key": "tests__parts__clean_one_setup.step.json.gz"
+ },
+ {
+  "path": "tests/parts/clean_pocket.step",
+  "process": "mill",
+  "key": "tests__parts__clean_pocket.step.json.gz"
+ },
+ {
+  "path": "tests/parts/clean_shaft.step",
+  "process": "turn",
+  "key": "tests__parts__clean_shaft.step.json.gz"
+ },
+ {
+  "path": "tests/parts/clean_walls.step",
+  "process": "mill",
+  "key": "tests__parts__clean_walls.step.json.gz"
+ },
+ {
+  "path": "tests/parts/countersunk_hole.step",
+  "process": "mill",
+  "key": "tests__parts__countersunk_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/deep_hole.step",
+  "process": "mill",
+  "key": "tests__parts__deep_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/drill_point_hole.step",
+  "process": "mill",
+  "key": "tests__parts__drill_point_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/fillet_not_hole.step",
+  "process": "mill",
+  "key": "tests__parts__fillet_not_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/flange_bolt_hole.step",
+  "process": "turn",
+  "key": "tests__parts__flange_bolt_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/flat_bottom_hole.step",
+  "process": "mill",
+  "key": "tests__parts__flat_bottom_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/hole_near_edge.step",
+  "process": "mill",
+  "key": "tests__parts__hole_near_edge.step.json.gz"
+ },
+ {
+  "path": "tests/parts/holes_close.step",
+  "process": "mill",
+  "key": "tests__parts__holes_close.step.json.gz"
+ },
+ {
+  "path": "tests/parts/metric_hole.step",
+  "process": "mill",
+  "key": "tests__parts__metric_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/no_solid.step",
+  "process": "mill",
+  "key": "tests__parts__no_solid.step.json.gz"
+ },
+ {
+  "path": "tests/parts/not_step.step",
+  "process": "mill",
+  "key": "tests__parts__not_step.step.json.gz"
+ },
+ {
+  "path": "tests/parts/odd_hole.step",
+  "process": "mill",
+  "key": "tests__parts__odd_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/odd_metric_hole.step",
+  "process": "mill",
+  "key": "tests__parts__odd_metric_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/pocket_deep.step",
+  "process": "mill",
+  "key": "tests__parts__pocket_deep.step.json.gz"
+ },
+ {
+  "path": "tests/parts/pocket_deep_wide.step",
+  "process": "mill",
+  "key": "tests__parts__pocket_deep_wide.step.json.gz"
+ },
+ {
+  "path": "tests/parts/pocket_island.step",
+  "process": "mill",
+  "key": "tests__parts__pocket_island.step.json.gz"
+ },
+ {
+  "path": "tests/parts/pocket_long_thin_tool.step",
+  "process": "mill",
+  "key": "tests__parts__pocket_long_thin_tool.step.json.gz"
+ },
+ {
+  "path": "tests/parts/pocket_sharp.step",
+  "process": "mill",
+  "key": "tests__parts__pocket_sharp.step.json.gz"
+ },
+ {
+  "path": "tests/parts/pocket_small_radius.step",
+  "process": "mill",
+  "key": "tests__parts__pocket_small_radius.step.json.gz"
+ },
+ {
+  "path": "tests/parts/report_sample.step",
+  "process": "mill",
+  "key": "tests__parts__report_sample.step.json.gz"
+ },
+ {
+  "path": "tests/parts/rotated_block.step",
+  "process": "mill",
+  "key": "tests__parts__rotated_block.step.json.gz"
+ },
+ {
+  "path": "tests/parts/shaft_with_groove_and_bore.step",
+  "process": "turn",
+  "key": "tests__parts__shaft_with_groove_and_bore.step.json.gz"
+ },
+ {
+  "path": "tests/parts/slender_shaft.step",
+  "process": "turn",
+  "key": "tests__parts__slender_shaft.step.json.gz"
+ },
+ {
+  "path": "tests/parts/slot_not_wall.step",
+  "process": "mill",
+  "key": "tests__parts__slot_not_wall.step.json.gz"
+ },
+ {
+  "path": "tests/parts/split_hole.step",
+  "process": "mill",
+  "key": "tests__parts__split_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/stepped_hole.step",
+  "process": "mill",
+  "key": "tests__parts__stepped_hole.step.json.gz"
+ },
+ {
+  "path": "tests/parts/stout_shaft.step",
+  "process": "turn",
+  "key": "tests__parts__stout_shaft.step.json.gz"
+ },
+ {
+  "path": "tests/parts/thin_drill_point.step",
+  "process": "mill",
+  "key": "tests__parts__thin_drill_point.step.json.gz"
+ },
+ {
+  "path": "tests/parts/thin_floor.step",
+  "process": "mill",
+  "key": "tests__parts__thin_floor.step.json.gz"
+ },
+ {
+  "path": "tests/parts/thin_rib.step",
+  "process": "mill",
+  "key": "tests__parts__thin_rib.step.json.gz"
+ },
+ {
+  "path": "tests/parts/through_hole_two_dirs.step",
+  "process": "mill",
+  "key": "tests__parts__through_hole_two_dirs.step.json.gz"
+ },
+ {
+  "path": "tests/parts/two_holes_web.step",
+  "process": "mill",
+  "key": "tests__parts__two_holes_web.step.json.gz"
+ },
+ {
+  "path": "tests/parts/two_sided_block.step",
+  "process": "mill",
+  "key": "tests__parts__two_sided_block.step.json.gz"
+ },
+ {
+  "path": "tests/parts/very_deep_hole.step",
+  "process": "mill",
+  "key": "tests__parts__very_deep_hole.step.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ctc_01_asme1_rd.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ctc_01_asme1_rd.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ctc_02_asme1_rc.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ctc_02_asme1_rc.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ctc_03_asme1_rc.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ctc_03_asme1_rc.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ctc_04_asme1_rd.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ctc_04_asme1_rd.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ctc_05_asme1_rd.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ctc_05_asme1_rd.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ftc_06_asme1_rd.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ftc_06_asme1_rd.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ftc_07_asme1_rd.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ftc_07_asme1_rd.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ftc_08_asme1_rc.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ftc_08_asme1_rc.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ftc_09_asme1_rd.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ftc_09_asme1_rd.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ftc_10_asme1_rb.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ftc_10_asme1_rb.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 geometry only/nist_ftc_11_asme1_rb.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 geometry only__nist_ftc_11_asme1_rb.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 with PMI/nist_ctc_01_asme1_ap203.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 with PMI__nist_ctc_01_asme1_ap203.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 with PMI/nist_ctc_02_asme1_ap203.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 with PMI__nist_ctc_02_asme1_ap203.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 with PMI/nist_ctc_03_asme1_ap203.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 with PMI__nist_ctc_03_asme1_ap203.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 with PMI/nist_ctc_04_asme1_ap203.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 with PMI__nist_ctc_04_asme1_ap203.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/AP203 with PMI/nist_ctc_05_asme1_ap203.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__AP203 with PMI__nist_ctc_05_asme1_ap203.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_01_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_01_asme1_ap242-e1.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_02_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_02_asme1_ap242-e2.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_03_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_03_asme1_ap242-e2.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_05_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_05_asme1_ap242-e1.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_06_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_06_asme1_ap242-e2.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_07_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_07_asme1_ap242-e2.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_08_asme1_ap242-e1-tg.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_08_asme1_ap242-e1-tg.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_08_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_08_asme1_ap242-e2.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_09_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_09_asme1_ap242-e1.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_10_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_10_asme1_ap242-e2.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_11_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_11_asme1_ap242-e2.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_06_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_06_asme1_ap242-e3.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_07_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_07_asme1_ap242-e3.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_08_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_08_asme1_ap242-e3.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_09_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_09_asme1_ap242-e3.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_10_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_10_asme1_ap242-e2.stp.json.gz"
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_01_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_01_asme1_ap242-e1.stp+INV_nist_ctc_01_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_01_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_01_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_01_asme1_ap242-e1.stp+INV_nist_ctc_01_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_01_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_02_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_02_asme1_ap242-e2.stp+INV_nist_ctc_02_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_02_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_02_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_02_asme1_ap242-e2.stp+INV_nist_ctc_02_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_02_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_03_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_03_asme1_ap242-e2.stp+INV_nist_ctc_03_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_03_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_03_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_03_asme1_ap242-e2.stp+INV_nist_ctc_03_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_03_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+INV_nist_ctc_04_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_04_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+INV_nist_ctc_04_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_04_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_05_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_05_asme1_ap242-e1.stp+INV_nist_ctc_05_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_05_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_05_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_05_asme1_ap242-e1.stp+INV_nist_ctc_05_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ctc_05_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_06_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_06_asme1_ap242-e2.stp+INV_nist_ftc_06_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_06_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_06_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_06_asme1_ap242-e2.stp+INV_nist_ftc_06_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_06_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_06_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_06_asme1_ap242-e3.stp+INV_nist_ftc_06_asme1_2024.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_06_asme1_2024.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_06_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_06_asme1_ap242-e3.stp+INV_nist_ftc_06_asme1_2024.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_06_asme1_2024.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_07_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_07_asme1_ap242-e2.stp+INV_nist_ftc_07_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_07_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_07_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_07_asme1_ap242-e2.stp+INV_nist_ftc_07_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_07_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_07_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_07_asme1_ap242-e3.stp+INV_nist_ftc_07_asme1_2024.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_07_asme1_2024.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_07_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_07_asme1_ap242-e3.stp+INV_nist_ftc_07_asme1_2024.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_07_asme1_2024.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_08_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_08_asme1_ap242-e2.stp+INV_nist_ftc_08_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_08_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_08_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_08_asme1_ap242-e2.stp+INV_nist_ftc_08_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_08_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_08_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_08_asme1_ap242-e3.stp+INV_nist_ftc_08_asme1_2024.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_08_asme1_2024.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_08_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_08_asme1_ap242-e3.stp+INV_nist_ftc_08_asme1_2024.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_08_asme1_2024.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_09_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_09_asme1_ap242-e1.stp+INV_nist_ftc_09_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_09_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_09_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_09_asme1_ap242-e1.stp+INV_nist_ftc_09_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_09_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_09_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_09_asme1_ap242-e3.stp+INV_nist_ftc_09_asme1_2024.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_09_asme1_2024.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_09_asme1_ap242-e3.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_09_asme1_ap242-e3.stp+INV_nist_ftc_09_asme1_2024.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_09_asme1_2024.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_10_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_10_asme1_ap242-e2.stp+INV_nist_ftc_10_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_10_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_10_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_10_asme1_ap242-e2.stp+INV_nist_ftc_10_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_10_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_10_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_10_asme1_ap242-e2.stp+INV_nist_ftc_10_asme1_2024.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_10_asme1_2024.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_stc_10_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_stc_10_asme1_ap242-e2.stp+INV_nist_ftc_10_asme1_2024.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_10_asme1_2024.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_11_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_11_asme1_ap242-e2.stp+INV_nist_ftc_11_asme1_2021.ipt.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_11_asme1_2021.ipt",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ftc_11_asme1_ap242-e2.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ftc_11_asme1_ap242-e2.stp+INV_nist_ftc_11_asme1_2021.ipt+harness.json.gz",
+  "ipt": "tests/inventor/files/INV_nist_ftc_11_asme1_2021.ipt",
+  "harness": true
+ },
+ {
+  "path": "tests/parts/box_through_hole.step",
+  "process": "mill",
+  "key": "tests__parts__box_through_hole.step+no-model.ipt.json.gz",
+  "ipt": "tests/parity/key/ipt/no-model.ipt.gz",
+  "harness": false
+ },
+ {
+  "path": "tests/parts/box_through_hole.step",
+  "process": "mill",
+  "key": "tests__parts__box_through_hole.step+unknown-tag.ipt.json.gz",
+  "ipt": "tests/parity/key/ipt/unknown-tag.ipt.gz",
+  "harness": false
+ },
+ {
+  "path": "tests/parts/box_through_hole.step",
+  "process": "mill",
+  "key": "tests__parts__box_through_hole.step+cut-short.ipt.json.gz",
+  "ipt": "tests/parity/key/ipt/cut-short.ipt.gz",
+  "harness": false
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+hole-no_end.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/hole-no_end.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+hole-long_list.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/hole-long_list.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+hole-owner_off.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/hole-owner_off.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+blend-no_end.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/blend-no_end.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+blend-long_list.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/blend-long_list.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+blend-owner_off.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/blend-owner_off.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+cycle-hole.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/cycle-hole.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+cycle-blend.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/cycle-blend.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/nist/.cache/NIST-PMI-STEP-Files/nist_ctc_04_asme1_ap242-e1.stp",
+  "process": "mill",
+  "key": "tests__nist__.cache__NIST-PMI-STEP-Files__nist_ctc_04_asme1_ap242-e1.stp+fillet-radius.ipt+harness.json.gz",
+  "ipt": "tests/parity/key/ipt/fillet-radius.ipt.gz",
+  "harness": true
+ },
+ {
+  "path": "tests/parts/box_through_hole.step",
+  "process": "mill",
+  "key": "tests__parts__box_through_hole.step+not-an-ipt.ipt.json.gz",
+  "ipt": "tests/parity/key/ipt/not-an-ipt.ipt.gz",
+  "harness": false
+ }
+]
