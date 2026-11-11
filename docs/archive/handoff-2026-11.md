@@ -193,3 +193,8 @@ Build, first usable version: all seven slices merged. S1 to S6 in #3 to #17 (his
 - 2026-11-11 D-076: UI fixes plan and mock-up approved: slice A model, slice B screens; tool-access check after steps and slots.
 - 2026-11-11 D-075: edge treatments (chamfers, fillets), then pocket shapes, join the recognition plan after steps and slots.
 - 2026-11-11 D-074: S8b approved: Python retired; tessellation is a named 3-face exemption (OCCT 8.0.1 vs 8.0.0).
+
+## Moved 2026-11-11 (spike session)
+
+- 2026-11-11 D-078: UI fixes spec approved; view buttons in file axes, triad in part axes (as recommended); free rotation with ArcballControls (Morgan changed it from turntable).
+- 2026-11-10 D-068: steps and slots named and scored by MFCAD++'s classes (no open-pocket kind); plan and tools first; slot depth over 6× width a finding.

@@ -17,7 +17,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ✔ Build slice by slice: S1 to S7, grading spike, recognition rounds, stress-test, undercut and turning sets (#3 to #18).
 - ○ Assemblies and DFA · history and compare · time and $.
 - ▶ Inventor parts (Morgan, 2026-11-08): ✔ research · ✔ own reader (D-031) · ✔ plan (D-032) · ✔ spec I1 (D-033) · ✔ I1 S1 #21, S2 #22, S3 #23 · ✔ spec I2+I3 (D-039) · ✔ I2 S1 hole features #24 (D-041) · ✔ S2 names and copies and S3 fillets and chamfers, merged in #27 (D-043, D-046) · ▶ work-pair check owed (from 2026-11-12).
-- ○ Inventor shape from the `.ipt` alone (D-035; after I1).
+- ▶ Inventor shape from the `.ipt` alone (D-035): ✔ TypeScript spike, closed solid for 7 of 16 files, same features as the STEP route on CTC 04 and FTC 06 (PR #52, [README](research/inventor-shape-ts/README.md)) · ○ spline surfaces and edges, FTC 09, FTC 11 · ○ plan the phase with `planning-interview` first.
 - ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ✔ spec approved (D-045, #28) · ✔ S1 merged in #29 (D-047) · ✔ S2 + S3 merged in #30 (D-048 to D-052) · ✔ UX audit #31 · ✔ audit fixes #32 (D-053) ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
 - ▶ GitLab Pages port (Morgan, 2026-11-09; D-054, D-055, D-056): ✔ trial · ✔ spec approved (PR #33) · ✔ S1 site, viewer, parity (PR #34) · ✔ S2 holes (PR #35) · ✔ S3 plan, cost, PDF (PR #36; work release possible) · ✔ S4 pockets (PR #37) · ✔ S5 walls (PR #38) · ✔ S6 turning (PR #40) · ✔ S7 Inventor (PR #41) · ✔ S8a (PR #42) · ✔ S8b retire Python (PR #43).
 - ✔ UI fixes (Morgan, 2026-11-10; D-076): ✔ round 1 and review · ✔ mock-up approved (PR #46) · ✔ spec A+B (D-078, #49) · ✔ slice A model (#51, D-080) · ✔ slice B screens (#53) · ○ Morgan's work-copy check · ○ later: cutaway, dimensions; tool-access check after steps and slots.
@@ -28,6 +28,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 - 2026-11-11 Steps and slots spec approved (D-081) and merged in PR #50: planned with D-079 (Morgan: research, then the recommendations); checked 6 times ([approval page](https://claude.ai/artifact/G38mPz8nx9BMCwwYR39hqc)). Baseline: MFCAD++ first 500 holes 12/602 missed, pockets 78/3,745, 1 wrong (716 s, 4 jobs); check set holes 23/666, pockets 112/3,872, 1 wrong.
 - 2026-11-11 UI fixes slice B (the screens) merged in PR #53: Examples, one Open… picker, Part / Machine switch; `web/e2e/screens.spec.ts`.
+- 2026-11-11 Shape-from-`.ipt` spike in TypeScript (PR #52; research only, outside `npm run check`; next steps in its README are Proposed, nothing decided).
 - Earlier (UI fixes spec #49, D-077 #48, plan, S8b, harness v4.14.0): archive "Moved 2026-11-11 (spec session)", "(slice A session)" and "(steps-slots planning session)".
 
 ## Next
@@ -53,6 +54,4 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - 2026-11-11 D-081: steps and slots spec approved; merged after UI fixes B (Morgan: "You merge after pr 53").
 - 2026-11-11 D-080: UI fixes slice A approved after the demo; merged in PR #51; open calls stand as built.
 - 2026-11-11 D-079: steps and slots planned: step cut from floor or wall, slot from floor only (amends D-068); slot rougher ≤ 0.75 width then finisher; step rougher 1 in then corner finisher; deep check on both and slot over 6× width; target fixed before the first run.
-- 2026-11-11 D-078: UI fixes spec approved; view buttons in file axes, triad in part axes (as recommended); free rotation with ArcballControls (Morgan changed it from turntable).
-- 2026-11-10 D-068: steps and slots named and scored by MFCAD++'s classes (no open-pocket kind); plan and tools first; slot depth over 6× width a finding.
 - D-001 to D-037: see `docs/DECISIONS.md` (`grep '^## D-'`).
