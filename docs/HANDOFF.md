@@ -20,7 +20,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ○ Inventor shape from the `.ipt` alone (D-035; after I1).
 - ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ✔ spec approved (D-045, #28) · ✔ S1 merged in #29 (D-047) · ✔ S2 + S3 merged in #30 (D-048 to D-052) · ✔ UX audit #31 · ✔ audit fixes #32 (D-053) ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
 - ▶ GitLab Pages port (Morgan, 2026-11-09; D-054, D-055, D-056): ✔ trial · ✔ spec approved (PR #33) · ✔ S1 site, viewer, parity (PR #34) · ✔ S2 holes (PR #35) · ✔ S3 plan, cost, PDF (PR #36; work release possible) · ✔ S4 pockets (PR #37) · ✔ S5 walls (PR #38) · ✔ S6 turning (PR #40) · ✔ S7 Inventor (PR #41) · ✔ S8a (PR #42) · ✔ S8b retire Python (PR #43).
-- ○ Steps and slots (Morgan, 2026-11-10; D-066, D-068): ✔ research ([page](research/feature-recognition.html)) · ✔ answers (MFCAD++ classes, no open-pocket kind, plan first) · ○ spec with `write-spec` · ○ build (after the port, unless Morgan moves it up).
+- ○ Steps and slots (Morgan, 2026-11-10; D-066, D-068): ✔ research ([page](research/feature-recognition.html)) · ✔ answers (MFCAD++ classes, no open-pocket kind, plan first) · ○ spec with `write-spec` · ○ build (after the port, unless Morgan moves it up) · ○ then edge treatments: chamfers and fillets (D-075) · ○ then pocket shapes, MFCAD++ 13-16 (D-075).
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
@@ -48,10 +48,10 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-11 D-075: edge treatments (chamfers, fillets), then pocket shapes, join the recognition plan after steps and slots.
 - 2026-11-11 D-074: S8b approved: Python retired; tessellation is a named 3-face exemption (OCCT 8.0.1 vs 8.0.0).
 - 2026-11-11 D-073: harness v4.14.0 (testing rules) and the 900 s check budget; approved, merged in PR #44.
 - 2026-11-11 D-071: S8 before the UI list; faster checks on the S8 branch; S8 file list and two-PR split approved.
-- 2026-11-10 D-070: S7 merges without the full-set parity (stopped, no result); parity prints a line per file.
 - 2026-11-10 D-069: S7 approved; merge when ready; S8 in a new session.
 - 2026-11-10 D-068: steps and slots named and scored by MFCAD++'s classes (no open-pocket kind); plan and tools first; slot depth over 6× width a finding.
 - 2026-11-10 D-067: S6 approved; merge when CI is done; S7 in a new session.
