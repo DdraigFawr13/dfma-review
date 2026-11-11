@@ -50,7 +50,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
-- 2026-11-11 D-077: checks follow what changed (docs- or mockups-only: drift check only, CI still reports); Morgan checks each slice by using it. PR from branch `ci-docs-only-light`.
+- 2026-11-11 D-077: checks follow what changed (docs- or mockups-only: drift check only, CI still reports); Morgan checks each slice by using it. Approved by Morgan; merged in PR #48.
 - 2026-11-11 D-076: UI fixes plan and mock-up approved: slice A model, slice B screens; tool-access check after steps and slots.
 - 2026-11-11 D-075: edge treatments (chamfers, fillets), then pocket shapes, join the recognition plan after steps and slots.
 - 2026-11-11 D-074: S8b approved: Python retired; tessellation is a named 3-face exemption (OCCT 8.0.1 vs 8.0.0).
