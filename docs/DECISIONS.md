@@ -616,7 +616,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 
 ## D-082 A UI-only change skips the engine-only checks
 
-- **Status:** Accepted (2026-11-11). Morgan, in chat: "Also can you reduce the testing for this?", then picked "Skip engine tests on UI-only (Recommended)" from: skip engine tests on UI-only changes; merge PR #51 on the local pass; both; no change. Numbered D-082 because the steps and slots branch (PR #50) holds D-079 and D-081.
+- **Status:** Accepted (2026-11-11). Built in PR #54; Morgan: "Approved merge". Morgan, in chat: "Also can you reduce the testing for this?", then picked "Skip engine tests on UI-only (Recommended)" from: skip engine tests on UI-only changes; merge PR #51 on the local pass; both; no change. Numbered D-082 because the steps and slots branch (PR #50) holds D-079 and D-081.
 - **Decision:**
   - `scripts/scope.mjs` decides, for `npm run check` locally and in CI. A change is UI-only when every changed file is screen code directly in `web/src/` (not `api.ts`, whose types the engine imports, nor `worker.ts`, which runs it), under `web/e2e/` or `web/public/`, `web/index.html`, Markdown, `docs/` or `mockups/`. Anything else, an empty change, or no base to compare with runs everything.
   - A UI-only change skips the parity run against the frozen key (`npm run parity`) and the timed engine tests (`npm --prefix web run timed`). The drift check, NIST unpack, type check, unit tests, both builds, the browser tests and the timed browser tests still run.
