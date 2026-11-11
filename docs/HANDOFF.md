@@ -26,7 +26,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 ## Just done
 
 - 2026-11-11 S8b (PR #43, draft): Python retired; `npm run check` at the root passes (exit 0): drift, NIST unpack, web check (901 vitest), build and test build, parity quick 122 of 122 the same (4 shards, 99.7 s), e2e 101 passed, timed 4 passed. Then run: edmr 114 of 114 pass; parity:full 335 files, 327 the same, 2 different (bn_ball6, nasty_cheese: D-073 tessellation, Morgan to decide the compare), 6 Python crashed (the UMD files, S1). plan.test.ts angled-holes test has a 30 s limit (engine 5.2 s vs Python 3.8 s).
-- Tessellation (D-073): cause is the OpenCascade build (pythonocc 8.0.1 vs opencascade.js 8.0.0), not our code; decision open (compare rule or dependency upgrade, needs approval).
+- Tessellation (D-073): named exemption for 3 faces (bn_ball6 14, 18; nasty_cheese 202); parity:full exit 0 (327 same, 2 known, 0 different). Morgan can overrule.
 - Status page for Morgan: https://claude.ai/artifact/MgtFDYNREZzpeUP9b4cdn5 (update before approval).
 
 ## Next
