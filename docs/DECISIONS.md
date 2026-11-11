@@ -583,3 +583,13 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - **Later:** tool-access check after steps and slots (Morgan, review note), research first; cutaway and dimensions on the part: Soon, after A and B; view cube: no.
 - **Amends, when built:** UI_STYLE "Selected finding" (a row lights the finding it shows; other faces grey, not their colours); D-042 ("Change file" leaves the overview; one Open… picker); D-023 (the Machine view turns the view per setup and lights a tool's faces); D-017 (pins hidden while the part moves).
 - **Why:** Morgan's 4 photos of the work copy (2026-11-10): rotating was "the hardest currently"; a row with many copies lit the whole part. Round 1 and the review settled each choice; an adversarial review and two fresh mock-up checks ($1.42 measured) found the folded-row cause, the lag on wheel and keys, the arrow-key clash, trackpad moves and the lathe view.
+
+## D-077 Checks follow what changed; Morgan checks each slice by using it
+
+- **Status:** Accepted (2026-11-11). Morgan, in chat, picked option (a), "Both", from: (a) Morgan hand-checks each slice and docs- or mockups-only pushes skip the long checks, with CI still reporting; (b) no rule change.
+- **Decision:**
+  - A push whose changed files are all Markdown, under `docs/` or under `mockups/` runs only the drift check (`npm run drift`), locally and in CI. Any other push runs `npm run check` as before (D-073 budget unchanged).
+  - CI keeps running on every non-draft PR update and `main` push; `scripts/ci-scope.sh` decides light or full inside the one `check` job, so the job always reports. Manual runs, first pushes and unknown bases are full.
+  - EDMR (`npm --prefix web run edmr`) before ready only when `web/src/engine/` or the web packages changed.
+  - "Testing by what changed" in Morgan's words: "I will observe and use all the changes and note whether or not they work as intended or if I want changes after using them". Their notes are the owner's evidence (VER-07); the automated checks still run on code.
+- **Why:** PR #46 changed only docs and mock-ups, yet ran `npm run check` (688 s) and EDMR (442 s) locally, and CI ran the full check, because `ci.yml`'s `paths-ignore` covered only `**/*.md` and `docs/**`. Morgan: "Testing and co should be dependent on what is being changed so we don't have to do all that long testing every time". A workflow-level filter would leave a required check pending; skipping steps inside the job doesn't. Search: the check scripts, `web/src` and `web/e2e` mention `docs/` and `mockups/` only in comments (grep, 2026-11-11); NIST files live in `tests/nist`.
