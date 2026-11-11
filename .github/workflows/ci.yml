@@ -1,15 +1,15 @@
 # One Linux job runs `npm run check` at the repo root (S8b: Node only, no conda): the master drift check, the NIST
 # unpack, the web check and build, the parity run against the frozen key, the browser e2e tests and the timed ones.
+# D-077: a change made only of Markdown, docs/ and mockups/ runs only the drift check; the job still runs and reports,
+# so a required "check" is never left waiting (a workflow-level paths filter would leave it pending). scripts/ci-scope.sh decides.
 # Pinned runner: ubuntu-latest moved to 26.04 on 2026-11-09, where Playwright 1.60 can't install Chromium (LESSONS "ci").
 name: CI
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    paths-ignore: ["**/*.md", "docs/**"]
   push:
     branches: [main]
-    paths-ignore: ["**/*.md", "docs/**"]
   workflow_dispatch:
 
 permissions:
@@ -27,11 +27,23 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2 # HEAD^1 is the PR's base on GitHub's merge commit
+      - id: scope
+        env:
+          CI_EVENT: ${{ github.event_name }}
+          CI_BEFORE: ${{ github.event.before }}
+        run: bash scripts/ci-scope.sh
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
-      - run: npm --prefix web ci
-      - run: npm --prefix web exec -- playwright install --with-deps chromium
-      - run: npm run check
+      - if: steps.scope.outputs.light == 'true'
+        run: npm run drift
+      - if: steps.scope.outputs.light != 'true'
+        run: npm --prefix web ci
+      - if: steps.scope.outputs.light != 'true'
+        run: npm --prefix web exec -- playwright install --with-deps chromium
+      - if: steps.scope.outputs.light != 'true'
+        run: npm run check
