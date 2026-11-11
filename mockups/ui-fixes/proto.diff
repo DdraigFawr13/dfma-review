@@ -1,0 +1,53 @@
+diff --git a/web/src/main.ts b/web/src/main.ts
+index 4fe9b8d..5f8683d 100644
+--- a/web/src/main.ts
++++ b/web/src/main.ts
+@@ -70,6 +70,7 @@ declare global {
+     };
+   }
+ }
++(window as any).__proto = { look: (d: number[], up: number[]) => viewer.protoLook(d, up), select: (id: string, faces: number[]) => viewer.select({ id, faces } as any, false) };
+ window.__dfma = {
+   highlightedFaces: () => viewer.highlightedFaces(),
+   cameraTarget: () => viewer.cameraTarget(),
+@@ -127,7 +128,9 @@ function pickOf(result: Analysis, s: Sel): Pick | null {
+   if (s.kind === "row") {
+     const r = [...result.rows, ...result.passed_rows].find((x) => x.id === s.row);
+     if (!r) return null;
+-    return { id: r.findings[Math.min(s.at, r.findings.length - 1)] ?? r.id, faces: rowFaces(r, result) };
++    const fid = r.findings[Math.min(s.at, r.findings.length - 1)]; // PROTO: one feature at a time
++    const one = result.findings.find((x) => x.id === fid);
++    return { id: fid ?? r.id, faces: one ? one.faces : rowFaces(r, result) };
+   }
+   return stillThere(result, s.id);
+ }
+diff --git a/web/src/viewer.ts b/web/src/viewer.ts
+index 6cfba70..a890c51 100644
+--- a/web/src/viewer.ts
++++ b/web/src/viewer.ts
+@@ -216,6 +216,16 @@ export class Viewer {
+ 
+   /** Select a finding (or clear with null): accent on its faces, the rest faded, camera framed.
+    *  frame = false keeps the camera (restoring a selection after the material changes). */
++  /** PROTO: look from a direction with a given up, the whole part framed. */
++  protoLook(d: number[], up: number[]): void {
++    const box = new THREE.Box3().setFromObject(this.part);
++    this.place(box.getBoundingSphere(new THREE.Sphere()), new THREE.Vector3(d[0], d[1], d[2]).normalize());
++    this.camera.up.set(up[0], up[1], up[2]);
++    this.camera.lookAt(this.controls.target);
++    this.controls.update();
++    this.render();
++  }
++
+   select(finding: Selection | null, frame = true): void {
+     this.selected = finding;
+     this.paint();
+@@ -309,7 +319,7 @@ export class Viewer {
+       const sev = severity.get(id);
+       const kind = this.checked.get(id);
+       const ok = kind !== undefined && this.showChecked[kind] && this.okStep;
+-      material.color.copy(chosen.has(id) ? accent : sev ? token(`--${sev}`) : ok ? token(CHECKED_TOKEN[kind]) : part);
++      material.color.copy(chosen.has(id) ? accent : this.selected ? part : sev ? token(`--${sev}`) : ok ? token(CHECKED_TOKEN[kind]) : part); // PROTO: picked -> rest grey
+       const ghost = this.selected !== null && !chosen.has(id) && !kept.has(id);
+       material.transparent = ghost;
+       material.opacity = ghost ? GHOST_OPACITY : 1;
