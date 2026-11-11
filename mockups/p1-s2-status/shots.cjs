@@ -1,0 +1,34 @@
+const { chromium } = require('playwright');
+const out = process.argv[2], scale = +(process.argv[3] || 2);
+const P = '/home/user/dfma-review/tests/parts/clean_pocket.step';
+(async () => {
+  const b = await chromium.launch({ executablePath: process.env.DFMA_CHROMIUM, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  const p = await b.newPage({ viewport: { width: 1280, height: 860 }, deviceScaleFactor: scale });
+  p.on('pageerror', (e) => console.log('pageerror', e.message));
+  await p.goto('http://127.0.0.1:8790/');
+  await p.getByTestId('upload-file').setInputFiles(P);
+  await p.getByTestId('overview').waitFor({ timeout: 60000 });
+  await p.getByTestId('step-machining').click();
+  await p.waitForTimeout(900); await p.screenshot({ path: `${out}/03-ghost.png` });
+  for (const [i, v] of ['3.25', '2.25', '1.125'].entries()) await p.getByTestId(`stock-size-${i + 1}`).fill(v);
+  await p.getByTestId('stock-apply').click();
+  await p.waitForTimeout(900); await p.screenshot({ path: `${out}/04-typed.png` });
+  await p.getByTestId('stock-size-3').fill('0.9'); await p.getByTestId('stock-apply').click();
+  await p.waitForTimeout(300); await p.getByTestId('plan-your-stock').screenshot({ path: `${out}/05a-too-small.png` });
+  await p.getByTestId('stock-size-3').fill('0'); await p.getByTestId('stock-apply').click();
+  await p.waitForTimeout(300); await p.getByTestId('plan-your-stock').screenshot({ path: `${out}/05b-bad.png` });
+  await p.getByTestId('stock-toggle').click();
+  await p.waitForTimeout(900); await p.screenshot({ path: `${out}/06-off.png` });
+  // phone width at 200 % text (APP-02)
+  const q = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: scale });
+  await q.goto('http://127.0.0.1:8790/');
+  await q.addStyleTag({ content: 'html{font-size:200%}' });
+  await q.getByTestId('upload-file').setInputFiles(P);
+  await q.getByTestId('overview').waitFor({ timeout: 60000 });
+  await q.getByTestId('step-machining').click();
+  await q.waitForTimeout(600);
+  await q.getByTestId('plan-your-stock').scrollIntoViewIfNeeded();
+  await q.screenshot({ path: `${out}/07-phone-200.png` });
+  console.log('overflow', await q.evaluate(() => document.documentElement.scrollWidth > innerWidth));
+  await b.close();
+})();

@@ -36,6 +36,8 @@
           <canvas data-testid="viewer-canvas" id="viewer" tabindex="0" role="application" aria-label="3D model of the part. Arrows rotate, Shift and arrows move, plus and minus zoom, H goes home."></canvas>
           <!-- UI fixes A2: views in the file's axes (D-078) -->
           <div class="views" id="views" role="group" aria-label="Views" hidden>
+            <!-- machining P1 S2 (D-089): the ghost stock, on Machining only, beside the view buttons -->
+            <button type="button" class="chip" data-testid="stock-toggle" id="stock-toggle" aria-pressed="true" hidden>Stock</button>
             <button type="button" class="chip" data-testid="view-home" id="view-home">Home</button>
             <button type="button" class="chip" data-testid="view-front" id="view-front">Front</button>
             <button type="button" class="chip" data-testid="view-top" id="view-top">Top</button>
