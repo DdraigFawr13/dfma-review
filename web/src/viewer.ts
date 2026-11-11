@@ -795,7 +795,8 @@ export class Viewer {
   /** The triad pass (A3, A13): a square in the bottom-left corner, then the renderer as it was. */
   private drawTriad(): void {
     if (this.triadOff || !this.triadAxes.length || !this.meshes.size) return;
-    const size = this.small.matches ? 64 : 96, inset = 8;
+    // 8 px in from the left; from the bottom 8 px at 500 px and below, else 24 px so the "Part axes" caption fits under it
+    const size = this.small.matches ? 64 : 96, inset = 8, lift = this.small.matches ? 8 : 24;
     const full = this.renderer.getSize(new THREE.Vector2());
     const back = this.camera.position.clone().sub(this.pivot()).normalize();
     this.triadCamera.position.copy(back).multiplyScalar(3);
@@ -803,8 +804,8 @@ export class Viewer {
     this.triadCamera.lookAt(0, 0, 0);
     this.renderer.autoClear = false;
     this.renderer.setScissorTest(true);
-    this.renderer.setScissor(inset, inset, size, size);
-    this.renderer.setViewport(inset, inset, size, size);
+    this.renderer.setScissor(inset, lift, size, size);
+    this.renderer.setViewport(inset, lift, size, size);
     this.renderer.clearDepth();
     this.renderer.render(this.triadScene, this.triadCamera);
     this.renderer.setScissorTest(false);
