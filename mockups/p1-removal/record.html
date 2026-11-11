@@ -1,0 +1,18 @@
+<section id="check-record"><h2>Check record</h2>
+<ul>
+<li><b>Files checked:</b> <code>docs/specs/machining-p1-p2.md</code> (Terms, J1, J2, J7, Design "P1: removal" and "P1: page", slices P1 S1 and S2, R1-R10); <code>docs/DECISIONS.md</code> D-001, D-042, D-057, D-085, D-088; <code>docs/UI_STYLE.md</code>; <code>.claude/skills/ui-style/references/avoid.md</code>; <code>web/index.html</code> (view buttons, lines 39-43); <code>web/src/findings.ts</code> (Stock row line 171, <code>stockText</code> 317-321); <code>web/src/report.ts</code> (Part summary, line 113); <code>web/src/viewer.ts</code> (<code>GHOST_OPACITY</code> 0.35, line 10); <code>tests/parts/make_parts.py</code> (clean_pocket: 3 × 2 × 1 in block, 0.400 in pocket, lines 133-145 and 550).</li>
+<li><b>Facts checked:</b> 31, each with its source in <code>mockups/p1-removal/facts.txt</code>.Every volume, percent and size is from <code>mockups/p1-removal/numbers.json</code>: the spec's formula run on each part by <code>web/src/removal-proto/mockup.run.ts</code> on 2026-11-11. Facing and typed-stock numbers come from <code>shots.cjs</code>'s arithmetic on those numbers. Error wording is from spec J2. Button and line labels are from <code>index.html</code> and <code>findings.ts</code>.</li>
+<li><b>Fixes made:</b>
+<ul>
+<li>The clean_pocket caption first put the 4 mm³ down to corner fillets. It now gives the likely cause (the floor mesh's straight segments at the rounded corners) and labels it an inference.</li>
+<li>From the fresh check: with typed stock, the Not explained line now says "% of the part-size removal" (it had kept the part-size percent under a larger removal).</li>
+<li>From the fresh check: the Stock button is described as "beside the view buttons", as the spec says.</li>
+<li>From the fresh check: the CTC 01 caption no longer counts notches and slots, which were never measured.</li>
+<li>From the fresh check: the clean_pocket caption now gives 0.00 in³ as well as mm³.</li>
+</ul></li>
+<li><b>Lint:</b> <code>mockup-lint: 0 warnings</code> (<code>--min-text 14</code>). Dark mode was opened at 400 px and its text reads.</li>
+<li><b>Widths:</b> the app is shown at its first width, 1280 px (2× screenshots), and the PDF at 110 dpi. The 900 px stacking was not shown, because the new rows sit in the existing plan list.</li>
+<li><b>Fresh check:</b> one reviewer agent, which had not seen this conversation. It returned 1 major and 3 minor findings, all verified against the files and fixed. It found the arithmetic, the in³ conversions, the error texts and the tap and text sizes correct. It did not open DECISIONS or view two of the screenshots (03 and 06); I checked those myself.</li>
+<li><b>Cost:</b> 67,066 subagent tokens (agent report). In dollars that is an estimate of about $0.30-1.</li>
+</ul>
+</section>

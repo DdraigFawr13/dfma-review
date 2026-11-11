@@ -1,0 +1,127 @@
+[
+ {
+  "name": "clean_pocket.step",
+  "bbox_in": [
+   2,
+   3,
+   1
+  ],
+  "stock_mm3": 98322.38399999998,
+  "part_mm3": 85339.33378511315,
+  "total_mm3": 12983.050214886825,
+  "features": [
+   {
+    "feature": "pocket-1",
+    "volume_mm3": 12979.171977177411
+   }
+  ],
+  "unexplained_mm3": 3.878237709413952,
+  "unexplained_pct": 0.02987154517023301,
+  "stock_text": {
+   "shape": "block",
+   "size_in": [
+    2,
+    3,
+    1
+   ]
+  }
+ },
+ {
+  "name": "report_sample.step",
+  "bbox_in": [
+   2.5,
+   4,
+   2
+  ],
+  "stock_mm3": 327741.27999999997,
+  "part_mm3": 315924.7388537031,
+  "total_mm3": 11816.541146296891,
+  "features": [
+   {
+    "feature": "hole-1",
+    "volume_mm3": 2175.092524773919
+   },
+   {
+    "feature": "hole-2",
+    "volume_mm3": 1447.9166215210996
+   },
+   {
+    "feature": "pocket-1",
+    "volume_mm3": 8193.532000000003
+   }
+  ],
+  "unexplained_mm3": 1.8699211068451405e-9,
+  "unexplained_pct": 1.5824606233704375e-11,
+  "stock_text": {
+   "shape": "block",
+   "size_in": [
+    2.5,
+    4,
+    2
+   ]
+  }
+ },
+ {
+  "name": "nist_ctc_01_asme1_ap242-e1.stp",
+  "bbox_in": [
+   31.496063,
+   17.716535,
+   5.905512
+  ],
+  "stock_mm3": 54000000.42149995,
+  "part_mm3": 14644823.305612631,
+  "total_mm3": 39355177.11588732,
+  "features": [
+   {
+    "feature": "hole-1",
+    "volume_mm3": 24543.69260616987
+   },
+   {
+    "feature": "hole-2",
+    "volume_mm3": 14137.166941154039
+   },
+   {
+    "feature": "hole-3",
+    "volume_mm3": 14137.166941154039
+   },
+   {
+    "feature": "hole-4",
+    "volume_mm3": 96211.27501618741
+   },
+   {
+    "feature": "hole-5",
+    "volume_mm3": 96211.2750161885
+   },
+   {
+    "feature": "hole-6",
+    "volume_mm3": 96211.2750161885
+   },
+   {
+    "feature": "hole-7",
+    "volume_mm3": 96211.2750161885
+   },
+   {
+    "feature": "hole-8",
+    "volume_mm3": 24543.692606170258
+   },
+   {
+    "feature": "hole-9",
+    "volume_mm3": 24543.692606170258
+   },
+   {
+    "feature": "hole-10",
+    "volume_mm3": 24543.692606170258
+   }
+  ],
+  "unexplained_mm3": 38843882.91151558,
+  "unexplained_pct": 98.70082098000434,
+  "stock_text": {
+   "shape": "block",
+   "size_in": [
+    31.496063,
+    17.716535,
+    5.905512
+   ]
+  }
+ }
+]

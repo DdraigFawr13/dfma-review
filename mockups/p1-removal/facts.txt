@@ -1,0 +1,31 @@
+clean_pocket removal 0.79 in3 | numbers.json total_mm3 / 16387.064
+clean_pocket removal 12,983 mm3 | numbers.json total_mm3
+clean_pocket stock 2.000 x 3.000 x 1.000 in | numbers.json bbox_in; findings.ts:317 stockText
+clean_pocket not explained 4 mm3 | numbers.json unexplained_mm3
+clean_pocket not explained 0.00 in3 | numbers.json
+clean_pocket not explained 0.03 % | numbers.json unexplained_pct
+clean_pocket pocket depth 0.400 in | make_parts.py:550
+CTC01 removal 2,401.60 in3 | numbers.json
+CTC01 removal 39,355,177 mm3 | numbers.json
+CTC01 not explained 2,370.40 in3 | numbers.json
+CTC01 not explained 38,843,883 mm3 | numbers.json
+CTC01 not explained 98.70 % | numbers.json
+CTC01 stock 31.496 x 17.717 x 5.906 in | numbers.json bbox_in
+typed stock 3.25 x 2.25 x 1.125 in | chosen input
+typed removal 3.02 in3 | shots.cjs lines()
+typed removal 49,470 mm3 | shots.cjs lines()
+facing Z 0.0625 in per side | shots.cjs facing()
+facing Z 0.91 in3 | shots.cjs facing()
+facing X 0.1250 in per side | shots.cjs facing()
+facing X 0.81 in3 | shots.cjs facing()
+facing Y 0.1250 in per side | shots.cjs facing()
+facing Y 0.50 in3 | shots.cjs facing()
+error "Your 0.900 in is smaller than the part's 1.000 in." | spec J2 machining-p1-p2.md:59
+error "Type three sizes over 0 in." | spec J2 machining-p1-p2.md:60
+view buttons Home Front Top Right Iso | web/index.html:39-43
+Stock row label and text | findings.ts:171, 317-321
+PDF Stock line after Part summary | report.ts:113
+ghost opacity 0.35 | viewer.ts:10 GHOST_OPACITY
+typed stock not in PDF, session only | spec R6
+milled parts only, turned part no removal | spec J1
+nothing else changes | spec J7

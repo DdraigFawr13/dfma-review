@@ -16,21 +16,19 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ✔ Spec the first usable version (D-007, 6 fresh checks, $1.49).
 - ✔ Build slice by slice: S1 to S7, grading spike, recognition rounds, stress-test, undercut and turning sets (#3 to #18).
 - ○ Assemblies and DFA · history and compare · time and $.
-- ▶ Inventor parts (Morgan, 2026-11-08): ✔ research · ✔ own reader (D-031) · ✔ plan (D-032) · ✔ spec I1 (D-033) · ✔ I1 S1 #21, S2 #22, S3 #23 · ✔ spec I2+I3 (D-039) · ✔ I2 S1 hole features #24 (D-041) · ✔ S2 names and copies and S3 fillets and chamfers, merged in #27 (D-043, D-046) · ▶ work-pair check owed (from 2026-11-12).
+- ▶ Inventor parts (D-031 to D-046; #21 to #27): ▶ work-pair check owed (from 2026-11-12). Full line in the archive.
 - ▶ Inventor shape from the `.ipt` alone (D-035): ✔ TypeScript spike, closed solid for 7 of 16 files, same features as the STEP route on CTC 04 and FTC 06 (PR #52, [README](research/inventor-shape-ts/README.md)) · ○ spline surfaces and edges, FTC 09, FTC 11 · ○ plan the phase with `planning-interview` first.
 - ✔ UI direction: research, mock-ups, spec, S1-S3, UX audit and fixes (#25 to #32, D-042 to D-053; full line in the archive).
 - ✔ GitLab Pages port (D-054 to D-074): trial, spec, S1-S7, S8a, S8b retire Python (#33 to #43; full line in the archive).
 - ✔ UI fixes (Morgan, 2026-11-10; D-076): ✔ round 1 and review · ✔ mock-up approved (PR #46) · ✔ spec A+B (D-078, #49) · ✔ slice A model (#51, D-080) · ✔ slice B screens (#53) · ○ Morgan's work-copy check · ○ later: cutaway, dimensions; tool-access check after steps and slots.
-- ▶ Steps and slots (Morgan, 2026-11-10; D-066, D-068, D-079): ✔ research ([page](research/feature-recognition.html)) · ✔ planning ([round 1](https://claude.ai/artifact/2NiJeW3rhomfLQSDeVzDhY), [review](https://claude.ai/artifact/1DwcDhFZcZVzxisd3QTqcy)) · ✔ spec `docs/specs/steps-slots.md` approved (D-081), merged in PR #50 · ○ S1 steps · ○ S2 slots · ○ S3 screens · ○ then V-groove and round-bottom slots, edge treatments, pocket shapes (D-075).
-- ▶ Machining and DFMA rework, then Inventor-only and Vault (Morgan, 2026-11-11; D-083, D-084): ✔ research ([page](https://claude.ai/artifact/UnHEMoUGXWeHiYeQUiWff2)) · ✔ plan accepted (D-084), merged in PR #55 · ✔ P1+P2 planned (D-085, [round 1](https://claude.ai/artifact/EFfFHenk4UaMnjpq4hGLLj), [review](https://claude.ai/artifact/Mc4eBLkZtwmGPJ9uHEs8Zt)), PR #56 · ✔ P0 counterbore side (D-086, PR #57) · ✔ spike ([README](research/reach-spike/README.md), [status page](https://claude.ai/artifact/39TfLVdfgnogtB4GjbC44n)) · ✔ spec P1+P2 approved (D-088, [spec](specs/machining-p1-p2.md)) · ▶ P1 removal volume S1-S2 · ○ slots S1-S2 · ○ P2 reach check · ○ P3 Xometry checks · ○ P4 time · ○ DFMA · ○ Inventor-only · ○ Vault.
+- ▶ Steps and slots (D-066, D-068, D-079, D-081): ✔ research, planning, spec `docs/specs/steps-slots.md` (#50) · ○ S1 steps · ○ S2 slots · ○ S3 screens · ○ then V-groove and round-bottom slots, edge treatments, pocket shapes (D-075). Full line in the archive.
+- ▶ Machining and DFMA rework (D-083 to D-088): ✔ research, plan, P0 (#57), spike (#58), spec P1+P2 ([spec](specs/machining-p1-p2.md), #59) · ▶ P1 removal volume S1-S2 · ○ slots S1-S2 · ○ P2 reach check · ○ P3 Xometry checks · ○ P4 time · ○ DFMA · ○ Inventor-only · ○ Vault. Full line in the archive.
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
 
 - 2026-11-11 P1+P2 spec approved (D-088), merged in [PR #59](https://github.com/DdraigFawr13/dfma-review/pull/59); removal prototype [README](research/removal-proto/README.md).
-- 2026-11-11 Reach spike (D-085 step 1) accepted (D-087), merged in [PR #58](https://github.com/DdraigFawr13/dfma-review/pull/58); [README](research/reach-spike/README.md) has every number and how it was measured. CTC 02 (largest NIST part), 6 directions × 11 end mills + holder, Chromium: 10.0 s on 1 worker, 3.8 s on 3 at cell D/4 capped 4 M cells. Manifold 3.5.4: 218 kB gzip, loads in 34-45 ms; all 17 NIST meshes weld valid; FTC 08 `-e1-tg` mesh is inside-out. OpenCAMLib (Morgan approved the install): LGPL-2.1-or-later; built from source and run; centre-sampled tips are optimistic on 0.13-20.7 % of points (P2a needs a conservative raster or a wider disk). Code: `web/src/reach-spike/`, spike config only.
-- 2026-11-11 P0 approved (D-086), merged in PR #57: archive "Moved 2026-11-11 (reach spike session)".
-- Earlier (P1+P2 plan #56, UI fixes, S8b, harness): archive.
+- Earlier (reach spike #58, P0 #57, P1+P2 plan #56, UI fixes, S8b, harness): archive.
 
 ## Next
 
