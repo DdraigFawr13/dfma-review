@@ -1,10 +1,10 @@
 # Handoff
 
-Updated: 2026-11-11 (port S8b approved, D-074; merging in PR #43). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
+Updated: 2026-11-11 (port S8b merged in PR #43, D-074; D-075 recorded). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
 
 ## Phase
 
-Build. First usable version, Inventor parts I1-I3, review steps and the UX audit fixes are merged (#3 to #32). GitLab Pages port S1-S7 and S8a merged (#34 to #42; D-060 to D-072). S8b (retire Python) approved, merging in #43 (D-074); harness v4.14.0 merged in #44 (D-073). Now: UI fixes (Next 000a), and the work-pair check from 2026-11-12. History: [docs/archive/handoff-2026-11.md](archive/handoff-2026-11.md) (grep it; "Moved 2026-11-09" holds the long entries cut from here).
+Build. First usable version, Inventor parts I1-I3, review steps and the UX audit fixes are merged (#3 to #32). GitLab Pages port S1-S7 and S8a merged (#34 to #42; D-060 to D-072). S8b (retire Python) merged in #43 (D-074); harness v4.14.0 merged in #44 (D-073). Now: UI fixes (Next 000a), and the work-pair check from 2026-11-12. History: [docs/archive/handoff-2026-11.md](archive/handoff-2026-11.md) (grep it; "Moved 2026-11-09" holds the long entries cut from here).
 
 ## Plan map
 
@@ -20,12 +20,12 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ○ Inventor shape from the `.ipt` alone (D-035; after I1).
 - ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ✔ spec approved (D-045, #28) · ✔ S1 merged in #29 (D-047) · ✔ S2 + S3 merged in #30 (D-048 to D-052) · ✔ UX audit #31 · ✔ audit fixes #32 (D-053) ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
 - ▶ GitLab Pages port (Morgan, 2026-11-09; D-054, D-055, D-056): ✔ trial · ✔ spec approved (PR #33) · ✔ S1 site, viewer, parity (PR #34) · ✔ S2 holes (PR #35) · ✔ S3 plan, cost, PDF (PR #36; work release possible) · ✔ S4 pockets (PR #37) · ✔ S5 walls (PR #38) · ✔ S6 turning (PR #40) · ✔ S7 Inventor (PR #41) · ✔ S8a (PR #42) · ✔ S8b retire Python (PR #43).
-- ○ Steps and slots (Morgan, 2026-11-10; D-066, D-068): ✔ research ([page](research/feature-recognition.html)) · ✔ answers (MFCAD++ classes, no open-pocket kind, plan first) · ○ spec with `write-spec` · ○ build (after the port, unless Morgan moves it up).
+- ○ Steps and slots (Morgan, 2026-11-10; D-066, D-068): ✔ research ([page](research/feature-recognition.html)) · ✔ answers (MFCAD++ classes, no open-pocket kind, plan first) · ○ spec with `write-spec` · ○ build (after the port, unless Morgan moves it up) · ○ then edge treatments: chamfers and fillets (D-075) · ○ then pocket shapes, MFCAD++ 13-16 (D-075).
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
 
-- 2026-11-11 S8b approved (PR #43, auto-merge on): Python retired; `npm run check` at the root passes (exit 0): drift, NIST unpack, web check (901 vitest), build and test build, parity quick 122 of 122 the same (4 shards, 99.7 s), e2e 101 passed, timed 4 passed. Then run: edmr 114 of 114 pass; parity:full 335 files, 327 the same, 2 different (bn_ball6, nasty_cheese: D-073 tessellation), 6 Python crashed (the UMD files, S1). plan.test.ts angled-holes test has a 30 s limit (engine 5.2 s vs Python 3.8 s).
+- 2026-11-11 S8b merged in #43 (06:19 UTC, `43c4caf`; PR CI green, 12.8 min): Python retired, checks on Node (D-074). `npm run check` 421 s (900 s budget); edmr 114 of 114; parity:full 327 the same, 2 known tessellation, 0 different. The first CI run failed on NIST 10 s limits inside the parallel vitest run; fixed with a timed lane run alone. plan.test.ts angled-holes test: 30 s limit (engine 5.2 s, Python 3.8 s).
 - Tessellation (D-074): named exemption for 3 faces (bn_ball6 14, 18; nasty_cheese 202); parity:full exit 0 (327 same, 2 known, 0 different). Cause: OCCT 8.0.1 (pythonocc) vs 8.0.0 (opencascade.js).
 - 2026-11-11 Harness upgraded v4.12.0 → v4.14.0 (master D-068): the `test-design` skill, VER-10 (see a test fail first) and VER-11 (real samples, time tests, fixed waits are wall-clock limits) now load here; check time budget in AGENTS.md (D-073). Merged as #44 by auto-merge on green (Morgan approved 2026-11-11).
 
@@ -48,10 +48,10 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-11 D-075: edge treatments (chamfers, fillets), then pocket shapes, join the recognition plan after steps and slots.
 - 2026-11-11 D-074: S8b approved: Python retired; tessellation is a named 3-face exemption (OCCT 8.0.1 vs 8.0.0).
 - 2026-11-11 D-073: harness v4.14.0 (testing rules) and the 900 s check budget; approved, merged in PR #44.
 - 2026-11-11 D-071: S8 before the UI list; faster checks on the S8 branch; S8 file list and two-PR split approved.
-- 2026-11-10 D-070: S7 merges without the full-set parity (stopped, no result); parity prints a line per file.
 - 2026-11-10 D-069: S7 approved; merge when ready; S8 in a new session.
 - 2026-11-10 D-068: steps and slots named and scored by MFCAD++'s classes (no open-pocket kind); plan and tools first; slot depth over 6× width a finding.
 - 2026-11-10 D-067: S6 approved; merge when CI is done; S7 in a new session.
