@@ -10,7 +10,7 @@ import { analyze } from "../analyze";
 import { loadNodeOc, analyzeOrRefuse } from "../node";
 import { ReadError } from "../read";
 import { MAX_UPLOAD_BYTES, MSG_NO_SOLID, MSG_NOT_STEP, MSG_TOO_LARGE, MSG_TOO_LONG } from "../settings";
-import { analyzeBytes, expected, oc, PARTS, ROOT, run, type Result } from "./helpers";
+import { analyzeBytes, expected, oc, PARTS, ROOT, run, type Result } from "./groupa_common";
 
 const NOT_STEP = "This is not a STEP file this tool can read. Export it again as .step or .stp from your CAD.";
 const NO_SOLID = "No solid found in this file. Export the part as a solid body, not surfaces or a drawing.";

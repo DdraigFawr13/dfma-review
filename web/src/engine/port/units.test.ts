@@ -6,7 +6,7 @@ import { resolve } from "node:path";
 import { expect, test } from "vitest";
 import { MSG_NO_UNIT } from "../settings";
 import { nearestDrill } from "../tools";
-import { analyzeBytes, PARTS, run } from "./helpers";
+import { analyzeBytes, PARTS, run } from "./groupa_common";
 
 const BASE = readFileSync(resolve(PARTS, "box_through_hole.step"), "utf8");
 const UNIT = "#430 = ( LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.) );\n";

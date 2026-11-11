@@ -3,7 +3,7 @@
 import { expect, test } from "vitest";
 import { costDrivers } from "../drivers";
 import { driversConfig } from "../settings";
-import { run, type Result } from "./helpers";
+import { run, type Result } from "./groupa_common";
 
 const table = (r: Result): [string, number, number][] => r.cost_drivers.map((d: Result) => [d.driver, d.count, d.score]);
 

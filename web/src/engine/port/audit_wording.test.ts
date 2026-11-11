@@ -6,7 +6,7 @@
 // browser lane's (web/e2e).
 import { beforeAll, describe, expect, test } from "vitest";
 import * as settings from "../settings";
-import { PARTS, run, analyzeBytes, type Result } from "./helpers";
+import { PARTS, run, analyzeBytes, type Result } from "./groupa_common";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 

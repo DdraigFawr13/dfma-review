@@ -6,7 +6,7 @@ import { resolve } from "node:path";
 import { expect, test } from "vitest";
 import { cylinder, Topology, wholeDegree } from "../features/holes";
 import { readStep } from "../read";
-import { oc, ROOT } from "./helpers";
+import { oc, ROOT } from "./groupa_common";
 
 test("whole degree snaps noise at a whole degree", () => {
   expect(wholeDegree(269.99999999999994)).toBe(270); // the browser's value at linkage_arm_42's seam

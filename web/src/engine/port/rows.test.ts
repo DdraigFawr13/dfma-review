@@ -9,7 +9,7 @@ import { costDrivers } from "../drivers";
 import { RULES } from "../rules/index";
 import { checkName, checksRun, costTotal, findingRows, idRange, joinValues, LIMITS, limitText, SENTENCES, SHORTS, valueText } from "../rows";
 import { round } from "../units";
-import { PARTS, ROOT, run, type Result } from "./helpers";
+import { PARTS, ROOT, run, type Result } from "./groupa_common";
 
 const RULE_DIR = resolve(ROOT, "web/src/engine/rules");
 

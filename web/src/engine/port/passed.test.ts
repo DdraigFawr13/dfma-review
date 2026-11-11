@@ -3,7 +3,7 @@
 import { describe, expect, test } from "vitest";
 import type { Material, Process } from "../../api";
 import * as undercut from "../rules/undercut";
-import { expectedParts, run, type Result } from "./helpers";
+import { expectedParts, run, type Result } from "./groupa_common";
 
 const JUDGES: Record<string, string[]> = {
   hole_depth: ["hole"], bore_depth: ["bore"], hole_size: ["hole"], corner_radius: ["corner"], pocket_depth: ["pocket"],
