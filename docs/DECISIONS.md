@@ -584,12 +584,12 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Amends, when built:** UI_STYLE "Selected finding" (a row lights the finding it shows; other faces grey, not their colours); D-042 ("Change file" leaves the overview; one Open… picker); D-023 (the Machine view turns the view per setup and lights a tool's faces); D-017 (pins hidden while the part moves).
 - **Why:** Morgan's 4 photos of the work copy (2026-11-10): rotating was "the hardest currently"; a row with many copies lit the whole part. Round 1 and the review settled each choice; an adversarial review and two fresh mock-up checks ($1.42 measured) found the folded-row cause, the lag on wheel and keys, the arrow-key clash, trackpad moves and the lathe view.
 
-## D-078 UI fixes spec approved; view axes and turntable as recommended
+## D-078 UI fixes spec approved; view buttons in file axes; free rotation
 
-- **Status:** Accepted (2026-11-11). Morgan, in chat: "I approve both. Merge in whatever order you deem correct then start the next slice in a new session" (PRs #48 and #49, [approval page](https://claude.ai/artifact/SYV9w7ZZmAXFArnEu7dKvh)). The reply gave no answer to the page's two questions, so both are taken as the page recommended (WS-02); Morgan can change either before slice A merges.
+- **Status:** Accepted (2026-11-11). Morgan, in chat: "I approve both. Merge in whatever order you deem correct then start the next slice in a new session" (PRs #48 and #49, [approval page](https://claude.ai/artifact/SYV9w7ZZmAXFArnEu7dKvh)). The reply gave no answer to the page's two questions, so both were taken as recommended (WS-02); Morgan then changed question 2 to free rotation.
 - **Decision:**
   - The spec `docs/specs/ui-fixes.md` is approved: slice A (the model), then slice B (the screens) after A merges.
   - View buttons (Home, Front, Top, Right, Iso) use the file's axes; the triad uses the part's axes (part.frame, D-076) with a "Part axes" caption (Open question 1, a).
-  - The part turns like a turntable about the file's +Z and never rolls (Open question 2, a). This fixes today's orbit about the file's Y axis.
+  - The part turns freely (Open question 2, b): Morgan, in chat after the approval: "Oh wait no I want the free rotation not the turn table". Built on three's `ArcballControls` (same package, no new dependency), which replaces today's orbit about the file's Y axis.
   - The page's additions stand: pins return about 0.5 s after a move on big parts (CTC 02); 600 ms after a key; any selection greys the rest, PDF pictures included; stepping frames each finding; view buttons move under the model at 500 px and below.
 - **Why:** 41 of 42 sample parts have part axes that differ from the file's (26 with part +Z = file −Z), so Top in part axes would show the underside; the orbit-axis cause was confirmed with three.js 0.187 in Node. Measured before: CTC 02 drag frame gap p90 344-466 ms, pin placement 420 ms a frame.
