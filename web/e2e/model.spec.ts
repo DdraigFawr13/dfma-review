@@ -175,6 +175,7 @@ const VIEWS: [string, Vec, Vec][] = [
 test("test_view_buttons", async ({ page }) => {
   await reopen(page, SAMPLE);
   const part = await partOf(page), R = part.radius;
+  const frame = ((await page.evaluate(() => window.__dfma.analysis())) as Result).part.frame as { x: Vec; y: Vec; z: Vec };
   const opening = await view(page);
   const identity = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
   await drag(page, "left", 90, 40); // the views put a turned part back
@@ -185,10 +186,17 @@ test("test_view_buttons", async ({ page }) => {
       expect(deg(sub(v.position, v.target), direction)).toBeLessThan(0.1);
       // the screen's up: a point above the target along Up lands straight above it on screen
       const box = await canvasBox(page);
-      const [tx, ty] = project(v, v.target, box.width, box.height);
-      const [ux, uy] = project(v, add(v.target, mul(unit(up), 0.1 * R)), box.width, box.height);
-      expect((Math.atan2(ux - tx, ty - uy) * 180) / Math.PI).toBeCloseTo(0, 1);
-      expect(Math.abs((Math.atan2(ux - tx, ty - uy) * 180) / Math.PI)).toBeLessThan(0.1);
+      // the camera's real turn, read from its matrix through the triad hook (not from `up`): each part axis lands on
+      // screen where A2's direction and Up put it
+      const f = unit(mul(direction, -1)), u = unit(sub(up, mul(f, dot(up, f)))), r = unit(cross(f, u));
+      const arrows = await page.evaluate(() => window.__dfma.triad()) as { axis: "X" | "Y" | "Z"; dx: number; dy: number }[];
+      expect(arrows.length).toBe(3);
+      for (const a of arrows) {
+        const axis = frame[a.axis.toLowerCase() as "x" | "y" | "z"];
+        const ex = dot(axis, r), ey = dot(axis, u);
+        if (Math.hypot(ex, ey) <= 0.2) continue; // pointing at the viewer
+        expect(deg([a.dx, a.dy, 0], [ex, ey, 0]), `${name} ${a.axis}`).toBeLessThan(0.1);
+      }
       const [x0, y0, z0, x1, y1, z1] = part.box;
       for (const x of [x0, x1]) for (const y of [y0, y1]) for (const z of [z0, z1]) {
         const [px, py] = project(v, [x, y, z], box.width, box.height);
@@ -236,6 +244,7 @@ test("test_axis_triad", async ({ page }) => {
   const x = front.arrows.find((a) => a.axis === "X")!, y = front.arrows.find((a) => a.axis === "Y")!;
   expect(x.dy).toBeLessThan(-0.99);
   expect(y.dx).toBeGreaterThan(0.99);
+  expect(Math.hypot(frame.z[0], frame.z[2])).toBeLessThan(0.2); // Z points at the viewer: skipped
   await page.getByTestId("view-top").click(); // looking towards −Z, up +Y: (a·X, a·Y)
   expect((await expectArrows((a) => [a[0], a[1]])).checked).toBeGreaterThanOrEqual(2);
   await expect(page.locator(".stage .triad-caption")).toHaveText("Part axes");
@@ -252,16 +261,24 @@ const moving = (page: Page) => page.evaluate(() => document.querySelector(".stag
 const pinsHidden = (page: Page) => page.evaluate(() => [...document.querySelectorAll<HTMLElement>(".stage .flag, .stage .leaders")]
   .every((el) => getComputedStyle(el).visibility === "hidden"));
 
-/** Milliseconds from now until the stage drops `moving`. */
-async function msUntilRest(page: Page, limit = 5000): Promise<number> {
-  return page.evaluate((limit) => new Promise<number>((done) => {
-    const t0 = performance.now();
+/** Watch, inside the page, for the last `type` event (window, capture) and the first frame after it with no
+ *  `moving`; `restMs` then gives the time between them, so the input's own round trip doesn't count. */
+async function watchRest(page: Page, type: string): Promise<void> {
+  await page.evaluate((type) => {
+    const w = window as unknown as { __last: number | null; __rest: number | null };
+    w.__last = null;
+    w.__rest = null;
+    addEventListener(type, () => { w.__last = performance.now(); w.__rest = null; }, { capture: true });
     const look = () => {
-      if (!document.querySelector(".stage")!.classList.contains("moving") || performance.now() - t0 > limit) done(performance.now() - t0);
-      else requestAnimationFrame(look);
+      if (w.__last !== null && w.__rest === null && !document.querySelector(".stage")!.classList.contains("moving")) w.__rest = performance.now();
+      requestAnimationFrame(look);
     };
-    look();
-  }), limit);
+    requestAnimationFrame(look);
+  }, type);
+}
+async function restMs(page: Page): Promise<number> {
+  await page.waitForFunction(() => (window as unknown as { __rest: number | null }).__rest !== null, undefined, { timeout: 5000 });
+  return page.evaluate(() => { const w = window as unknown as { __last: number; __rest: number }; return w.__rest - w.__last; });
 }
 
 test("test_pins_stay_hidden_while_held", { tag: "@timed" }, async ({ page }) => {
@@ -282,18 +299,26 @@ test("test_pins_stay_hidden_while_held", { tag: "@timed" }, async ({ page }) => 
   expect(await page.evaluate(() => window.__dfma.flagState().some((f) => f.shown))).toBe(false);
   await page.mouse.move(cx, cy, { steps: 4 }); // back to where the drag began: the same view as Front
   expect(await page.evaluate(() => window.__dfma.placements())).toBe(placed);
+  await watchRest(page, "pointerup");
   await page.mouse.up();
-  const t0 = Date.now();
-  const ms = await msUntilRest(page);
-  const elapsed = Math.max(ms, Date.now() - t0 - 50);
-  expect(elapsed).toBeGreaterThanOrEqual(150);
-  expect(elapsed).toBeLessThanOrEqual(1500);
+  const ms = await restMs(page); // from the release to the pins' return
+  expect(ms).toBeGreaterThanOrEqual(150);
+  expect(ms).toBeLessThanOrEqual(1500);
   expect(await pinsHidden(page)).toBe(false);
   const after = await page.evaluate(() => window.__dfma.flagState());
   await page.getByTestId("view-front").click(); // the same view again, no move: the same pins
   await page.waitForTimeout(300);
   expect(after).toEqual(await page.evaluate(() => window.__dfma.flagState()));
   expect(after).toEqual(before);
+  // a cancelled pointer (a touch the system takes) ends the move too: pins come back
+  await page.mouse.move(cx, cy);
+  await page.mouse.down();
+  await page.mouse.move(cx + 40, cy, { steps: 3 });
+  expect(await moving(page)).toBe(true);
+  await watchRest(page, "pointercancel");
+  await page.getByTestId("viewer-canvas").dispatchEvent("pointercancel", { pointerId: 1, pointerType: "mouse", bubbles: true });
+  expect(await restMs(page)).toBeLessThanOrEqual(1500);
+  await page.mouse.up();
 });
 
 test("test_pins_return_after_moving", { tag: "@timed" }, async ({ page }) => {
@@ -301,28 +326,25 @@ test("test_pins_return_after_moving", { tag: "@timed" }, async ({ page }) => {
   const box = await canvasBox(page);
   await test.step("a wheel notch hides pins; back within 150-1,500 ms", async () => {
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await watchRest(page, "wheel");
     await page.mouse.wheel(0, -100);
-    const t0 = Date.now();
     expect(await moving(page)).toBe(true);
-    const ms = await msUntilRest(page);
-    const elapsed = Date.now() - t0;
-    expect(ms).toBeGreaterThanOrEqual(100); // the poll starts a little after the notch
-    expect(elapsed).toBeGreaterThanOrEqual(150);
-    expect(elapsed).toBeLessThanOrEqual(1500);
+    const ms = await restMs(page);
+    expect(ms).toBeGreaterThanOrEqual(150);
+    expect(ms).toBeLessThanOrEqual(1500);
   });
   await test.step("an arrow key on the model hides pins; back within 600-2,000 ms", async () => {
     await page.getByTestId("view-front").click();
     await page.waitForTimeout(300);
     const before = await page.evaluate(() => window.__dfma.flagState());
     await page.getByTestId("viewer-canvas").focus();
+    await watchRest(page, "keydown");
     await page.keyboard.press("ArrowRight");
-    const t0 = Date.now();
     expect(await moving(page)).toBe(true);
     await page.keyboard.press("ArrowLeft"); // and back: the Front view again
-    const t1 = Date.now();
-    await msUntilRest(page);
-    expect(Date.now() - t1).toBeGreaterThanOrEqual(600);
-    expect(Date.now() - t0).toBeLessThanOrEqual(2000 + (t1 - t0));
+    const ms = await restMs(page); // from the last key
+    expect(ms).toBeGreaterThanOrEqual(600);
+    expect(ms).toBeLessThanOrEqual(2000);
     const after = await page.evaluate(() => window.__dfma.flagState());
     await page.getByTestId("view-front").click();
     await page.waitForTimeout(300);
@@ -374,6 +396,8 @@ test("test_one_feature_at_a_time", async ({ page }) => {
       expect(bar, `bar ${bid}`).toEqual(bid === id ? { colour: accent, opacity: 1 } : { colour: part, opacity: 0.35 });
     }
   };
+  // before a pick, findings tint their faces, so `lit` below can see a severity colour stay
+  expect(Object.values(await page.evaluate(() => window.__dfma.faceColours())).some((c) => c !== part)).toBe(true);
   const row = page.getByTestId("row-F4");
   await row.click();
   await expect(page.getByTestId("row-detail")).toContainText("1 of 4");
@@ -398,6 +422,16 @@ test("test_one_feature_at_a_time", async ({ page }) => {
   expect(sortNum(await page.evaluate(() => window.__dfma.highlightedFaces()))).toEqual(sortNum(finding("F1").faces));
   const faces = await page.evaluate(() => window.__dfma.faceColours());
   for (const [fid, colour] of Object.entries(faces)) expect(colour).toBe(finding("F1").faces.includes(Number(fid)) ? accent : part);
+
+  // Show OK tints go too: angled_hole_in_pocket has passed pocket and corner faces tinted by Show OK
+  await reopen(page, resolve(PARTS, "angled_hole_in_pocket.step"));
+  await shown(page, "angled_hole_in_pocket.step");
+  const ok = new Set([...await page.evaluate(() => window.__dfma.checkedFaces("pocket")), ...await page.evaluate(() => window.__dfma.checkedFaces("corner"))]);
+  expect(ok.size).toBeGreaterThan(0);
+  const other = (await page.evaluate(() => window.__dfma.analysis()) as Result).findings[0];
+  await page.getByTestId("row-F1").click();
+  const after = await page.evaluate(() => window.__dfma.faceColours());
+  for (const id of ok) if (!other.faces.includes(id)) expect(after[id], `face ${id}`).toBe(part);
 });
 
 test("test_model_keys", async ({ page }) => {

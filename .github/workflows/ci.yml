@@ -43,7 +43,10 @@ jobs:
         run: npm run drift
       - if: steps.scope.outputs.light != 'true'
         run: npm --prefix web ci
+      # Chromium alone, from Playwright's download host. ubuntu-24.04 already has its system libraries; --with-deps only
+      # added 9 optional fonts (CJK, Thai, X11) from Ubuntu's mirror, whose DNS failed twice on 2026-11-11 before any
+      # test ran (runs 43043688194, 43045616029). The app ships its own fonts (web/public/fonts).
       - if: steps.scope.outputs.light != 'true'
-        run: npm --prefix web exec -- playwright install --with-deps chromium
+        run: npm --prefix web exec -- playwright install chromium
       - if: steps.scope.outputs.light != 'true'
         run: npm run check

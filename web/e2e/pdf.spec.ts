@@ -130,7 +130,7 @@ test("test_export_pdf", async ({ page, browser }, testInfo) => {
       c.height = img.height;
       const g = c.getContext("2d")!;
       g.drawImage(img, 0, 0);
-      const px = g.getImageData(0, img.height - 96, 96, 96).data; // the bottom-left 96 × 96 px
+      const px = g.getImageData(0, img.height - 128, 128, 128).data; // the bottom-left corner, where the triad would be
       // The triad's X and Y arrows are red #c62828 and green #2e7d32; every face not selected is grey (A5), so a
       // clearly red or green pixel there is the triad. Not ±8 of its colours: JPEG blurs its 1 px lines further
       // (a picture with the triad drawn in had 0 pixels within ±8; builder default, spec S1).

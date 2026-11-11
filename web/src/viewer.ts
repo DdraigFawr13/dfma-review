@@ -140,6 +140,8 @@ export class Viewer {
     this.controls.unsetMouseAction(0, "CTRL");
     this.controls.addEventListener("start", () => { this.held = true; this.startMoving(); });
     this.controls.addEventListener("end", () => { this.held = false; this.restIn(PIN_REST_MS); });
+    // three 0.187's ArcballControls sends no `end` on a cancelled pointer (a touch taken by the system): end the move here
+    canvas.addEventListener("pointercancel", () => { if (this.held) { this.held = false; this.restIn(PIN_REST_MS); } });
     canvas.addEventListener("keydown", (e) => this.onKey(e));
     this.controls.addEventListener("change", () => {
       // three 0.187 turns camera.up as if it were in the camera's own axes; keep it the screen's up instead
@@ -636,7 +638,7 @@ export class Viewer {
 
   /** A move made in code (a view, a pick, Home) while moving: pins come back with this frame. */
   private settleNow(): void {
-    if (!this.moving) return;
+    if (!this.moving || this.held) return; // mid-drag (H pressed, a re-analysis): the release brings pins back
     clearTimeout(this.restTimer);
     this.settling = true;
   }
@@ -644,7 +646,7 @@ export class Viewer {
   // --- UI fixes A6: keys on the focused model ---
 
   private onKey(e: KeyboardEvent): void {
-    if (e.ctrlKey || e.altKey || e.metaKey) return;
+    if (e.ctrlKey || e.altKey || e.metaKey || this.meshes.size === 0) return; // no part: nothing to turn
     const target = this.pivot();
     const offset = this.camera.position.clone().sub(target);
     const forward = offset.clone().negate().normalize();
@@ -659,7 +661,6 @@ export class Viewer {
     const shift = (v: THREE.Vector3) => { target.add(v); this.camera.position.add(v); };
     const key = e.key;
     if (key === "h" || key === "H") {
-      if (e.shiftKey) return;
       e.preventDefault();
       this.fit();
       return;
@@ -921,7 +922,8 @@ export class Viewer {
   /** The triad pass (A3, A13): a square in the bottom-left corner, then the renderer as it was. */
   private drawTriad(): void {
     if (this.triadOff || !this.triadAxes.length || !this.meshes.size) return;
-    const size = this.small.matches ? 64 : 96, inset = 8;
+    // 8 px in from the left; from the bottom 8 px at 500 px and below, else 24 px so the "Part axes" caption fits under it
+    const size = this.small.matches ? 64 : 96, inset = 8, lift = this.small.matches ? 8 : 24;
     const full = this.renderer.getSize(new THREE.Vector2());
     const back = this.camera.position.clone().sub(this.pivot()).normalize();
     this.triadCamera.position.copy(back).multiplyScalar(3);
@@ -929,8 +931,8 @@ export class Viewer {
     this.triadCamera.lookAt(0, 0, 0);
     this.renderer.autoClear = false;
     this.renderer.setScissorTest(true);
-    this.renderer.setScissor(inset, inset, size, size);
-    this.renderer.setViewport(inset, inset, size, size);
+    this.renderer.setScissor(inset, lift, size, size);
+    this.renderer.setViewport(inset, lift, size, size);
     this.renderer.clearDepth();
     this.renderer.render(this.triadScene, this.triadCamera);
     this.renderer.setScissorTest(false);
