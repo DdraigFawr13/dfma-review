@@ -1,7 +1,7 @@
 {
-  "version": "v4.12.0",
-  "commit": "1672a1d600c3ead5feabcb2a0759a3afd05f2be1",
-  "manifest": "f3b3358b3f15cf55130e35db4d6c870cbf8f4d596cbc4d02b079392f2454e1ea",
+  "version": "v4.14.0",
+  "commit": "c156cb1733ada98218c73ac81915a0b64d8de11e",
+  "manifest": "715edd727b60303c6b020b10aa4c27118c0490594f516740773ca8aa728a6afa",
   "budget": {
     "lines": 200,
     "bytes": 24576
@@ -34,7 +34,7 @@
     ".claude/hooks/guards/pre-tool-use.mjs": "01601a586de20da7206a611be58b370421175d63e6b45026d551c1fa7c510f86",
     ".claude/hooks/guards/stop.mjs": "2dbefa7a08c2e1698f8066e4d90d2cdf5c22c58e3628f1db4c6466f4b43fa488",
     ".claude/hooks/session-start.sh": "aa2ec0740032c732917ef500bc16cd7a4afb7b15d78f9bfcaaf5cb40279d690f",
-    ".claude/master/RULES.md": "80d2bcbe1087edeaa87ea87519dc1e27cd734c27da70865073cd0e2ed7cf1e53",
+    ".claude/master/RULES.md": "56d491a77c2729f18d6b822dd3ac6779e7364f8708be4d6a0ef3deb4779defe2",
     ".claude/master/sync.mjs": "e112037c8b31ae5464beb4807c5ee2f7376cfaf9c114f5859d9017c6e4bf77c5",
     ".claude/skills/audit/assets/report.md": "2a19661a5343fcf354e0f720435214f398a4f57d31d2e960d0869a98d6620e41",
     ".claude/skills/audit/references/design.md": "745fec1d297a493cc688e831d705972ca350749d719983b4c2a34807ed8e8c20",
@@ -55,6 +55,9 @@
     ".claude/skills/planning-interview/assets/form.html": "0c71044d9031a494513eaa5b21bfc1abcb278528ff5059a63770fe286ceacdd5",
     ".claude/skills/planning-interview/SKILL.md": "aa1509a032459bc961d502a0347765a5120017ba9bb3c6786610d5006a9c180d",
     ".claude/skills/routing/SKILL.md": "896d0f7221ca1255850a21b65746e21e310479d9f74a83e251aa3df022edac37",
+    ".claude/skills/test-design/references/browser-tests.md": "283e65f0a4287da802376385519cb52473921fbc22dc5d64cff6f1a85b4c0383",
+    ".claude/skills/test-design/scripts/test-traps.mjs": "72e627a62485907258f39edea3ec001049a3a94eeba6c019d41044b0cea4e20c",
+    ".claude/skills/test-design/SKILL.md": "c18cae14fc5069de3f4606d5546c3d4a9a1752abc45930c7f8513daa0854b15e",
     ".claude/skills/ui-mockups/assets/zoom-viewer.html": "caaf5b82822d2d335bc8d48a548b26d16216651000e0c69f6d6f65a0cb41556a",
     ".claude/skills/ui-mockups/scripts/add-zoom.mjs": "a0a3890293136f7c8d1eab49a7cf4d41f7bed98bfeddc7446c15747c9d2da252",
     ".claude/skills/ui-mockups/scripts/mockup-lint.mjs": "b9f40c6dbe527c33f168188e672505525240a2c9bbfb826a20b71694580a8887",
