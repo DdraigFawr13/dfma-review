@@ -13,8 +13,8 @@ Today the pocket finder drops every floor with an open side: `pocketWalls` (`web
 
 - **Open edge:** a floor edge with a neighbour face, where no wall, floor chamfer or blend leads up and `Enclosure.inside` is false (its rays escape the part). Prototyped 2026-11-11 on a block with a step and a slot: rays escape through the open sides and hit the closed end and the far wall.
 - **Open floor:** a planar floor, not a hole or pocket face, whose normal is a part-frame axis (`frameDir` not null), with at least one open edge and at least one wall; every other edge is a wall, blend, floor chamfer or an edge cut by another feature (`inside` true). The axis rule keeps a 90° V-groove (two faces at 45°, each a wall of the other) from reading as a step.
-- **Same feature:** a step is symmetric: its wall, seen as a floor, has the floor as its wall. Open floors that give the same face set are one feature; its floor is the largest-area face of the set, ties broken by the `ORDER` of its direction (`plan.ts:9`). A face already in an open feature (taken in lowest-floor-id order) is not used again.
-- **Run:** the floor's walls in order round its outer wire, split wherever an open edge comes between them. A U (side, end, side) is one run; two walls with open edges between them at both ends are two runs.
+- **Same feature:** a step is symmetric: its wall, seen as a floor, has the floor as its wall. Open floors that give the same face set are one feature; its floor is the face whose normal comes first in `ORDER` (`plan.ts:9`) in the part frame, and the feature names it in a `floor` field (face id). `depth` is measured along that floor's normal. All open floors are classified first; a step whose faces all lie in a slot's face set is dropped (a slot's side wall, seen as a floor, has the slot floor as its one wall). This runs in S1 too, where slots are classified but not emitted.
+- **Run:** the floor's walls in order round its outer wire, split wherever an open edge or a cut edge (`inside` true) comes between them. A U (side, end, side) is one run; two walls with open edges between them at both ends are two runs.
 - **Facing pair:** two planar walls whose normals, projected on the floor plane, point at each other within 2 × `DRAFT_MAX_DEG` (30°), with the floor between them.
 - **MFCAD++ classes** (`tests/grading/sets/undercuts/make.py` names them): 5 triangular (V) through slot, 6 rectangular through slot, 7 circular (round-bottom) through slot, 8 rectangular through step, 9 2-sided through step, 10 slanted through step, 17 rectangular blind slot, 18 vertical circular end blind slot, 19 horizontal circular end blind slot, 20 triangular blind step, 21 circular blind step, 22 rectangular blind step.
 - **UMD:** the University of Maryland benchmark parts in `tests/edmr/models/UMD`, with `.fts` feature lists (`docs/nist/CATALOG.md:40`).
@@ -42,16 +42,16 @@ Checks in `web/src/engine/port/steps_slots.test.ts` run in `npm run check` (the 
 
 ### J1 Steps (S1)
 
-- `st_through`: a step 15 wide (y 0-15) and 10 deep along the whole X length. **Then** one `step` feature holding the floor and wall faces; `depth` 10, `open_edges` 3; `open_dirs` equal to `[frameDir(file +Z), frameDir(file −Y)]` from `result.part.frame`; one tool, `em-1.000` (no inside corner, so the finisher is the 1 in end mill and no rougher is listed).
-- `st_l`: an L step at the +X −Y corner, 20 × 15, 10 deep, its two walls meeting in a 3 mm radius. **Then** `open_dirs` the floor's only (two wall planes); tools `em-1.000` (rougher) then `em-0.188` (3/16 in: radius 2.38 fits 3 mm; 1/4 in's 3.175 doesn't, `PICK_TOL_MM` 0.001); one `corner` feature linked to the step (its `pocket` field holds the step's id); no `corner_radius` finding (10 ÷ 4.76 = 2.1, under 4; radius 3 over the 1/32 in minimum).
-- `st_deep`: an L step at the −X +Y corner, 10 × 8, 20 deep, its walls meeting in a 1 mm radius. **Then** tools `em-1.000` then `em-0.062` (1/16 in, radius 0.79 fits 1 mm); `step_depth` medium (20 ÷ 1.5875 = 12.6, over 3) and `corner_radius` medium (depth ÷ end mill 12.6, over `max_depth_ratio` 4).
+- `st_through`: a step 15 wide (y 0-15) and 10 deep along the whole X length. **Then** one `step` feature holding the floor and wall faces; its `floor` is the one `ORDER` picks, and `depth` is 10 when that is the z = 20 face or 15 when it is the y = 15 face (the test reads which); `open_edges` 3; `open_dirs` equal to `[frameDir(file +Z), frameDir(file −Y)]` from `result.part.frame`; one tool, `em-1.000` (no inside corner, so the finisher is the 1 in end mill and no rougher is listed).
+- `st_l`: an L step at the +X −Y corner, 20 × 15, 10 deep, its two walls meeting in a 3 mm radius. **Then** `open_dirs` the floor's only (two wall planes); tools `em-1.000` (rougher) and `em-0.188` (3/16 in: radius 2.38 fits 3 mm; 1/4 in's 3.175 doesn't, `PICK_TOL_MM` 0.001); one `corner` feature linked to the step (its `pocket` field holds the step's id); no `corner_radius` finding (10 ÷ 4.76 = 2.1, under 4; radius 3 over the 1/32 in minimum).
+- `st_deep`: an L step at the −X +Y corner, 10 × 8, 20 deep, its walls meeting in a 1 mm radius. **Then** (floor and depth as `st_through`, 20 or 10/8) tools `em-1.000` and `em-0.062` (1/16 in, radius 0.79 fits 1 mm); `step_depth` medium (20 ÷ 1.5875 = 12.6, over 3) and `corner_radius` medium (depth ÷ end mill 12.6, over `max_depth_ratio` 4).
 
 ### J2 Slots (S2)
 
-- `sl_blind_round`: slot 10 wide, 8 deep, from x = 40 out through +X, round end of radius 5. **Then** one `slot`; `narrowest_width` 10, `depth` 8, `open_ends` 1, `end_type` "round", `end_radius` 5; `open_dirs` the floor's only; tools `em-0.250` (rougher, largest ≤ 0.75 × 10 = 7.5 mm) then `em-0.375` (finisher ≤ 10 mm, radius 4.76 ≤ 5).
+- `sl_blind_round`: slot 10 wide, 8 deep, from x = 40 out through +X, round end of radius 5. **Then** one `slot`; `narrowest_width` 10, `depth` 8, `open_ends` 1, `end_type` "round", `end_radius` 5; `open_dirs` the floor's only; tools `em-0.250` (rougher, largest ≤ 0.75 × 10 = 7.5 mm) and `em-0.375` (finisher ≤ 10 mm, radius 4.76 ≤ 5), both on the slot's operations; the plan lists them largest first, as for every setup (`plan.ts:97-100`).
 - `sl_blind`: the same with a flat end and sharp corners. **Then** `end_type` "flat"; finisher `em-0.031` marked undersized (as a sharp-cornered pocket today), rougher `em-0.250`; findings `corner_radius` high (sharp) and `slot_depth` medium (8 ÷ 0.79 = 10).
-- `sl_through`: slot 10 wide, 8 deep, along the whole X length. **Then** `open_ends` 2, `end_type` "open"; tools `em-0.250` then `em-0.375` (no inside corner).
-- `sl_deep`: through slot 4 wide, 26 deep. **Then** `slot_depth` medium (26 ÷ 3.175 = 8.2, over 3) and `slot_ratio` medium (26 > 6 × 4).
+- `sl_through`: slot 10 wide, 8 deep, along the whole X length. **Then** `open_ends` 2, `end_type` "open"; tools `em-0.250` and `em-0.375` (no inside corner).
+- `sl_deep`: through slot 4 wide, 26 deep. **Then** tools `em-0.094` (rougher, 2.38 ≤ 0.75 × 4) and `em-0.125`; `slot_depth` medium (26 ÷ 3.175 = 8.2, over 3) and `slot_ratio` medium (26 > 6 × 4).
 
 ### J3 Look-alikes (guards: they pass today and must keep passing)
 
@@ -60,7 +60,7 @@ Checks in `web/src/engine/port/steps_slots.test.ts` run in `npm run check` (the 
 ### J4 Scores
 
 - On our set (`steps_slots.test.ts` scores it with `groupc-kit.ts` `scoreFile`, as `bullnose_draft.test.ts`): every step face found and 0 wrong from S1; every slot face from S2; each found whole (`INSTANCES.json`). On both MFCAD++ sets: the target rule, printed by `summaryLine` (`score.ts:295`) as PASS or FAIL against `web/src/grading/baseline.ts` (the two baselines above as constants); S1 prints the step half, S2 both. A miss stops the slice: the numbers go to Morgan; the target is not lowered. **Check:** set tests; the two grading runs pasted in the PR.
-- UMD: `web/src/engine/port/umd_counts.test.ts` counts `Feature Type: [step]`, `[slot]` and `[Opened Pocket]` in each `<part>/<part>.fts` of the 11 readable parts (AES94, base1-Part, base2-Part, bottomless_pocket1, polyh_castle, regli_pathological1, socket1-Part, socket2-Part, swivel1-Part, swivel2-Part, vand1: 31 steps, 19 slots, 2 opened pockets; bracket1-4-Part, castle and ex1 stop the reader with "memory access out of bounds", measured 2026-11-11). Per part, steps found equal the labelled steps, and slots found the labelled slots, with each opened pocket allowed as either. A part that disagrees goes to Morgan with its numbers before any exemption. In `npm run check`; not `timed` (no wall-clock limit); time it.
+- UMD: `web/src/engine/port/umd_counts.test.ts` counts `Feature Type: [step]`, `[slot]` and `[Opened Pocket]` in each `<part>/<part>.fts` of the 11 readable parts (AES94, base1-Part, base2-Part, bottomless_pocket1, polyh_castle, regli_pathological1, socket1-Part, socket2-Part, swivel1-Part, swivel2-Part, vand1: 31 steps, 19 slots, 2 opened pockets; bracket1-4-Part, castle and ex1 stop the reader with "memory access out of bounds", measured 2026-11-11). Per part, with `s`, `t`, `o` the labelled steps, slots and opened pockets: S1 checks `s ≤ steps found ≤ s + o`; S2 also checks `t ≤ slots found` and `steps + slots found ≤ s + t + o`. A part that disagrees goes to Morgan with its numbers before any exemption. In `npm run check`; not `timed` (no wall-clock limit); time it.
 
 ### J5 Nothing else changes (guard, every slice; passes today)
 
@@ -99,7 +99,7 @@ Checks in `web/src/engine/port/steps_slots.test.ts` run in `npm run check` (the 
 
 ### Finder (`features/pockets.ts`)
 
-- `pocketWalls` keeps its result exactly. It takes an optional out-list `open: OC[] | null`; at the branch that returns `null` for a not-enclosed edge with a neighbour (`pockets.ts:285-288`), it pushes the edge to `open` before returning `null`. `nb === null` returns `null` without recording.
+- `pocketWalls` gains an optional out-list `open: OC[] | null`. Without it (every pocket call) nothing changes. With it (open mode), the branch that returns `null` for a not-enclosed edge with a neighbour (`pockets.ts:285-288`) pushes the edge to `open` and continues; `nb === null` still returns `null`; the `cut && walls.length < 2` and `knifeEdge` returns (`pockets.ts:290-291`) apply as they are.
 - In the `pockets()` loop, a floor that gives no pocket after both of `pockets()`'s tries (its own outline, then the `floorPieces` group), so pockets are unchanged, and is not a hole face is retried with an `open` list, walking every outer edge (an open edge no longer ends the walk). With at least one open edge and one wall it is an open floor; `knifeEdge` and `reachable` apply as for pockets.
 - `pockets()` returns `[pockets, corners, steps, slots]`; `analyze.ts:77` takes them; `number(steps, "step")`, `number(slots, "slot")`; the features array becomes holes, turned, pockets, corners, steps, slots, walls. `linkCorners` links a corner to a pocket, step or slot by its lowest face.
 - Classify an open floor:
@@ -111,7 +111,7 @@ Checks in `web/src/engine/port/steps_slots.test.ts` run in `npm run check` (the 
 | one run holding a facing pair and an end wall between them | slot, `open_ends` 1, `end_type` "round" when the end wall is one cylinder (`end_radius` its radius), else "flat" |
 | anything else (3 or more runs, an island) | no call |
 
-- Runs split at open edges and at cut edges (`inside` true); `open_ends` counts open edges only.
+- `open_ends` counts open edges only (a cut end is not open).
 - A face set already found is skipped (Terms, "Same feature").
 - In S1 a slot row gives no call.
 - Fields (as `Pocket`): `kind`, `faces` (floor pieces, walls, blends, corner chamfers), `axis` (floor normal), `open_dirs`, `open_vectors` (floor normal, then one outward unit vector per open edge's direction, deduplicated within 0.5°), `dims_mm`: `depth` (`rimTop`, as pockets), `length` (floor extent along the walls: along the facing pair for slots, along the longest wall's floor edge for steps), `narrowest_width` (slots only: shortest distance between the facing pair, `distShapes`), `min_corner_radius`, `end_mill_mm`, `undersized`, `end_radius` (round end only). Steps carry `open_edges` (count); slots `open_ends`, `end_type`.
@@ -129,7 +129,7 @@ Update, naming each change in the PR: `port/rules.test.ts` (exact `rules_run`), 
 
 ### Plan and tools (`plan.ts`)
 
-`slotTools(f)`: rougher as `roughTool` but listed unless equal to the finisher, then `pocketTool(f)`. `stepTools(f)`: rougher `endMillsMm().at(-1)` (1 in) when larger than `f.dims_mm.end_mill_mm`, then the finisher. `web/src/findings.ts:120-140` tool reasons (the pocket-only "75% of its gap" reason at 132-137 gets a slot twin): step "the roughing end mill: no wall limits it" / "fits its inside corner"; slot "the roughing end mill: under its width" / "fits its width". `web/src/findings.ts:89` sizes: step "{depth} deep", slot "{width} wide, {depth} deep".
+`slotTools(f)`: rougher the largest end mill ≤ `pocket_width_share` × `narrowest_width`, listed unless it equals the finisher (unlike `roughTool`, it may be smaller), then `pocketTool(f)`; `pocketTools` and `roughTool` are unchanged. The plan orders tools by `rank` (largest first), so for a slot the list order is not the cutting order; the tool reasons say which tool roughs (assumption: acceptable until S3's screens show cut order). `stepTools(f)`: rougher `endMillsMm().at(-1)` (1 in) when larger than `f.dims_mm.end_mill_mm`, then the finisher. `web/src/findings.ts:120-140` tool reasons (the pocket-only "75% of its gap" reason at 132-137 gets a slot twin): step "the roughing end mill: no wall limits it" / "fits its inside corner"; slot "the roughing end mill: under its width" / "fits its width". `web/src/findings.ts:89` sizes: step "{depth} deep", slot "{width} wide, {depth} deep".
 
 ### Rules and settings
 
@@ -143,13 +143,13 @@ Update, naming each change in the PR: `port/rules.test.ts` (exact `rules_run`), 
 - D-019: faces `pocketShapedSlot` marks stay out of the tally (counted on their own line, as today); they are neither slot misses nor pocket wrong calls. Pocket calls on other 17-22 faces print on `slot-step-as-pocket` and count as step or slot misses; the pocket comparison in the target uses the baseline's labels only.
 - `floorless`: faces of classes 5 and 7, and what each was called. A step or slot call there is a wrong call (they stay scored labels), which J3's `vg_through` and the axis rule guard.
 - Pocket calls on classes 6 and 8-10 stay pocket wrong calls, as today (0 in both baselines).
-- `grade.ts:37`: beside `holes_whole`, `steps_whole` and `slots_whole` from `INSTANCES.json` keys `<stem>` → `{"holes": [...], "steps": [[faces]], "slots": [[faces]]}`; a set whose value is a plain list keeps meaning holes (today's sets).
+- `grade.ts:37`: beside `holes_whole`, `steps_whole` and `slots_whole` from `INSTANCES.json` keys `<stem>` → `{"holes": [...], "steps": [[faces]], "slots": [[faces]]}`; a set whose value is a plain list keeps meaning holes (today's sets). `instanceScore` groups features of the given kind by faces, with the same whole, split and merged rules as holes.
 - `grading/analyse.ts` exports step and slot features; `summary.ts` prints step and slot lines and the target rule.
 - Whole features: `INSTANCES.json` (as `tests/grading/sets/hole_joins/INSTANCES.json`: stem → list of face-index lists) lists each step and slot; `instanceScore` counts them with each feature's own faces.
 
 ### Test set (`tests/grading/sets/steps_slots/`)
 
-`make.ts` on opencascade.js, run by `node web/scripts/make-set.mjs steps_slots` (prototyped 2026-11-11: `STEPControl_Writer` in Node; faces labelled in explorer order by a point inside each face classified ON a tool solid; the grader read it with `file_order` and `names_agree` true). `make-set.mjs` runs `make.ts` with `--experimental-transform-types --import scripts/ts-register.mjs`, as `grading.mjs` does. Face labels: a face on a step tool is 8 (through) or 20-22 (blind, by shape), on a slot tool 6 or 17-19, its fillets and corner faces the same class; the 45° chamfer 0; untouched block faces 24; `vg_through` 5. Writes the `.step` files, `MANIFEST.md` (the `undercuts` set's format) and `INSTANCES.json`. Parts: the J1-J3 parts plus `st_stair` (two steps), `st_fillet` (a 2 mm floor fillet), `st_blind_rect`, `st_blind_round`, `st_blind_tri` (classes 22, 21, 20), `st_face` (a step across the whole top), `sl_angled`, `vg_through`. S1 adds every part to `tests/parity/key/index-quick.json` through `parity:refreeze --add`.
+`make.ts` on opencascade.js, run by `node web/scripts/make-set.mjs steps_slots` (prototyped 2026-11-11: `STEPControl_Writer` in Node; faces labelled in explorer order by a point inside each face classified ON a tool solid; the grader read it with `file_order` and `names_agree` true). `make-set.mjs` runs `make.ts` with `--experimental-transform-types --import scripts/ts-register.mjs`, as `grading.mjs` does. Face labels: a face on a step tool is 8 (through) or 20-22 (blind, by shape), on a slot tool 6 or 17-19, its fillets and corner faces the same class; the 45° chamfer 0; untouched block faces 24; `vg_through` 5. Writes the `.step` files, `MANIFEST.md` (the `undercuts` set's format) and `INSTANCES.json`. Parts (each one feature unless said): the J1-J3 parts plus `st_stair` (two steps, 10 and 20 deep), `st_fillet` (`st_through` with a 2 mm floor fillet, in the step's faces), `st_blind_rect` (an L corner notch, 22), `st_blind_round` (a quarter-round corner notch, 21), `st_blind_tri` (a triangular corner notch, 20), `st_face` (the top lowered 5 mm over x 0-60, leaving one wall at x = 60: a step, 8), `sl_angled`, `vg_through`. S1 adds every part to `tests/parity/key/index-quick.json` through `parity:refreeze --add`.
 
 ### Parity re-freeze
 
@@ -162,14 +162,14 @@ Update, naming each change in the PR: `port/rules.test.ts` (exact `rules_run`), 
 - **Morgan tries:** upload `st_through.step` or a stepped work part: the Machining step lists the step's setup and end mills.
 - **Checks that fail now:** J1, J3 (step guards), J4 for steps, the UMD step counts.
 - **Files:** `features/pockets.ts`, `analyze.ts`, `plan.ts`, `turning.ts`, `rules/access.ts`, `rules/step_depth.ts`, `rules/index.ts`, `rows.ts`, `src/findings.ts`, `config/drivers.toml`, `grading/{score,analyse,summary,grade,baseline}.ts`, `port/groupb_common.ts`, the tests above, `port/steps_slots.test.ts`, `port/umd_counts.test.ts`, `tests/grading/sets/steps_slots/` (the whole set), `web/scripts/{make-set,parity-refreeze}.mjs`, `web/package.json`, `tests/parity/key/`.
-- **First:** run the open-floor rule (axis rule and dedupe, no plan or tools yet) on the first 500 MFCAD++ parts and count step calls on class 5 and 7 faces and on stock (24); any over 0 goes back into the rule before the rest is built.
+- **First:** run the open-floor rule (axis rule and dedupe, no plan or tools yet) on the first 500 MFCAD++ parts and count step calls on class 5, 6, 7 and 17-19 faces and on stock (24); any over 0 goes back into the rule before the rest is built.
 - **Waits on:** none.
 
 ### S2 Slots
 
 - **Morgan tries:** `sl_blind_round.step` and `sl_deep.step`: the slot's tools and the two findings.
 - **Checks that fail now:** J2, J3 (slot guards), J4 for slots, UMD slot counts.
-- **Files:** `features/pockets.ts`, `plan.ts`, `src/findings.ts`, `rules/{slot_depth,slot_ratio}.ts`, `rules/index.ts`, `rows.ts`, `config/{thresholds,drivers}.toml`, `grading/score.ts`, `tests/parity/key/`.
+- **Files:** `features/pockets.ts`, `plan.ts`, `src/findings.ts`, `rules/{slot_depth,slot_ratio}.ts`, `rules/index.ts`, `rows.ts`, `config/{thresholds,drivers}.toml`, `grading/{score,summary,baseline}.ts`, `port/umd_counts.test.ts`, `tests/parity/key/`.
 - **Waits on:** S1.
 
 ### S3 Screens and PDF
