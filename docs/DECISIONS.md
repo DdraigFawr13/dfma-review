@@ -564,3 +564,22 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - **Pocket shapes, after edge treatments:** the four MFCAD++ pocket classes told apart (13 triangular, 14 rectangular, 15 6-sided, 16 circular end); today all four are one "pocket" kind.
 - **Why:** Morgan's call, from the MFCAD++ class coverage page (https://claude.ai/artifact/8jC8LKPZBuzrtCJd6vFas7). The order after steps and slots is the builder's default: Morgan set only edge treatments before pocket shapes. Each is planned and specced before it is built (WS-02).
 - **Open (Proposed, not decided):** passages (MFCAD++ 2 to 4) are scored today and have no plan.
+
+## D-076 UI fixes (HANDOFF 000a): plan and mock-up approved
+
+- **Status:** Accepted (2026-11-11). Morgan, in chat on the [mock-up](https://claude.ai/artifact/Adh7jrTqHCskfymUbrPkc4): "Ok approved. When you are done merging please open the next slice in a new session to continue". Answers: [round 1](https://claude.ai/artifact/TC6zxWereXxzeVBLG4MtLE), [review](https://claude.ai/artifact/N8rWXXux4n2VWqNhkDzEUB); mock-up `mockups/ui-fixes.html` (built by `mockups/build_ui_fixes.mjs`; screenshots from a throwaway prototype, `mockups/ui-fixes/proto.diff`). PR #46. Not built yet.
+- **Decision:** two slices, spec'd with `write-spec` first, A before B.
+  - **Slice A, the model:**
+    - Mouse like Inventor, plus trackpad moves: left-drag or Shift + middle-drag rotates; middle-drag, right-drag or Shift + left-drag moves; the wheel zooms towards the point under the mouse, forward zooms in. Touch unchanged. Middle-click autoscroll and paste blocked over the model.
+    - View buttons Home, Front, Top, Right, Iso at the model's bottom right (no view cube). Views and setups move the camera, never the part.
+    - An XYZ axis triad in the model's bottom-left corner, labelled, in the part's own axes (part.frame); no origin marker (Morgan: "just the triad is fine").
+    - Pins hide on any camera change (drag, wheel, keys) and come back about 150 ms after the last; still, pins on every finding as now. Lag timed on a named big part on a production build, before and after.
+    - One feature at a time: a picked row lights only the finding it shows ("1 of n"); every other face is plain grey at 0.35 opacity (findings and Show OK tints too); ‹ › and ← → step. Nothing picked: as now, Show OK switches unchanged.
+    - Keyboard on the focused model: arrows rotate, Shift + arrows move, + and − zoom, H home; ← → step on the open row. The model gets a visible focus ring.
+  - **Slice B, the screens:**
+    - Examples on the start form and in a top-bar Examples ▾ menu: report_sample, angled_hole_in_pocket, slender_shaft, clean_one_setup (an example sets Process itself).
+    - Top bar: Open…, Examples ▾, Export PDF; the file name moves to the status line; "Change file" leaves the overview. One picker takes the STEP and its .ipt.
+    - Machine view on Machining: a Part / Machine switch over the model; a setup chip turns the view so the spindle is on top (a lathe part lies across the screen); tapping a tool row (a button, at least 32 px tall) lights the faces it cuts in that setup and shows it in a placeholder spindle (cutter diameter to scale, the rest generic); a lathe part shows a placeholder chuck.
+  - **Later:** tool-access check after steps and slots (Morgan, review note), research first; cutaway and dimensions on the part: Soon, after A and B; view cube: no.
+- **Amends, when built:** UI_STYLE "Selected finding" (a row lights the finding it shows; other faces grey, not their colours); D-042 ("Change file" leaves the overview; one Open… picker); D-023 (the Machine view turns the view per setup and lights a tool's faces); D-017 (pins hidden while the part moves).
+- **Why:** Morgan's 4 photos of the work copy (2026-11-10): rotating was "the hardest currently"; a row with many copies lit the whole part. Round 1 and the review settled each choice; an adversarial review and two fresh mock-up checks ($1.42 measured) found the folded-row cause, the lag on wheel and keys, the arrow-key clash, trackpad moves and the lathe view.
