@@ -1,6 +1,6 @@
 # Handoff
 
-Updated: 2026-11-11 (reach spike done on branch `spike-reach`, numbers to Morgan; next: Morgan's two answers, then `write-spec` for P1 and P2). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
+Updated: 2026-11-11 (reach spike done on branch `spike-reach`, numbers to Morgan; accepted, D-087; next: `write-spec` for P1 and P2). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
 
 ## Phase
 
@@ -22,12 +22,12 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ✔ GitLab Pages port (D-054 to D-074): trial, spec, S1-S7, S8a, S8b retire Python (#33 to #43; full line in the archive).
 - ✔ UI fixes (Morgan, 2026-11-10; D-076): ✔ round 1 and review · ✔ mock-up approved (PR #46) · ✔ spec A+B (D-078, #49) · ✔ slice A model (#51, D-080) · ✔ slice B screens (#53) · ○ Morgan's work-copy check · ○ later: cutaway, dimensions; tool-access check after steps and slots.
 - ▶ Steps and slots (Morgan, 2026-11-10; D-066, D-068, D-079): ✔ research ([page](research/feature-recognition.html)) · ✔ planning ([round 1](https://claude.ai/artifact/2NiJeW3rhomfLQSDeVzDhY), [review](https://claude.ai/artifact/1DwcDhFZcZVzxisd3QTqcy)) · ✔ spec `docs/specs/steps-slots.md` approved (D-081), merged in PR #50 · ○ S1 steps · ○ S2 slots · ○ S3 screens · ○ then V-groove and round-bottom slots, edge treatments, pocket shapes (D-075).
-- ▶ Machining and DFMA rework, then Inventor-only and Vault (Morgan, 2026-11-11; D-083, D-084): ✔ research ([page](https://claude.ai/artifact/UnHEMoUGXWeHiYeQUiWff2)) · ✔ plan accepted (D-084), merged in PR #55 · ✔ P1+P2 planned (D-085, [round 1](https://claude.ai/artifact/EFfFHenk4UaMnjpq4hGLLj), [review](https://claude.ai/artifact/Mc4eBLkZtwmGPJ9uHEs8Zt)), PR #56 · ✔ P0 counterbore side (D-086, PR #57) · ✔ spike ([README](research/reach-spike/README.md), [status page](https://claude.ai/artifact/39TfLVdfgnogtB4GjbC44n)) · ▶ Morgan's answers, then spec P1+P2 · ○ P1 removal volume · ○ slots S1-S2 · ○ P2 reach check · ○ P3 Xometry checks · ○ P4 time · ○ DFMA · ○ Inventor-only · ○ Vault.
+- ▶ Machining and DFMA rework, then Inventor-only and Vault (Morgan, 2026-11-11; D-083, D-084): ✔ research ([page](https://claude.ai/artifact/UnHEMoUGXWeHiYeQUiWff2)) · ✔ plan accepted (D-084), merged in PR #55 · ✔ P1+P2 planned (D-085, [round 1](https://claude.ai/artifact/EFfFHenk4UaMnjpq4hGLLj), [review](https://claude.ai/artifact/Mc4eBLkZtwmGPJ9uHEs8Zt)), PR #56 · ✔ P0 counterbore side (D-086, PR #57) · ✔ spike ([README](research/reach-spike/README.md), [status page](https://claude.ai/artifact/39TfLVdfgnogtB4GjbC44n)) · ▶ spec P1+P2 (D-087) · ○ P1 removal volume · ○ slots S1-S2 · ○ P2 reach check · ○ P3 Xometry checks · ○ P4 time · ○ DFMA · ○ Inventor-only · ○ Vault.
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
 
-- 2026-11-11 Reach spike (D-085 step 1), branch `spike-reach`, draft PR; [README](research/reach-spike/README.md) has every number and how it was measured. CTC 02 (largest NIST part), 6 directions × 11 end mills + holder, Chromium: 10.0 s on 1 worker, 3.8 s on 3 at cell D/4 capped 4 M cells. Manifold 3.5.4: 218 kB gzip, loads in 34-45 ms; all 17 NIST meshes weld valid; FTC 08 `-e1-tg` mesh is inside-out. OpenCAMLib: LGPL-2.1-or-later from source; not run (the session's permission check refused the prebuilt binary and the source build). Code: `web/src/reach-spike/`, spike config only.
+- 2026-11-11 Reach spike (D-085 step 1), branch `spike-reach`, draft PR; [README](research/reach-spike/README.md) has every number and how it was measured. CTC 02 (largest NIST part), 6 directions × 11 end mills + holder, Chromium: 10.0 s on 1 worker, 3.8 s on 3 at cell D/4 capped 4 M cells. Manifold 3.5.4: 218 kB gzip, loads in 34-45 ms; all 17 NIST meshes weld valid; FTC 08 `-e1-tg` mesh is inside-out. OpenCAMLib (Morgan approved the install): LGPL-2.1-or-later; built from source and run; centre-sampled tips are optimistic on 0.13-20.7 % of points (P2a needs a conservative raster or a wider disk). Code: `web/src/reach-spike/`, spike config only.
 - 2026-11-11 P0 approved (D-086), merged in PR #57: archive "Moved 2026-11-11 (reach spike session)".
 - Earlier (P1+P2 plan #56, UI fixes, S8b, harness): archive.
 
@@ -35,7 +35,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 00. Checks: `npm run check` at the root; before a PR is marked ready also `npm --prefix web run edmr` and `parity:full` when the engine changed. Morgan: turn on GitHub Pages (Settings → Pages → Source: GitHub Actions) if not yet; tell IT before the work copy (D-055).
 000a. UI fixes (D-076, D-078, D-080): A and B merged (#51, #53). Owed: Morgan's work-copy check of both (VER-07); arrow keys and the 50 ms drag target stand as built (D-080) until then. B's open finding: a countersink tool has `diameter_in: null`, so it shows no spindle.
-0000. Spike done (above). Owed by Morgan, on the [status page](https://claude.ai/artifact/39TfLVdfgnogtB4GjbC44n): Q1 the P2a cell rule (recommended D/4, cap 4 M, up to 3 workers); Q2 OpenCAMLib (recommended: build from source in a session, test-only; or allow the npm prebuilt binary; or drop the cross-check). Then `write-spec` for P1 and P2 from D-085 with the spike numbers. Still owed: the engineer's wrong-side parts (run them when they arrive), which free options he meant, the shop's setup issues. Stale branch `port-s8-retire-python` (S8b, merged in #43): check before deleting (GIT-03).
+0000. Spike done and accepted (D-087). Next: `write-spec` for P1 and P2 from D-085 and D-087 (numbers in the spike README). Still owed by Morgan: the engineer's wrong-side parts (run them when they arrive), which free options he meant, the shop's setup issues. Stale branch `port-s8-retire-python` (S8b, merged in #43): check before deleting (GIT-03).
 000. After P1 (D-085 order; steps and slots, D-079, D-081): build S1 (steps) from the approved spec [`docs/specs/steps-slots.md`](specs/steps-slots.md) in a new session, on a new branch from main: re-run write-spec step 8's zero-decision check on S1's sections against main (UI fixes A and B changed `findings.ts`, `main.ts`), do S1's "First" check on 500 MFCAD++ parts, see S1's checks fail, then build. MFCAD++: archive "Moved 2026-11-09" for the download.
 0. Now: plainer sentences for the rule cases that still read as titles, each shown to Morgan first (D-045). Follow-up from the audit fixes: Hole feature rows still carry aria-pressed and aria-expanded (F15's pattern, out of its scope).
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `cd web && node scripts/harness.mjs local-pairs` (prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
@@ -50,6 +50,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-11 D-087: spike accepted; P2a cell rule D/4 capped 4 M, a height map that is never optimistic, OpenCAMLib built from source for tests.
 - 2026-11-11 D-086: P0 approved; `tool_dirs` on holes; the guarded `parity:refreeze` changes the key.
 - 2026-11-11 D-085: P1+P2 plan approved (Morgan: "Go with all as recommended and I approve"): P0 counterbore side, spike, P1, slots S1-S2, P2a, P2b; Manifold at runtime, OpenCAMLib test-only.
 - Earlier (D-001 to D-084): `docs/DECISIONS.md` (`grep '^## D-'`).

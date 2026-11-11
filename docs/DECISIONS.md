@@ -681,3 +681,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-11). Morgan, in chat: "Approved", after the [status page](https://claude.ai/artifact/5SEUuurhd1gxJLdXH2hiYq) and [demo](https://claude.ai/artifact/8iYnMCsrzFsHYtkQoELg4i) of PR #57.
 - **Decision:** a hole segment records `tool_dirs`, the open ends it can be reached from past no narrower segment of its hole, when fewer than `open_dirs`; the mill plan uses them. The guarded `parity:refreeze` (steps-slots spec design) is the way the frozen key changes; P0's re-freeze changed 60 of 335 files, none refused. The drill picked for a flat-bottom counterbore of a drill's size stays as it is until Morgan asks.
 - **Why:** the engineer's report (D-085); the `.ipt`'s own counterbore ends agree on the 14 mapped NIST counterbores.
+
+## D-087 Reach spike accepted: cell rule, a conservative height map, OpenCAMLib built from source
+
+- **Status:** Accepted (2026-11-11). Morgan, after the [status page](https://claude.ai/artifact/39TfLVdfgnogtB4GjbC44n): "Go with your recommendations. I approve"; earlier, "I approve of the opencam install".
+- **Decision:** (1) P2a cell rule: each tool on cells of D/4, at most 4 M cells per direction map, directions on up to min(3, cores - 1) workers (CTC 02: 10.0 s on 1 Chromium worker, 3.8 s on 3). (2) P2a's height map must not be optimistic: use the highest point over each cell's area, not its centre, and check it against OpenCAMLib tip heights the way the spike did before it ships (the spike's centre sampling was lower than OpenCAMLib on 0.13-20.7 % of points). (3) OpenCAMLib (LGPL-2.1-or-later, from its source) is built from upstream source for test runs, as in `docs/research/reach-spike/README.md`; it never reaches the built site (D-085). Numbers and method: that README.
+- **Why:** the spike's measurements; the reach check is only useful if it never says a tool reaches where it can't.

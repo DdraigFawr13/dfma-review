@@ -6,7 +6,7 @@ The three measurements D-085 asks for before the P1 and P2 spec. Code: `web/src/
 
 1. **Reach timing fits the 15 s budget.** On the largest NIST part (CTC 02), with all 6 directions, all 11 end mills and the holder, one Chromium worker takes 4.2 to 10.0 s with each tool on its own grid. Three workers take 2.0 to 3.8 s. Proposed rule: cell = D/4, capped at 4 M cells per map, directions spread over up to 3 workers.
 2. **Manifold is small and loads fast.** The Vite build emits 44,026 B of JS and 541,470 B of wasm (gzip 14,182 + 203,843 B). That is 1.4 % of the 41,036,092 B OpenCascade wasm the site ships already. It loads in 34 to 45 ms in Chromium (5 cold runs, no network). Every NIST mesh welds into a valid manifold.
-3. **OpenCAMLib's licence is LGPL-2.1-or-later.** Build and run were not done: the session's permission check refused both loading the npm package's prebuilt native binary and building the binding from source ("Code from External"). That needs Morgan's go-ahead.
+3. **OpenCAMLib is LGPL-2.1-or-later, builds and runs here.** Morgan approved the install (2026-11-11). The Node binding was built from upstream source in 29 s and checked our tool-tip heights. Finding for P2a: sampling H at cell centres is optimistic. On 0.13 to 20.7 % of points our tip is lower than OpenCAMLib's, so a tool would seem to reach where it can't. A disk one cell wider is safe to 0.177 mm, but pessimistic on 3.4 to 76 % of points.
 
 ## 1. Reach timing
 
@@ -53,7 +53,7 @@ CTC 02, all 6 directions × 11 tools, times in ms:
 
 **Not covered** (REP-02):
 - Refining where leftovers show is not built. Its cost depends on how much area is left over, which P2a sets.
-- The leftover volumes are not yet checked against OpenCAMLib, so they count as timing work only.
+- The leftover volumes are timing work only: the tip map is checked against OpenCAMLib (section 3), but not the full opening, the holder or the volumes.
 - Cell-centre sampling loses half a cell at each wall. The test pocket's 48 mm³ reads as 36.75 mm³ at 0.5 mm cells.
 - D-085's "smallest feature" part of the cell rule is not used; only tool size is.
 - Ball and bull-nose tools (P2b) are not timed.
@@ -88,16 +88,25 @@ CTC 02, all 6 directions × 11 tools, times in ms:
   - The README badge says LGPL v2.1. `pyproject.toml` points to `COPYING`.
   - Only the npm wrapper's `package.json` (`src/npmpackage/package.json:30`, and the published `@opencamlib/opencamlib` 2023.01.11) says `"LGPL-3.0"`. "Or any later version" allows that, but it is not the source's own licence.
   - Answer: **LGPL-2.1-or-later.** As a test-time dependency that never ships (D-085), LGPL places no duty on the built site.
-- **Build and run: not done.** The npm package `@opencamlib/opencamlib` 2023.01.11 ships prebuilt `ocl.node` binaries (linux, macOS and Windows; x64 and arm64), 8,620,141 B `browser.js` and an 8,390,598 B emscripten `build/ocl.js`.
-  - Loading its prebuilt linux-x64 binary in Node was refused by the session's permission check.
-  - Building the Node binding from the cloned source was refused too ("Code from External"). That build is cmake-js plus node-addon-api, with Boost 1.83 headers installed in the container.
-  - What it needs, as far as read: g++ 13.3, cmake 3.28 and Boost headers are here; cmake-js and node-addon-api come from npm (`src/nodejslib/package.json`).
-  - Whether it builds and runs here is still open: Morgan's call.
+- **Build and run: done, from source, with Morgan's approval (2026-11-11).**
+  - The session's permission check first refused both loading the npm package's prebuilt `ocl.node` (`@opencamlib/opencamlib` 2023.01.11, prebuilt for linux, macOS and Windows) and the first source build; Morgan then approved the install.
+  - The repo's `install.sh` route (cmake-js) could not fetch Node headers: nodejs.org answered 405 through the network proxy.
+  - What worked: Boost 1.83 headers (`apt-get install libboost-dev`), the npm package `node-api-headers` for the Node-API headers, and node-addon-api from `src/nodejslib`. Then `cmake -S . -B build/nodejs -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_NODEJS_LIB=ON -DVERSION_STRING=1a450b7 -DCMAKE_JS_INC=<node-api-headers>/include` and `cmake --build build/nodejs -j 3`. `VERSION_STRING` is needed because a shallow clone has no tags.
+  - Result: 29 s, `ocl.node` 737,144 B; it loads in Node 22.23.4 and answers.
+- **Cross-check** (`web/src/reach-spike/ocl-check.mjs`, raw output in `ocl-check.txt`):
+  - Method: the part is rotated so each direction is +Z. OpenCAMLib's `PathDropCutter` with a `CylCutter` (1/4 in, flute 4 × D) runs along every 10th grid row. Its sampling is set so its points fall on our cell centres. The cell is D/8 (0.794 mm), so our disk is exactly 4 cells = R. Compared: our tip map T (dilation) against its tip heights, at the same points.
+  - Two binding traps: it keeps raw pointers to the cutter and the surface, so hold both in variables. And a line takes floor(L / s + 1) samples.
+  - FTC 06, 6 directions (3,968 to 12,288 points each): within 0.01 mm on 89.3 to 99.4 % of points, within 0.1 mm on 92.4 to 99.7 %. Ours lower (optimistic) on 0.13 to 9.70 %, higher on 0.12 to 1.40 %. Worst 268.49 mm.
+  - CTC 02, 5 directions (+X −X +Y −Y +Z; 43,707 to 93,413 points each): within 0.01 mm on 78.6 to 95.2 %, within 0.1 mm on 94.5 to 97.6 %. Ours lower on 4.48 to 20.73 %, higher on 0.29 to 0.64 %. Worst 852 mm, a whole part width.
+  - The −Z run was killed for lack of memory and was not repeated.
+  - OpenCAMLib time: 2.4 to 7.0 s per direction on FTC 06, 62 to 129 s on CTC 02 (every 10th row). Test-time checks should use small parts or sparse rows.
+  - With a disk one cell wider (r + 1): ours lower on 0 to 1.55 % of points, by at most 0.177 mm; ours higher on 3.43 to 76.44 %.
+  - Reading (inference): the misses are edges and slopes between cell centres, which centre sampling cannot see. P2a needs a conservative raster (the highest point over each cell's area, not at its centre) or the wider disk, and has to pick between them by this same check. Not measured yet.
 
 ## Files
 
 - `web/src/reach-spike/heightmap.ts`: the rasteriser, dilation, erosion, holder and per-direction run.
 - `check.run.ts`: the 3 checks. `meshes.run.ts`: meshes the 17 NIST files into `tests/nist/.cache/reach-spike/` (gitignored).
-- `time-node.mjs`, `time-browser.mjs` and `rules.mjs`: the timing harnesses.
+- `time-node.mjs`, `time-browser.mjs` and `rules.mjs`: the timing harnesses. `ocl-check.mjs`: the OpenCAMLib cross-check (needs a built `ocl.node`). `picture.mjs`: the +Z picture (`ctc02-plusZ.png`).
 - Run: `cd web && npx vitest run --config vitest.spike.config.ts src/reach-spike/`, then `node src/reach-spike/time-node.mjs ../tests/nist/.cache/reach-spike/nist_ctc_02_asme1_ap242-e2.f32 tool:4:4`. The browser harness also needs `DFMA_CHROMIUM` set.
 - `manifold/`: the probes. They need `manifold-3d@3.5.4` installed in a scratch folder (`npm i manifold-3d@3.5.4`), and `weld.mjs` reads the spike's mesh cache.
