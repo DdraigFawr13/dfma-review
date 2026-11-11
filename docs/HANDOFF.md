@@ -25,7 +25,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-11 S8b merged in #43 (06:19 UTC, `43c4caf`; PR CI green, 12.8 min). First Node CI run failed: NIST 10 s limits in the parallel vitest run (11.7 s, 13.3 s); fixed by a timed vitest lane run alone (reproduced: 14.9 s under 4 workers on 2 cores); `npm run check` 421 s. Python retired; `npm run check` at the root passes (exit 0): drift, NIST unpack, web check (901 vitest), build and test build, parity quick 122 of 122 the same (4 shards, 99.7 s), e2e 101 passed, timed 4 passed. Then run: edmr 114 of 114 pass; parity:full 335 files, 327 the same, 2 different (bn_ball6, nasty_cheese: D-073 tessellation), 6 Python crashed (the UMD files, S1). plan.test.ts angled-holes test has a 30 s limit (engine 5.2 s vs Python 3.8 s).
+- 2026-11-11 S8b merged in #43 (06:19 UTC, `43c4caf`; PR CI green, 12.8 min): Python retired, checks on Node (D-074). `npm run check` 421 s (900 s budget); edmr 114 of 114; parity:full 327 the same, 2 known tessellation, 0 different. The first CI run failed on NIST 10 s limits inside the parallel vitest run; fixed with a timed lane run alone. plan.test.ts angled-holes test: 30 s limit (engine 5.2 s, Python 3.8 s).
 - Tessellation (D-074): named exemption for 3 faces (bn_ball6 14, 18; nasty_cheese 202); parity:full exit 0 (327 same, 2 known, 0 different). Cause: OCCT 8.0.1 (pythonocc) vs 8.0.0 (opencascade.js).
 - 2026-11-11 Harness upgraded v4.12.0 → v4.14.0 (master D-068): the `test-design` skill, VER-10 (see a test fail first) and VER-11 (real samples, time tests, fixed waits are wall-clock limits) now load here; check time budget in AGENTS.md (D-073). Merged as #44 by auto-merge on green (Morgan approved 2026-11-11).
 
