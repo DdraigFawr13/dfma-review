@@ -151,6 +151,8 @@ def main() -> int:
         "browser": [
             # Port spec J2: the browser engine in Node against the frozen key (quick set, tests/parity/key/; S8a: no
             # Python key run per check); the browser e2e tests read the same key (test_worker_parity), so they come after
+            # S8a: the parity test reads the NIST STEP files named in the key; unpack the zip first (CI starts without it)
+            ("NIST files", [py, "-c", "import sys; sys.path.insert(0, 'tests'); from nist_files import ap242_files; ap242_files()"]),
             ("parity", [npm, "--prefix", "web", "run", "parity"]),
             # browser_pending.txt deselected; J4 (the 49.94 MiB plate) runs once per slice, alone (D-058; -m per_slice)
             ("browser e2e tests", [*pytest, "-m", f"e2e and not per_slice and {NOT_TIMED}", "--engine", "browser"]),
