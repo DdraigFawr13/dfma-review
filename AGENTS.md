@@ -15,6 +15,7 @@ Shared rules come from AI-Master-Instructions and load through CLAUDE.md (`.clau
 ## Local checks (run before pushing)
 
 - Every push: `python scripts/check.py` inside the `dfma` environment (drift check, service tests, web check and build, browser tests). It runs three lanes at once (service tests; e2e; parity then browser e2e), then the `timed` tests alone: mark any test that asserts a wall-clock limit `@pytest.mark.timed`, or the lanes can slow it past its limit.
+- Time budget (proposed 2026-11-11, Morgan to approve): `python scripts/check.py` under 900 s here (measured 639 s on 2026-11-11: lanes 511.5 s, then timed service 63.5 s, e2e 21.7 s, browser 33.8 s), and CI under its 20-minute `timeout-minutes`. Report the check time against it; over budget means find the slow step (test-design skill, "Time budgets").
 - Cloud sessions have no conda. The "Network" environment's setup script builds the env at `/opt/mamba/envs/dfma` on a fresh container; if it is missing, install micromamba from conda-forge (D-008) and build `environment.yml` yourself. Set `DFMA_CHROMIUM` to the preinstalled Chromium (`/opt/pw-browsers/chromium-*/chrome-linux64/chrome`).
 
 ## What CI runs

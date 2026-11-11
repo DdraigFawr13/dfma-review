@@ -4,7 +4,7 @@ Updated: 2026-11-10 (port S7 approved, D-069; merged in PR #41). A fresh session
 
 ## Phase
 
-Build. First usable version: S1 to S7 merged (#3 to #18). Inventor parts: I1 (#21 to #23), I2 and I3 (#24, #27; D-039 to D-046) merged. Review-steps S1 merged in #29 (D-047). Review-steps S2+S3 merged in #30 (D-051): the step screen is complete. UX audit merged in #31; its 34 fixes merged in #32 (D-053). Now: GitLab Pages port S8 (retire Python) next, in a new session; S7 merged in #41 (D-069); S6 merged in #40 (D-067); S5 merged in #38 (D-064), S4 in #37 (D-062); S1 merged in #34, S2 in #35 (D-060), S3 in #36 (D-061); and the work-pair check from 2026-11-12. History and full entries: [docs/archive/handoff-2026-11.md](archive/handoff-2026-11.md) (grep it; "Moved 2026-11-09" holds the long entries cut from here).
+Build. First usable version, Inventor parts I1-I3, review steps and the UX audit fixes are merged (#3 to #32). GitLab Pages port S1-S7 and S8a merged (#34 to #42; D-060 to D-072). Now: port S8b (retire Python) in a new session, and the work-pair check from 2026-11-12. History: [docs/archive/handoff-2026-11.md](archive/handoff-2026-11.md) (grep it; "Moved 2026-11-09" holds the long entries cut from here).
 
 ## Plan map
 
@@ -25,8 +25,8 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
+- 2026-11-11 Harness upgraded v4.12.0 → v4.14.0 (master D-068): the `test-design` skill, VER-10 (see a test fail first) and VER-11 (real samples, time tests, fixed waits are wall-clock limits) now load here; check time budget in AGENTS.md. Draft PR, waits on Morgan.
 - 2026-11-11 S8a (D-072): merged the D-071 docs from `port-s8-retire-python` here (that branch is unmerged; left as is). Quick parity 122 of 122, 4 shards, 236.7 s. Scorer and harness match Python (numbers in D-072). Stale EDMR line: `tests/edmr/scorecard.toml` `nasty_cheese` 386, both engines 387 (open).
-
 
 
 ## Next
