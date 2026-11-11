@@ -1,6 +1,6 @@
 # Handoff
 
-Updated: 2026-11-11 (UI fixes spec approved, D-078; next: slice A in a new session). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
+Updated: 2026-11-11 (UI fixes slice A built on `ui-fixes-a-model`; next: checks, review, status page, draft PR, Morgan's check). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
 
 ## Phase
 
@@ -20,19 +20,19 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ○ Inventor shape from the `.ipt` alone (D-035; after I1).
 - ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ✔ spec approved (D-045, #28) · ✔ S1 merged in #29 (D-047) · ✔ S2 + S3 merged in #30 (D-048 to D-052) · ✔ UX audit #31 · ✔ audit fixes #32 (D-053) ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
 - ▶ GitLab Pages port (Morgan, 2026-11-09; D-054, D-055, D-056): ✔ trial · ✔ spec approved (PR #33) · ✔ S1 site, viewer, parity (PR #34) · ✔ S2 holes (PR #35) · ✔ S3 plan, cost, PDF (PR #36; work release possible) · ✔ S4 pockets (PR #37) · ✔ S5 walls (PR #38) · ✔ S6 turning (PR #40) · ✔ S7 Inventor (PR #41) · ✔ S8a (PR #42) · ✔ S8b retire Python (PR #43).
-- ▶ UI fixes (Morgan, 2026-11-10; D-076): ✔ round 1 and review · ✔ mock-up approved (PR #46) · ✔ spec A+B (D-078, #49) · ▶ slice A model · ○ slice B screens · ○ later: cutaway, dimensions; tool-access check after steps and slots.
+- ▶ UI fixes (Morgan, 2026-11-10; D-076): ✔ round 1 and review · ✔ mock-up approved (PR #46) · ✔ spec A+B (D-078, #49) · ▶ slice A model (built, awaiting Morgan) · ○ slice B screens · ○ later: cutaway, dimensions; tool-access check after steps and slots.
 - ○ Steps and slots (Morgan, 2026-11-10; D-066, D-068): ✔ research ([page](research/feature-recognition.html)) · ✔ answers (MFCAD++ classes, no open-pocket kind, plan first) · ○ spec with `write-spec` · ○ build (after the port, unless Morgan moves it up) · ○ then edge treatments: chamfers and fillets (D-075) · ○ then pocket shapes, MFCAD++ 13-16 (D-075).
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
 
-- 2026-11-11 Spec UI fixes A and B approved (D-078) and merged in PR #49 (`docs/specs/ui-fixes.md`; [approval page](https://claude.ai/artifact/SYV9w7ZZmAXFArnEu7dKvh)): before-numbers on CTC 02 (drag frame gap p90 344-466 ms; pin placement 420 ms a frame, drawing 3.3 ms); orbit-axis bug confirmed in three.js; 41 of 42 sample parts' part axes differ from the file's. D-077 (checks follow what changed) merged in PR #48 (`npm run check` 661 s).
-- Earlier (UI fixes plan, S8b, tessellation, harness v4.14.0, #47): archive "Moved 2026-11-11 (spec session)".
+- 2026-11-11 UI fixes S1 built on `ui-fixes-a-model` (from `0900cf7`; builder defaults and two three 0.187 workarounds in spec S1 "Built"); 9 new e2e tests (`web/e2e/model.spec.ts`) failed on main. Pin lag, CTC 02: drag script 10.9-15.2 s → 0.22-0.27 s, but frame gap p90 192-196 ms (target 50) with SwiftShader drawing; wheel p90 263-412 ms.
+- Earlier (UI fixes spec #49, D-077 #48, plan, S8b, harness v4.14.0): archive "Moved 2026-11-11 (spec session)" and "(slice A session)".
 
 ## Next
 
 00. Checks: `npm run check` at the root; before a PR is marked ready also `npm --prefix web run edmr` and `parity:full` when the engine changed. Morgan: turn on GitHub Pages (Settings → Pages → Source: GitHub Actions) if not yet; tell IT before the work copy (D-055).
-000a. Now (UI fixes, D-076, D-078): build S1 (slice A, the model) from the approved spec [`docs/specs/ui-fixes.md`](specs/ui-fixes.md) in a new session, on a new branch from main: re-run write-spec step 8's zero-decision check on S1's sections first, see S1's checks fail, then build; time pin lag with `web/scripts/pin-lag.mjs` (port of `docs/specs/ui-fixes-pin-lag.cjs`) before and after on a production build. S2 (slice B) after S1 merges. Forms: [round 1](https://claude.ai/artifact/TC6zxWereXxzeVBLG4MtLE), [review](https://claude.ai/artifact/N8rWXXux4n2VWqNhkDzEUB).
+000a. Now (UI fixes, D-076, D-078): S1 built on `ui-fixes-a-model` ([spec](specs/ui-fixes.md) S1 "Built" lists the builder defaults). Left: `npm run check`, fresh review against the spec, status page + `npm run demo`, draft PR; Morgan checks by using it (D-077) and decides on the 50 ms frame target (not met in software WebGL) and the arrow-key sign. S2 (slice B) after S1 merges, in a new session. Forms: [round 1](https://claude.ai/artifact/TC6zxWereXxzeVBLG4MtLE), [review](https://claude.ai/artifact/N8rWXXux4n2VWqNhkDzEUB).
 000. Steps and slots (D-068): Morgan added slot recognition in another copy without full testing (2026-11-10) and wants it redone here, tested; spec with `write-spec` after the port; start with a labelled `steps_slots` set, then NIST and EDMR, then MFCAD++ classes 5-10 and 17-22.
 0. Now: plainer sentences for the rule cases that still read as titles, each shown to Morgan first (D-045). Follow-up from the audit fixes: Hole feature rows still carry aria-pressed and aria-expanded (F15's pattern, out of its scope).
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `cd web && node scripts/harness.mjs local-pairs` (prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.

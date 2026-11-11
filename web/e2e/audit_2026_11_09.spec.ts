@@ -301,7 +301,7 @@ test("test_f24_card_heading_is_the_link", async ({ page }) => {
 test("test_f28_canvas_is_labelled_and_the_hint_names_the_keyboard", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("viewer-canvas")).toHaveAttribute("aria-label", /3D model/);
-  await expect(page.locator(".viewfoot .hint")).toContainText("keyboard");
+  await expect(page.locator(".viewfoot .hint")).toContainText("Tab to the model for keys."); // the words of UI fixes A8
 });
 
 // --- Machining and the pins ---

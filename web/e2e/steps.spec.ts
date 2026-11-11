@@ -313,14 +313,13 @@ test("test_feature_rows", async ({ page, browser }) => {
   await expect(page.getByTestId("legend")).toHaveCount(0); // the 7-entry legend is gone (D-014 amended)
 
   const f4 = sample.findings.find((f: Result) => f.id === "F4");
-  const faces = [...new Set<number>(sample.findings.filter((f: Result) => f.rule === "corner_radius").flatMap((f: Result) => f.faces as number[]))].sort((a: number, b: number) => a - b);
   await row.click();
   await expect(row).toHaveAttribute("aria-expanded", "true");
   const detail = page.getByTestId("row-detail");
   await expect(detail).toContainText("F4 · corner-1 · 1 of 4");
   await expect(detail).toContainText("radius 0.000 in, pocket 0.250 in deep");
   await expect(detail).toContainText(`What to do${f4.suggestion}`);
-  expect(sortNum(await page.evaluate("window.__dfma.highlightedFaces()") as number[])).toEqual(faces); // all its findings' faces
+  expect(sortNum(await page.evaluate("window.__dfma.highlightedFaces()") as number[])).toEqual(sortNum(f4.faces)); // the shown finding's faces (UI fixes A5, D-076)
   await expect(page.locator(".viewer .flag.chosen")).toHaveAttribute("data-id", "F4");
   await page.getByTestId("row-next").click();
   await expect(detail).toContainText("F5 · corner-2 · 2 of 4");

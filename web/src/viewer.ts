@@ -4,10 +4,39 @@
 
 import { sevMark, sevWord } from "./words";
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { ArcballControls } from "three/examples/jsm/controls/ArcballControls.js";
 import type { Face, Finding } from "./api";
 
 const GHOST_OPACITY = 0.35;
+const PIN_REST_MS = 150; // pins come back this long after the last mouse or wheel move (UI fixes A4, D-076)
+const KEY_REST_MS = 600; // ... and after the last key: longer than a key's repeat delay (about 500 ms)
+const TRIAD_COLOURS = ["#c62828", "#2e7d32", "#1565c0"]; // X, Y, Z (UI fixes A3)
+
+/** The view buttons (UI fixes A2, D-078): direction from the part's centre to the camera, and the screen's up, in file axes. */
+export const VIEWS = {
+  home: { direction: [1, -1.2, 0.9], up: [0, 0, 1] },
+  front: { direction: [0, -1, 0], up: [0, 0, 1] },
+  top: { direction: [0, 0, 1], up: [0, 1, 0] },
+  right: { direction: [1, 0, 0], up: [0, 0, 1] },
+  iso: { direction: [1, -1, 1], up: [0, 0, 1] },
+} as const;
+export type ViewName = keyof typeof VIEWS;
+
+/** A letter for the triad, drawn bold in the ink colour on a canvas texture. */
+function letter(text: string): THREE.Sprite {
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const g = c.getContext("2d")!;
+  g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#16263d";
+  g.font = "bold 48px system-ui, sans-serif";
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  g.fillText(text, 32, 34);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
+  sprite.scale.set(0.42, 0.42, 1);
+  return sprite;
+}
+
 const MIN_FRAME = 0.4; // a selected finding is framed at no less than this share of the part's size (S3)
 
 /** Feature kinds the legend can tint when checked with no finding (D-014), and their tokens. */
@@ -46,7 +75,7 @@ export class Viewer {
   private readonly renderer: THREE.WebGLRenderer;
   private readonly scene = new THREE.Scene();
   private readonly camera = new THREE.PerspectiveCamera(35, 1, 0.1, 10000);
-  private readonly controls: OrbitControls;
+  private readonly controls: ArcballControls;
   private readonly part = new THREE.Group();
   private readonly meshes = new Map<number, THREE.Mesh>();
   private readonly flags: { el: HTMLElement; points: THREE.Vector3[]; finding: Finding }[] = [];
@@ -60,6 +89,18 @@ export class Viewer {
   private okStep = false; // review-steps S2: OK tints only while the Features step shows
   private selected: Selection | null = null;
   private frame = 0;
+  // UI fixes A4: while the camera moves, pins are hidden and not placed
+  private moving = false;
+  private settling = false; // the next frame places pins and ends `moving`
+  private held = false; // a press or touch the controls are following
+  private restTimer = 0;
+  private placed = 0; // placeFlags() runs since page load, for the test hook
+  // UI fixes A3: the part-axes triad, drawn in the canvas's bottom-left corner
+  private readonly triadScene = new THREE.Scene();
+  private readonly triadCamera = new THREE.OrthographicCamera(-1.55, 1.55, 1.55, -1.55, 0.1, 10);
+  private readonly triadAxes: THREE.Vector3[] = [];
+  private triadOff = false; // snapshot() draws its picture without the triad (A13)
+  private readonly small = window.matchMedia("(max-width: 500px)");
 
   constructor(private readonly canvas: HTMLCanvasElement) {
     // preserveDrawingBuffer: the canvas can be read back (tests now, the PDF in S7).
@@ -78,9 +119,34 @@ export class Viewer {
     this.scene.add(this.camera, this.part);
     this.camera.position.set(0, 0, 100);
 
-    this.controls = new OrbitControls(this.camera, canvas);
-    this.controls.enableDamping = false;
-    this.controls.addEventListener("change", () => this.render());
+    // UI fixes A1 (D-078): free rotation like Inventor's free orbit. No scene: no gizmos, no double-click focus.
+    this.controls = new ArcballControls(this.camera, canvas, null);
+    this.controls.setGizmosVisible(false);
+    this.controls.enableAnimations = false;
+    this.controls.enableGrid = false;
+    this.controls.enableFocus = false;
+    this.controls.cursorZoom = true; // zoom to the mouse
+    this.controls.adjustNearFar = true;
+    this.controls.setMouseAction("ROTATE", 0);
+    this.controls.setMouseAction("ROTATE", 1, "SHIFT");
+    this.controls.setMouseAction("PAN", 1);
+    this.controls.setMouseAction("PAN", 0, "SHIFT");
+    this.controls.setMouseAction("PAN", 2);
+    this.controls.setMouseAction("ZOOM", "WHEEL");
+    this.controls.unsetMouseAction("WHEEL", "SHIFT"); // no field-of-view change
+    this.controls.unsetMouseAction(0, "CTRL");
+    this.controls.addEventListener("start", () => { this.held = true; this.startMoving(); });
+    this.controls.addEventListener("end", () => { this.held = false; this.restIn(PIN_REST_MS); });
+    canvas.addEventListener("keydown", (e) => this.onKey(e));
+    this.controls.addEventListener("change", () => {
+      // three 0.187 turns camera.up as if it were in the camera's own axes; keep it the screen's up instead
+      this.camera.up.set(0, 1, 0).applyQuaternion(this.camera.quaternion);
+      this.render();
+    });
+    // Middle-click: no autoscroll, no paste over the model
+    const noMiddle = (e: MouseEvent) => { if (e.button === 1) e.preventDefault(); };
+    canvas.addEventListener("mousedown", noMiddle);
+    canvas.addEventListener("auxclick", noMiddle);
     new ResizeObserver(() => this.resize()).observe(canvas);
     this.resize();
   }
@@ -226,12 +292,14 @@ export class Viewer {
   /** A picture of the canvas with `finding` selected and framed, for the PDF report (S7); the selection and
    *  camera the reader had come back afterwards. JPEG: the view background is opaque. */
   snapshot(finding: Selection | null): { url: string; width: number; height: number; spot: [number, number] | null } {
-    const keep = { selected: this.selected, position: this.camera.position.clone(), target: this.controls.target.clone(),
+    const keep = { selected: this.selected, position: this.camera.position.clone(), target: this.pivot(), up: this.camera.up.clone(),
                    near: this.camera.near, far: this.camera.far };
     this.selected = finding;
     this.paint();
     if (finding) this.frameFaces(finding.faces, this.edges.get(finding.id));
+    this.triadOff = true; // the PDF picture has no triad (A13)
     this.renderer.render(this.scene, this.camera); // now: the queued frame would come after the read
+    this.triadOff = false;
     const url = this.canvas.toDataURL("image/jpeg", 0.85);
     // Where the finding's centre lands in the picture (0-1 across, 0-1 down), for the report's ring (D-017's pin)
     let spot: [number, number] | null = null;
@@ -245,15 +313,11 @@ export class Viewer {
     }
     this.selected = keep.selected;
     this.camera.position.copy(keep.position);
+    this.camera.up.copy(keep.up);
     this.camera.near = keep.near; // framing moves the clip planes with the camera: put the reader's back
     this.camera.far = keep.far;
     this.camera.updateProjectionMatrix();
-    this.controls.target.copy(keep.target);
-    this.controls.update();
-    // update() rebuilds the position from angles and re-clamps the target about its cursor, which can round both:
-    // put the reader's own back exactly
-    this.camera.position.copy(keep.position);
-    this.controls.target.copy(keep.target);
+    this.setView(keep.target);
     this.paint();
     this.render();
     return { url, width: this.canvas.width, height: this.canvas.height, spot };
@@ -276,8 +340,45 @@ export class Viewer {
   }
 
   cameraTarget(): [number, number, number] {
-    const t = this.controls.target;
+    const t = this.pivot();
     return [t.x, t.y, t.z];
+  }
+
+  /** The camera and the point it turns about, in file axes (UI fixes A10). */
+  view(): { position: [number, number, number]; target: [number, number, number]; up: [number, number, number] } {
+    const v = (p: THREE.Vector3): [number, number, number] => [p.x, p.y, p.z];
+    return { position: v(this.camera.position), target: v(this.pivot()), up: v(this.camera.up) };
+  }
+
+  /** The part's bounding sphere and box (UI fixes A10). */
+  partBounds(): { center: [number, number, number]; radius: number; box: [number, number, number, number, number, number] } {
+    const box = new THREE.Box3().setFromObject(this.part);
+    const s = box.getBoundingSphere(new THREE.Sphere());
+    return { center: [s.center.x, s.center.y, s.center.z], radius: s.radius,
+      box: [box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z] };
+  }
+
+  /** The part group's world matrix (16 numbers): views move the camera, never the part (A2). */
+  partMatrix(): number[] {
+    this.part.updateMatrixWorld();
+    return [...this.part.matrixWorld.elements];
+  }
+
+  /** The point the controls turn about. ArcballControls moves its gizmo on a pan or a zoom to the mouse but not its
+   *  public `target`, so the pivot is read from the gizmo (three 0.187, ArcballControls.js `_gizmos`). */
+  private pivot(): THREE.Vector3 {
+    const gizmos = (this.controls as unknown as { _gizmos: THREE.Object3D })._gizmos;
+    return gizmos.position.clone();
+  }
+
+  /** The camera was moved in code: point it at `target` and let the controls re-read it (A1). */
+  private setView(target: THREE.Vector3): void {
+    // `target` is in three's ArcballControls.js (0.187) but not in @types/three 0.187
+    (this.controls as unknown as { target: THREE.Vector3 }).target.copy(target);
+    this.controls.setCamera(this.camera);
+    // three 0.187: setCamera() moves the gizmo to the target but leaves its matrix stale, which the next pan or zoom
+    // starts from (with no scene nothing else updates it): the pivot jumped to the old spot (measured in the A1 probe).
+    (this.controls as unknown as { _gizmos: THREE.Object3D })._gizmos.updateMatrix();
   }
 
   private paint(): void {
@@ -292,14 +393,17 @@ export class Viewer {
         if (!prev || rank[f.severity] > rank[prev]) severity.set(id, f.severity);
       }
     }
+    // UI fixes A5 (D-076): while anything is selected, everything not chosen is plain grey: no severity or OK colour
+    const any = this.selected !== null;
     const selectedBar = this.selected ? this.edges.get(this.selected.id) : undefined;
     const chosen = new Set(selectedBar ? [] : this.selected?.faces ?? []);
     const kept = new Set(selectedBar ? this.selected?.faces ?? [] : []); // a sharp corner's walls stay solid
     for (const [id, bar] of this.edges) {
       const f = this.findings.find((x) => x.id === id);
       const material = bar.material as THREE.MeshStandardMaterial;
-      material.color.copy(this.selected?.id === id ? accent : token(`--${f?.severity ?? "high"}`));
-      const ghost = this.selected !== null && this.selected.id !== id; // fades with the rest of the part
+      const on = this.selected?.id === id;
+      material.color.copy(on ? accent : any ? part : token(`--${f?.severity ?? "high"}`));
+      const ghost = any && !on; // fades with the rest of the part
       material.transparent = ghost;
       material.opacity = ghost ? GHOST_OPACITY : 1;
       material.needsUpdate = true;
@@ -309,14 +413,146 @@ export class Viewer {
       const sev = severity.get(id);
       const kind = this.checked.get(id);
       const ok = kind !== undefined && this.showChecked[kind] && this.okStep;
-      material.color.copy(chosen.has(id) ? accent : sev ? token(`--${sev}`) : ok ? token(CHECKED_TOKEN[kind]) : part);
-      const ghost = this.selected !== null && !chosen.has(id) && !kept.has(id);
+      material.color.copy(chosen.has(id) ? accent : any ? part : sev ? token(`--${sev}`) : ok ? token(CHECKED_TOKEN[kind]) : part);
+      const ghost = any && !chosen.has(id) && !kept.has(id);
       material.transparent = ghost;
       material.opacity = ghost ? GHOST_OPACITY : 1;
       material.depthWrite = !ghost;
       material.needsUpdate = true;
     }
+  }
 
+  /** Each face's colour as drawn, lower-case #rrggbb (UI fixes A10). */
+  faceColours(): Record<number, string> {
+    return Object.fromEntries([...this.meshes].map(([id, m]) => [id, `#${(m.material as THREE.MeshStandardMaterial).color.getHexString()}`]));
+  }
+
+  /** Each sharp-corner bar's colour and opacity, by finding id (UI fixes A10). */
+  barColours(): Record<string, { colour: string; opacity: number }> {
+    return Object.fromEntries([...this.edges].map(([id, bar]) => {
+      const m = bar.material as THREE.MeshStandardMaterial;
+      return [id, { colour: `#${m.color.getHexString()}`, opacity: m.opacity }];
+    }));
+  }
+
+  /** How many times pins were placed since the page loaded (UI fixes A4). */
+  placements(): number {
+    return this.placed;
+  }
+
+  /** The renderer's state after a frame or a snapshot (UI fixes A13). */
+  renderState(): { autoClear: boolean; scissorTest: boolean } {
+    return { autoClear: this.renderer.autoClear, scissorTest: this.renderer.getScissorTest() };
+  }
+
+  /** The part's own axes (part.frame, in file coordinates) for the triad; null draws none (UI fixes A3). */
+  setFrame(frame: { x: number[]; y: number[]; z: number[] } | null): void {
+    for (const child of [...this.triadScene.children]) {
+      this.triadScene.remove(child);
+      child.traverse((o) => {
+        const any = o as THREE.Mesh;
+        any.geometry?.dispose();
+        const m = any.material as THREE.Material | undefined;
+        (m as THREE.SpriteMaterial | undefined)?.map?.dispose();
+        m?.dispose();
+      });
+    }
+    this.triadAxes.length = 0;
+    if (frame) {
+      [frame.x, frame.y, frame.z].forEach((a, i) => {
+        const dir = new THREE.Vector3(a[0], a[1], a[2]).normalize();
+        this.triadAxes.push(dir);
+        this.triadScene.add(new THREE.ArrowHelper(dir, new THREE.Vector3(), 1, TRIAD_COLOURS[i], 0.28, 0.16));
+        const label = letter("XYZ"[i]);
+        label.position.copy(dir).multiplyScalar(1.32);
+        this.triadScene.add(label);
+      });
+    }
+    this.render();
+  }
+
+  /** Each triad arrow's direction on screen, a unit vector with y up (UI fixes A3); (0, 0) for one pointing at the viewer. */
+  triad(): { axis: "X" | "Y" | "Z"; dx: number; dy: number }[] {
+    this.camera.updateMatrixWorld();
+    const right = new THREE.Vector3().setFromMatrixColumn(this.camera.matrixWorld, 0);
+    const up = new THREE.Vector3().setFromMatrixColumn(this.camera.matrixWorld, 1);
+    return this.triadAxes.map((a, i) => {
+      const dx = a.dot(right), dy = a.dot(up), n = Math.hypot(dx, dy);
+      return { axis: "XYZ"[i] as "X" | "Y" | "Z", dx: n > 1e-9 ? dx / n : 0, dy: n > 1e-9 ? dy / n : 0 };
+    });
+  }
+
+  /** Show the part from one of the view buttons' directions (UI fixes A2): the whole part, at once. */
+  showView(name: ViewName): void {
+    const box = new THREE.Box3().setFromObject(this.part);
+    if (box.isEmpty()) return;
+    const v = VIEWS[name];
+    this.place(box.getBoundingSphere(new THREE.Sphere()), new THREE.Vector3(...v.direction).normalize(), new THREE.Vector3(...v.up));
+  }
+
+  // --- UI fixes A4: pins while the camera moves ---
+
+  private startMoving(): void {
+    clearTimeout(this.restTimer);
+    this.settling = false;
+    if (this.moving) return;
+    this.moving = true;
+    this.canvas.parentElement?.classList.add("moving");
+  }
+
+  /** Pins come back `ms` after the last move: the next frame places them, and only then shows them. */
+  private restIn(ms: number): void {
+    clearTimeout(this.restTimer);
+    if (!this.moving) return;
+    this.restTimer = window.setTimeout(() => { this.settling = true; this.render(); }, ms);
+  }
+
+  /** A move made in code (a view, a pick, Home) while moving: pins come back with this frame. */
+  private settleNow(): void {
+    if (!this.moving) return;
+    clearTimeout(this.restTimer);
+    this.settling = true;
+  }
+
+  // --- UI fixes A6: keys on the focused model ---
+
+  private onKey(e: KeyboardEvent): void {
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
+    const target = this.pivot();
+    const offset = this.camera.position.clone().sub(target);
+    const forward = offset.clone().negate().normalize();
+    const up = this.camera.up.clone().sub(forward.clone().multiplyScalar(this.camera.up.dot(forward))).normalize();
+    const right = forward.clone().cross(up).normalize();
+    const turn = (axis: THREE.Vector3, deg: number) => {
+      const q = new THREE.Quaternion().setFromAxisAngle(axis, THREE.MathUtils.degToRad(deg));
+      this.camera.position.copy(target).add(offset.applyQuaternion(q));
+      this.camera.up.copy(up.applyQuaternion(q));
+    };
+    const height = 2 * offset.length() * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
+    const shift = (v: THREE.Vector3) => { target.add(v); this.camera.position.add(v); };
+    const key = e.key;
+    if (key === "h" || key === "H") {
+      if (e.shiftKey) return;
+      e.preventDefault();
+      this.fit();
+      return;
+    }
+    const arrows: Record<string, THREE.Vector3> = { ArrowLeft: right.clone().negate(), ArrowRight: right, ArrowUp: up, ArrowDown: up.clone().negate() };
+    // Builder default (spec S1): the camera goes the arrow's way: ← turns or moves it left, ↑ up over the part
+    if (key in arrows) {
+      if (e.shiftKey) shift(arrows[key].clone().multiplyScalar(0.1 * height));
+      else if (key === "ArrowLeft" || key === "ArrowRight") turn(up.clone(), key === "ArrowLeft" ? -10 : 10);
+      else turn(right.clone(), key === "ArrowUp" ? -10 : 10);
+    } else if (key === "+" || key === "=" || e.code === "NumpadAdd") {
+      this.camera.position.copy(target).addScaledVector(offset, 1 / 1.25);
+    } else if (key === "-" || e.code === "NumpadSubtract") {
+      this.camera.position.copy(target).addScaledVector(offset, 1.25);
+    } else return;
+    e.preventDefault();
+    this.startMoving();
+    this.setView(target);
+    if (!this.held) this.restIn(KEY_REST_MS); // while a button is held, its release brings the pins back
+    this.render();
   }
 
   private boxOf(faceIds: number[]): THREE.Box3 {
@@ -365,26 +601,26 @@ export class Viewer {
       this.render(); // cleared: draw the empty scene
       return;
     }
-    this.place(box.getBoundingSphere(new THREE.Sphere()), new THREE.Vector3(1, -1.2, 0.9).normalize());
+    this.place(box.getBoundingSphere(new THREE.Sphere()), new THREE.Vector3(1, -1.2, 0.9).normalize(), new THREE.Vector3(0, 0, 1));
   }
 
   private viewDirection(): THREE.Vector3 {
-    return this.camera.position.clone().sub(this.controls.target).normalize();
+    return this.camera.position.clone().sub(this.pivot()).normalize();
   }
 
-  private place(sphere: THREE.Sphere, direction: THREE.Vector3): void {
+  private place(sphere: THREE.Sphere, direction: THREE.Vector3, up: THREE.Vector3 = this.camera.up.clone()): void {
     // Fit the narrower of the two view angles, so tall views don't clip the sides. Immediate, no animation.
     const vertical = THREE.MathUtils.degToRad(this.camera.fov / 2);
     const horizontal = Math.atan(Math.tan(vertical) * this.camera.aspect);
     const radius = Math.max(sphere.radius, 1);
     const distance = (radius / Math.sin(Math.min(vertical, horizontal))) * 1.15;
     this.camera.position.copy(sphere.center).addScaledVector(direction, distance);
-    this.camera.up.set(0, 0, 1);
+    this.settleNow(); // a view, a pick or Home while moving: pins come back with this frame (A4)
+    this.camera.up.copy(up);
     this.camera.near = distance / 100;
     this.camera.far = distance * 100;
     this.camera.updateProjectionMatrix();
-    this.controls.target.copy(sphere.center);
-    this.controls.update();
+    this.setView(sphere.center);
     this.render();
   }
 
@@ -533,11 +769,12 @@ export class Viewer {
 
   /** Where each finding's pin went: shown, folded into another pin, or hidden behind the part. */
   flagState(): { id: string; shown: boolean; mergedInto: string }[] {
-    return this.flags.map(({ el, finding }) => ({ id: finding.id, shown: !el.hidden, mergedInto: el.dataset.mergedInto ?? "" }));
+    return this.flags.map(({ el, finding }) => ({ id: finding.id, shown: !el.hidden && !this.moving, mergedInto: el.dataset.mergedInto ?? "" }));
   }
 
   /** Each visible pin's box with its stem and dot, for the overlap test (audit F27). */
   pinFootprints(): { id: string; x: number; y: number; w: number; h: number }[] {
+    if (this.moving) return [];
     const host = this.canvas.parentElement?.getBoundingClientRect();
     return this.pinned.filter((p) => !p.el.hidden).map(({ el, at }) => {
       const f = footprint(el.getBoundingClientRect(), (host?.left ?? 0) + at.x, (host?.top ?? 0) + at.y);
@@ -547,17 +784,45 @@ export class Viewer {
 
   /** Screen boxes of the visible flags, for the overlap test. */
   flagBoxes(): { id: string; x: number; y: number; w: number; h: number }[] {
+    if (this.moving) return [];
     return this.flags.filter((f) => !f.el.hidden).map(({ el, finding }) => {
       const r = el.getBoundingClientRect();
       return { id: finding.id, x: r.x, y: r.y, w: r.width, h: r.height };
     });
   }
 
+  /** The triad pass (A3, A13): a square in the bottom-left corner, then the renderer as it was. */
+  private drawTriad(): void {
+    if (this.triadOff || !this.triadAxes.length || !this.meshes.size) return;
+    const size = this.small.matches ? 64 : 96, inset = 8;
+    const full = this.renderer.getSize(new THREE.Vector2());
+    const back = this.camera.position.clone().sub(this.pivot()).normalize();
+    this.triadCamera.position.copy(back).multiplyScalar(3);
+    this.triadCamera.up.copy(this.camera.up);
+    this.triadCamera.lookAt(0, 0, 0);
+    this.renderer.autoClear = false;
+    this.renderer.setScissorTest(true);
+    this.renderer.setScissor(inset, inset, size, size);
+    this.renderer.setViewport(inset, inset, size, size);
+    this.renderer.clearDepth();
+    this.renderer.render(this.triadScene, this.triadCamera);
+    this.renderer.setScissorTest(false);
+    this.renderer.setViewport(0, 0, full.x, full.y);
+    this.renderer.autoClear = true;
+  }
+
   private render(): void {
     cancelAnimationFrame(this.frame);
     this.frame = requestAnimationFrame(() => {
       this.renderer.render(this.scene, this.camera);
+      this.drawTriad();
+      if (this.moving && !this.settling) return; // pins wait until the camera rests (A4)
       this.placeFlags();
+      this.placed++;
+      if (this.moving) { // only now, so pins never flash at their old spots
+        this.moving = this.settling = false;
+        this.canvas.parentElement?.classList.remove("moving");
+      }
     });
   }
 }

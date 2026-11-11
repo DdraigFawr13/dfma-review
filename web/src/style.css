@@ -98,7 +98,9 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 .spin { width: 28px; height: 28px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .viewer { display: flex; flex-direction: column; gap: var(--space-1); min-height: 0; }
-.viewer canvas { flex: 1; width: 100%; min-height: 20rem; background: var(--view); border: 1px solid var(--line); border-radius: var(--radius); display: block; touch-action: none; }
+/* UI fixes A9: the canvas, the view buttons and the triad caption share one box; pins and leaders sit in it too */
+.stage { position: relative; flex: 1; display: flex; min-height: 0; }
+.stage canvas { flex: 1; width: 100%; min-height: 20rem; background: var(--view); border: 1px solid var(--line); border-radius: var(--radius); display: block; touch-action: none; }
 .hint { margin: 0; color: var(--muted); font-size: 0.875rem; }
 .viewfoot { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); align-items: center; justify-content: space-between; }
 .key { display: inline-flex; gap: 6px; align-items: center; min-height: 32px; }
@@ -175,13 +177,25 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 .flag.chosen[data-more]:not([data-more=""])::after { color: var(--accent-ink); }
 .leaders { position: absolute; pointer-events: none; overflow: visible; z-index: 2; }
 .viewer { position: relative; overflow: hidden; } /* flags near the edge never widen the page */
+/* UI fixes A4: pins and stems hidden while the camera moves (kept in layout so they can be measured) */
+.stage.moving .flag, .stage.moving .leaders { visibility: hidden; }
+/* UI fixes A6: the focused model's ring, inside its edge so the viewer's overflow can't clip it */
+.stage canvas:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+/* UI fixes A2, A12: view buttons at the model's bottom right; the triad's caption under it */
+.views { position: absolute; right: 8px; bottom: 8px; display: flex; flex-wrap: wrap; gap: var(--space-1); z-index: 4; }
+.views[hidden] { display: none; }
+.triad-caption { position: absolute; left: 8px; bottom: 2px; width: 96px; text-align: center; color: var(--muted); font-size: 0.75rem; pointer-events: none; }
+.triad-caption[hidden] { display: none; }
 @media (max-width: 900px) {
   .cols { grid-template-columns: 1fr; min-height: 0; flex: none; }
-  .viewer canvas { height: 420px; flex: none; }
+  .stage canvas { height: 420px; flex: none; }
+  .stage { flex: none; }
   .side { max-height: none; }
   .topfile { display: none; } /* frame r3-overview-900: the file name shows in the overview */
 }
 @media (max-width: 500px) {
+  .viewfoot .views { position: static; } /* A12: under the model, before the hint */
+  .triad-caption { display: none; }
   /* audit F20: the five steps scroll in one row instead of wrapping into several */
   .steps { flex: 1 1 100%; flex-wrap: nowrap; overflow-x: auto; padding: 6px; margin: -6px; } /* room for the focus ring */
   /* audit F5: a cost driver's label on its own row, count × weight and score under it */

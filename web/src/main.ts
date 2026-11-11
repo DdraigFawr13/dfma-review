@@ -9,7 +9,7 @@ import { formatSize } from "./format";
 import { buildReport, reportName } from "./report";
 import { STEPS, STEP_NAMES, groupTally, placeRows, placedLine, renderChips, renderCost, renderOverview, renderReport,
   renderRows, renderSetupChips, rowFaces, stepCounts, type Placed, type RowFilter, type Step } from "./steps";
-import { Viewer, type CheckedKind } from "./viewer";
+import { Viewer, VIEWS, type CheckedKind, type ViewName } from "./viewer";
 
 function byId<T extends HTMLElement>(id: string): T {
   const el = document.getElementById(id);
@@ -41,6 +41,8 @@ const SWITCHES: [CheckedKind, HTMLInputElement][] = [
   ["wall", byId<HTMLInputElement>("show-checked-walls")],
 ];
 for (const [kind, box] of SWITCHES) box.addEventListener("change", () => viewer.setShowChecked(kind, box.checked));
+// UI fixes A2: the view buttons move the camera, never the part
+for (const name of Object.keys(VIEWS) as ViewName[]) byId(`view-${name}`).addEventListener("click", () => viewer.showView(name));
 
 let run = 0;
 /** What is selected (review-steps spec Design "Parts"): a row and the finding it shows, or one thing by its id
@@ -67,6 +69,14 @@ declare global {
       flagBoxes(): { id: string; x: number; y: number; w: number; h: number }[];
       flagState(): { id: string; shown: boolean; mergedInto: string }[];
       pinFootprints(): { id: string; x: number; y: number; w: number; h: number }[];
+      view(): { position: [number, number, number]; target: [number, number, number]; up: [number, number, number] };
+      part(): { center: [number, number, number]; radius: number; box: [number, number, number, number, number, number] };
+      partMatrix(): number[];
+      triad(): { axis: "X" | "Y" | "Z"; dx: number; dy: number }[];
+      renderState(): { autoClear: boolean; scissorTest: boolean };
+      placements(): number;
+      faceColours(): Record<number, string>;
+      barColours(): Record<string, { colour: string; opacity: number }>;
     };
   }
 }
@@ -78,7 +88,15 @@ window.__dfma = {
   flagBoxes: () => viewer.flagBoxes(), // test hook: where each visible finding label sits
   flagState: () => viewer.flagState(), // test hook: each pin shown, folded into another, or hidden
   pinFootprints: () => viewer.pinFootprints(), // test hook: each pin shown with its stem and dot (audit F27)
-  checkedFaces: (kind?: CheckedKind) => viewer.checkedFaces(kind), // test hook: drawn in a kind's "checked" colour
+  checkedFaces: (kind?: CheckedKind) => viewer.checkedFaces(kind),
+  view: () => viewer.view(), // test hooks (UI fixes A10): the camera, the part's bounds and matrix
+  part: () => viewer.partBounds(),
+  partMatrix: () => viewer.partMatrix(),
+  triad: () => viewer.triad(),
+  renderState: () => viewer.renderState(),
+  placements: () => viewer.placements(),
+  faceColours: () => viewer.faceColours(),
+  barColours: () => viewer.barColours(), // test hook: drawn in a kind's "checked" colour
   // test hook: the result on screen, without the view buffers the worker adds (port J4, J6b; the test build adds
   // wasm_bytes and worker)
   analysis: () => shown && { ...shown, faces: shown.faces.map(({ view: _view, ...f }) => f) },
@@ -121,13 +139,15 @@ function kindOf(id: string): Exclude<NonNullable<Sel>, { kind: "row" }>["kind"] 
 }
 
 /** What the viewer shows for a selection in `result`, or null when it isn't there (a new result of the same file:
- *  a material change). A row shows all its findings' faces, its pin the shown finding's. */
+ *  a material change). A row shows the finding it shows, one at a time (UI fixes A5); a passed row all its features. */
 function pickOf(result: Analysis, s: Sel): Pick | null {
   if (!s) return null;
   if (s.kind === "row") {
     const r = [...result.rows, ...result.passed_rows].find((x) => x.id === s.row);
     if (!r) return null;
-    return { id: r.findings[Math.min(s.at, r.findings.length - 1)] ?? r.id, faces: rowFaces(r, result) };
+    const id = r.findings[Math.min(s.at, r.findings.length - 1)];
+    const f = id ? result.findings.find((x) => x.id === id) : undefined;
+    return f ? { id: f.id, faces: f.faces } : { id: r.id, faces: rowFaces(r, result) };
   }
   return stillThere(result, s.id);
 }
@@ -185,7 +205,10 @@ const rowHandlers = {
   },
   onStep(delta: number) { // ‹ ›: the next finding in the open row, the row stays open
     if (sel?.kind !== "row") sel = openRow ? { kind: "row", row: openRow, at: 0 } : null;
-    if (sel?.kind === "row") sel = { ...sel, at: Math.max(0, sel.at + delta) };
+    if (sel?.kind === "row") { // clamped at both ends (UI fixes A7)
+      const r = shown && [...shown.rows, ...shown.passed_rows].find((x) => x.id === (sel as { row: string }).row);
+      sel = { ...sel, at: Math.min(Math.max(0, sel.at + delta), Math.max(0, (r?.findings.length ?? 1) - 1)) };
+    }
     apply();
   },
   onPass(fid: string) { // one feature of an open passed row alone; again: the whole row
@@ -276,6 +299,8 @@ function showFindings(result: Analysis | null, message: string): void {
   tabs.get("features")!.setAttribute("aria-label", counts ? `2 Features: ${counts}` : "2 Features");
   byId<HTMLButtonElement>("export-pdf").disabled = !result;
   byId("export-pdf").hidden = !result;
+  byId("views").hidden = !result;
+  byId("triad-caption").hidden = !result;
   byId("top-file").hidden = !result;
   byId("top-file").textContent = result?.part.name ?? "";
   for (const s of STEPS) if (s !== "part") { // focusable while closed, with the reason (audit F19)
@@ -352,6 +377,15 @@ function placeShowOk(): void {
 }
 narrow.addEventListener("change", placeShowOk);
 placeShowOk();
+// UI fixes A12: at 500 px and below the view buttons move under the model, before the hint (moved, not copied)
+const small = window.matchMedia("(max-width: 500px)");
+function placeViews(): void {
+  const views = byId("views");
+  if (small.matches) document.querySelector(".viewfoot .hint")!.insertAdjacentElement("beforebegin", views);
+  else byId("viewer").insertAdjacentElement("afterend", views);
+}
+small.addEventListener("change", placeViews);
+placeViews();
 back.addEventListener("click", () => showStep(STEPS[STEPS.indexOf(step) - 1]));
 next.addEventListener("click", () => showStep(STEPS[STEPS.indexOf(step) + 1]));
 window.addEventListener("hashchange", () => {
@@ -399,6 +433,7 @@ async function analyse(): Promise<void> {
     viewer.show(result.faces, samePart); // the same file re-analysed keeps the camera
     viewer.setFindings(result.findings, edgesOf(result));
     viewer.setChecked(checkedFaces(result));
+    viewer.setFrame(result.part.frame ?? null); // the triad, in part axes (UI fixes A3)
     for (const [kind, box] of SWITCHES) viewer.setShowChecked(kind, box.checked);
     shownFile = file;
     shownIpt = ipt;
@@ -442,6 +477,7 @@ function showError(message: string, retry = false): void {
 /** No part on screen: the start form, nothing left of the previous part (its numbers, model or selection). */
 function clearPart(): void {
   viewer.show([]);
+  viewer.setFrame(null);
   shownFile = null;
   shownIpt = null;
   sel = null;

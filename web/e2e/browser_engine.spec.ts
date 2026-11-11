@@ -354,7 +354,7 @@ for (const name of ["report_sample", "countersunk_hole", "deep_hole", "clean_hol
     const ids: Record<string, string> = Object.fromEntries(findings.map((f: any, n: number) => [f.id, `F${n + 1}`]));
     await checkRows(page, rows, ids);
     const first = rows[0];
-    const faces = faceUnion(findings, first.findings);
+    const faces = faceUnion(findings, first.findings.slice(0, 1)); // the row lights the finding it shows (UI fixes A5, D-076)
     await page.getByTestId(`row-${ids[first.findings[0]]}`).click();
     expect(((await page.evaluate("window.__dfma.highlightedFaces()")) as number[]).sort((a, b) => a - b)).toEqual(faces);
   });
@@ -385,7 +385,7 @@ for (const name of ["clean_pocket", "pocket_sharp", "pocket_deep", "pocket_islan
     await checkRows(page, rows, ids);
     if (rows.length) {
       const first = rows[0];
-      const faces = faceUnion(findings, first.findings);
+      const faces = faceUnion(findings, first.findings.slice(0, 1)); // the row lights the finding it shows (UI fixes A5, D-076)
       await page.getByTestId(`row-${ids[first.findings[0]]}`).click();
       expect(((await page.evaluate("window.__dfma.highlightedFaces()")) as number[]).sort((a, b) => a - b)).toEqual(faces);
     }
@@ -415,7 +415,7 @@ for (const name of ["thin_rib", "thin_floor", "clean_walls", "thin_drill_point",
     await checkRows(page, rows, ids);
     if (rows.length) {
       const first = rows[0];
-      const faces = faceUnion(findings, first.findings);
+      const faces = faceUnion(findings, first.findings.slice(0, 1)); // the row lights the finding it shows (UI fixes A5, D-076)
       await page.getByTestId(`row-${ids[first.findings[0]]}`).click();
       expect(((await page.evaluate("window.__dfma.highlightedFaces()")) as number[]).sort((a, b) => a - b)).toEqual(faces);
     }
