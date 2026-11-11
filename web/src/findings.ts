@@ -1,6 +1,7 @@
 // Words for findings, the machine plan and the .ipt groups (spec "Web page", D-012), shown in the Features and
 // Machining steps (review-steps S1-S3, D-045); the rows themselves are in steps.ts.
 
+import { removalLines } from "./removal";
 import type { Analysis, Blend, CostDriver, Feature, Finding, HoleFeature, IptHole, Thread, Tool } from "./api";
 
 const KIND_NAMES: [string, string, string][] = [["profile", "turned profile", "turned profiles"], ["hole", "hole", "holes"], ["bore", "bore", "bores"], ["groove", "groove", "grooves"],
@@ -169,6 +170,9 @@ export function renderPlan(host: HTMLElement, count: HTMLElement, result: Analys
   };
   row("Machine", result.machine, "plan-machine");
   if (result.stock) row("Stock", stockText(result.stock), "plan-stock");
+  const [removalRow, unexplainedRow] = removalLines(result); // P1 (D-088, D-089): under Stock
+  if (removalRow) row(...removalRow, "plan-removal");
+  if (unexplainedRow) row(...unexplainedRow, "plan-unexplained");
   const lathe = result.setups.length === 1 && result.setups[0].direction === "turn";
   if (lathe && result.turn_axis) row("Turning axis", axisText(result.turn_axis, result), "plan-turn-axis");
   row("Tool loads", `${result.tool_changes} (the first in each setup counts)`, "plan-loads"); // frame r3-mach

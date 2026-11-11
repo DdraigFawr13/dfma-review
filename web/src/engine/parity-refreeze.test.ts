@@ -21,11 +21,11 @@ const { k, n } = parseShard(process.env.PARITY_SHARD ?? "0/1");
 const OUT = process.env.PARITY_REFREEZE_OUT;
 const REPORT = process.env.PARITY_REFREEZE_REPORT;
 
-/** What this slice may change. P0 (D-085): a counterbore is cut from its large end, so a hole may gain `tool_dirs`,
- *  and the plan and the cost built on it may change; every hole and pocket keeps its own tools. */
+/** What this slice may change. P1 S1 (D-088): every result gains `removal` (null on a turned part), and a milled
+ *  part's assumptions gain the removal line; nothing else, and every hole and pocket keeps its own tools. */
 const ALLOWED = {
-  keys: ["setups", "operations", "tools", "tool_changes", "cost_drivers", "cost_total"],
-  featureFields: { hole: ["tool_dirs"] } as Record<string, string[]>,
+  keys: ["removal", "assumptions"],
+  featureFields: {} as Record<string, string[]>,
 };
 
 type Entry = { path: string; process: Process; key: string; ipt?: string; harness?: boolean };

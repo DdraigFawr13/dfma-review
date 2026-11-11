@@ -96,6 +96,18 @@ export interface Thread {
   feature_name: string | null;
 }
 
+/** Material off the stock block (machining spec, Design "P1: removal"). */
+export interface Removal {
+  stock_mm3: number;
+  part_mm3: number;
+  total_mm3: number;
+  features: { feature: string; volume_mm3: number }[];
+  features_sum_mm3: number;
+  explained_mm3: number;
+  unexplained_mm3: number;
+  unexplained_pct: number;
+}
+
 export interface Analysis {
   inventor?: Inventor;
   part: {
@@ -120,6 +132,7 @@ export interface Analysis {
   machine: string | null; // S5
   turn_axis: number[] | null;
   stock?: { shape: "bar" | "block"; diameter_in?: number; length_in?: number; size_in?: number[] }; // the part's own size // S6: the turning axis (file coordinates), for parts reviewed for turning
+  removal?: Removal | null; // P1 (D-088): milled parts; null for turned parts
   setups: { direction: string; features: string[] }[];
   operations: { setup: number; tool: string; features: string[]; faces: number[] }[]; // faces each tool cuts
   tools: Tool[];

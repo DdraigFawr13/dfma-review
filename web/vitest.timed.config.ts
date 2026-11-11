@@ -6,7 +6,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   server: { fs: { allow: [".."] } },
   test: {
-    include: ["src/engine/port/nist.test.ts", "src/engine/port/read_runtime.test.ts"],
+    include: ["src/engine/port/nist.test.ts", "src/engine/port/read_runtime.test.ts", "src/engine/port/removal_nist.test.ts"],
     fileParallelism: false,
     testTimeout: 120_000,
   },

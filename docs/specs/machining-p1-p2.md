@@ -142,7 +142,7 @@ Engine checks run in `npm run check` (vitest takes `web/src/**` except the files
 - Typed stock: three number fields (in) and Apply, in the Machining step's plan list under Stock. Sizes and the part's `bbox_in` are each sorted largest first and paired; any typed size under its pair → the "smaller than the part" line. Facing per axis: (typed − part) ÷ 2 per side (assumption: the part sits centred), with that layer's volume; one line per axis pair. Not stored (session only).
 - Ghost stock: `Viewer.showStock(frame, minMm, sizeMm)`: a box mesh in the part frame (its min corner is the extents' minimum along each frame axis, as the removal prototype built it), its edges drawn, opacity `GHOST_OPACITY`, `depthWrite` off; a "Stock" toggle (`aria-pressed`) beside the view buttons; test hook `__dfma.stock()`.
 - PDF (`report.ts`, Part summary, after Stock): the same lines (typed stock not in the PDF: assumption, the PDF is the file's own review).
-- Exact placement, wording and toggle: the P1 mock-up (`ui-mockups`) approved before S1's code.
+- Exact placement, wording and toggle: the P1 mock-up (`ui-mockups`) approved before S1's code: approved 2026-11-11 (D-089), [page](https://claude.ai/artifact/9AyZ9UKCJRt3PKZA4yLJnM), `mockups/p1-removal.html`.
 
 ### P2a: reach core (`web/src/reach/`, new; no OpenCascade)
 

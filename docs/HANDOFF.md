@@ -1,6 +1,6 @@
 # Handoff
 
-Updated: 2026-11-11 (P1+P2 spec approved, D-088; next: P1 S1 in a new session, mock-up first). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
+Updated: 2026-11-11 (P1 S1 merged in PR #60, D-089; next: P1 S2 in a new session). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
 
 ## Phase
 
@@ -16,27 +16,26 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ✔ Spec the first usable version (D-007, 6 fresh checks, $1.49).
 - ✔ Build slice by slice: S1 to S7, grading spike, recognition rounds, stress-test, undercut and turning sets (#3 to #18).
 - ○ Assemblies and DFA · history and compare · time and $.
-- ▶ Inventor parts (Morgan, 2026-11-08): ✔ research · ✔ own reader (D-031) · ✔ plan (D-032) · ✔ spec I1 (D-033) · ✔ I1 S1 #21, S2 #22, S3 #23 · ✔ spec I2+I3 (D-039) · ✔ I2 S1 hole features #24 (D-041) · ✔ S2 names and copies and S3 fillets and chamfers, merged in #27 (D-043, D-046) · ▶ work-pair check owed (from 2026-11-12).
+- ▶ Inventor parts (D-031 to D-046; #21 to #27): ▶ work-pair check owed (from 2026-11-12). Full line in the archive.
 - ▶ Inventor shape from the `.ipt` alone (D-035): ✔ TypeScript spike, closed solid for 7 of 16 files, same features as the STEP route on CTC 04 and FTC 06 (PR #52, [README](research/inventor-shape-ts/README.md)) · ○ spline surfaces and edges, FTC 09, FTC 11 · ○ plan the phase with `planning-interview` first.
 - ✔ UI direction: research, mock-ups, spec, S1-S3, UX audit and fixes (#25 to #32, D-042 to D-053; full line in the archive).
 - ✔ GitLab Pages port (D-054 to D-074): trial, spec, S1-S7, S8a, S8b retire Python (#33 to #43; full line in the archive).
 - ✔ UI fixes (Morgan, 2026-11-10; D-076): ✔ round 1 and review · ✔ mock-up approved (PR #46) · ✔ spec A+B (D-078, #49) · ✔ slice A model (#51, D-080) · ✔ slice B screens (#53) · ○ Morgan's work-copy check · ○ later: cutaway, dimensions; tool-access check after steps and slots.
-- ▶ Steps and slots (Morgan, 2026-11-10; D-066, D-068, D-079): ✔ research ([page](research/feature-recognition.html)) · ✔ planning ([round 1](https://claude.ai/artifact/2NiJeW3rhomfLQSDeVzDhY), [review](https://claude.ai/artifact/1DwcDhFZcZVzxisd3QTqcy)) · ✔ spec `docs/specs/steps-slots.md` approved (D-081), merged in PR #50 · ○ S1 steps · ○ S2 slots · ○ S3 screens · ○ then V-groove and round-bottom slots, edge treatments, pocket shapes (D-075).
-- ▶ Machining and DFMA rework, then Inventor-only and Vault (Morgan, 2026-11-11; D-083, D-084): ✔ research ([page](https://claude.ai/artifact/UnHEMoUGXWeHiYeQUiWff2)) · ✔ plan accepted (D-084), merged in PR #55 · ✔ P1+P2 planned (D-085, [round 1](https://claude.ai/artifact/EFfFHenk4UaMnjpq4hGLLj), [review](https://claude.ai/artifact/Mc4eBLkZtwmGPJ9uHEs8Zt)), PR #56 · ✔ P0 counterbore side (D-086, PR #57) · ✔ spike ([README](research/reach-spike/README.md), [status page](https://claude.ai/artifact/39TfLVdfgnogtB4GjbC44n)) · ✔ spec P1+P2 approved (D-088, [spec](specs/machining-p1-p2.md)) · ▶ P1 removal volume S1-S2 · ○ slots S1-S2 · ○ P2 reach check · ○ P3 Xometry checks · ○ P4 time · ○ DFMA · ○ Inventor-only · ○ Vault.
+- ▶ Steps and slots (D-066, D-068, D-079, D-081): ✔ research, planning, spec `docs/specs/steps-slots.md` (#50) · ○ S1 steps · ○ S2 slots · ○ S3 screens · ○ then V-groove and round-bottom slots, edge treatments, pocket shapes (D-075). Full line in the archive.
+- ▶ Machining and DFMA rework (D-083 to D-088): ✔ research, plan, P0 (#57), spike (#58), spec P1+P2 ([spec](specs/machining-p1-p2.md), #59) · ✔ P1 S1 removal numbers (#60, D-089) · ▶ P1 S2 stock box and your stock · ○ slots S1-S2 · ○ P2 reach check · ○ P3 Xometry checks · ○ P4 time · ○ DFMA · ○ Inventor-only · ○ Vault. Full line in the archive.
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
 
+- 2026-11-11 P1 S1 (removal numbers) merged in [PR #60](https://github.com/DdraigFawr13/dfma-review/pull/60): mock-up [approved](https://claude.ai/artifact/9AyZ9UKCJRt3PKZA4yLJnM) (D-089), [status page](https://claude.ai/artifact/2HFi38q2Cw33uTEgfzgGjF), [demo](https://claude.ai/artifact/NLELKgNM6cXgeW21VcaVoH). `result.removal` on milled parts (null on turned), two lines on Machining and in the PDF; re-freeze 303 key files, none refused; check 720 s; parity:full 0 different; EDMR 114/114.
 - 2026-11-11 P1+P2 spec approved (D-088), merged in [PR #59](https://github.com/DdraigFawr13/dfma-review/pull/59); removal prototype [README](research/removal-proto/README.md).
-- 2026-11-11 Reach spike (D-085 step 1) accepted (D-087), merged in [PR #58](https://github.com/DdraigFawr13/dfma-review/pull/58); [README](research/reach-spike/README.md) has every number and how it was measured. CTC 02 (largest NIST part), 6 directions × 11 end mills + holder, Chromium: 10.0 s on 1 worker, 3.8 s on 3 at cell D/4 capped 4 M cells. Manifold 3.5.4: 218 kB gzip, loads in 34-45 ms; all 17 NIST meshes weld valid; FTC 08 `-e1-tg` mesh is inside-out. OpenCAMLib (Morgan approved the install): LGPL-2.1-or-later; built from source and run; centre-sampled tips are optimistic on 0.13-20.7 % of points (P2a needs a conservative raster or a wider disk). Code: `web/src/reach-spike/`, spike config only.
-- 2026-11-11 P0 approved (D-086), merged in PR #57: archive "Moved 2026-11-11 (reach spike session)".
-- Earlier (P1+P2 plan #56, UI fixes, S8b, harness): archive.
+- Earlier (reach spike #58, P0 #57, P1+P2 plan #56, UI fixes, S8b, harness): archive.
 
 ## Next
 
 00. Checks: `npm run check` at the root; before a PR is marked ready also `npm --prefix web run edmr` and `parity:full` when the engine changed. Morgan: turn on GitHub Pages (Settings → Pages → Source: GitHub Actions) if not yet; tell IT before the work copy (D-055).
 000a. UI fixes (D-076, D-078, D-080): A and B merged (#51, #53). Owed: Morgan's work-copy check of both (VER-07); arrow keys and the 50 ms drag target stand as built (D-080) until then. B's open finding: a countersink tool has `diameter_in: null`, so it shows no spindle.
-0000. P1+P2 spec approved (D-088), merged in [PR #59](https://github.com/DdraigFawr13/dfma-review/pull/59): [`docs/specs/machining-p1-p2.md`](specs/machining-p1-p2.md). Next, in a new session on a new branch from main: P1 S1 (removal numbers), starting with the P1 mock-up (`ui-mockups`, covers S1 and S2) for Morgan's approval, then S1's checks failing first. GitHub Actions was down on 2026-11-11 (runs 367-371 "queued", 0 jobs; githubstatus.com): Morgan, "trust our own checks and merge when ready", so merge on a green local `npm run check` after Morgan's approval, and read main's CI again once Actions is back. Still owed by Morgan: the engineer's wrong-side parts, which free options he meant, the shop's setup issues. Stale branch `port-s8-retire-python` (S8b, merged in #43): check before deleting (GIT-03).
+0000. Next, in a new session on a new branch from main: P1 S2 (ghost stock and your own stock), spec [`docs/specs/machining-p1-p2.md`](specs/machining-p1-p2.md) J2, Design "P1: page", slice "P1 S2"; the approved mock-up (D-089) covers it, so no new mock-up: re-run write-spec step 8's zero-decision check, see J2's checks fail, build, `npm run check`, status page and demo. D-089 settles its four open choices. J2's "typed stock" removal line and Not explained wording: as the mock-up (`mockups/p1-removal/shots.cjs` `lines()`). Still owed by Morgan: the engineer's wrong-side parts, which free options he meant, the shop's setup issues; turn on GitHub Pages (Pages run 21 on main failed, log not read). Stale branch `port-s8-retire-python` (merged in #43): check before deleting (GIT-03).
 000. After P1 S1 and S2 (D-085, D-088 order; steps and slots, D-079, D-081): build S1 (steps); its builder adds `step` (S2: `slot`) to `VOLUME_KINDS` in `web/src/engine/removal.ts` with the pocket's formula (machining spec, Design "Feature volumes") from the approved spec [`docs/specs/steps-slots.md`](specs/steps-slots.md) in a new session, on a new branch from main: re-run write-spec step 8's zero-decision check on S1's sections against main (UI fixes A and B changed `findings.ts`, `main.ts`), do S1's "First" check on 500 MFCAD++ parts, see S1's checks fail, then build. MFCAD++: archive "Moved 2026-11-09" for the download.
 0. Now: plainer sentences for the rule cases that still read as titles, each shown to Morgan first (D-045). Follow-up from the audit fixes: Hole feature rows still carry aria-pressed and aria-expanded (F15's pattern, out of its scope).
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `cd web && node scripts/harness.mjs local-pairs` (prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
@@ -51,6 +50,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-11 D-089: P1 mock-up approved with its four defaults; merge P1 S1 when ready, then P1 S2 in a new session.
 - 2026-11-11 D-088: P1+P2 spec approved (R1-R10 as recommended); merge on our own checks while Actions is down.
 - 2026-11-11 D-087: spike accepted; P2a cell rule D/4 capped 4 M, a height map that is never optimistic, OpenCAMLib built from source for tests.
 - 2026-11-11 D-086: P0 approved; `tool_dirs` on holes; the guarded `parity:refreeze` changes the key.

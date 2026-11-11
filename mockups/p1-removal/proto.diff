@@ -1,0 +1,66 @@
+diff --git a/web/src/main.ts b/web/src/main.ts
+index 666a1ec..09a818f 100644
+--- a/web/src/main.ts
++++ b/web/src/main.ts
+@@ -83,6 +83,7 @@ declare global {
+     };
+   }
+ }
++(window as any).__proto = { stock: (pad: [number, number, number], on: boolean) => viewer.protoStock((window as any).__dfma.analysis().part.frame, pad, on) };
+ window.__dfma = {
+   highlightedFaces: () => viewer.highlightedFaces(),
+   cameraTarget: () => viewer.cameraTarget(),
+diff --git a/web/src/report.ts b/web/src/report.ts
+index c99b18c..d04cb28 100644
+--- a/web/src/report.ts
++++ b/web/src/report.ts
+@@ -111,6 +111,7 @@ function summaryPage(p: Page, input: ReportInput): void {
+   p.text(`Faces: ${part.face_count}`);
+   p.text(`Units in file: ${part.units_in_file}`);
+   if (result.stock && !planNotWorkedOut(result)) p.text(`Stock: ${stockText(result.stock)}`); // the plan's (D-057)
++  for (const l of ((window as any).__protoPdf ?? []) as string[]) p.text(l); // PROTO (P1 mock-up)
+ 
+   p.heading("Machine plan");
+   if (planNotWorkedOut(result)) {
+diff --git a/web/src/viewer.ts b/web/src/viewer.ts
+index 59e6b16..4280aa8 100644
+--- a/web/src/viewer.ts
++++ b/web/src/viewer.ts
+@@ -480,6 +480,37 @@ export class Viewer {
+     this.render();
+   }
+ 
++  /** PROTO (P1 mock-up): a ghost stock box in the part frame, its corner at the extents' minimum, `pad` mm per side. */
++  protoStock(frame: { x: number[]; y: number[]; z: number[] }, pad: [number, number, number] = [0, 0, 0], on = true): void {
++    const old = this.part.getObjectByName("proto-stock");
++    if (old) this.part.remove(old);
++    if (on) {
++      const ax = [frame.x, frame.y, frame.z].map((a) => new THREE.Vector3(a[0], a[1], a[2]).normalize());
++      const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
++      for (const m of this.meshes.values()) {
++        const pos = m.geometry.getAttribute("position");
++        for (let i = 0; i < pos.count; i++) {
++          const v = new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i));
++          ax.forEach((a, k) => { const d = v.dot(a); lo[k] = Math.min(lo[k], d); hi[k] = Math.max(hi[k], d); });
++        }
++      }
++      const size = ax.map((_, k) => hi[k] - lo[k] + 2 * pad[k]);
++      const mid = ax.map((_, k) => (lo[k] + hi[k]) / 2);
++      const g = new THREE.Group();
++      g.name = "proto-stock";
++      const geo = new THREE.BoxGeometry(size[0], size[1], size[2]);
++      const mat = new THREE.MeshStandardMaterial({ color: token("--part"), transparent: true, opacity: GHOST_OPACITY, depthWrite: false });
++      g.add(new THREE.Mesh(geo, mat), new THREE.LineSegments(new THREE.EdgesGeometry(geo), this.edgeMaterial));
++      g.matrixAutoUpdate = false;
++      const basis = new THREE.Matrix4().makeBasis(ax[0], ax[1], ax[2]);
++      const c = ax[0].clone().multiplyScalar(mid[0]).add(ax[1].clone().multiplyScalar(mid[1])).add(ax[2].clone().multiplyScalar(mid[2]));
++      g.matrix.copy(basis).setPosition(c);
++      g.renderOrder = 2;
++      this.part.add(g);
++    }
++    this.render();
++  }
++
+   /** Each triad arrow's direction on screen, a unit vector with y up (UI fixes A3); (0, 0) for one pointing at the viewer. */
+   triad(): { axis: "X" | "Y" | "Z"; dx: number; dy: number }[] {
+     this.camera.updateMatrixWorld();

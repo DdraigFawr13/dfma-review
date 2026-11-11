@@ -20,6 +20,7 @@ import { plan, type Plan } from "./plan";
 import { RULES } from "./rules/index";
 import type { Feature, PartSummary } from "./rules/types";
 import { ASSUMPTIONS, MATERIALS, MSG_NO_UNIT, MSG_OPEN_SHELL, PROCESSES, thresholds, TURN_ASSUMPTIONS } from "./settings";
+import { removal, REMOVAL_ASSUMPTION } from "./removal";
 import { mmToIn, round } from "./units";
 import type { IptRead } from "./inventor/part";
 import { checkPair, checkPartType, inventorBlock, pairReason } from "./inventor/pair";
@@ -70,7 +71,8 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
     const vertices: Vec[] = [];
     for (const m of meshes) for (let i = 0; i < m.positions.length; i += 3) vertices.push([m.positions[i], m.positions[i + 1], m.positions[i + 2]]);
     const frame = partFrame(infos, vertices);
-    const bboxIn = extentsMm(frame, vertices).map((e) => round(mmToIn(e), 6)) as [number, number, number];
+    const bboxMm = extentsMm(frame, vertices);
+    const bboxIn = bboxMm.map((e) => round(mmToIn(e), 6)) as [number, number, number];
     // Holes, then pockets (skipping hole faces), then walls between planar faces and at holes (analyze.py)
     let holeList = holes(oc, part.solid, part.faces, frame);
     const holeFaces = new Set(holeList.flatMap((f) => f.faces));
@@ -130,7 +132,7 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
         ? lathePlan(features, findings as { rule: string }[], part.unitsInFile)
         : { machine: null, setups: [], operations: [], tools: [], tool_changes: 0 }; // turned, but no turning axis: nothing to plan
     const drivers = costDrivers(findings as unknown as { id: string; rule: string }[], milled.setups, milled.tools);
-    const assumptions = [...ASSUMPTIONS, ...(process === "turn" ? TURN_ASSUMPTIONS : [])];
+    const assumptions = [...ASSUMPTIONS, ...(process === "turn" ? TURN_ASSUMPTIONS : [REMOVAL_ASSUMPTION])];
     if (part.freeEdges) assumptions.push(MSG_OPEN_SHELL.replace("{n}", String(part.freeEdges)));
     if (part.unitsInFile === "none") assumptions.push(MSG_NO_UNIT);
     if (inventor !== null) assumptions.push(IPT_ASSUMPTION);
@@ -161,6 +163,8 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
       stock: turnFeatures !== null
         ? { shape: "bar", diameter_in: round(mmToIn(turn.diameter!), 6), length_in: round(mmToIn(turn.length!), 6) }
         : { shape: "block", size_in: bboxIn },
+      // P1 (D-088): material off the stock block, and how much the found features explain; milled parts only
+      removal: process === "mill" ? removal(features as never, infos.map((f, i) => ({ kind: f.kind, ...meshes[i] })), bboxMm, part.volumeMm3) : null,
       setups: milled.setups,
       operations: milled.operations,
       tools: milled.tools as Analysis["tools"],

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Analysis } from "./api";
 import { holeCopies, holeNamesSeen } from "./findings";
-import { ascii, blendLine, holeFeatureLine, reportName, threadLine, valueText, verdictText } from "./report";
+import { ascii, blendLine, holeFeatureLine, removalPdfLines, reportName, threadLine, valueText, verdictText } from "./report";
 
 const withFindings = (severities: string[]) => ({ findings: severities.map((severity) => ({ severity })) }) as unknown as Analysis;
 
@@ -99,5 +99,19 @@ describe("Fillets and chamfers (I3 S3, D-043)", () => {
   it("gives the reason of a blend not understood, with no face count", () => {
     expect(blendLine({ ...base, id: "bl-3", kind: null, faces: 0, faces_mapped: 0, state: "not_mapped", reason: "blend shape not understood" }, result))
       .toBe("bl-3 Blend · shape not understood: not mapped: blend shape not understood (our limit, not a finding).");
+  });
+});
+
+describe("removal lines in the PDF (P1 S1, D-089)", () => {
+  const removal = { stock_mm3: 98322.384, part_mm3: 85339.334, total_mm3: 12983.05, features: [], features_sum_mm3: 12979.172,
+    explained_mm3: 12979.172, unexplained_mm3: 3.878, unexplained_pct: 0.03 };
+  it("adds the removal and the share no found feature explains to the Part summary", () => {
+    expect(removalPdfLines({ removal } as unknown as Analysis)).toEqual([
+      "Removal: 0.79 in³ (12,983 mm³), the stock block minus the part",
+      "Not explained by a found feature: 0.00 in³ (4 mm³), 0.03 % of the removal",
+    ]);
+  });
+  it("has none for a turned part", () => {
+    expect(removalPdfLines({ removal: null } as unknown as Analysis)).toEqual([]);
   });
 });
