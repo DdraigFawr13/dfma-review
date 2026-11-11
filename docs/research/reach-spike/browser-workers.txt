@@ -1,0 +1,6 @@
+{"file":"nist_ctc_02_asme1_ap242-e2.f32","browser":"153.0.8010.12","cores":4,"workers":3,"rule":"tool:4:1","wall_ms":1950,"worker_ms":[1673,1584,1388]}
+{"file":"nist_ctc_02_asme1_ap242-e2.f32","browser":"153.0.8010.12","cores":4,"workers":3,"rule":"tool:4:2","wall_ms":2622,"worker_ms":[2356,2185,1894]}
+{"file":"nist_ctc_02_asme1_ap242-e2.f32","browser":"153.0.8010.12","cores":4,"workers":3,"rule":"tool:4:4","wall_ms":3809,"worker_ms":[3652,3525,3037]}
+{"file":"nist_ctc_02_asme1_ap242-e2.f32","browser":"153.0.8010.12","cores":4,"workers":3,"rule":"tool:8:4","wall_ms":6538,"worker_ms":[6378,5872,4501]}
+{"file":"nist_ctc_02_asme1_ap242-e2.f32","browser":"153.0.8010.12","cores":4,"workers":6,"rule":"tool:4:4","wall_ms":3665,"worker_ms":[3457,3149,2751,2703,2725,2528]}
+{"file":"nist_ctc_02_asme1_ap242-e2.f32","browser":"153.0.8010.12","cores":4,"workers":6,"rule":"tool:8:4","wall_ms":5659,"worker_ms":[5159,5440,3577,3770,3429,3655]}
