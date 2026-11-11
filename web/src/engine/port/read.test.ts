@@ -7,7 +7,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 import { analyze } from "../analyze";
-import { loadNodeOc, analyzeOrRefuse } from "../node";
+import { analyzeOrRefuse } from "../node";
 import { ReadError } from "../read";
 import { MAX_UPLOAD_BYTES, MSG_NO_SOLID, MSG_NOT_STEP, MSG_TOO_LARGE, MSG_TOO_LONG } from "../settings";
 import { analyzeBytes, expected, oc, PARTS, ROOT, run, type Result } from "./groupa_common";
@@ -164,22 +164,7 @@ test("parts are collected", () => {
   expect(STEP_PARTS.length).toBeGreaterThanOrEqual(4);
 });
 
-describe("runtime", () => {
-  // Every committed part finishes in under 10 s, including engine start (the browser's worker start; Python's was the
-  // process start). Each part loads its own engine.
-  for (const file of STEP_PARTS) {
-    test(file.replace(/\.step$/, ""), async () => {
-      const start = performance.now();
-      const engine = await loadNodeOc();
-      try {
-        await analyzeOrRefuse(engine, new Uint8Array(readFileSync(resolve(PARTS, file))), file, "mill"); // bad files answer too
-      } finally {
-        const elapsed = (performance.now() - start) / 1000;
-        expect(elapsed, `${file} took ${elapsed.toFixed(2)} s`).toBeLessThan(10.0);
-      }
-    });
-  }
-});
+// The runtime tests (Python: `timed`) assert a wall-clock limit: they run alone in read_runtime.test.ts (VER-11).
 
 test("a solid without a product structure", async () => {
   // A 1995 AP203 file whose solid is not under a product (UMD benchmark, tests/edmr) still reads.

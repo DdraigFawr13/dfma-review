@@ -8,7 +8,7 @@
     "nist": "node scripts/unpack-nist.mjs",
     "parity": "npm --prefix web run parity",
     "e2e": "npm --prefix web run e2e -- --grep-invert @timed",
-    "timed": "npm --prefix web run e2e -- --grep @timed",
+    "timed": "npm --prefix web run timed && npm --prefix web run e2e -- --grep @timed",
     "demo": "node scripts/make-demo.mjs"
   }
 }

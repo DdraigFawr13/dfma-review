@@ -15,7 +15,8 @@
     "parity:full": "node scripts/parity-full.mjs",
     "e2e": "playwright test -c e2e/playwright.config.ts --trace off",
     "edmr": "vitest run --config vitest.parity.config.ts src/engine/port/edmr.test.ts",
-    "grading": "node scripts/grading.mjs"
+    "grading": "node scripts/grading.mjs",
+    "timed": "vitest run --config vitest.timed.config.ts"
   },
   "dependencies": {
     "@taucad/opencascade.js": "3.0.0-beta.3",
