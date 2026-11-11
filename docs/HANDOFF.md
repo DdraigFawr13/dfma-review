@@ -1,6 +1,6 @@
 # Handoff
 
-Updated: 2026-11-11 (UI fixes plan and mock-up approved, D-076, merged in PR #46). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
+Updated: 2026-11-11 (UI fixes spec approved, D-078; next: slice A in a new session). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
 
 ## Phase
 
@@ -20,21 +20,19 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ○ Inventor shape from the `.ipt` alone (D-035; after I1).
 - ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ✔ spec approved (D-045, #28) · ✔ S1 merged in #29 (D-047) · ✔ S2 + S3 merged in #30 (D-048 to D-052) · ✔ UX audit #31 · ✔ audit fixes #32 (D-053) ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
 - ▶ GitLab Pages port (Morgan, 2026-11-09; D-054, D-055, D-056): ✔ trial · ✔ spec approved (PR #33) · ✔ S1 site, viewer, parity (PR #34) · ✔ S2 holes (PR #35) · ✔ S3 plan, cost, PDF (PR #36; work release possible) · ✔ S4 pockets (PR #37) · ✔ S5 walls (PR #38) · ✔ S6 turning (PR #40) · ✔ S7 Inventor (PR #41) · ✔ S8a (PR #42) · ✔ S8b retire Python (PR #43).
-- ▶ UI fixes (Morgan, 2026-11-10; D-076): ✔ round 1 and review · ✔ mock-up approved (PR #46) · ○ spec A+B with `write-spec` · ○ slice A model · ○ slice B screens · ○ later: cutaway, dimensions; tool-access check after steps and slots.
+- ▶ UI fixes (Morgan, 2026-11-10; D-076): ✔ round 1 and review · ✔ mock-up approved (PR #46) · ✔ spec A+B (D-078, #49) · ▶ slice A model · ○ slice B screens · ○ later: cutaway, dimensions; tool-access check after steps and slots.
 - ○ Steps and slots (Morgan, 2026-11-10; D-066, D-068): ✔ research ([page](research/feature-recognition.html)) · ✔ answers (MFCAD++ classes, no open-pocket kind, plan first) · ○ spec with `write-spec` · ○ build (after the port, unless Morgan moves it up) · ○ then edge treatments: chamfers and fillets (D-075) · ○ then pocket shapes, MFCAD++ 13-16 (D-075).
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
 
-- 2026-11-11 UI fixes planned (D-076): round 1, review (adversarial review $0.80), mock-up on real-app screenshots with 2 fresh checks ($0.29, $0.33); Morgan added the axis triad and placeholder spindle, dropped the origin marker; approved. Merged in PR #46.
-- 2026-11-11 S8b merged in #43 (06:19 UTC, `43c4caf`; PR CI green, 12.8 min): Python retired, checks on Node (D-074). `npm run check` 421 s (900 s budget); edmr 114 of 114; parity:full 327 the same, 2 known tessellation, 0 different. The first CI run failed on NIST 10 s limits inside the parallel vitest run; fixed with a timed lane run alone. plan.test.ts angled-holes test: 30 s limit (engine 5.2 s, Python 3.8 s).
-- Tessellation (D-074): named exemption for 3 faces (bn_ball6 14, 18; nasty_cheese 202); parity:full exit 0 (327 same, 2 known, 0 different). Cause: OCCT 8.0.1 (pythonocc) vs 8.0.0 (opencascade.js).
-- 2026-11-11 Harness upgraded v4.12.0 → v4.14.0 (master D-068): the `test-design` skill, VER-10 (see a test fail first) and VER-11 (real samples, time tests, fixed waits are wall-clock limits) now load here; check time budget in AGENTS.md (D-073). Merged as #44 by auto-merge on green (Morgan approved 2026-11-11).
+- 2026-11-11 Spec UI fixes A and B approved (D-078) and merged in PR #49 (`docs/specs/ui-fixes.md`; [approval page](https://claude.ai/artifact/SYV9w7ZZmAXFArnEu7dKvh)): before-numbers on CTC 02 (drag frame gap p90 344-466 ms; pin placement 420 ms a frame, drawing 3.3 ms); orbit-axis bug confirmed in three.js; 41 of 42 sample parts' part axes differ from the file's. D-077 (checks follow what changed) merged in PR #48 (`npm run check` 661 s).
+- Earlier (UI fixes plan, S8b, tessellation, harness v4.14.0, #47): archive "Moved 2026-11-11 (spec session)".
 
 ## Next
 
-00. `main` after #43: CI red on the timed e2e step (`test_ui_responsive` stalled 298 ms > 200 ms; it ran beside a PDF test with 2 workers); fixed in #47: timed e2e with 1 worker, and the test times only once the page is quiet (the stall was Chromium's page-load teardown, not the analysis; LESSONS "tests"); owner approved 2026-11-11; check `main`'s CI after it merges. Pages deploy 404: Morgan to turn Pages on (Settings → Pages → Source: GitHub Actions). Checks: `npm run check` at the root; before a PR is marked ready also `npm --prefix web run edmr` and `parity:full`. Morgan: turn on GitHub Pages if not yet; tell IT before the work copy (D-055).
-000a. Next (new session): first a small PR, testing by what changed (Morgan, 2026-11-11, "Do what you recommend"): docs- or mockups-only pushes run the drift check locally, and CI skips its heavy steps but still reports (a paths filter alone could leave a required check waiting); code pushes run `npm run check` as now, EDMR before ready only when the engine changed; AGENTS, ci.yml (`efficient-github-actions` skill) and a DECISIONS entry. Then UI fixes, D-076: spec slices A and B with `write-spec` from D-076 and the approved [mock-up](https://claude.ai/artifact/Adh7jrTqHCskfymUbrPkc4) (`mockups/ui-fixes.html`; prototype diff `mockups/ui-fixes/proto.diff`, throwaway, not app code); then build slice A (Inventor mouse, view buttons, axis triad, pins hidden while moving, one feature at a time, keys). Time pin lag on a big part on a production build before and after. Forms: [round 1](https://claude.ai/artifact/TC6zxWereXxzeVBLG4MtLE), [review](https://claude.ai/artifact/N8rWXXux4n2VWqNhkDzEUB).
+00. Checks: `npm run check` at the root; before a PR is marked ready also `npm --prefix web run edmr` and `parity:full` when the engine changed. Morgan: turn on GitHub Pages (Settings → Pages → Source: GitHub Actions) if not yet; tell IT before the work copy (D-055).
+000a. Now (UI fixes, D-076, D-078): build S1 (slice A, the model) from the approved spec [`docs/specs/ui-fixes.md`](specs/ui-fixes.md) in a new session, on a new branch from main: re-run write-spec step 8's zero-decision check on S1's sections first, see S1's checks fail, then build; time pin lag with `web/scripts/pin-lag.mjs` (port of `docs/specs/ui-fixes-pin-lag.cjs`) before and after on a production build. S2 (slice B) after S1 merges. Forms: [round 1](https://claude.ai/artifact/TC6zxWereXxzeVBLG4MtLE), [review](https://claude.ai/artifact/N8rWXXux4n2VWqNhkDzEUB).
 000. Steps and slots (D-068): Morgan added slot recognition in another copy without full testing (2026-11-10) and wants it redone here, tested; spec with `write-spec` after the port; start with a labelled `steps_slots` set, then NIST and EDMR, then MFCAD++ classes 5-10 and 17-22.
 0. Now: plainer sentences for the rule cases that still read as titles, each shown to Morgan first (D-045). Follow-up from the audit fixes: Hole feature rows still carry aria-pressed and aria-expanded (F15's pattern, out of its scope).
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `cd web && node scripts/harness.mjs local-pairs` (prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
@@ -50,6 +48,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
+- 2026-11-11 D-078: UI fixes spec approved; view buttons in file axes, triad in part axes (as recommended); free rotation with ArcballControls (Morgan changed it from turntable).
 - 2026-11-11 D-077: checks follow what changed (docs- or mockups-only: drift check only, CI still reports); Morgan checks each slice by using it. Approved by Morgan; merged in PR #48.
 - 2026-11-11 D-076: UI fixes plan and mock-up approved: slice A model, slice B screens; tool-access check after steps and slots.
 - 2026-11-11 D-075: edge treatments (chamfers, fillets), then pocket shapes, join the recognition plan after steps and slots.

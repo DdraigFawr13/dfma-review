@@ -593,3 +593,13 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - EDMR (`npm --prefix web run edmr`) before ready only when `web/src/engine/` or the web packages changed.
   - "Testing by what changed" in Morgan's words: "I will observe and use all the changes and note whether or not they work as intended or if I want changes after using them". Their notes are the owner's evidence (VER-07); the automated checks still run on code.
 - **Why:** PR #46 changed only docs and mock-ups, yet ran `npm run check` (688 s) and EDMR (442 s) locally, and CI ran the full check, because `ci.yml`'s `paths-ignore` covered only `**/*.md` and `docs/**`. Morgan: "Testing and co should be dependent on what is being changed so we don't have to do all that long testing every time". A workflow-level filter would leave a required check pending; skipping steps inside the job doesn't. Search: the check scripts, `web/src` and `web/e2e` mention `docs/` and `mockups/` only in comments (grep, 2026-11-11); NIST files live in `tests/nist`.
+
+## D-078 UI fixes spec approved; view buttons in file axes; free rotation
+
+- **Status:** Accepted (2026-11-11). Morgan, in chat: "I approve both. Merge in whatever order you deem correct then start the next slice in a new session" (PRs #48 and #49, [approval page](https://claude.ai/artifact/SYV9w7ZZmAXFArnEu7dKvh)). The reply gave no answer to the page's two questions, so both were taken as recommended (WS-02); Morgan then changed question 2 to free rotation.
+- **Decision:**
+  - The spec `docs/specs/ui-fixes.md` is approved: slice A (the model), then slice B (the screens) after A merges.
+  - View buttons (Home, Front, Top, Right, Iso) use the file's axes; the triad uses the part's axes (part.frame, D-076) with a "Part axes" caption (Open question 1, a).
+  - The part turns freely (Open question 2, b): Morgan, in chat after the approval: "Oh wait no I want the free rotation not the turn table". Built on three's `ArcballControls` (same package, no new dependency), which replaces today's orbit about the file's Y axis.
+  - The page's additions stand: pins return about 0.5 s after a move on big parts (CTC 02); 600 ms after a key; any selection greys the rest, PDF pictures included; stepping frames each finding; view buttons move under the model at 500 px and below.
+- **Why:** 41 of 42 sample parts have part axes that differ from the file's (26 with part +Z = file −Z), so Top in part axes would show the underside; the orbit-axis cause was confirmed with three.js 0.187 in Node. Measured before: CTC 02 drag frame gap p90 344-466 ms, pin placement 420 ms a frame.
