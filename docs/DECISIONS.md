@@ -606,7 +606,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - The page's additions stand: pins return about 0.5 s after a move on big parts (CTC 02); 600 ms after a key; any selection greys the rest, PDF pictures included; stepping frames each finding; view buttons move under the model at 500 px and below.
 - **Why:** 41 of 42 sample parts have part axes that differ from the file's (26 with part +Z = file −Z), so Top in part axes would show the underside; the orbit-axis cause was confirmed with three.js 0.187 in Node. Measured before: CTC 02 drag frame gap p90 344-466 ms, pin placement 420 ms a frame.
 
-## D-079 UI fixes slice A approved; merge when ready
+## D-080 UI fixes slice A approved; merge when ready
+
+- **Numbered D-080:** recorded first as D-079 on the slice A branch; renumbered before merging because the steps and slots branch (PR #50) had already recorded its own D-079.
 
 - **Status:** Accepted (2026-11-11). Morgan, in chat, after the [demo](https://claude.ai/artifact/KzexiP7jM8zQdB3RQox29M): "Ok I approve of the demo. You may merge whenever you are ready to do so" (PR #51).
 - **Decision:** slice A (spec `docs/specs/ui-fixes.md` S1) merges as built, with the builder defaults in the spec's S1 "Built" list. The reply named neither open call, so both stand as built (WS-02): the arrow keys move the camera the arrow's way; the drag frame target of 50 ms stays a target, judged on the work copy's GPU (measured here in software WebGL: p90 192-196 ms, page script 0.22-0.27 s per 40-move drag, against 10.9-15.2 s on main). Slice B starts in a new session after the merge.

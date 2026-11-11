@@ -1,6 +1,6 @@
 # Handoff
 
-Updated: 2026-11-11 (UI fixes slice A approved, D-079, merged in PR #51; next: slice B in a new session). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
+Updated: 2026-11-11 (UI fixes slice A approved, D-080, merged in PR #51; next: slice B in a new session). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
 
 ## Phase
 
@@ -20,7 +20,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ○ Inventor shape from the `.ipt` alone (D-035; after I1).
 - ✔ UI direction: research and 3 mock-up rounds, approved (D-042, #25) · ✔ spec approved (D-045, #28) · ✔ S1 merged in #29 (D-047) · ✔ S2 + S3 merged in #30 (D-048 to D-052) · ✔ UX audit #31 · ✔ audit fixes #32 (D-053) ([round 3](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8); answers and sources in `docs/research/ui-direction/README.md`).
 - ▶ GitLab Pages port (Morgan, 2026-11-09; D-054, D-055, D-056): ✔ trial · ✔ spec approved (PR #33) · ✔ S1 site, viewer, parity (PR #34) · ✔ S2 holes (PR #35) · ✔ S3 plan, cost, PDF (PR #36; work release possible) · ✔ S4 pockets (PR #37) · ✔ S5 walls (PR #38) · ✔ S6 turning (PR #40) · ✔ S7 Inventor (PR #41) · ✔ S8a (PR #42) · ✔ S8b retire Python (PR #43).
-- ▶ UI fixes (Morgan, 2026-11-10; D-076): ✔ round 1 and review · ✔ mock-up approved (PR #46) · ✔ spec A+B (D-078, #49) · ✔ slice A model (#51, D-079) · ▶ slice B screens · ○ later: cutaway, dimensions; tool-access check after steps and slots.
+- ▶ UI fixes (Morgan, 2026-11-10; D-076): ✔ round 1 and review · ✔ mock-up approved (PR #46) · ✔ spec A+B (D-078, #49) · ✔ slice A model (#51, D-080) · ▶ slice B screens · ○ later: cutaway, dimensions; tool-access check after steps and slots.
 - ○ Steps and slots (Morgan, 2026-11-10; D-066, D-068): ✔ research ([page](research/feature-recognition.html)) · ✔ answers (MFCAD++ classes, no open-pocket kind, plan first) · ○ spec with `write-spec` · ○ build (after the port, unless Morgan moves it up) · ○ then edge treatments: chamfers and fillets (D-075) · ○ then pocket shapes, MFCAD++ 13-16 (D-075).
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
@@ -32,7 +32,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 ## Next
 
 00. Checks: `npm run check` at the root; before a PR is marked ready also `npm --prefix web run edmr` and `parity:full` when the engine changed. Morgan: turn on GitHub Pages (Settings → Pages → Source: GitHub Actions) if not yet; tell IT before the work copy (D-055).
-000a. Now (UI fixes, D-076, D-078, D-079): slice A merged in [PR #51](https://github.com/DdraigFawr13/dfma-review/pull/51). Next: S2 (slice B, the screens) in a new session on a new branch from main: write-spec step 8's zero-decision check on S2 against merged A first (the spec's S2 "Needs from S1" names what to reuse), see S2's checks fail, then build. Arrow keys and the 50 ms drag target stand as built (D-079) until Morgan's work-copy check says otherwise.
+000a. Now (UI fixes, D-076, D-078, D-080): slice A merged in [PR #51](https://github.com/DdraigFawr13/dfma-review/pull/51). Next: S2 (slice B, the screens) in a new session on a new branch from main: write-spec step 8's zero-decision check on S2 against merged A first (the spec's S2 "Needs from S1" names what to reuse), see S2's checks fail, then build. Arrow keys and the 50 ms drag target stand as built (D-080) until Morgan's work-copy check says otherwise.
 000. Steps and slots (D-068): Morgan added slot recognition in another copy without full testing (2026-11-10) and wants it redone here, tested; spec with `write-spec` after the port; start with a labelled `steps_slots` set, then NIST and EDMR, then MFCAD++ classes 5-10 and 17-22.
 0. Now: plainer sentences for the rule cases that still read as titles, each shown to Morgan first (D-045). Follow-up from the audit fixes: Hole feature rows still carry aria-pressed and aria-expanded (F15's pattern, out of its scope).
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `cd web && node scripts/harness.mjs local-pairs` (prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
@@ -48,7 +48,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Decisions since the last plan update
 
-- 2026-11-11 D-079: UI fixes slice A approved after the demo; merged in PR #51; open calls stand as built.
+- 2026-11-11 D-080: UI fixes slice A approved after the demo; merged in PR #51; open calls stand as built.
 - 2026-11-11 D-078: UI fixes spec approved; view buttons in file axes, triad in part axes (as recommended); free rotation with ArcballControls (Morgan changed it from turntable).
 - 2026-11-11 D-077: checks follow what changed (docs- or mockups-only: drift check only, CI still reports); Morgan checks each slice by using it. Approved by Morgan; merged in PR #48.
 - 2026-11-11 D-076: UI fixes plan and mock-up approved: slice A model, slice B screens; tool-access check after steps and slots.
