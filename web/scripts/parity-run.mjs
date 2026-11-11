@@ -27,7 +27,8 @@ const results = await Promise.all(Array.from({ length: shards }, (_, k) => runSh
 const total = { files: 0, same: 0, bad: [], crashed: [], leftOut: {}, keys: [] };
 const failed = [];
 for (const r of results) {
-  if (r.code !== 0 || !existsSync(r.out)) { failed.push(r.k); continue; }
+  if (r.code !== 0) failed.push(r.k); // a failed shard still reports its counts: the summary must cover every file
+  if (!existsSync(r.out)) continue;
   const s = JSON.parse(readFileSync(r.out, "utf8"));
   total.files += s.files; total.same += s.same; total.bad.push(...s.bad); total.crashed.push(...s.crashed);
   for (const [key, n] of Object.entries(s.leftOut)) total.leftOut[key] = (total.leftOut[key] ?? 0) + n;
