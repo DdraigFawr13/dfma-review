@@ -183,3 +183,13 @@ Build, first usable version: all seven slices merged. S1 to S6 in #3 to #17 (his
 ## Moved 2026-11-11 (slice A session)
 
 - 2026-11-11 Spec UI fixes A and B approved (D-078) and merged in PR #49 (`docs/specs/ui-fixes.md`; [approval page](https://claude.ai/artifact/SYV9w7ZZmAXFArnEu7dKvh)): before-numbers on CTC 02 (drag frame gap p90 344-466 ms; pin placement 420 ms a frame, drawing 3.3 ms); orbit-axis bug confirmed in three.js; 41 of 42 sample parts' part axes differ from the file's. D-077 (checks follow what changed) merged in PR #48 (`npm run check` 661 s).
+
+## Moved 2026-11-11 (steps-slots planning session)
+
+- 2026-11-10 D-065: faster `check.py` (lanes, timed tests alone, pytest-xdist); approved and merged in PR #39.
+- 2026-11-11 D-073: harness v4.14.0 (testing rules) and the 900 s check budget; approved, merged in PR #44.
+- 2026-11-11 D-071: S8 before the UI list; faster checks on the S8 branch; S8 file list and two-PR split approved.
+- 2026-11-11 D-077: checks follow what changed (docs- or mockups-only: drift check only, CI still reports); Morgan checks each slice by using it. Approved by Morgan; merged in PR #48.
+- 2026-11-11 D-076: UI fixes plan and mock-up approved: slice A model, slice B screens; tool-access check after steps and slots.
+- 2026-11-11 D-075: edge treatments (chamfers, fillets), then pocket shapes, join the recognition plan after steps and slots.
+- 2026-11-11 D-074: S8b approved: Python retired; tessellation is a named 3-face exemption (OCCT 8.0.1 vs 8.0.0).
