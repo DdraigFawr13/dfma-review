@@ -98,7 +98,9 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 .spin { width: 28px; height: 28px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .viewer { display: flex; flex-direction: column; gap: var(--space-1); min-height: 0; }
-.viewer canvas { flex: 1; width: 100%; min-height: 20rem; background: var(--view); border: 1px solid var(--line); border-radius: var(--radius); display: block; touch-action: none; }
+/* UI fixes A9: the canvas, the view buttons and the triad caption share one box; pins and leaders sit in it too */
+.stage { position: relative; flex: 1; display: flex; min-height: 0; }
+.stage canvas { flex: 1; width: 100%; min-height: 20rem; background: var(--view); border: 1px solid var(--line); border-radius: var(--radius); display: block; touch-action: none; }
 .hint { margin: 0; color: var(--muted); font-size: 0.875rem; }
 .viewfoot { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); align-items: center; justify-content: space-between; }
 .key { display: inline-flex; gap: 6px; align-items: center; min-height: 32px; }
@@ -175,13 +177,25 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 .flag.chosen[data-more]:not([data-more=""])::after { color: var(--accent-ink); }
 .leaders { position: absolute; pointer-events: none; overflow: visible; z-index: 2; }
 .viewer { position: relative; overflow: hidden; } /* flags near the edge never widen the page */
+/* UI fixes A4: pins and stems hidden while the camera moves (kept in layout so they can be measured) */
+.stage.moving .flag, .stage.moving .leaders { visibility: hidden; }
+/* UI fixes A6: the focused model's ring, inside its edge so the viewer's overflow can't clip it */
+.stage canvas:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+/* UI fixes A2, A12: view buttons at the model's bottom right; the triad's caption under it */
+.views { position: absolute; right: 8px; bottom: 8px; display: flex; flex-wrap: wrap; gap: var(--space-1); z-index: 4; }
+.views[hidden] { display: none; }
+.triad-caption { position: absolute; left: 8px; bottom: 2px; width: 96px; text-align: center; color: var(--muted); font-size: 0.75rem; pointer-events: none; }
+.triad-caption[hidden] { display: none; }
 @media (max-width: 900px) {
   .cols { grid-template-columns: 1fr; min-height: 0; flex: none; }
-  .viewer canvas { height: 420px; flex: none; }
+  .stage canvas { height: 420px; flex: none; }
+  .stage { flex: none; }
   .side { max-height: none; }
   .topfile { display: none; } /* frame r3-overview-900: the file name shows in the overview */
 }
 @media (max-width: 500px) {
+  .viewfoot .views { position: static; } /* A12: under the model, before the hint */
+  .triad-caption { display: none; }
   /* audit F20: the five steps scroll in one row instead of wrapping into several */
   .steps { flex: 1 1 100%; flex-wrap: nowrap; overflow-x: auto; padding: 6px; margin: -6px; } /* room for the focus ring */
   /* audit F5: a cost driver's label on its own row, count × weight and score under it */
@@ -250,10 +264,34 @@ div.thread-row { text-align: left; }
 .placed .sev { font-size: 0.875rem; }
 .nosetup { display: grid; gap: 4px; border-top: 1px solid var(--line); padding-top: var(--space-1); }
 .nosetup .shead { font: 600 0.875rem var(--mono); }
+/* UI fixes B1-B3: the examples, the one picker, the Part / Machine switch and the tool rows */
+.exwrap { position: relative; display: inline-flex; }
+.exmenu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; display: grid; min-width: 14rem; padding: var(--space-1); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 4px 16px rgb(0 0 0 / 0.18); }
+.exmenu[hidden] { display: none; }
+.exmenu button { font: 400 0.9375rem var(--mono); text-align: left; min-height: 36px; padding: 0 var(--space-3); border: 0; border-radius: var(--radius); background: none; color: var(--ink); cursor: pointer; }
+.exmenu button:hover, .exmenu button:focus-visible { background: var(--view); }
+.exmenu button:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+.examples { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.examples .ghostbtn { font-family: var(--mono); font-size: 0.875rem; }
+.fhint { margin: 0; font-size: 0.875rem; color: var(--muted); }
+.modeswitch { position: absolute; right: 8px; top: 8px; display: flex; z-index: 4; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--panel); }
+.modeswitch[hidden] { display: none; }
+.modeswitch .mode { position: relative; display: inline-flex; }
+.modeswitch input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.modeswitch span { display: inline-flex; align-items: center; min-height: 32px; padding: 0 12px; font: 400 0.875rem var(--sans); color: var(--ink); }
+.modeswitch input:checked + span { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.modeswitch input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: -3px; }
+.plan .toolrows { display: grid; }
+.plan .toolrow { display: flex; align-items: center; min-height: 32px; width: 100%; padding: 0 var(--space-3); border: 0; border-top: 1px solid var(--line); background: none; font: inherit; font-size: 0.875rem; color: inherit; text-align: left; cursor: pointer; }
+.plan .toolrow:hover { background: var(--view); }
+.plan .toolrow[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.plan .toolrow[aria-pressed="true"] .ofeat { color: var(--accent-ink); }
+.plan .toolrow:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
 /* Below 900 px, after every rule above: touch-sized targets (F16), Show OK under the chips (F18), setup chips above the model (F33) */
 @media (max-width: 900px) {
   .stepper, .chip, .pfeat { min-height: 44px; } .stepper { min-width: 44px; }
   #page-features .showok { padding: 8px 12px; border-bottom: 1px solid var(--line); }
+  .toolrow, .exmenu button, .modeswitch span { min-height: 44px; }
   .setupchips { position: static; order: -1; } /* above the model, not over it (audit F33) */
   .plan .setup .shead { min-height: 44px; } /* a touch-sized band (D-061, audit F16) */
 }

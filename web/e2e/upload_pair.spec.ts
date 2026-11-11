@@ -33,17 +33,17 @@ test("test_ipt_first_waits", async ({ page }) => {
   await page.goto("/");
   const calls: string[] = [];
   page.on("request", (r) => { if (r.url().includes("/api/analyze")) calls.push(r.url()); });
-  await page.getByTestId("upload-ipt").setInputFiles(resolve(INV, "INV_nist_ftc_11_asme1_2021.ipt"));
+  await page.getByTestId("upload-file").setInputFiles(resolve(INV, "INV_nist_ftc_11_asme1_2021.ipt")); // the one picker (UI fixes B2)
   await expect(page.locator("#status")).toHaveText("Now choose the STEP file that Inventor exported from this .ipt.");
   expect(calls).toEqual([]);
 });
 
-test("test_ipt_in_step_field", async ({ page }) => {
+test("test_ipt_bytes_named_step", async ({ page }) => { // an .ipt's bytes under a .step name: the same refusal
   await page.goto("/");
   const calls: string[] = [];
   page.on("request", (r) => { if (r.url().includes("/api/analyze")) calls.push(r.url()); });
   await page.getByTestId("upload-file").setInputFiles({
-    name: "part.ipt", mimeType: "application/octet-stream", buffer: readFileSync(resolve(INV, "INV_nist_ftc_11_asme1_2021.ipt")),
+    name: "part.step", mimeType: "application/octet-stream", buffer: readFileSync(resolve(INV, "INV_nist_ftc_11_asme1_2021.ipt")),
   });
   await expect(page.getByTestId("error-message")).toHaveText(MSG_IPT_NEEDS_STEP);
   expect(calls).toEqual([]);
@@ -52,8 +52,7 @@ test("test_ipt_in_step_field", async ({ page }) => {
 test("test_nist_pair_refused", async ({ page }, testInfo) => {
   await page.goto("/");
   const step = nistStep(testInfo.outputPath("nist"), "nist_ctc_04_asme1_ap242-e1.stp");
-  await page.getByTestId("upload-ipt").setInputFiles(resolve(INV, "INV_nist_ctc_04_asme1_2021.ipt"));
-  await page.getByTestId("upload-file").setInputFiles(step);
+  await page.getByTestId("upload-file").setInputFiles([step, resolve(INV, "INV_nist_ctc_04_asme1_2021.ipt")]);
   await expect(page.getByTestId("error-message")).toHaveText(
     "These files don't match: the STEP has 483 faces, the .ipt 368. Export the STEP again from this .ipt and upload both.",
     { timeout: 30_000 });
@@ -78,7 +77,7 @@ test("test_pair_shown", async ({ page }) => {
   await page.goto("/");
   await page.getByTestId("upload-file").setInputFiles(BOX);
   await expect(page.locator("#status")).toHaveText("Showing box_through_hole.step with box.ipt."); // the routed answer has it
-  await page.getByTestId("upload-ipt").setInputFiles(resolve(INV, "INV_nist_ftc_11_asme1_2021.ipt"));
+  await page.getByTestId("upload-file").setInputFiles([BOX, resolve(INV, "INV_nist_ftc_11_asme1_2021.ipt")]); // both in one pick
   await expect(page.getByTestId("ipt-build")).toHaveText("2024.1 (Build 281209000, 209)");
   await expect(page.locator("#inventor-meta")).toBeVisible();
   expect(bodies.length).toBe(2);

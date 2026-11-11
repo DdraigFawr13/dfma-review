@@ -322,6 +322,14 @@ export function renderRows(host: HTMLElement, result: Analysis, filter: RowFilte
     const box = el("div", open ? "rowbox open" : "rowbox");
     box.append(rowButton(r, open, h.onRow));
     if (open) box.append(r.findings.length ? findingDetail(r, Math.min(state.at, r.findings.length - 1), result, h) : passedDetail(r, state, result, h));
+    // UI fixes A7: ← → on the open row, its ‹ or › step through its findings, as ‹ › do
+    if (open && r.findings.length > 1) {
+      for (const b of box.querySelectorAll<HTMLButtonElement>(".srow, .stepper")) b.addEventListener("keydown", (e) => {
+        if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+        e.preventDefault();
+        h.onStep(e.key === "ArrowLeft" ? -1 : 1);
+      });
+    }
     host.append(box);
   }
 }

@@ -112,7 +112,7 @@ test("test_view_part", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("copy-tag")).toHaveText("Test copy");
   await expect(page.locator(".privacy")).toHaveText("Your file stays on this computer. Nothing is uploaded.");
-  await expect(page.locator("#ipt-field")).toBeVisible(); // S7: back, as in the service copy
+  await expect(page.locator("#example-field")).toBeVisible(); // UI fixes B1: the examples sit where the .ipt field was
   await expect(page.locator("#status")).toHaveText("Choose a STEP file to start. Add its .ipt too, if you have one.");
   const before = await canvas(page);
   await read(page, resolve(PARTS, "report_sample.step"));
@@ -258,7 +258,9 @@ test("test_refused", async ({ page }, testInfo) => {
   await page.goto("/");
   const big = testInfo.outputPath("too_big.step");
   writeFileSync(big, Buffer.alloc((setting("MAX_UPLOAD_BYTES") as number) + 1, "0"));
-  const ipt = resolve(ROOT, "tests/inventor/files", readdirSync(resolve(ROOT, "tests/inventor/files")).filter((f) => f.endsWith(".ipt")).sort()[0]);
+  // An .ipt picked alone now waits for its STEP (UI fixes B2, status line, no error); its bytes under a .step name are still refused
+  const ipt = testInfo.outputPath("ipt_as.step");
+  writeFileSync(ipt, readFileSync(resolve(ROOT, "tests/inventor/files", readdirSync(resolve(ROOT, "tests/inventor/files")).filter((f) => f.endsWith(".ipt")).sort()[0])));
   const cases: [string, string][] = [
     [resolve(PARTS, "not_step.step"), setting("MSG_NOT_STEP") as string],
     [resolve(PARTS, "no_solid.step"), setting("MSG_NO_SOLID") as string],
@@ -354,7 +356,7 @@ for (const name of ["report_sample", "countersunk_hole", "deep_hole", "clean_hol
     const ids: Record<string, string> = Object.fromEntries(findings.map((f: any, n: number) => [f.id, `F${n + 1}`]));
     await checkRows(page, rows, ids);
     const first = rows[0];
-    const faces = faceUnion(findings, first.findings);
+    const faces = faceUnion(findings, first.findings.slice(0, 1)); // the row lights the finding it shows (UI fixes A5, D-076)
     await page.getByTestId(`row-${ids[first.findings[0]]}`).click();
     expect(((await page.evaluate("window.__dfma.highlightedFaces()")) as number[]).sort((a, b) => a - b)).toEqual(faces);
   });
@@ -385,7 +387,7 @@ for (const name of ["clean_pocket", "pocket_sharp", "pocket_deep", "pocket_islan
     await checkRows(page, rows, ids);
     if (rows.length) {
       const first = rows[0];
-      const faces = faceUnion(findings, first.findings);
+      const faces = faceUnion(findings, first.findings.slice(0, 1)); // the row lights the finding it shows (UI fixes A5, D-076)
       await page.getByTestId(`row-${ids[first.findings[0]]}`).click();
       expect(((await page.evaluate("window.__dfma.highlightedFaces()")) as number[]).sort((a, b) => a - b)).toEqual(faces);
     }
@@ -415,7 +417,7 @@ for (const name of ["thin_rib", "thin_floor", "clean_walls", "thin_drill_point",
     await checkRows(page, rows, ids);
     if (rows.length) {
       const first = rows[0];
-      const faces = faceUnion(findings, first.findings);
+      const faces = faceUnion(findings, first.findings.slice(0, 1)); // the row lights the finding it shows (UI fixes A5, D-076)
       await page.getByTestId(`row-${ids[first.findings[0]]}`).click();
       expect(((await page.evaluate("window.__dfma.highlightedFaces()")) as number[]).sort((a, b) => a - b)).toEqual(faces);
     }

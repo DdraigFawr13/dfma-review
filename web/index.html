@@ -20,18 +20,40 @@
         <button type="button" class="step" data-step="report" data-testid="step-report" aria-disabled="true" aria-describedby="steps-why" title="Read a STEP file to open steps 2 to 5"><span class="n">5</span>Report</button>
       </nav>
       <span class="spacer"></span>
-      <span class="topfile" id="top-file" data-testid="top-file" hidden></span>
+      <!-- UI fixes B2: one picker for a STEP and its .ipt (a button over the one input), and the examples (B1) -->
+      <button type="button" class="ghostbtn" id="open-button" data-testid="open-button">Open…</button>
+      <input id="file" class="sr-file" data-testid="upload-file" type="file" multiple accept=".step,.stp,.STEP,.STP,.ipt,.IPT" aria-label="Open a STEP file and, if you have it, its .ipt" tabindex="-1" />
+      <span class="exwrap">
+        <button type="button" class="ghostbtn" id="examples-button" data-testid="examples-button" aria-haspopup="menu" aria-expanded="false" aria-controls="examples-menu">Examples ▾</button>
+        <div class="exmenu" id="examples-menu" data-testid="examples-menu" role="menu" aria-label="Examples" hidden></div>
+      </span>
       <button id="export-pdf" data-testid="export-pdf" class="action" type="button" disabled hidden>Export PDF</button>
     </header>
     <p id="status" class="status" role="status" aria-live="polite">Choose a STEP file to start. Add its .ipt too, if you have one.</p>
     <main class="cols">
       <section class="viewer" aria-label="3D view of the part">
-        <canvas data-testid="viewer-canvas" id="viewer" role="img" aria-label="3D model of the part"></canvas>
+        <div class="stage">
+          <canvas data-testid="viewer-canvas" id="viewer" tabindex="0" role="application" aria-label="3D model of the part. Arrows rotate, Shift and arrows move, plus and minus zoom, H goes home."></canvas>
+          <!-- UI fixes A2: views in the file's axes (D-078) -->
+          <div class="views" id="views" role="group" aria-label="Views" hidden>
+            <button type="button" class="chip" data-testid="view-home" id="view-home">Home</button>
+            <button type="button" class="chip" data-testid="view-front" id="view-front">Front</button>
+            <button type="button" class="chip" data-testid="view-top" id="view-top">Top</button>
+            <button type="button" class="chip" data-testid="view-right" id="view-right">Right</button>
+            <button type="button" class="chip" data-testid="view-iso" id="view-iso">Iso</button>
+          </div>
+          <!-- UI fixes B3: Part or Machine, on the Machining step only -->
+          <div class="modeswitch" id="mode-switch" role="radiogroup" aria-label="View" data-testid="mode-switch" hidden>
+            <label class="mode"><input type="radio" name="viewmode" id="mode-part" value="part" checked /><span>Part</span></label>
+            <label class="mode"><input type="radio" name="viewmode" id="mode-machine" value="machine" data-testid="mode-machine" /><span>Machine</span></label>
+          </div>
+          <span class="triad-caption" id="triad-caption" aria-hidden="true" hidden>Part axes</span>
+        </div>
         <!-- review-steps S3 (frame r3-mach): one chip per setup over the model, on the Machining step only -->
         <div class="setupchips" role="group" aria-label="Setups" id="setup-chips" data-testid="setup-chips" hidden></div>
         <div class="viewer-note" id="viewer-note" data-testid="viewer-note"><span class="spin" id="spin" aria-hidden="true" hidden></span><span id="viewer-note-text">The part shows here once it's read.</span></div>
         <div class="viewfoot">
-          <p class="hint">Drag to rotate, scroll to zoom, right-drag to pan. By keyboard or touch, the lists and chips pick what the model shows.</p>
+          <p class="hint">Drag to rotate. Middle-drag or Shift + drag to move. The wheel zooms to the mouse. Tab to the model for keys.</p>
           <!-- review-steps S2 (D-014 amended by D-042): the Show OK switches, on the Features step only -->
           <div class="showok" role="group" aria-labelledby="show-ok-label" data-testid="show-ok" id="show-ok" hidden>
             <span class="lbl" id="show-ok-label">Show OK</span>
@@ -48,16 +70,15 @@
             <h2 tabindex="-1">Start a review</h2>
             <div class="field">
               <span class="flabel" id="file-label">STEP file</span>
-              <label class="action filebtn" for="file">Open STEP file…</label>
-              <input id="file" class="sr-file" data-testid="upload-file" type="file" accept=".step,.stp,.STEP,.STP" aria-labelledby="file-label" />
+              <button type="button" class="action filebtn" id="start-open" data-testid="start-open">Open STEP file…</button>
+              <p class="fhint">Pick its .ipt in the same window, if you have one.</p>
             </div>
             <!-- audit F3: the reason sits under the file it is about, and describes that field while it shows -->
             <p id="error" class="error" data-testid="error-message" role="alert" hidden></p>
             <p id="error-next" class="error-next" hidden>Choose another file, or try again.</p>
-            <div class="field" id="ipt-field">
-              <span class="flabel" id="ipt-label">Inventor part (.ipt), optional</span>
-              <label class="ghostbtn filebtn" for="ipt">Add .ipt…</label>
-              <input id="ipt" class="sr-file" data-testid="upload-ipt" type="file" accept=".ipt,.IPT" aria-labelledby="ipt-label" />
+            <div class="field" id="example-field">
+              <span class="flabel" id="example-label">Or try an example</span>
+              <div class="examples" id="example-list" role="group" aria-labelledby="example-label"></div>
             </div>
             <div class="settings" id="settings">
               <div class="field">
@@ -81,7 +102,7 @@
           </form>
           <div class="overview" id="overview" data-testid="overview" hidden>
             <div class="ohead">
-              <div class="orow"><h2 tabindex="-1" class="label" id="part-name"></h2><button type="button" class="link" id="change-file" data-testid="change-file">Change file</button></div>
+              <div class="orow"><h2 tabindex="-1" class="label" id="part-name"></h2></div>
               <p class="num dims"><span data-testid="part-size" id="part-size"></span> · <span data-testid="face-count" id="face-count"></span> · <span id="part-units" data-testid="part-units"></span></p>
               <p class="num" id="inventor-meta" hidden>Inventor <span data-testid="ipt-build" id="ipt-build"></span></p>
               <div class="oslot" id="settings-slot"></div>

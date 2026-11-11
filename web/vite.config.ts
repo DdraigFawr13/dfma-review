@@ -1,7 +1,8 @@
 /// <reference types="vitest/config" />
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineConfig, type Plugin } from "vite";
+import { EXAMPLES } from "./src/examples.ts";
 
 // Two builds (port spec Design "web/vite.config.ts"):
 // - the service build (npm run build): web/dist, served by the Python app (python -m dfma start);
@@ -49,23 +50,48 @@ function licensesListed(): Plugin {
   };
 }
 
+
+/** The four examples (spec ui-fixes B1): files of tests/parts, served at <base>examples/<name>.step by the dev server and
+ *  copied into every build's output, so there is one home for them (SRC-01). */
+const NAMES = EXAMPLES.map((e) => e.name);
+function examples(): Plugin {
+  const dir = resolve(import.meta.dirname, "../tests/parts");
+  return {
+    name: "dfma-examples",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const m = /\/examples\/([a-z_]+)\.step(?:\?.*)?$/.exec(req.url ?? "");
+        if (!m || !NAMES.includes(m[1]) || !existsSync(resolve(dir, `${m[1]}.step`))) return next();
+        res.setHeader("Content-Type", "application/octet-stream");
+        res.end(readFileSync(resolve(dir, `${m[1]}.step`)));
+      });
+    },
+    generateBundle() {
+      for (const name of NAMES) {
+        this.emitFile({ type: "asset", fileName: `examples/${name}.step`, source: readFileSync(resolve(dir, `${name}.step`)) });
+      }
+    },
+  };
+}
+
 export default defineConfig(ENGINE === "demo"
   ? {
       // The demo (scripts/make_demo.py --engine browser): the browser copy's page, its answers from browser-engine
       // results the demo script inlines; absolute paths, as make_demo.py reads web/dist.
-      plugins: [browserPage()],
+      plugins: [browserPage(), examples()],
       build: { outDir: "dist-demo", emptyOutDir: true, chunkSizeWarningLimit: 5000 },
       server: { fs: { allow: [".."] } },
     }
   : ENGINE === "browser"
   ? {
       base: "./",
-      plugins: [browserPage(), licensesListed()],
+      plugins: [browserPage(), licensesListed(), examples()],
       build: { outDir: process.env.DFMA_OUT_DIR ?? (TEST ? "dist-pages-test" : "dist-pages"), emptyOutDir: true, chunkSizeWarningLimit: 5000 },
       worker: { format: "es", plugins: () => [licensesListed()] }, // the worker is its own bundle: check it too
       server: { fs: { allow: [".."] } }, // config/*.toml is read with ?raw from outside web/
     }
   : {
+      plugins: [examples()],
       build: { outDir: "dist", emptyOutDir: true },
       server: { proxy: { "/api": "http://127.0.0.1:8000" }, fs: { allow: [".."] } },
       test: { exclude: ["**/node_modules/**", "e2e/**", "src/engine/parity.test.ts", "src/engine/demo-results.test.ts", "src/engine/port/edmr.test.ts", "src/engine/port/nist.test.ts", "src/engine/port/read_runtime.test.ts"] },

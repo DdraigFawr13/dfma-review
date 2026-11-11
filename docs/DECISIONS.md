@@ -117,6 +117,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-07).
 - **Amended by D-042, built 2026-11-09:** HIGH / MEDIUM read FIX / REVIEW on screen and in the PDF; the selected pin reads "F4 FIX".
 - **Amended by D-053 (2026-11-09):** every pin carries its ▲/◆ mark, selected or not, so a pin's severity no longer rests on its ring colour alone (UX audit F26).
+- **Amended by D-076, built in UI fixes S1 (2026-11-11):** pins and stems hide while the camera moves (drag, wheel, keys) and come back about 150 ms after the last mouse or wheel move, 600 ms after a key; and a selection greys everything else, so "nothing else dims" no longer holds.
 - **Decision:**
   - Each finding's label is a pin ("F5") on a visible spot of its faces, white and ringed in its severity colour. A pin that would cover one already placed folds into it ("F4 +2"); a pin whose spot is behind the part is hidden. This replaces D-015's labels that moved to the nearest free spot.
   - The selected finding's pin is solid in its severity colour (red for HIGH, orange for MEDIUM), larger, with its severity word ("F5 HIGH"), raised on a stem to a dot on its spot. Its faces still turn the Selected colour (`--accent`); nothing else dims.
@@ -174,6 +175,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 ## D-023 Machine plan panel, Passed list and selectable setups
 
 - **Status:** Accepted (2026-11-08). The Machine plan panel first; the two additions after their [mock-up](https://claude.ai/artifact/ACtTrQnaA8qUkRzZkUgMRX) (Morgan: "Approved, merge when ready").
+- **Amended by D-076 (slice B, built 2026-11-11):** the Machining step has a Part / Machine switch over the model; in Machine a setup puts its direction up on screen, and a tool row lights the faces it cuts with a placeholder spindle (a chuck on a lathe part). Part is as before.
 - **Amended by D-042, built 2026-11-09:** the Machine plan panel is the Machining step; the Passed list is the Features step's Passed chip (rows by kind and check, each feature's math in the open row).
 - **Decision:**
   - Accepted: the Machine plan panel as on the [mock-up](https://claude.ai/artifact/5Cmq85bG5CPpi7oZ3oZHGW) (`mockups/plan-panel.html`).
@@ -330,6 +332,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 ## D-042 Review screen redesign: a step-by-step review
 
 - **Status:** Accepted (2026-11-09; Morgan, on the [round 3 page](https://claude.ai/artifact/V5jsL9TkRoY7HDiPJM4DS8): "Approved with the changes I wrote" and "The cost section isn't showing any total but otherwise go with what you recommend"). Not built yet: the build is its own slice, planned with `write-spec` after the Inventor I2+I3 work. Until then UI_STYLE describes the screen as built. When built, it amends D-012 (layout and verdict line), D-014 (legend), D-017 (severity words) and D-023 (where Plan and Passed sit).
+- **Amended by D-076 (slice B, built 2026-11-11):** one Open… picker in the top bar takes a STEP and its .ipt together; "Change file" and the file name in the bar are gone; Examples ▾ loads four sample parts.
 - **Amended by D-053 (2026-11-09):** the setup count's reason reads "Why n setups:" on its own line (F31); Fix first stays last on the overview, but the cards column no longer stretches, so no blank band sits above it (F21).
 - **Decision:**
   - Steps across the top: Part · Features · Machining · Cost · Report, with Back / Next at the foot of each. The Part step is the start form; once the part is read it becomes the overview (counts per step, features checked, biggest cost drivers, Fix first) with "Change file".
@@ -581,6 +584,7 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
     - Top bar: Open…, Examples ▾, Export PDF; the file name moves to the status line; "Change file" leaves the overview. One picker takes the STEP and its .ipt.
     - Machine view on Machining: a Part / Machine switch over the model; a setup chip turns the view so the spindle is on top (a lathe part lies across the screen); tapping a tool row (a button, at least 32 px tall) lights the faces it cuts in that setup and shows it in a placeholder spindle (cutter diameter to scale, the rest generic); a lathe part shows a placeholder chuck.
   - **Later:** tool-access check after steps and slots (Morgan, review note), research first; cutaway and dimensions on the part: Soon, after A and B; view cube: no.
+- **Slice A built (2026-11-11, branch `ui-fixes-a-model`):** UI_STYLE "Selected finding" and D-017 amended; builder defaults in the spec's S1 section.
 - **Amends, when built:** UI_STYLE "Selected finding" (a row lights the finding it shows; other faces grey, not their colours); D-042 ("Change file" leaves the overview; one Open… picker); D-023 (the Machine view turns the view per setup and lights a tool's faces); D-017 (pins hidden while the part moves).
 - **Why:** Morgan's 4 photos of the work copy (2026-11-10): rotating was "the hardest currently"; a row with many copies lit the whole part. Round 1 and the review settled each choice; an adversarial review and two fresh mock-up checks ($1.42 measured) found the folded-row cause, the lag on wheel and keys, the arrow-key clash, trackpad moves and the lathe view.
 
@@ -603,3 +607,42 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
   - The part turns freely (Open question 2, b): Morgan, in chat after the approval: "Oh wait no I want the free rotation not the turn table". Built on three's `ArcballControls` (same package, no new dependency), which replaces today's orbit about the file's Y axis.
   - The page's additions stand: pins return about 0.5 s after a move on big parts (CTC 02); 600 ms after a key; any selection greys the rest, PDF pictures included; stepping frames each finding; view buttons move under the model at 500 px and below.
 - **Why:** 41 of 42 sample parts have part axes that differ from the file's (26 with part +Z = file −Z), so Top in part axes would show the underside; the orbit-axis cause was confirmed with three.js 0.187 in Node. Measured before: CTC 02 drag frame gap p90 344-466 ms, pin placement 420 ms a frame.
+
+## D-080 UI fixes slice A approved; merge when ready
+
+- **Numbered D-080:** recorded first as D-079 on the slice A branch; renumbered before merging because the steps and slots branch (PR #50) had already recorded its own D-079.
+
+- **Status:** Accepted (2026-11-11). Morgan, in chat, after the [demo](https://claude.ai/artifact/KzexiP7jM8zQdB3RQox29M): "Ok I approve of the demo. You may merge whenever you are ready to do so" (PR #51).
+- **Decision:** slice A (spec `docs/specs/ui-fixes.md` S1) merges as built, with the builder defaults in the spec's S1 "Built" list. The reply named neither open call, so both stand as built (WS-02): the arrow keys move the camera the arrow's way; the drag frame target of 50 ms stays a target, judged on the work copy's GPU (measured here in software WebGL: p90 192-196 ms, page script 0.22-0.27 s per 40-move drag, against 10.9-15.2 s on main). Slice B starts in a new session after the merge.
+- **Why:** the demo showed the slice working; `npm run check` passed (662 s), a fresh review's 8 findings were fixed, and each new check failed on main or on a planted bug.
+
+## D-079 Steps and slots planned: directions, depth checks, step tools, target rule
+
+- **Status:** Accepted (2026-11-11). Morgan answered [round 1](https://claude.ai/artifact/2NiJeW3rhomfLQSDeVzDhY) (every question as recommended) and, on the [review page](https://claude.ai/artifact/1DwcDhFZcZVzxisd3QTqcy), in chat: "Do some research on these questions first then go with what you recommend". The research (below) supported each recommendation, so all five review questions are taken as recommended. Amends D-068 (open sides).
+- **Decision:**
+  - **Scope:** steps (MFCAD++ 8-10, 20-22) and slots with a floor (6, 17-19) on the engine, plan and tools first; a Features group, model colours and a PDF section after the UI fixes (D-076, D-078) merge, with a mock-up first. After this work: V-groove and round-bottom slots (5, 7; scored on their own line meanwhile), the closed-pocket ramp note, T-slot and dovetail names and cutters, keyways on turned parts.
+  - **Directions (amends D-068):** a step can be cut from its floor's direction or its wall's direction; both are setup choices. A slot is cut from its floor's direction only; its open ends mean side entry (no ramp), not a setup.
+  - **Tools:** a slot roughs with the largest end mill at most `pocket_width_share` (0.75) of its width, then finishes as a pocket does (`pickEndMill`). A step roughs with the largest end mill up to 1 in (nothing limits its width), then finishes with the end mill that fits its corner radius; the rougher is listed only when larger than the finisher (D-029's rule).
+  - **Findings:** steps and slots get the deep pocket check (depth over 3× the finishing end mill in aluminium, D-052 passes); a slot deeper than 6× its width is its own medium finding.
+  - **Target, fixed before the first run:** on both 500-part MFCAD++ sets, step and slot face recall at least the pockets' recall in the same run, 0 wrong step or slot calls, and holes and pockets no worse than the baseline (first 500 on 2026-11-11: holes 12 of 602 missed, pockets 78 of 3,745 missed, 1 wrong); whole features counted too, on our sets and the UMD parts.
+  - **Sizes kept for drawings later:** width, length, depth, end type (open, flat, round), end radius, open ends, directions.
+- **Why:** research, 2026-11-11 (pages opened unless marked): access on a 3-axis mill is "from above" along six principal directions (Hubs, how-design-parts-cnc-machining); cutting a slot from its end takes a side-and-face cutter on a horizontal mill (Sandvik, groove-or-slot-milling), which the app doesn't plan; setup planners give a feature several tool approach directions (snippet only). Hubs checks both cavity depth (4× width) and tool length (3-4× diameter), so both checks are usual. Fusion's rest machining roughs with a large tool, then a smaller one clears what it left. Published MFCAD++ face accuracy is 97.79% overall, with the rectangular through slot lowest at 91% (Vidanes et al., CAD 166, 2024). V-grooves take 60° or 90° double-angle cutters (Harvey); half-round grooves take convex radius cutters (Penn Tool) or a ball end mill (inference). Two MFCAD++ classes have no floor (measured on the first 500: class 5, 103 faces in 38 parts; class 7, 78 faces in 47), so a floor-and-wall finder can't find them. The 6× slot depth comes from D-068 (Protolabs); this session's fetch of Protolabs' guide found only a 2 in overall depth limit.
+
+## D-081 Steps and slots spec approved; merge after the two sessions ahead of it
+
+- **Status:** Accepted (2026-11-11). Morgan, in chat: "I agree with all recommendations. Do not run ci until I tell you to. There are two other sessions that need to merge before this one. Once they are merged you can update from main and merge as well." ([approval page](https://claude.ai/artifact/G38mPz8nx9BMCwwYR39hqc); no answers saved on it, so every item is taken as recommended.)
+- **Decision:**
+  - The spec `docs/specs/steps-slots.md` is approved: S1 steps, S2 slots, S3 screens and PDF after the UI fixes merge.
+  - The five additions stand: the guarded parity re-freeze script; crossing slots and slots into a pocket wait; steps and slots only on a floor along a part axis; a step's floor picked by direction order and recorded; UMD parts counted by feature.
+  - PR #50 merges after UI fixes slice A (PR #51, merged 2026-11-11) and slice B (PR #53, `ccr-cb7e43ab-n1dv94`; Morgan, in chat: "You merge after pr 53"): then update from main and merge. No CI run until Morgan says so.
+- **Why:** Morgan's instruction. The two UI branches change the screens and HANDOFF; merging after them keeps one order of decisions and handoff entries.
+
+## D-082 A UI-only change skips the engine-only checks
+
+- **Status:** Accepted (2026-11-11). Built in PR #54; Morgan: "Approved merge". Morgan, in chat: "Also can you reduce the testing for this?", then picked "Skip engine tests on UI-only (Recommended)" from: skip engine tests on UI-only changes; merge PR #51 on the local pass; both; no change. Numbered D-082 because the steps and slots branch (PR #50) holds D-079 and D-081.
+- **Decision:**
+  - `scripts/scope.mjs` decides, for `npm run check` locally and in CI. A change is UI-only when every changed file is screen code directly in `web/src/` (not `api.ts`, whose types the engine imports, nor `worker.ts`, which runs it), under `web/e2e/` or `web/public/`, `web/index.html`, Markdown, `docs/` or `mockups/`. Anything else, an empty change, or no base to compare with runs everything.
+  - A UI-only change skips the parity run against the frozen key (`npm run parity`) and the timed engine tests (`npm --prefix web run timed`). The drift check, NIST unpack, type check, unit tests, both builds, the browser tests and the timed browser tests still run.
+  - Locally the change is the merge base with `origin/main` to the working tree, untracked files included; in CI it is the PR's merge commit (`HEAD^1..HEAD`). A push to `main` and a manual run always run everything, once per merge. `DFMA_FULL=1` forces everything.
+  - D-077's light path (docs-only: drift check alone) and its EDMR rule are unchanged.
+- **Why:** on PR #51 (screen code only) the parity run took about 134 s and the timed engine tests 100 s of a 695 s check (2026-11-11 local run); neither reads the screen code. The engine reads `web/src/api.ts`, `web/src/grading/`, `web/src/inventor-harness/` and `config/` (grep of `web/src/engine` imports, 2026-11-11), so those are not UI. Checked: 19 cases in `web/src/scope.test.ts` (5 fail with the UI pattern widened to all of `web/src/`), and 8 git cases in a scratch repo (local unstaged, committed, untracked engine file, engine edit, `DFMA_FULL`, push, PR merge commit, empty change).

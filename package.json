@@ -3,12 +3,14 @@
   "private": true,
   "description": "DFMA Review root checks (S8b: Python retired). The web app, its tests and its Playwright e2e tests live in web/.",
   "scripts": {
-    "check": "npm run drift && npm run nist && npm --prefix web run check && npm --prefix web run build && npm --prefix web run build:pages:test && npm run parity && npm run e2e && npm run timed",
+    "check": "npm run drift && npm run nist && npm --prefix web run check && npm --prefix web run build && npm --prefix web run build:pages:test && node scripts/scope.mjs skip-if-ui -- npm run parity && npm run e2e && node scripts/scope.mjs skip-if-ui -- npm --prefix web run timed && npm run timed:e2e",
     "drift": "node .claude/master/sync.mjs --check",
     "nist": "node scripts/unpack-nist.mjs",
     "parity": "npm --prefix web run parity",
     "e2e": "npm --prefix web run e2e -- --grep-invert @timed",
     "timed": "npm --prefix web run timed && npm --prefix web run e2e -- --grep @timed --workers 1",
-    "demo": "node scripts/make-demo.mjs"
+    "demo": "node scripts/make-demo.mjs",
+    "timed:e2e": "npm --prefix web run e2e -- --grep @timed --workers 1",
+    "scope": "node scripts/scope.mjs"
   }
 }
