@@ -1,6 +1,6 @@
 # Handoff
 
-Updated: 2026-11-11 (UI fixes slice A built on `ui-fixes-a-model`; next: checks, review, status page, draft PR, Morgan's check). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
+Updated: 2026-11-11 (UI fixes slice A in draft PR #51; next: Morgan's check and approval). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
 
 ## Phase
 
@@ -32,7 +32,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 ## Next
 
 00. Checks: `npm run check` at the root; before a PR is marked ready also `npm --prefix web run edmr` and `parity:full` when the engine changed. Morgan: turn on GitHub Pages (Settings → Pages → Source: GitHub Actions) if not yet; tell IT before the work copy (D-055).
-000a. Now (UI fixes, D-076, D-078): S1 built on `ui-fixes-a-model` ([spec](specs/ui-fixes.md) S1 "Built" lists the builder defaults). Left: `npm run check`, fresh review against the spec, status page + `npm run demo`, draft PR; Morgan checks by using it (D-077) and decides on the 50 ms frame target (not met in software WebGL) and the arrow-key sign. S2 (slice B) after S1 merges, in a new session. Forms: [round 1](https://claude.ai/artifact/TC6zxWereXxzeVBLG4MtLE), [review](https://claude.ai/artifact/N8rWXXux4n2VWqNhkDzEUB).
+000a. Now (UI fixes, D-076, D-078): S1 built on `ui-fixes-a-model` ([spec](specs/ui-fixes.md) S1 "Built" lists the builder defaults). Draft [PR #51](https://github.com/DdraigFawr13/dfma-review/pull/51), check 662 s, review fixed, [demo](https://claude.ai/artifact/KzexiP7jM8zQdB3RQox29M), status page `mockups/ui-fixes-a-status.html`. Morgan checks by using it (D-077) and decides on the 50 ms frame target (not met in software WebGL) and the arrow-key sign. S2 (slice B) after S1 merges, in a new session. Forms: [round 1](https://claude.ai/artifact/TC6zxWereXxzeVBLG4MtLE), [review](https://claude.ai/artifact/N8rWXXux4n2VWqNhkDzEUB).
 000. Steps and slots (D-068): Morgan added slot recognition in another copy without full testing (2026-11-10) and wants it redone here, tested; spec with `write-spec` after the port; start with a labelled `steps_slots` set, then NIST and EDMR, then MFCAD++ classes 5-10 and 17-22.
 0. Now: plainer sentences for the rule cases that still read as titles, each shown to Morgan first (D-045). Follow-up from the audit fixes: Hole feature rows still carry aria-pressed and aria-expanded (F15's pattern, out of its scope).
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `cd web && node scripts/harness.mjs local-pairs` (prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
