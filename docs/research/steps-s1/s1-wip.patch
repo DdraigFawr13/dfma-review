@@ -416,7 +416,7 @@ index 97ea568..5e315b5 100644
      const summary: PartSummary = { units_in_file: part.unitsInFile, frame, turn, face_count: part.faces.length };
      if (inventor !== null) {
 diff --git a/web/src/engine/features/pockets.ts b/web/src/engine/features/pockets.ts
-index 7258bc4..35a7817 100644
+index 7258bc4..ce54069 100644
 --- a/web/src/engine/features/pockets.ts
 +++ b/web/src/engine/features/pockets.ts
 @@ -6,6 +6,7 @@ import { ANGLE_TOL, cross, dot, unit, type Vec } from "../frame";
@@ -671,7 +671,7 @@ index 7258bc4..35a7817 100644
      const sealed = pieces.every((k) => enclosure.sealed.has(k));
      const [ceilings, upper] = sealed ? [[], []] as [number[], number[]]
        : undercut(topo, walls, n, new Set([...pieces, ...holeFaces]), overFloor(topo, pieces, n));
-@@ -740,7 +905,124 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
+@@ -740,7 +905,145 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
        foundC.push(corner);
      }
    });
@@ -693,10 +693,16 @@ index 7258bc4..35a7817 100644
 +/** The open floor on this face, or null (Terms, "Open floor"): a plane on a part-frame axis whose outline has at least
 + *  one wall and one open edge, reached by a cutter along its normal. A floor in several flat pieces is taken once,
 + *  from its lowest-numbered piece, with the pieces' shared outline. */
++/** Grading only (D-093): with `on`, the open-floor search also records, per shape it leaves out of steps on purpose,
++ *  the faces involved, so the scorer can put labelled step faces of those shapes on their own line. It never changes
++ *  a result; the app leaves it off. Reset `held` before each analysis. */
++export const OPEN_DIAG: { on: boolean; held: [string, number[]][] } = { on: false, held: [] };
++
 +function openFloor(topo: Topology, fid: number, n: Vec, frame: Frame, holeFaces: Set<number>, enclosure: Enclosure): OpenFloor | null {
 +  const oc = topo.oc;
 +  const dir = frameDir(n, frame);
-+  if (dir === null) return null; // a floor off the part axes is no step (D-081; tilted floors wait on Morgan, D-092)
++  // A floor off the part axes is no step (D-081, D-093); grading notes one that has a wall on a part axis
++  if (dir === null && !OPEN_DIAG.on) return null;
 +  const group = floorPieces(topo, fid, n, holeFaces);
 +  if (group && minOf(group) !== fid) return null;
 +  const pieces = group ?? [fid];
@@ -708,9 +714,19 @@ index 7258bc4..35a7817 100644
 +  const trace: TraceEdge[] = [];
 +  const walls = openWalls(topo, fid, n, edges, enclosure, blends, trace);
 +  if (walls === null) return null;
++  const own = () => [...pieces, ...walls, ...blends];
 +  if (enclosure.rays === null) enclosure.rays = new Rays(oc, topo.solid);
-+  // A floor no cutter reaches along its normal is no step (as pockets; side-cut notches wait on Morgan, D-092)
-+  return reachable(topo, pieces, n, enclosure.rays) ? { fid, n, dir, pieces, walls, blends, trace } : null;
++  if (dir === null) {
++    const axisWall = walls.some((w) => topo.type(w) === "GeomAbs_Plane" && frameDir(outwardNormal(oc, topo.faces[w])[1], frame) !== null);
++    if (axisWall && reachable(topo, pieces, n, enclosure.rays)) OPEN_DIAG.held.push(["tilted", own()]);
++    return null;
++  }
++  // A floor no cutter reaches along its normal is no step (as pockets; D-093); grading notes one reached from a side
++  if (reachable(topo, pieces, n, enclosure.rays)) return { fid, n, dir, pieces, walls, blends, trace };
++  if (OPEN_DIAG.on && openVectors(topo, trace, n).some((v) => frameDir(v, frame) !== null && reachable(topo, pieces, v, enclosure.rays!))) {
++    OPEN_DIAG.held.push(["side", own()]);
++  }
++  return null;
 +}
 +
 +/** The outward unit vector across each open edge, deduplicated within 0.5 deg. */
@@ -745,7 +761,12 @@ index 7258bc4..35a7817 100644
 +    const own = new Set([...o.pieces, ...o.walls, ...o.blends]);
 +    if (rs.length === 1 && !pairIn(rs[0]) && wallArc(topo, rs[0], o.n) < STEP_ARC_MAX_DEG) stepFloors.push(o);
 +    else if ((rs.length === 2 && rs.every((r) => r.length === 1) && face(rs[0][0], rs[1][0]))
-+      || (rs.length === 1 && rs[0].length >= 3 && face(rs[0][0], rs[0][rs[0].length - 1]))) slotSets.push(own);
++      || (rs.length === 1 && rs[0].length >= 3 && face(rs[0][0], rs[0][rs[0].length - 1]))) {
++      slotSets.push(own);
++      // Grading (D-093): a U of 4 flat faces, 3 walls and 1 open edge is the shape of a blind slot (MFCAD++ class 17)
++      if (OPEN_DIAG.on && own.size === 4 && [...own].every((f) => topo.type(f) === "GeomAbs_Plane") && rs[0].length === 3
++        && o.trace.filter((t) => t.kind === "open").length === 1 && !o.trace.some((t) => t.kind === "cut")) OPEN_DIAG.held.push(["u-slot", [...own]]);
++    }
 +  }
 +  // One feature per face set; its floor the face whose direction comes first in ORDER (Terms, "Same feature").
 +  const bySet = new Map<string, OpenFloor>();
@@ -1211,13 +1232,14 @@ index 0000000..3f964de
 +});
 diff --git a/web/src/engine/port/umd_counts.test.ts b/web/src/engine/port/umd_counts.test.ts
 new file mode 100644
-index 0000000..f8b96aa
+index 0000000..aabd9c8
 --- /dev/null
 +++ b/web/src/engine/port/umd_counts.test.ts
-@@ -0,0 +1,39 @@
+@@ -0,0 +1,51 @@
 +// Steps and slots spec, J4 (UMD): the University of Maryland benchmark parts (tests/edmr/models/UMD, docs/nist/CATALOG.md)
 +// label features by removed volume, not by face, so they are counted: per part, with s, t and o the labelled steps,
-+// slots and opened pockets in <part>/<part>.fts, S1 checks s <= steps found <= s + o. bracket1-4-Part, castle and ex1
++// slots and opened pockets in <part>/<part>.fts, S1 checks s <= steps found <= s + o. A `[Corner]` (a corner notch, a
++// plain L step; MFCAD++ class 22) counts with the steps (D-093). bracket1-4-Part, castle and ex1
 +// stop the reader ("memory access out of bounds", measured 2026-11-11) and are left out. Not timed: no wall-clock limit.
 +import { readFileSync } from "node:fs";
 +import { resolve } from "node:path";
@@ -1235,6 +1257,12 @@ index 0000000..f8b96aa
 +  return readFileSync(resolve(UMD, part, `${part}.fts`), "utf8").split(`Feature Type: [${type}]`).length - 1;
 +}
 +
++/** Parts that disagree for a reason Morgan settled (D-093), with the numbers: each test checks they still disagree, so
++ *  an entry is removed when the engine changes. */
++const KNOWN: Record<string, string> = {
++  vand1: "6 labelled steps meet the centre hole, so each floor has one wall and a cut edge: not steps (D-093); 0 found",
++};
++
 +let oc: OC;
 +beforeAll(async () => { oc = await loadNodeOc(); });
 +
@@ -1245,12 +1273,17 @@ index 0000000..f8b96aa
 +
 +describe("steps found within the labelled steps and opened pockets", () => {
 +  for (const part of PARTS) {
-+    test(part, async () => {
++    test(part, { timeout: 60_000 }, async () => {
 +      const r: Result = await analyseFile(oc, resolve(UMD, part, `${part}.step`));
 +      const found = r.features.filter((f: Result) => f.kind === "step").length;
-+      const [s, o] = [labelled(part, "step"), labelled(part, "Opened Pocket")];
-+      expect(found, `${part}: ${found} steps found, labelled ${s} steps and ${o} opened pockets`).toBeGreaterThanOrEqual(s);
-+      expect(found, `${part}: ${found} steps found, labelled ${s} steps and ${o} opened pockets`).toBeLessThanOrEqual(s + o);
++      const [s, o] = [labelled(part, "step") + labelled(part, "Corner"), labelled(part, "Opened Pocket")];
++      const say = `${part}: ${found} steps found, labelled ${s} steps and corners and ${o} opened pockets`;
++      if (part in KNOWN) {
++        expect(found >= s && found <= s + o, `${say}; known difference: ${KNOWN[part]}`).toBe(false);
++        return;
++      }
++      expect(found, say).toBeGreaterThanOrEqual(s);
++      expect(found, say).toBeLessThanOrEqual(s + o);
 +    });
 +  }
 +});
@@ -1671,10 +1704,33 @@ index 7ef941a..caddf5c 100644
        : `${toolName(t)}: no drill matches ${inch(d.diameter)}, so an end mill.`;
    }).join(" ");
 diff --git a/web/src/grading/analyse.ts b/web/src/grading/analyse.ts
-index 5761e8e..af588c2 100644
+index 5761e8e..e91bc17 100644
 --- a/web/src/grading/analyse.ts
 +++ b/web/src/grading/analyse.ts
-@@ -120,7 +120,7 @@ export async function gradeFile(oc: OC, path: string): Promise<GradeFile> {
+@@ -7,6 +7,7 @@ import { basename } from "node:path";
+ import { dot, faceInfo, type Vec } from "../engine/frame.ts";
+ import { Topology } from "../engine/features/holes.ts";
+ import { analyzeOrRefuse } from "../engine/node.ts";
++import { OPEN_DIAG } from "../engine/features/pockets.ts";
+ import type { OC } from "../engine/oc.ts";
+ import { SOLID_ENTITIES, volume } from "../engine/read.ts";
+ import type { FaceRec, FeatureRec } from "./score.ts";
+@@ -98,12 +99,13 @@ export function shortWalls(topo: Topology, pocket: { faces: number[]; axis: numb
+     .map((w): [number, number[]] => [w, [...topo.neighbours(w).keys()].filter((k) => !faces.has(k)).sort((a, b) => a - b)]);
+ }
+ 
+-export interface GradeFile { faces: FaceRec[]; features: FeatureRec[]; ignored_solids: number; error: string | null }
++export interface GradeFile { faces: FaceRec[]; features: FeatureRec[]; ignored_solids: number; error: string | null; held_steps?: [string, number[]][] }
+ 
+ export async function gradeFile(oc: OC, path: string): Promise<GradeFile> {
+   const bytes = new Uint8Array(readFileSync(path));
+   const empty = (error: string): GradeFile => ({ faces: [], features: [], ignored_solids: 0, error });
+   if (path.toLowerCase().endsWith(".brep")) return empty("the browser engine reads STEP only (no BREP reader)");
++  [OPEN_DIAG.on, OPEN_DIAG.held] = [true, []]; // D-093: the shapes left out of steps on purpose, for the scorer
+   const r = (await analyzeOrRefuse(oc, bytes, basename(path), "mill")) as {
+     error?: string; faces: { kind: string }[]; features: (FeatureRec & { open_vectors?: unknown[]; axis: number[]; dims_mm: Record<string, number> })[];
+     part: { ignored_solids: number };
+@@ -120,7 +122,7 @@ export async function gradeFile(oc: OC, path: string): Promise<GradeFile> {
        const sid = second.shape && !second.shape.IsNull() && i < second.faces.length ? whole.FindIndex(second.faces[i]) : 0;
        return { kind: f.kind, kind2, name, file_pos: pos, shape_id: sid || null };
      });
@@ -1683,6 +1739,15 @@ index 5761e8e..af588c2 100644
      const features: FeatureRec[] = kept.map((f) => ({
        kind: f.kind, faces: f.faces, open_ends: (f.open_vectors ?? []).length, ...(f.chain !== undefined ? { chain: f.chain } : {}),
      }));
+@@ -130,7 +132,7 @@ export async function gradeFile(oc: OC, path: string): Promise<GradeFile> {
+       topo ??= new Topology(oc, second.solid, second.faces);
+       features[i].short_walls = shortWalls(topo, f);
+     });
+-    return { faces, features, ignored_solids: r.part.ignored_solids, error: null };
++    return { faces, features, ignored_solids: r.part.ignored_solids, error: null, held_steps: OPEN_DIAG.held };
+   } finally {
+     oc.FS.unlink(SECOND_FILE);
+   }
 diff --git a/web/src/grading/baseline.ts b/web/src/grading/baseline.ts
 new file mode 100644
 index 0000000..0bec445
@@ -1748,10 +1813,10 @@ index 2539a90..a36a793 100644
  }
  
 diff --git a/web/src/grading/score.test.ts b/web/src/grading/score.test.ts
-index 600fbbc..0796316 100644
+index 600fbbc..fd94a31 100644
 --- a/web/src/grading/score.test.ts
 +++ b/web/src/grading/score.test.ts
-@@ -189,7 +189,32 @@ describe("summary", () => {
+@@ -189,7 +189,46 @@ describe("summary", () => {
      const part = { part: "a.step", status: "ok", labels: [1, 1, 14], features: [feat({ kind: "hole", faces: [0, 1], open_ends: 2 }), feat({ kind: "pocket", faces: [2] })] };
      const d = { status: { ok: 1 }, scores: scores(tally([1, 1, 14], ["through", "through", "pocket"])), per_part: [part],
        holes_whole: { whole: 1, of: 1, split: 0, merged: 0 } } as unknown as GradeResult;
@@ -1775,8 +1840,22 @@ index 600fbbc..0796316 100644
 +    const part = { part: "a.step", status: "ok", labels, features } as unknown as PartRec;
 +    const out = summaryLine("r.json", { status: { ok: 1 }, scores: s, per_part: [part] } as unknown as GradeResult).split("\n");
 +    expect(out[1]).toBe("  steps 2/3 (miss 1, wrong 3: 2 on scored labels, 1 on excluded; by class 8 1/1, 9 0/0, 10 0/0, 20 0/1, 21 0/0, 22 1/1); "
-+      + 'floorless class 5 {"step":1}, class 7 {}');
++      + 'floorless class 5 {"step":1}, class 7 {}; not steps (D-093) none');
 +    expect(out[2]).toBe("  target (D-079): no baseline for this set");
++  });
++
++  test("labelled step faces of a shape that is not a step leave the count, on their own line (D-093)", () => {
++    // faces 0-2 are class 22, face 3 class 10; the engine left [0, 1] out as a side-cut notch and [3] as a tilted floor,
++    // and called face 2 a step; face 1 is called nothing
++    const labels = [22, 22, 22, 10, 24];
++    const r = { status: "ok", faces: faces(labels.map(String)), ignored_solids: 0,
++      features: [feat({ kind: "step", faces: [0, 2] })], held_steps: [["side", [0, 1]], ["tilted", [3]]] as [string, number[]][] };
++    const [rec, counts, missed] = scorePart("p.step", r, labels);
++    expect(rec.held).toEqual({ side: 1, tilted: 1 }); // face 0 is called a step, so it counts as found
++    const s = scores(counts);
++    expect([s.recall[22].n, s.recall[22].of, s.recall[10].of]).toEqual([2, 2, 0]);
++    expect(missed.filter((m) => m.class === 22 || m.class === 10)).toEqual([]);
++    expect(summaryLine("r.json", { status: { ok: 1 }, scores: s, per_part: [rec] } as unknown as GradeResult)).toContain("not steps (D-093) side 1, tilted 1");
 +  });
 +
 +  test("pocket calls on blind step faces stay out of the pocket precision (D-079)", () => {
@@ -1786,10 +1865,10 @@ index 600fbbc..0796316 100644
 +  });
  });
 diff --git a/web/src/grading/score.ts b/web/src/grading/score.ts
-index ee59a14..f7b342a 100644
+index ee59a14..ed4ac03 100644
 --- a/web/src/grading/score.ts
 +++ b/web/src/grading/score.ts
-@@ -2,16 +2,28 @@
+@@ -2,18 +2,30 @@
  // scored against labelled parts. No engine calls here; analyse.ts makes each file's result, run.ts runs the files.
  // The scoring rules are Python's, unchanged. Counter keys are (label, prediction), kept as {lab, pred, n} entries.
  import { round } from "../engine/units.ts";
@@ -1818,9 +1897,20 @@ index ee59a14..f7b342a 100644
 -export type Pred = string | null; // "through", "blind", "hole", "pocket" or null
 +export type Pred = string | null; // "through", "blind", "hole", "pocket", "step", "slot" or null
  export type Label = number | null;
- type Lab = number | "unlabelled" | "excluded";
+-type Lab = number | "unlabelled" | "excluded";
++type Lab = number | "unlabelled" | "excluded" | "held";
  
-@@ -49,11 +61,12 @@ export function faceLabels(result: { faces: FaceRec[] }, inFile: number[]): [Lab
+ export interface FaceRec { kind: string; kind2: string | null; name: string | null; file_pos: number | null; shape_id: number | null }
+ export interface FeatureRec {
+@@ -22,6 +34,7 @@ export interface FeatureRec {
+ /** One file's child result (child.ts), or a status with no analysis. */
+ export interface ChildResult {
+   status: string; faces: FaceRec[]; features: FeatureRec[]; ignored_solids: number; error?: string | null;
++  held_steps?: [string, number[]][];
+   returncode?: number; stderr?: string;
+ }
+ 
+@@ -49,11 +62,12 @@ export function faceLabels(result: { faces: FaceRec[] }, inFile: number[]): [Lab
    return [labels, checks];
  }
  
@@ -1835,7 +1925,21 @@ index ee59a14..f7b342a 100644
    for (const f of result.features) {
      if (f.kind === "hole") for (const i of f.faces) out[i] = f.open_ends === null ? "hole" : f.open_ends >= 2 ? "through" : "blind";
    }
-@@ -111,7 +124,9 @@ export function scores(total: Tally): Scores {
+@@ -81,11 +95,12 @@ export class Tally {
+ 
+ /** Counts for one part, keyed (label, prediction); excluded labels are dropped, and so are faces whose label could not
+  *  be read. Excluded faces we claimed are counted under ("excluded", pred). */
+-export function tally(labels: Label[], preds: Pred[]): Tally {
++export function tally(labels: Label[], preds: Pred[], held: Set<number> = new Set()): Tally {
+   const c = new Tally();
+   labels.forEach((lab, i) => {
+     const p = preds[i];
+     if (lab === null) c.add("unlabelled", p);
++    else if (held.has(i) && lab in STEP_CLASSES && p !== "step") c.add("held", p); // D-093: not a step, on its own line
+     else if (EXCLUDED.has(lab)) {
+       if (p) c.add("excluded", p);
+     } else c.add(lab, p);
+@@ -111,7 +126,9 @@ export function scores(total: Tally): Scores {
      out.type_recall[cls] = ratio(total.get(cls, HOLE_CLASSES[cls]), of);
    }
    for (const cls of POCKET_IDS) out.recall[cls] = ratio(total.get(cls, "pocket"), sum((c) => c.lab === cls));
@@ -1846,7 +1950,7 @@ index ee59a14..f7b342a 100644
    const groups: [string, Set<number>, Set<string>][] = [
      ["through", new Set([1]), new Set(["through"])], ["blind", new Set([12]), new Set(["blind"])],
      ["hole", new Set(HOLE_IDS), new Set(["through", "blind", "hole"])], ["pocket", new Set(POCKET_IDS), new Set(["pocket"])],
-@@ -121,9 +136,14 @@ export function scores(total: Tally): Scores {
+@@ -121,9 +138,14 @@ export function scores(total: Tally): Scores {
      const right = scored.filter((c) => c.pred !== null && preds.has(c.pred) && cls.has(c.lab)).reduce((a, c) => a + c.n, 0);
      out.precision[name] = ratio(right, claimed);
    }
@@ -1863,18 +1967,24 @@ index ee59a14..f7b342a 100644
      // most_common: by count, ties in first-seen order (Python's Counter); a JS object puts integer keys in ascending order
      out.false_by_label[kind] = Object.fromEntries([...wrong].sort((a, b) => b[1] - a[1]));
    }
-@@ -136,8 +156,8 @@ export interface Miss { part: string; class: number; faces: number[]; called: Pr
+@@ -134,11 +156,12 @@ export function scores(total: Tally): Scores {
+ export interface Miss { part: string; class: number; faces: number[]; called: Pred[] }
+ 
  /** One record per part and class with the faces we missed (0-based ids) and what we called them. */
- export function misses(name: string, labels: Label[], preds: Pred[]): Miss[] {
+-export function misses(name: string, labels: Label[], preds: Pred[]): Miss[] {
++export function misses(name: string, labels: Label[], preds: Pred[], held: Set<number> = new Set()): Miss[] {
    const out: Miss[] = [];
 -  for (const cls of [...HOLE_IDS, ...POCKET_IDS]) {
 -    const want = cls in POCKET_CLASSES ? ["pocket"] : ["through", "blind", "hole"];
+-    const missed = labels.flatMap((lab, i) => (lab === cls && !(preds[i] !== null && want.includes(preds[i]!)) ? [i] : []));
 +  for (const cls of [...HOLE_IDS, ...POCKET_IDS, ...STEP_IDS]) {
 +    const want = cls in POCKET_CLASSES ? ["pocket"] : cls in STEP_CLASSES ? ["step"] : ["through", "blind", "hole"];
-     const missed = labels.flatMap((lab, i) => (lab === cls && !(preds[i] !== null && want.includes(preds[i]!)) ? [i] : []));
++    const missed = labels.flatMap((lab, i) => (lab === cls && !(preds[i] !== null && want.includes(preds[i]!))
++      && !(cls in STEP_CLASSES && held.has(i)) ? [i] : []));
      if (missed.length) out.push({ part: name, class: cls, faces: missed, called: missed.map((i) => preds[i]) });
    }
-@@ -161,9 +181,9 @@ export function holeGroups(features: FeatureRec[]): Set<number>[] {
+   return out;
+@@ -161,9 +184,9 @@ export function holeGroups(features: FeatureRec[]): Set<number>[] {
  
  export interface Whole { whole: number; of: number; split: number; merged: number }
  
@@ -1887,16 +1997,36 @@ index ee59a14..f7b342a 100644
    const owner = new Map<number, number>();
    instances.forEach((inst, k) => inst.forEach((i) => owner.set(i, k)));
    let [whole, split, merged] = [0, 0, 0];
-@@ -227,7 +247,7 @@ export function select(paths: string[], skip = 0, limit?: number): string[] {
+@@ -227,7 +250,9 @@ export function select(paths: string[], skip = 0, limit?: number): string[] {
  
  export interface PartRec {
    part: string; status: string; checks?: Checks; faces?: number; ignored_solids?: number; features?: FeatureRec[];
 -  labels?: Label[]; holes_whole?: Whole;
 +  labels?: Label[]; holes_whole?: Whole; steps_whole?: Whole; slots_whole?: Whole;
++  /** D-093: labelled step faces of shapes that are not steps, by shape ("tilted", "side", "u-slot"). */
++  held?: Record<string, number>;
  }
  
  /** One part's record, counts and misses. A part that failed to read, crashed, timed out or could not be joined to its
-@@ -288,7 +308,8 @@ export function excludedCalls(perPart: PartRec[]): Record<string, number> {
+@@ -243,7 +268,16 @@ export function scorePart(name: string, r: ChildResult, inFile: number[]): [Part
+     if (checks.kinds_agree && !labels.includes(null)) {
+       rec.features = r.features;
+       rec.labels = labels;
+-      return [rec, tally(labels, preds), misses(name, labels, preds)];
++      // D-093: a labelled step face in a shape the engine leaves out of steps on purpose, and not called a step
++      const held = new Set<number>();
++      const byShape: Record<string, number> = {};
++      for (const [shape, faces] of r.held_steps ?? []) for (const i of faces) {
++        if (labels[i] === null || !(labels[i]! in STEP_CLASSES) || preds[i] === "step" || held.has(i)) continue;
++        held.add(i);
++        byShape[shape] = (byShape[shape] ?? 0) + 1;
++      }
++      if (held.size) rec.held = byShape;
++      return [rec, tally(labels, preds, held), misses(name, labels, preds, held)];
+     }
+     rec.status = "join_failed";
+   }
+@@ -288,7 +322,8 @@ export function excludedCalls(perPart: PartRec[]): Record<string, number> {
  
  export interface GradeResult {
    set: string; parts: number; status: Record<string, number>; checks_true: Record<string, number>; scores: Scores;
@@ -1906,7 +2036,7 @@ index ee59a14..f7b342a 100644
  }
  
  /** One line per result (summary.line); `name` is the result file's name. */
-@@ -303,6 +324,50 @@ export function summaryLine(name: string, d: GradeResult): string {
+@@ -303,6 +338,53 @@ export function summaryLine(name: string, d: GradeResult): string {
    const whole = hw ? ` whole holes ${hw.whole}/${hw.of} (split ${hw.split}, merged ${hw.merged})` : "";
    // Python prints the status dict with its repr: {'ok': 31}
    const status = `{${Object.entries(d.status).map(([k, v]) => `'${k}': ${v}`).join(", ")}}`;
@@ -1942,7 +2072,10 @@ index ee59a14..f7b342a 100644
 +  const sw = d.steps_whole;
 +  const whole = sw ? ` whole steps ${sw.whole}/${sw.of} (split ${sw.split}, merged ${sw.merged})` : "";
 +  const fl = Object.entries(floorless(d.per_part)).map(([c, calls]) => `class ${c} ${JSON.stringify(calls)}`).join(", ");
-+  const lines = [`  steps ${sn}/${so} (miss ${so - sn}, wrong ${wrong}: ${ps.of - ps.n} on scored labels, ${s.claimed_on_excluded.step ?? 0} on excluded; by class ${byClass})${whole}; floorless ${fl}`];
++  const held: Record<string, number> = {};
++  for (const p of d.per_part) for (const [k, v] of Object.entries(p.held ?? {})) held[k] = (held[k] ?? 0) + v;
++  const heldText = Object.keys(held).length ? Object.entries(held).map(([k, v]) => `${k} ${v}`).join(", ") : "none";
++  const lines = [`  steps ${sn}/${so} (miss ${so - sn}, wrong ${wrong}: ${ps.of - ps.n} on scored labels, ${s.claimed_on_excluded.step ?? 0} on excluded; by class ${byClass})${whole}; floorless ${fl}; not steps (D-093) ${heldText}`];
 +  const pct = (n: number, of: number) => (of ? (100 * n) / of : 0);
 +  const base = baselineFor(ho, po);
 +  if (base) {
