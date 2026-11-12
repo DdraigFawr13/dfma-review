@@ -2,7 +2,7 @@
 // drills, bore, groove, then each off-axis feature as a milling operation (pocketTools or a drill); the machine is
 // "lathe", or "lathe with live tooling" if turn_offaxis fired. One operation per tool, so tool loads are the number of
 // operations.
-import { holeTool, pocketTools, rank, stepTools, type Operation, type Plan, type Tool } from "./plan";
+import { holeTool, pocketTools, rank, slotTools, stepTools, type Operation, type Plan, type Tool } from "./plan";
 import { offAxis } from "./rules/turn_offaxis";
 import type { Feature } from "./rules/types";
 import { toolsConfig } from "./settings";
@@ -34,9 +34,9 @@ export function plan(features: Feature[], findings: { rule: string }[], unitsInF
     if (f.kind === "profile") jobs.push(...TURN_TOOLS.map((t): [number, string, Tool, number[]] => [0, f.id, t, f.faces]));
     else if (f.kind === "bore") jobs.push(...BORE_TOOLS.map((t): [number, string, Tool, number[]] => [2, f.id, t, f.faces]));
     else if (f.kind === "groove") jobs.push([3, f.id, grooveTool(f.dims_mm.width), f.faces]);
-    else if ((f.kind === "hole" || f.kind === "pocket" || f.kind === "step") && f.open_vectors?.length) {
+    else if ((f.kind === "hole" || f.kind === "pocket" || f.kind === "step" || f.kind === "slot") && f.open_vectors?.length) {
       const stage = f.kind === "hole" && !offAxis(f) ? 1 : 4; // a step is milled after turning, as a pocket
-      for (const tool of f.kind === "hole" ? [holeTool(f, unitsInFile)] : f.kind === "step" ? stepTools(f) : pocketTools(f)) jobs.push([stage, f.id, tool, f.faces]);
+      for (const tool of f.kind === "hole" ? [holeTool(f, unitsInFile)] : f.kind === "step" ? stepTools(f) : f.kind === "slot" ? slotTools(f) : pocketTools(f)) jobs.push([stage, f.id, tool, f.faces]);
     }
   }
   const ops = new Map<string, Operation>();

@@ -18,10 +18,11 @@ export const SLOT_CLASSES: Record<number, string> = { 6: "rectangular through", 
 export const NEW_LABELS = new Set([17, 18, 19, 20, 21, 22]);
 /** V-groove (5) and round-bottom (7) through slots: no floor, outside the target until their own work (D-079). */
 export const FLOORLESS = [5, 7];
-export const EXCLUDED = new Set([11, 17, 18, 19, 23, 24]); // O-ring, blind slots (scored from S2), round, stock: not scored
+export const EXCLUDED = new Set([11, 23, 24]); // O-ring, round, stock: not scored (blind slots scored from S2)
 const HOLE_IDS = Object.keys(HOLE_CLASSES).map(Number);
 const POCKET_IDS = Object.keys(POCKET_CLASSES).map(Number);
 const STEP_IDS = Object.keys(STEP_CLASSES).map(Number);
+const SLOT_IDS = Object.keys(SLOT_CLASSES).map(Number);
 
 export type Pred = string | null; // "through", "blind", "hole", "pocket", "step", "slot" or null
 export type Label = number | null;
@@ -95,12 +96,13 @@ export class Tally {
 
 /** Counts for one part, keyed (label, prediction); excluded labels are dropped, and so are faces whose label could not
  *  be read. Excluded faces we claimed are counted under ("excluded", pred). */
-export function tally(labels: Label[], preds: Pred[], held: Set<number> = new Set()): Tally {
+export function tally(labels: Label[], preds: Pred[], held: Set<number> = new Set(), shaped: Set<number> = new Set()): Tally {
   const c = new Tally();
   labels.forEach((lab, i) => {
     const p = preds[i];
     if (lab === null) c.add("unlabelled", p);
     else if (held.has(i) && lab in STEP_CLASSES && p !== "step") c.add("held", p); // D-093: not a step, on its own line
+    else if (shaped.has(i) && lab in SLOT_CLASSES && p === "pocket") c.add("excluded", p); // D-019: a right pocket call, on its own line
     else if (EXCLUDED.has(lab)) {
       if (p) c.add("excluded", p);
     } else c.add(lab, p);
@@ -127,6 +129,7 @@ export function scores(total: Tally): Scores {
   }
   for (const cls of POCKET_IDS) out.recall[cls] = ratio(total.get(cls, "pocket"), sum((c) => c.lab === cls));
   for (const cls of STEP_IDS) out.recall[cls] = ratio(total.get(cls, "step"), sum((c) => c.lab === cls));
+  for (const cls of SLOT_IDS) out.recall[cls] = ratio(total.get(cls, "slot"), sum((c) => c.lab === cls));
   const all = [...total].filter((c) => typeof c.lab === "number") as { lab: number; pred: Pred; n: number }[];
   const scored = all.filter((c) => !NEW_LABELS.has(c.lab)); // holes and pockets: on the baseline's labels
   const groups: [string, Set<number>, Set<string>][] = [
@@ -143,9 +146,14 @@ export function scores(total: Tally): Scores {
     const claimed = all.filter((c) => c.pred === "step").reduce((a, c) => a + c.n, 0);
     out.precision.step = ratio(all.filter((c) => c.pred === "step" && step[1].has(c.lab)).reduce((a, c) => a + c.n, 0), claimed);
   }
-  for (const [kind, cls, preds] of [groups[2], groups[3], step]) {
+  const slot: [string, Set<number>, Set<string>] = ["slot", new Set(SLOT_IDS), new Set(["slot"])];
+  {
+    const claimed = all.filter((c) => c.pred === "slot").reduce((a, c) => a + c.n, 0);
+    out.precision.slot = ratio(all.filter((c) => c.pred === "slot" && slot[1].has(c.lab)).reduce((a, c) => a + c.n, 0), claimed);
+  }
+  for (const [kind, cls, preds] of [groups[2], groups[3], step, slot]) {
     const wrong = new Map<number, number>();
-    for (const c of kind === "step" ? all : scored) if (c.pred !== null && preds.has(c.pred) && !cls.has(c.lab)) wrong.set(c.lab, (wrong.get(c.lab) ?? 0) + c.n);
+    for (const c of kind === "step" || kind === "slot" ? all : scored) if (c.pred !== null && preds.has(c.pred) && !cls.has(c.lab)) wrong.set(c.lab, (wrong.get(c.lab) ?? 0) + c.n);
     // most_common: by count, ties in first-seen order (Python's Counter); a JS object puts integer keys in ascending order
     out.false_by_label[kind] = Object.fromEntries([...wrong].sort((a, b) => b[1] - a[1]));
   }
@@ -156,12 +164,12 @@ export function scores(total: Tally): Scores {
 export interface Miss { part: string; class: number; faces: number[]; called: Pred[] }
 
 /** One record per part and class with the faces we missed (0-based ids) and what we called them. */
-export function misses(name: string, labels: Label[], preds: Pred[], held: Set<number> = new Set()): Miss[] {
+export function misses(name: string, labels: Label[], preds: Pred[], held: Set<number> = new Set(), shaped: Set<number> = new Set()): Miss[] {
   const out: Miss[] = [];
-  for (const cls of [...HOLE_IDS, ...POCKET_IDS, ...STEP_IDS]) {
-    const want = cls in POCKET_CLASSES ? ["pocket"] : cls in STEP_CLASSES ? ["step"] : ["through", "blind", "hole"];
+  for (const cls of [...HOLE_IDS, ...POCKET_IDS, ...STEP_IDS, ...SLOT_IDS]) {
+    const want = cls in POCKET_CLASSES ? ["pocket"] : cls in STEP_CLASSES ? ["step"] : cls in SLOT_CLASSES ? ["slot"] : ["through", "blind", "hole"];
     const missed = labels.flatMap((lab, i) => (lab === cls && !(preds[i] !== null && want.includes(preds[i]!))
-      && !(cls in STEP_CLASSES && held.has(i)) ? [i] : []));
+      && !(cls in STEP_CLASSES && held.has(i)) && !(cls in SLOT_CLASSES && shaped.has(i) && preds[i] === "pocket") ? [i] : []));
     if (missed.length) out.push({ part: name, class: cls, faces: missed, called: missed.map((i) => preds[i]) });
   }
   return out;
@@ -277,7 +285,10 @@ export function scorePart(name: string, r: ChildResult, inFile: number[]): [Part
         byShape[shape] = (byShape[shape] ?? 0) + 1;
       }
       if (held.size) rec.held = byShape;
-      return [rec, tally(labels, preds, held), misses(name, labels, preds, held)];
+      // D-019: faces of a pocket that is a blind slot closed by a short wall past a blind step stay out of the slot tally
+      const shaped = new Set<number>();
+      for (const f of r.features) if (pocketShapedSlot(f, labels)) for (const i of f.faces) shaped.add(i);
+      return [rec, tally(labels, preds, held, shaped), misses(name, labels, preds, held, shaped)];
     }
     rec.status = "join_failed";
   }
@@ -358,7 +369,7 @@ export function floorless(perPart: PartRec[]): Record<number, Record<string, num
   return out;
 }
 
-/** The step line and the D-079 target rule (steps half, S1) under the summary line. */
+/** The step and slot lines and the D-079 target rule under the summary line. */
 function stepLines(d: GradeResult): string {
   const s = d.scores;
   const total = (ids: number[], x: "n" | "of") => ids.reduce((a, k) => a + s.recall[k][x], 0);
@@ -372,7 +383,17 @@ function stepLines(d: GradeResult): string {
   const held: Record<string, number> = {};
   for (const p of d.per_part) for (const [k, v] of Object.entries(p.held ?? {})) held[k] = (held[k] ?? 0) + v;
   const heldText = Object.keys(held).length ? Object.entries(held).map(([k, v]) => `${k} ${v}`).join(", ") : "none";
+  const hasSlots = s.recall[SLOT_IDS[0]] !== undefined && s.precision.slot !== undefined; // a result from S1 has no slot recall
+  const [ln, lo] = hasSlots ? [total(SLOT_IDS, "n"), total(SLOT_IDS, "of")] : [0, 0];
+  const pl = s.precision.slot ?? ratio(0, 0);
+  const slotWrong = pl.of - pl.n + (s.claimed_on_excluded.slot ?? 0);
   const lines = [`  steps ${sn}/${so} (miss ${so - sn}, wrong ${wrong}: ${ps.of - ps.n} on scored labels, ${s.claimed_on_excluded.step ?? 0} on excluded; by class ${byClass})${whole}; floorless ${fl}; not steps (D-093) ${heldText}`];
+  if (hasSlots) {
+    const byClassL = SLOT_IDS.map((k) => `${k} ${s.recall[k].n}/${s.recall[k].of}`).join(", ");
+    const lw = d.slots_whole;
+    const wholeL = lw ? ` whole slots ${lw.whole}/${lw.of} (split ${lw.split}, merged ${lw.merged})` : "";
+    lines.push(`  slots ${ln}/${lo} (miss ${lo - ln}, wrong ${slotWrong}: ${pl.of - pl.n} on scored labels, ${s.claimed_on_excluded.slot ?? 0} on excluded; by class ${byClassL})${wholeL}`);
+  }
   const pct = (n: number, of: number) => (of ? (100 * n) / of : 0);
   const base = baselineFor(ho, po);
   if (base) {
@@ -380,11 +401,13 @@ function stepLines(d: GradeResult): string {
     const checks: [string, boolean][] = [
       [`step recall ${pct(sn, so).toFixed(1)}% >= pocket recall ${pct(pn, po).toFixed(1)}%`, pct(sn, so) >= pct(pn, po)],
       [`wrong step calls ${wrong} = 0`, wrong === 0],
+      ...(hasSlots ? [[`slot recall ${pct(ln, lo).toFixed(1)}% >= pocket recall ${pct(pn, po).toFixed(1)}%`, pct(ln, lo) >= pct(pn, po)] as [string, boolean],
+        [`wrong slot calls ${slotWrong} = 0`, slotWrong === 0] as [string, boolean]] : []),
       [`holes ${hn}/${ho} wrong ${ph.of - ph.n} vs ${base.name} ${base.holes[0]}/${base.holes[1]} wrong ${base.holes[2]}`, hn >= base.holes[0] && ph.of - ph.n <= base.holes[2]],
       [`pockets ${pn}/${po} wrong ${pp.of - pp.n} vs ${base.name} ${base.pockets[0]}/${base.pockets[1]} wrong ${base.pockets[2]}`, pn >= base.pockets[0] && pp.of - pp.n <= base.pockets[2]],
     ];
     const pass = checks.every(([, ok]) => ok);
-    lines.push(`  target (D-079, steps): ${pass ? "PASS" : "FAIL"}: ${checks.map(([t, ok]) => `${ok ? "ok" : "FAIL"} ${t}`).join("; ")}`);
+    lines.push(`  target (D-079, ${hasSlots ? "steps and slots" : "steps"}): ${pass ? "PASS" : "FAIL"}: ${checks.map(([t, ok]) => `${ok ? "ok" : "FAIL"} ${t}`).join("; ")}`);
   } else lines.push("  target (D-079): no baseline for this set");
   return lines.join("\n");
 }

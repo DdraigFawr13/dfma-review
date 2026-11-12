@@ -3,14 +3,14 @@
 // uses them: compare(masked(result, old), baseMasked(old, result)) must show no diff, and lostTools(old, result) none.
 import { compare } from "./compare";
 
-/** What this slice may change. Steps and slots S1 (spec Design "Parity re-freeze"; D-079, D-081): on every file the
+/** What this slice may change. Steps and slots S2 (the same list with slots; S1's steps are in the key now). S1 (spec Design "Parity re-freeze"; D-079, D-081): on every file the
  *  new rule in `rules_run` and its check in `checks_run`; on a file that gained a step, the step features and their
  *  corners with their findings and passed checks, renumbered finding ids, faces leaving `part.not_analysed_faces`, and
  *  the plan and cost keys below, `removal` (the step's volume, P1, which came after the spec) and the rows built from
  *  the findings; every hole and pocket keeps its own tools. Nothing else. */
-export const NEW_KINDS = ["step", "slot"];
-export const NEW_RULES = ["step_depth"];
-export const NEW_CHECKS = ["Step depth check"];
+export const NEW_KINDS = ["slot"]; // S2; S1 added "step", frozen since (D-095)
+export const NEW_RULES = ["slot_depth", "slot_ratio"];
+export const NEW_CHECKS = ["Slot depth check", "Slot depth to width check"];
 export const PLAN_KEYS = ["setups", "operations", "tools", "tool_changes", "cost_drivers", "cost_total", "removal", "rows", "passed_rows"];
 
 export type Obj = Record<string, unknown>;

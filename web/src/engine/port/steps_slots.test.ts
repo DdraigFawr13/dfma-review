@@ -4,7 +4,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeAll, describe, expect, test } from "vitest";
-import { instanceScore, scores, STEP_CLASSES, type Tally } from "../../grading/score";
+import { instanceScore, scores, SLOT_CLASSES, STEP_CLASSES, type Tally } from "../../grading/score";
 import { frameDir } from "../features/holes";
 import { loadNodeOc } from "../node";
 import type { OC } from "../oc";
@@ -84,6 +84,50 @@ describe("J1 steps", () => {
   });
 });
 
+describe("J2 slots", () => {
+  const one = async (name: string) => {
+    const r = await run(name);
+    const [s, ...more] = kinds(r, "slot");
+    expect(more).toEqual([]);
+    expect(kinds(r, "step"), "a slot part has no step call").toEqual([]);
+    return { r, s };
+  };
+  const floorOf = (r: Result, s: Result) => expect(s.open_dirs).toEqual([r.features.find((f: Result) => f.id === s.id).open_dirs[0]]);
+
+  test("sl_blind_round: round end radius 5, one open end, rougher 1/4 in and finisher 3/8 in", async () => {
+    const { r, s } = await one("sl_blind_round");
+    expect(s.dims_mm.narrowest_width).toBeCloseTo(10, 6);
+    expect(s.dims_mm.depth).toBeCloseTo(8, 6);
+    expect([s.open_ends, s.end_type]).toEqual([1, "round"]);
+    expect(s.dims_mm.end_radius).toBeCloseTo(5, 6);
+    expect(s.open_dirs).toHaveLength(1);
+    expect(toolsOf(r, s.id)).toEqual(["em-0.375", "em-0.250"]); // largest first (plan.ts rank)
+    floorOf(r, s);
+  });
+
+  test("sl_blind: flat end, sharp corners: undersized 1/32 in finisher, corner_radius high, slot_depth medium", async () => {
+    const { r, s } = await one("sl_blind");
+    expect([s.open_ends, s.end_type]).toEqual([1, "flat"]);
+    expect(s.dims_mm.undersized).toBe(1);
+    expect(toolsOf(r, s.id)).toEqual(["em-0.250", "em-0.031"]);
+    expect(rules(r, "corner_radius").map((f: Result) => f.severity)).toContain("high");
+    expect(rules(r, "slot_depth").map((f: Result) => [f.severity, f.feature])).toEqual([["medium", s.id]]);
+  });
+
+  test("sl_through: open both ends, 1/4 in and 3/8 in", async () => {
+    const { r, s } = await one("sl_through");
+    expect([s.open_ends, s.end_type]).toEqual([2, "open"]);
+    expect(toolsOf(r, s.id)).toEqual(["em-0.375", "em-0.250"]);
+  });
+
+  test("sl_deep: 3/32 in rougher, 1/8 in finisher, slot_depth and slot_ratio medium", async () => {
+    const { r, s } = await one("sl_deep");
+    expect(toolsOf(r, s.id)).toEqual(["em-0.125", "em-0.094"]);
+    expect(rules(r, "slot_depth").map((f: Result) => f.severity)).toEqual(["medium"]);
+    expect(rules(r, "slot_ratio").map((f: Result) => f.severity)).toEqual(["medium"]);
+  });
+});
+
 describe("J3 look-alikes", () => {
   test("st_chamfer: a 45 deg edge chamfer is no step", async () => {
     expect(kinds(await run("st_chamfer"), "step")).toEqual([]);
@@ -97,9 +141,15 @@ describe("J3 look-alikes", () => {
     const p = kinds(await run("pk_control"), "pocket");
     expect(p.map((x: Result) => [x.faces, x.dims_mm.depth])).toEqual([[[6, 7, 8, 9, 10], 12]]);
   });
-  for (const name of ["sl_angled", "vg_through", "sl_blind_round", "sl_blind", "sl_through", "sl_deep"]) {
-    test(`${name}: no step`, async () => {
-      expect(kinds(await run(name), "step")).toEqual([]);
+  for (const name of ["sl_angled", "vg_through"]) {
+    test(`${name}: no step, no slot`, async () => {
+      const r = await run(name);
+      expect([kinds(r, "step"), kinds(r, "slot")]).toEqual([[], []]);
+    });
+  }
+  for (const name of ["st_chamfer", "pk_beside_step", "pk_control", "st_through", "st_l", "st_deep", "st_stair", "st_face"]) {
+    test(`${name}: no slot`, async () => {
+      expect(kinds(await run(name), "slot")).toEqual([]);
     });
   }
 });
@@ -116,6 +166,18 @@ describe("J4 scores on the set", () => {
       expect(instanceScore(features, want, "step")).toEqual({ whole: want.length, of: want.length, split: 0, merged: 0 });
     });
   }
+
+  test("slot faces: every one found, none wrong, each slot whole", async () => {
+    for (const f of FILES) {
+      if (stem(f) === "sl_angled") continue; // a guard: its class 6 faces are on a tilted floor, which gets no call (J3, Non-goals)
+      const { counts, missed, features } = await scoreFile(oc, resolve(SET, f));
+      const s = scores(counts);
+      expect(s.precision.slot.n, `${stem(f)}: a face that is not a slot's was called one`).toBe(s.precision.slot.of);
+      expect((missed as { class: number }[]).filter((m) => m.class in SLOT_CLASSES), stem(f)).toEqual([]);
+      const want = INSTANCES[stem(f)].slots;
+      expect(instanceScore(features, want, "slot"), stem(f)).toEqual({ whole: want.length, of: want.length, split: 0, merged: 0 });
+    }
+  });
 
   test("set totals", async () => {
     const parts: Tally[] = [];

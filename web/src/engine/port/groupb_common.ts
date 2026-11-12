@@ -168,7 +168,7 @@ export function prism(o: OC, points: number[][], z0: number, h: number): Shape {
   return new o.BRepPrimAPI_MakePrism(face, new o.gp_Vec(0, 0, h * IN), false, true).Shape();
 }
 
-const PLANNED = ["hole", "pocket", "step", "profile", "bore", "groove"]; // what a setup holds (S5 mill, S6 lathe; steps S1)
+const PLANNED = ["hole", "pocket", "step", "slot", "profile", "bore", "groove"]; // what a setup holds (S5 mill, S6 lathe; steps S1)
 
 /** test_expected.check_plan: machine, setups (each holding the features its probes name, in order), tools and tool loads,
  *  for entries that list them. `bytes` is the STEP file the probes are measured on. */

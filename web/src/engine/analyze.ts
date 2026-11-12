@@ -76,14 +76,17 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
     // Holes, then pockets (skipping hole faces), then walls between planar faces and at holes (analyze.py)
     let holeList = holes(oc, part.solid, part.faces, frame);
     const holeFaces = new Set(holeList.flatMap((f) => f.faces));
-    const [rawPockets, rawCorners, rawSteps, , rawOpenCorners] = pockets(oc, part.solid, part.faces, frame, holeFaces);
+    const [rawPockets, rawCorners, rawSteps, rawSlots, rawOpenCorners, rawSlotCorners] = pockets(oc, part.solid, part.faces, frame, holeFaces);
     const wallList = [...walls(oc, part.solid, part.faces), ...holeWalls(oc, part.solid, part.faces, holeList)];
     const pocketList = number(rawPockets, "pocket");
     // Steps' corners are numbered after the pockets' (steps and slots S1), so a pocket's corners keep their ids
     const cornerList = [...number(rawCorners, "corner"),
-      ...number(rawOpenCorners, "corner").map((c, n) => ({ ...c, id: `corner-${rawCorners.length + n + 1}` }))];
+      ...number(rawOpenCorners, "corner").map((c, n) => ({ ...c, id: `corner-${rawCorners.length + n + 1}` })),
+      // slots' corners last (S2), so the frozen ids of pocket and step corners stay
+      ...number(rawSlotCorners, "corner").map((c, n) => ({ ...c, id: `corner-${rawCorners.length + rawOpenCorners.length + n + 1}` }))];
     const stepList = number(rawSteps, "step");
-    linkCorners([...pocketList, ...stepList], cornerList);
+    const slotList = number(rawSlots, "slot");
+    linkCorners([...pocketList, ...stepList, ...slotList], cornerList);
     // S6: the turning axis, for Turning and, on Milling, for looks_turned (D-028)
     const topo = new Topology(oc, part.solid, part.faces);
     const turn = turnedProfile(topo, infos.map((f) => f.area), vertices, turningAxis(infos, vertices));
@@ -94,11 +97,11 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
       for (const w of wallList) if (w.hole !== undefined) w.hole = renamed.get(w.hole)!; // a wall at a hole names it by its new id
       const taken = new Set([...kept, ...bores].flatMap((f) => f.faces));
       const grooveList = number(grooves(topo, turn, taken), "groove");
-      for (const i of [...grooveList, ...pocketList, ...stepList].flatMap((f) => f.faces)) taken.add(i);
+      for (const i of [...grooveList, ...pocketList, ...stepList, ...slotList].flatMap((f) => f.faces)) taken.add(i);
       const profile = { id: "profile-1", ...profileFeature(topo, turn, taken) };
-      for (const f of [...kept, ...bores, ...pocketList, ...stepList] as unknown as (Record<string, unknown> & { faces: number[]; kind: string })[]) {
+      for (const f of [...kept, ...bores, ...pocketList, ...stepList, ...slotList] as unknown as (Record<string, unknown> & { faces: number[]; kind: string })[]) {
         delete f.on_axis; // recorded instead as the angle and offset turn_offaxis reads
-        [f.off_axis_deg, f.off_axis_mm] = f.kind === "pocket" || f.kind === "step"
+        [f.off_axis_deg, f.off_axis_mm] = f.kind === "pocket" || f.kind === "step" || f.kind === "slot"
           ? pocketOnAxis(oc, f as unknown as { faces: number[]; axis: number[] }, part.faces, turn)
           : holeOffAxis(topo, f, turn);
       }
@@ -111,7 +114,7 @@ export function analyze(oc: OC, step: Uint8Array, name: string, process: Process
       inventor.hole_names_seen = iptPart!.hole_names_seen; // "<n> Hole features in the browser, <m> read"
       inventor.blends = mapBlends(topo, iptPart!.blends, harness.transform);
     }
-    const features = [...holeList, ...(turnFeatures ?? []), ...pocketList, ...cornerList, ...stepList, ...number(wallList, "wall")] as unknown as Feature[];
+    const features = [...holeList, ...(turnFeatures ?? []), ...pocketList, ...cornerList, ...stepList, ...slotList, ...number(wallList, "wall")] as unknown as Feature[];
     const pocketFaces = new Set(pocketList.flatMap((f) => f.faces));
     const summary: PartSummary = { units_in_file: part.unitsInFile, frame, turn, face_count: part.faces.length };
     if (inventor !== null) {
