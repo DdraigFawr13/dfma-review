@@ -711,3 +711,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-12). Morgan, in chat, after the [steps S1 results page](https://claude.ai/artifact/A48Afukz6a3KdVt1NoKkxV) (option A, recommended): "Keep improving".
 - **Decision:** S1 goes on in rounds on the miss causes in `docs/research/steps-s1/README.md`; each round runs both 500-part MFCAD++ sets and shows Morgan the numbers. The D-079 target is unchanged (step face recall at least the pocket recall of the same run, 0 wrong faces). Open for Morgan: whether a UMD `[Corner]` counts as a step.
 - **Why:** step recall 86.1% and 86.9% against pocket recall 97.9% and 97.1%, 21 and 29 wrong faces (version B, 2026-11-12).
+
+## D-092 Steps S1 audit: fix speed, the guard and the run bug; hold tilted and side steps
+
+- **Status:** Accepted (2026-11-12). Morgan, in chat, after the [audit reply page](https://claude.ai/artifact/6pLDaWQobgfDXxmuGHKncb) and report `docs/audit/2026-11-12-design.md` (PR #63): "Do as you recommend".
+- **Decision:** Next: bring CTC 02 back under its 10 s limit (F1), test the re-freeze guard with planted bugs (F6), fix `runs()` so a run does not depend on the edge the wire starts at (F7), and compare the U-shaped class 22 and class 17 instances by shape before any scoring change (F5). Round 1's change 7 (tilted floors) and change 8 (floors reached from a side) come out until Morgan decides whether those steps are in scope, since D-081 keeps steps on a floor along a part axis (F2, F3). The other findings stay open for later rounds.
+- **Why:** the audit's six high findings; F2 found change 7 reversed D-081 without asking (WS-07).

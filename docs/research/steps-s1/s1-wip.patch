@@ -416,7 +416,7 @@ index 97ea568..5e315b5 100644
      const summary: PartSummary = { units_in_file: part.unitsInFile, frame, turn, face_count: part.faces.length };
      if (inventor !== null) {
 diff --git a/web/src/engine/features/pockets.ts b/web/src/engine/features/pockets.ts
-index 7258bc4..7c0210a 100644
+index 7258bc4..35a7817 100644
 --- a/web/src/engine/features/pockets.ts
 +++ b/web/src/engine/features/pockets.ts
 @@ -6,6 +6,7 @@ import { ANGLE_TOL, cross, dot, unit, type Vec } from "../frame";
@@ -479,7 +479,7 @@ index 7258bc4..7c0210a 100644
        if (wallKind(topo, k, n)) {
          if (!walls.includes(k)) walls.push(k);
          tangent = tangent || sm;
-@@ -292,6 +303,128 @@ function pocketWalls(topo: Topology, floor: number, n: Vec, edges: FloorEdge[],
+@@ -292,6 +303,135 @@ function pocketWalls(topo: Topology, floor: number, n: Vec, edges: FloorEdge[],
    return walls;
  }
  
@@ -533,7 +533,10 @@ index 7258bc4..7c0210a 100644
 + *  `same`, a cut between two pieces of one wall (another feature cut through it, as a pocket beside a step) does not
 + *  split it. */
 +export function runs(trace: { kind: string; walls: number[] }[], same: (a: number, b: number) => boolean = () => false): number[][] {
-+  const start = trace.findIndex((t) => t.kind !== "wall");
++  // Start at an open edge, which always ends a run, so a run is never cut where the walk wraps (audit F7, D-092);
++  // with none, at a cut, and the last run joins the first when the cut between them is within one wall.
++  const firstOpen = trace.findIndex((t) => t.kind === "open");
++  const start = firstOpen >= 0 ? firstOpen : trace.findIndex((t) => t.kind !== "wall");
 +  if (start < 0) return [[...new Set(trace.flatMap((t) => t.walls))]];
 +  const out: number[][] = [];
 +  let cur: number[] = [];
@@ -555,6 +558,10 @@ index 7258bc4..7c0210a 100644
 +    }
 +  }
 +  if (cur.length) out.push(cur);
++  if (firstOpen < 0 && out.length > 1) { // closed by cuts all round: the wrap is a cut between the last run and the first
++    const [last, first] = [out[out.length - 1], out[0]];
++    if (first.some((w) => same(last[last.length - 1], w))) out.splice(0, 1, ...[[...new Set([...out.pop()!, ...first])]]);
++  }
 +  return out;
 +}
 +
@@ -608,7 +615,7 @@ index 7258bc4..7c0210a 100644
  export const REACH_STEP = 1e-3; // mm: a reach ray starts this far off the floor
  
  /** A cutter can reach the floor along its axis: a ray from some point inside a floor piece, along the outward
-@@ -654,12 +787,32 @@ export interface CornerFeature {
+@@ -654,12 +794,32 @@ export interface CornerFeature {
    edge_mm?: number[][];
  }
  
@@ -627,7 +634,7 @@ index 7258bc4..7c0210a 100644
 +}
 +
 +/** An open floor found in the pockets() loop, before it is classified. */
-+interface OpenFloor { fid: number; n: Vec; dir: string | null; side?: string; pieces: number[]; walls: number[]; blends: Set<number>; trace: TraceEdge[] }
++interface OpenFloor { fid: number; n: Vec; dir: string; pieces: number[]; walls: number[]; blends: Set<number>; trace: TraceEdge[] }
 +
  function outerWire(oc: OC, face: OC): OC {
    return oc.BRepTools.OuterWire(oc.TopoDS.Face(face));
@@ -643,7 +650,7 @@ index 7258bc4..7c0210a 100644
    const topo = new Topology(oc, solid, faces);
    const cyls = new Map<number, Cyl>();
    faces.forEach((_, i) => {
-@@ -669,6 +822,7 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
+@@ -669,6 +829,7 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
    const foundP: Pocket[] = [];
    const foundC: CornerFeature[] = [];
    const enclosure = new Enclosure(topo);
@@ -651,7 +658,7 @@ index 7258bc4..7c0210a 100644
    faces.forEach((face, fid) => {
      if (holeFaces.has(fid)) return;
      const n = planeNormal(topo, fid);
-@@ -692,7 +846,11 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
+@@ -692,7 +853,11 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
        walls = pocketWalls(topo, fid, n, outerEdges, enclosure, blends, cuts);
        if (walls && walls.length) [walls, reached] = floorChecks(topo, cyls, walls, pieces, n, enclosure);
      }
@@ -664,7 +671,7 @@ index 7258bc4..7c0210a 100644
      const sealed = pieces.every((k) => enclosure.sealed.has(k));
      const [ceilings, upper] = sealed ? [[], []] as [number[], number[]]
        : undercut(topo, walls, n, new Set([...pieces, ...holeFaces]), overFloor(topo, pieces, n));
-@@ -740,7 +898,132 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
+@@ -740,7 +905,124 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
        foundC.push(corner);
      }
    });
@@ -688,7 +695,8 @@ index 7258bc4..7c0210a 100644
 + *  from its lowest-numbered piece, with the pieces' shared outline. */
 +function openFloor(topo: Topology, fid: number, n: Vec, frame: Frame, holeFaces: Set<number>, enclosure: Enclosure): OpenFloor | null {
 +  const oc = topo.oc;
-+  const dir = frameDir(n, frame); // null: a tilted floor, kept only when a face of the step is on a part axis
++  const dir = frameDir(n, frame);
++  if (dir === null) return null; // a floor off the part axes is no step (D-081; tilted floors wait on Morgan, D-092)
 +  const group = floorPieces(topo, fid, n, holeFaces);
 +  if (group && minOf(group) !== fid) return null;
 +  const pieces = group ?? [fid];
@@ -701,14 +709,8 @@ index 7258bc4..7c0210a 100644
 +  const walls = openWalls(topo, fid, n, edges, enclosure, blends, trace);
 +  if (walls === null) return null;
 +  if (enclosure.rays === null) enclosure.rays = new Rays(oc, topo.solid);
-+  if (reachable(topo, pieces, n, enclosure.rays)) return { fid, n, dir, pieces, walls, blends, trace };
-+  // Material over the floor (a notch cut into a side face): a step when a cutter reaches it from an open side along a
-+  // part axis, as a side-milled notch; the plan then cuts it from that side.
-+  for (const out of openVectors(topo, trace, n)) {
-+    const side = frameDir(out, frame);
-+    if (side !== null && reachable(topo, pieces, out, enclosure.rays)) return { fid, n, dir, side, pieces, walls, blends, trace };
-+  }
-+  return null;
++  // A floor no cutter reaches along its normal is no step (as pockets; side-cut notches wait on Morgan, D-092)
++  return reachable(topo, pieces, n, enclosure.rays) ? { fid, n, dir, pieces, walls, blends, trace } : null;
 +}
 +
 +/** The outward unit vector across each open edge, deduplicated within 0.5 deg. */
@@ -741,16 +743,13 @@ index 7258bc4..7c0210a 100644
 +    const face = (a: number, b: number) => facing(topo, a, b, o.n, at);
 +    const pairIn = (ws: number[]) => ws.some((a, i) => ws.slice(i + 1).some((b) => face(a, b)));
 +    const own = new Set([...o.pieces, ...o.walls, ...o.blends]);
-+    // A tilted floor is a step only with a wall on a part axis (a slanted step); two tilted faces, as a V-groove's, are not
-+    const axisFace = (w: number) => topo.type(w) === "GeomAbs_Plane" && frameDir(outwardNormal(oc, topo.faces[w])[1], frame) !== null;
-+    const anchored = o.dir !== null || o.walls.some(axisFace);
-+    if (anchored && rs.length === 1 && !pairIn(rs[0]) && wallArc(topo, rs[0], o.n) < STEP_ARC_MAX_DEG) stepFloors.push(o);
++    if (rs.length === 1 && !pairIn(rs[0]) && wallArc(topo, rs[0], o.n) < STEP_ARC_MAX_DEG) stepFloors.push(o);
 +    else if ((rs.length === 2 && rs.every((r) => r.length === 1) && face(rs[0][0], rs[1][0]))
 +      || (rs.length === 1 && rs[0].length >= 3 && face(rs[0][0], rs[0][rs[0].length - 1]))) slotSets.push(own);
 +  }
 +  // One feature per face set; its floor the face whose direction comes first in ORDER (Terms, "Same feature").
 +  const bySet = new Map<string, OpenFloor>();
-+  const rankOf = (d: string | null) => (d === null ? ORDER.length : ORDER.indexOf(d as (typeof ORDER)[number]));
++  const rankOf = (d: string) => ORDER.indexOf(d as (typeof ORDER)[number]);
 +  for (const o of stepFloors) {
 +    const own = [...o.pieces, ...o.walls, ...o.blends];
 +    if (slotSets.some((s) => own.every((f) => s.has(f)))) continue; // a slot's side wall seen as a floor
@@ -772,7 +771,7 @@ index 7258bc4..7c0210a 100644
 +    const minR = found.length ? minOf(found.map(([, r]) => r)) : Infinity;
 +    const [tool, undersized] = pickEndMill(minR, Infinity);
 +    const stepFaces = [...own].sort((a, b) => a - b);
-+    const dirs = o.side !== undefined ? [o.side] : o.dir === null ? [] : [o.dir];
++    const dirs = [o.dir];
 +    if (walls.length === 1 && topo.type(walls[0]) === "GeomAbs_Plane") { // D-079: the wall's side too, when a cutter reaches it
 +      const m = outwardNormal(oc, topo.faces[walls[0]])[1];
 +      const d = frameDir(m, frame);
@@ -798,11 +797,51 @@ index 7258bc4..7c0210a 100644
  }
  
  /** Each corner's `pocket`: the id of the pocket it sits in (D-049). Run after both are numbered. */
+diff --git a/web/src/engine/features/runs.test.ts b/web/src/engine/features/runs.test.ts
+new file mode 100644
+index 0000000..ac6239f
+--- /dev/null
++++ b/web/src/engine/features/runs.test.ts
+@@ -0,0 +1,26 @@
++// Steps S1 audit F7 (D-092): a floor's runs of walls must not depend on the edge its wire starts at.
++import { describe, expect, test } from "vitest";
++import { runs } from "./pockets";
++
++const w = (...walls: number[]) => ({ kind: "wall", walls });
++const cut = { kind: "cut", walls: [] as number[] };
++const open = { kind: "open", walls: [] as number[] };
++const rotations = <T>(xs: T[]) => xs.map((_, i) => [...xs.slice(i), ...xs.slice(0, i)]);
++const sorted = (rs: number[][]) => rs.map((r) => [...r].sort((a, b) => a - b)).sort((a, b) => a[0] - b[0] || a.length - b.length);
++
++describe("runs", () => {
++  test("a cut between two pieces of one wall joins them, from every start edge", () => {
++    const same = (a: number, b: number) => [a, b].sort().join() === "1,2";
++    for (const t of rotations([w(1), cut, w(2), open])) expect(sorted(runs(t, same)), JSON.stringify(t)).toEqual([[1, 2]]);
++  });
++  test("a cut between two different walls splits them, from every start edge", () => {
++    for (const t of rotations([w(1), cut, w(2), open])) expect(sorted(runs(t)), JSON.stringify(t)).toEqual([[1], [2]]);
++  });
++  test("an L of walls with open edges is one run; open edges on both sides give two", () => {
++    for (const t of rotations([w(1), w(2), open, open])) expect(sorted(runs(t))).toEqual([[1, 2]]);
++    for (const t of rotations([w(1), open, w(2), open])) expect(sorted(runs(t))).toEqual([[1], [2]]);
++  });
++  test("the same wall met on two stretches of the outline counts in each run", () => {
++    for (const t of rotations([w(5), open, w(23, 5), open])) expect(sorted(runs(t))).toEqual([[5], [5, 23]]);
++  });
++});
 diff --git a/web/src/engine/parity-refreeze.test.ts b/web/src/engine/parity-refreeze.test.ts
-index 6826ad7..016c04c 100644
+index 6826ad7..02d7290 100644
 --- a/web/src/engine/parity-refreeze.test.ts
 +++ b/web/src/engine/parity-refreeze.test.ts
-@@ -21,16 +21,19 @@ const { k, n } = parseShard(process.env.PARITY_SHARD ?? "0/1");
+@@ -13,6 +13,7 @@ import type { Process } from "../api";
+ import { compare } from "./compare";
+ import { analyzeOrRefuse, loadNodeOc } from "./node";
+ import { KNOWN_TESSELLATION, parseShard, shardOf } from "./parity-shard";
++import { baseMasked, masked, newIds, PLAN_KEYS, toolsOf, type Obj } from "./refreeze-mask";
+ 
+ const ROOT = resolve(__dirname, "../../..");
+ const KEY_DIR = resolve(ROOT, "tests/parity/key");
+@@ -21,46 +22,40 @@ const { k, n } = parseShard(process.env.PARITY_SHARD ?? "0/1");
  const OUT = process.env.PARITY_REFREEZE_OUT;
  const REPORT = process.env.PARITY_REFREEZE_REPORT;
  
@@ -812,39 +851,27 @@ index 6826ad7..016c04c 100644
 -  keys: ["removal", "assumptions"],
 -  featureFields: {} as Record<string, string[]>,
 -};
-+/** What this slice may change. Steps and slots S1 (spec Design "Parity re-freeze"; D-079, D-081): on every file the
-+ *  new rule in `rules_run` and its check in `checks_run`; on a file that gained a step, the step features and their
-+ *  corners with their findings and passed checks, renumbered finding ids, faces leaving `part.not_analysed_faces`, and
-+ *  the plan and cost keys below, `removal` (the step's volume, P1, which came after the spec) and the rows built from
-+ *  the findings; every hole and pocket keeps its own tools. Nothing else. */
-+const NEW_KINDS = ["step", "slot"];
-+const NEW_RULES = ["step_depth"];
-+const NEW_CHECKS = ["Step depth check"];
-+const PLAN_KEYS = ["setups", "operations", "tools", "tool_changes", "cost_drivers", "cost_total", "removal", "rows", "passed_rows"];
- 
+-
  type Entry = { path: string; process: Process; key: string; ipt?: string; harness?: boolean };
- type Obj = Record<string, unknown>;
+-type Obj = Record<string, unknown>;
 -type Feat = { id: string; kind: string } & Obj;
+-type Op = { setup: number; tool: string; features: string[] };
 +type Feat = { id: string; kind: string; pocket?: unknown } & Obj;
- type Op = { setup: number; tool: string; features: string[] };
  
  const readBytes = (file: string): Buffer => (file.endsWith(".gz") ? gunzipSync(readFileSync(file)) : readFileSync(file));
-@@ -43,24 +46,66 @@ function toolsOf(side: Obj): Map<string, string> {
-   return new Map([...out].map(([f, t]) => [f, [...t].sort().join(",")]));
- }
+ const readKey = (file: string): Obj => JSON.parse(readBytes(file).toString("utf8"));
  
+-/** Each planned feature's set of tools, as the operations name it. */
+-function toolsOf(side: Obj): Map<string, string> {
+-  const out = new Map<string, Set<string>>();
+-  for (const op of (side.operations as Op[]) ?? []) for (const f of op.features) (out.get(f) ?? out.set(f, new Set()).get(f)!).add(op.tool);
+-  return new Map([...out].map(([f, t]) => [f, [...t].sort().join(",")]));
+-}
+-
 -/** The side with the allowed feature fields taken out, and the allowed keys set to `base`'s, so compare() sees only
 - *  the changes this slice may not make. */
-+/** The ids of the features this slice adds: steps and slots, and the corners linked to them. */
-+function newIds(side: Obj): Set<string> {
-+  const feats = (side.features as Feat[]) ?? [];
-+  const open = new Set(feats.filter((f) => NEW_KINDS.includes(f.kind)).map((f) => f.id));
-+  return new Set([...open, ...feats.filter((f) => f.kind === "corner" && open.has(f.pocket as string)).map((f) => f.id)]);
-+}
-+
-+/** `side` with what this slice may change set back to `base`'s, so compare() sees only the changes it may not make. */
- function masked(side: Obj, base: Obj): Obj {
-   const out: Obj = { ...side };
+-function masked(side: Obj, base: Obj): Obj {
+-  const out: Obj = { ...side };
 -  for (const key of ALLOWED.keys) if (key in base) out[key] = base[key]; else delete out[key];
 -  if (Array.isArray(side.features)) {
 -    out.features = (side.features as Feat[]).map((f) => {
@@ -852,28 +879,9 @@ index 6826ad7..016c04c 100644
 -      return Object.fromEntries(Object.entries(f).filter(([name]) => !drop.includes(name)));
 -    });
 -  }
-+  const without = (list: unknown, extra: string[]) => (list as string[]).filter((x) => !extra.includes(x));
-+  if (JSON.stringify(without(side.rules_run, NEW_RULES)) === JSON.stringify(base.rules_run)) out.rules_run = base.rules_run;
-+  if (JSON.stringify(without(side.checks_run, NEW_CHECKS)) === JSON.stringify(base.checks_run)) out.checks_run = base.checks_run;
-+  const added = newIds(side);
-+  if (!added.size) return out;
-+  out.features = (side.features as Feat[]).filter((f) => !added.has(f.id));
-+  const noId = (list: unknown) => ((list as Obj[]) ?? []).map(({ id: _id, ...rest }) => rest);
-+  out.findings = noId(((side.findings as Obj[]) ?? []).filter((f) => !added.has(f.feature as string)));
-+  out.passed = ((side.passed as Obj[]) ?? []).filter((f) => !added.has(f.feature as string));
-+  const [part, was] = [side.part as Obj, base.part as Obj];
-+  const faces = part.not_analysed_faces as number[], before = was.not_analysed_faces as number[];
-+  out.part = faces.every((i) => before.includes(i)) ? { ...part, not_analysed_faces: before } : part;
-+  for (const key of PLAN_KEYS) if (key in base) out[key] = base[key]; else delete out[key];
-   return out;
- }
- 
-+/** The old key's findings with their ids taken out, to compare with masked(): finding ids are renumbered. */
-+function baseMasked(old: Obj, result: Obj): Obj {
-+  if (!newIds(result).size) return old;
-+  return { ...old, findings: ((old.findings as Obj[]) ?? []).map(({ id: _id, ...rest }) => rest) };
-+}
-+
+-  return out;
+-}
+-
  const setupsText = (side: Obj) => ((side.setups as { direction: string; features: string[] }[]) ?? [])
    .map((s) => `${s.direction} [${s.features.join(" ")}]`).join(", ");
  
@@ -906,7 +914,7 @@ index 6826ad7..016c04c 100644
    const index = JSON.parse(readFileSync(resolve(KEY_DIR, `index-${SET}.json`), "utf8")) as Entry[];
    const sizeOf = (e: Entry) => readFileSync(resolve(ROOT, e.path)).length + (e.ipt ? readBytes(resolve(ROOT, e.ipt)).length : 0);
    const shard = shardOf(index.map(sizeOf), n);
-@@ -80,29 +125,26 @@ test(`parity re-freeze on the ${SET} set (shard ${k}/${n})`, async () => {
+@@ -80,29 +75,26 @@ test(`parity re-freeze on the ${SET} set (shard ${k}/${n})`, async () => {
      const label = entry.ipt ? `${entry.path} + ${entry.ipt}` : entry.path;
      if (compare(result, old).diffs.length === 0) continue;
      const exempt = KNOWN_TESSELLATION[entry.path] ?? [];
@@ -1246,6 +1254,153 @@ index 0000000..f8b96aa
 +    });
 +  }
 +});
+diff --git a/web/src/engine/refreeze-mask.test.ts b/web/src/engine/refreeze-mask.test.ts
+new file mode 100644
+index 0000000..811f57d
+--- /dev/null
++++ b/web/src/engine/refreeze-mask.test.ts
+@@ -0,0 +1,71 @@
++// The re-freeze guard (refreeze-mask.ts) on hand-made keys: an allowed step change passes, and each change the slice may
++// not make is refused (audit 2026-11-12 F6, D-092). Each refusal case is a planted bug on top of the allowed change.
++import { describe, expect, test } from "vitest";
++import { refused, type Obj } from "./refreeze-mask";
++
++const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x));
++const OLD: Obj = {
++  part: { name: "p.step", not_analysed_faces: [7] },
++  features: [{ id: "hole-1", kind: "hole", faces: [1], dims_mm: { diameter: 5 } },
++    { id: "pocket-1", kind: "pocket", faces: [2, 3], dims_mm: { depth: 4 } }],
++  findings: [{ id: "F1", rule: "hole_depth", feature: "hole-1" }],
++  passed: [{ rule: "pocket_depth", feature: "pocket-1" }],
++  rules_run: ["hole_depth", "pocket_depth"], checks_run: ["Hole depth check", "Pocket depth check"],
++  setups: [{ direction: "+Z", features: ["hole-1", "pocket-1"] }],
++  operations: [{ setup: 0, tool: "dr-0.2", features: ["hole-1"], faces: [1] }, { setup: 0, tool: "em-0.250", features: ["pocket-1"], faces: [2, 3] }],
++  tools: [{ id: "dr-0.2" }, { id: "em-0.250" }], tool_changes: 2, cost_drivers: [], cost_total: null, rows: [], passed_rows: [],
++};
++/** OLD plus what S1 may add: a step, its finding first (renumbering F1 to F2), its setup, tool and plan keys. */
++function withStep(): Obj {
++  const r = clone(OLD) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
++  r.part.not_analysed_faces = [];
++  r.features.push({ id: "step-1", kind: "step", faces: [7, 8], dims_mm: { depth: 10 } }, { id: "corner-1", kind: "corner", faces: [8], pocket: "step-1", dims_mm: {} });
++  r.findings = [{ id: "F1", rule: "step_depth", feature: "step-1" }, { id: "F2", rule: "hole_depth", feature: "hole-1" }];
++  r.passed.push({ rule: "corner_radius", feature: "corner-1" });
++  r.rules_run = ["hole_depth", "pocket_depth", "step_depth"];
++  r.checks_run = ["Hole depth check", "Pocket depth check", "Step depth check"];
++  r.setups = [{ direction: "+Z", features: ["hole-1", "pocket-1", "step-1"] }];
++  r.operations.unshift({ setup: 0, tool: "em-1.000", features: ["step-1"], faces: [7, 8] });
++  r.tools.unshift({ id: "em-1.000" });
++  r.tool_changes = 3;
++  r.cost_drivers = [{ driver: "deep_steps_slots", count: 1 }];
++  r.cost_total = 1;
++  r.rows = [{ ids: ["F1"] }];
++  return r;
++}
++
++describe("re-freeze guard", () => {
++  test("an allowed step change passes", () => expect(refused(withStep(), OLD)).toEqual([]));
++  test("a new rule in rules_run on a file with no step passes", () => {
++    const r = clone(OLD) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
++    r.rules_run = [...r.rules_run, "step_depth"]; r.checks_run = [...r.checks_run, "Step depth check"];
++    expect(refused(r, OLD)).toEqual([]);
++  });
++  const planted: [string, (r: Record<string, any>) => void][] = [ // eslint-disable-line @typescript-eslint/no-explicit-any
++    ["a changed hole", (r) => { r.features[0].dims_mm.diameter = 6; }],
++    ["a pocket that lost its faces", (r) => { r.features[1].faces = [2]; }],
++    ["a hole that lost its tool", (r) => { r.operations[1].tool = "dr-0.3"; }],
++    ["a changed hole finding", (r) => { r.findings[1].rule = "hole_size"; }],
++    ["a pocket's passed check gone", (r) => { r.passed = r.passed.filter((p: Obj) => p.feature !== "pocket-1"); }],
++    ["an extra rule that is not new", (r) => { r.rules_run.push("thin_wall"); }],
++    ["a face that joined not_analysed_faces", (r) => { r.part.not_analysed_faces = [9]; }],
++    ["the part's name", (r) => { r.part.name = "q.step"; }],
++  ];
++  for (const [what, plant] of planted) {
++    test(`refuses ${what}`, () => {
++      const r = withStep() as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
++      plant(r);
++      expect(refused(r, OLD).length, what).toBeGreaterThan(0);
++    });
++  }
++  test("refuses a changed finding on a file with no step", () => {
++    const r = clone(OLD) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
++    r.findings[0].id = "F2";
++    expect(refused(r, OLD).length).toBeGreaterThan(0);
++  });
++  test("refuses plan changes on a file with no step", () => {
++    const r = clone(OLD) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
++    r.setups = [{ direction: "-Z", features: ["hole-1", "pocket-1"] }];
++    expect(refused(r, OLD).length).toBeGreaterThan(0);
++  });
++});
+diff --git a/web/src/engine/refreeze-mask.ts b/web/src/engine/refreeze-mask.ts
+new file mode 100644
+index 0000000..2355f20
+--- /dev/null
++++ b/web/src/engine/refreeze-mask.ts
+@@ -0,0 +1,64 @@
++// The guarded re-freeze's allow list and masking (steps-slots spec, Design "Parity re-freeze"), apart from the run so
++// they can be tested with planted bugs (refreeze-mask.test.ts; audit 2026-11-12 F6, D-092). parity-refreeze.test.ts
++// uses them: compare(masked(result, old), baseMasked(old, result)) must show no diff, and lostTools(old, result) none.
++import { compare } from "./compare";
++
++/** What this slice may change. Steps and slots S1 (spec Design "Parity re-freeze"; D-079, D-081): on every file the
++ *  new rule in `rules_run` and its check in `checks_run`; on a file that gained a step, the step features and their
++ *  corners with their findings and passed checks, renumbered finding ids, faces leaving `part.not_analysed_faces`, and
++ *  the plan and cost keys below, `removal` (the step's volume, P1, which came after the spec) and the rows built from
++ *  the findings; every hole and pocket keeps its own tools. Nothing else. */
++export const NEW_KINDS = ["step", "slot"];
++export const NEW_RULES = ["step_depth"];
++export const NEW_CHECKS = ["Step depth check"];
++export const PLAN_KEYS = ["setups", "operations", "tools", "tool_changes", "cost_drivers", "cost_total", "removal", "rows", "passed_rows"];
++
++export type Obj = Record<string, unknown>;
++type Feat = { id: string; kind: string; pocket?: unknown } & Obj;
++type Op = { setup: number; tool: string; features: string[] };
++
++/** Each planned feature's set of tools, as the operations name it. */
++export function toolsOf(side: Obj): Map<string, string> {
++  const out = new Map<string, Set<string>>();
++  for (const op of (side.operations as Op[]) ?? []) for (const f of op.features) (out.get(f) ?? out.set(f, new Set()).get(f)!).add(op.tool);
++  return new Map([...out].map(([f, t]) => [f, [...t].sort().join(",")]));
++}
++
++/** The ids of the features this slice adds: steps and slots, and the corners linked to them. */
++export function newIds(side: Obj): Set<string> {
++  const feats = (side.features as Feat[]) ?? [];
++  const open = new Set(feats.filter((f) => NEW_KINDS.includes(f.kind)).map((f) => f.id));
++  return new Set([...open, ...feats.filter((f) => f.kind === "corner" && open.has(f.pocket as string)).map((f) => f.id)]);
++}
++
++/** `side` with what this slice may change set back to `base`'s, so compare() sees only the changes it may not make. */
++export function masked(side: Obj, base: Obj): Obj {
++  const out: Obj = { ...side };
++  const without = (list: unknown, extra: string[]) => (list as string[]).filter((x) => !extra.includes(x));
++  if (JSON.stringify(without(side.rules_run, NEW_RULES)) === JSON.stringify(base.rules_run)) out.rules_run = base.rules_run;
++  if (JSON.stringify(without(side.checks_run, NEW_CHECKS)) === JSON.stringify(base.checks_run)) out.checks_run = base.checks_run;
++  const added = newIds(side);
++  if (!added.size) return out;
++  out.features = (side.features as Feat[]).filter((f) => !added.has(f.id));
++  const noId = (list: unknown) => ((list as Obj[]) ?? []).map(({ id: _id, ...rest }) => rest);
++  out.findings = noId(((side.findings as Obj[]) ?? []).filter((f) => !added.has(f.feature as string)));
++  out.passed = ((side.passed as Obj[]) ?? []).filter((f) => !added.has(f.feature as string));
++  const [part, was] = [side.part as Obj, base.part as Obj];
++  const faces = part.not_analysed_faces as number[], before = was.not_analysed_faces as number[];
++  out.part = faces.every((i) => before.includes(i)) ? { ...part, not_analysed_faces: before } : part;
++  for (const key of PLAN_KEYS) if (key in base) out[key] = base[key]; else delete out[key];
++  return out;
++}
++
++/** The old key's findings with their ids taken out, to compare with masked(): finding ids are renumbered. */
++export function baseMasked(old: Obj, result: Obj): Obj {
++  if (!newIds(result).size) return old;
++  return { ...old, findings: ((old.findings as Obj[]) ?? []).map(({ id: _id, ...rest }) => rest) };
++}
++
++/** The changes this slice may not make: compare() diffs after masking, then each old feature whose tools changed. */
++export function refused(result: Obj, old: Obj): string[] {
++  const others = compare(masked(result, old), baseMasked(old, result)).diffs;
++  const [ta, tb] = [toolsOf(old), toolsOf(result)];
++  return [...others, ...[...ta.keys()].filter((f) => ta.get(f) !== tb.get(f)).map((f) => `${f}: tools ${ta.get(f)} -> ${tb.get(f) ?? "none"}`)];
++}
 diff --git a/web/src/engine/removal.ts b/web/src/engine/removal.ts
 index 12d93b8..ab1ebe4 100644
 --- a/web/src/engine/removal.ts
