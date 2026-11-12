@@ -16,7 +16,20 @@ Runs: `node web/scripts/grading.mjs grade mfcadpp tests/grading/.cache/mfcadpp -
 - Holes and pockets on every run: first 590 / 602, 0 wrong and 3,667 / 3,745, 1 wrong; check 643 / 666, 0 wrong and 3,760 / 3,872, 1 wrong: the baseline exactly.
 - V-groove (5) and round-bottom (7) slots: no step call on any run (first: 103 and 78 faces; check: 130 and 80).
 
-## Round 1 (D-091, 2026-11-12): in the patch now
+## After the audit (D-092, 2026-11-12): in the patch now
+
+The audit (`docs/audit/2026-11-12-design.md`, PR #63) found six high items; Morgan: "Do as you recommend".
+
+- Changes 7 (tilted floors) and 8 (floors reached from a side) are out of the patch until Morgan decides their scope: D-081 keeps steps on a floor along a part axis (audit F2, F3).
+- `runs()` starts at an open edge, so a run no longer depends on where the wire starts; `web/src/engine/features/runs.test.ts` failed on the old code (2 of 4) and passes (audit F7).
+- The re-freeze masking is in `web/src/engine/refreeze-mask.ts`, with 12 tests in `refreeze-mask.test.ts`; a planted loose guard fails 2 of them (audit F6).
+- CTC 02 (`nist_ctc_02_asme1_ap242-e2.stp`, the spec's 10 s file), two runs each: main 7.1, 6.4, 6.9 and 6.5 s; the patch 8.2, 7.5, 8.2 and 7.4 s. Round 1 with change 7 took 10.3 s (audit F1). The open-floor search costs about 0.9 s of it: edge gaps 0.56 s, walls 0.18 s, reach 0.15 s.
+- First set (646 s): steps 2,459 / 2,759 (89.1%) vs pockets 97.9%; 26 wrong (chamfer 14, class 6 6, class 4 3, class 13 3). Check set (665 s): 2,383 / 2,629 (90.6%) vs 97.1%; 39 wrong (chamfer 23, class 13 6, class 15 4, class 2 3, class 3 2, class 23 1). Holes and pockets unchanged. Target: FAIL on both.
+- `npx vitest run` (web): 931 pass, 6 fail, all in umd_counts (base1, base2, regli_pathological1, socket1, socket2, vand1).
+
+**U-shaped class 22 against class 17, by shape** (audit F5; first set, every instance whose floor test sees a U): of 13 class 22 instances, 5 (20 faces) have the signature "4 flat faces, 3 walls, 1 open edge", the same as 34 of the 40 class 17 slots. The other 8 have 7 or 10 faces, and 5 of them two open edges; no class 17 instance has either. So only those 5 cannot be told from blind slots by shape, and the round 1 claim that all 13 (79 faces) are alike was wrong. The other 8 are a recall lever for a later round.
+
+## Round 1 (D-091, 2026-11-12): superseded by the audit
 
 Morgan chose more rounds with the target unchanged. A trace of every missed step face (first set, version B: 384 faces in 154 instances) gave the causes; round 1 changed three things:
 
@@ -28,7 +41,7 @@ Morgan chose more rounds with the target unchanged. A trace of every missed step
 - Check set (707 s): steps 2,407 / 2,629 (91.6%) vs pockets 97.1%; 45 wrong (chamfer 26, class 13 6, class 15 4, class 2 3, class 3 2, class 14 2, class 6 1, class 23 1).
 - Holes and pockets unchanged on both. Target: FAIL on both sets.
 
-**Labels no shape rule can split** (measured on the first set, every class 17 and 22 instance, by the shape our floor test sees): class 22 blind steps, 157 instances L-shaped (518 faces) and 13 U-shaped (79 faces); class 17 blind slots, 40 U-shaped (164 faces). A U-shaped class 22 is the same shape as a class 17 slot, as D-019's pocket-shaped slots are, so its 79 faces cannot be called steps without calling the 164 slot faces steps too. With them on their own line (D-019's way), the first set's step recall would be 2,483 of 2,680 (92.6%), still short.
+**Labels no shape rule can split** (corrected after the audit: see above; measured on the first set, every class 17 and 22 instance, by the shape our floor test sees): class 22 blind steps, 157 instances L-shaped (518 faces) and 13 U-shaped (79 faces); class 17 blind slots, 40 U-shaped (164 faces). A U-shaped class 22 is the same shape as a class 17 slot, as D-019's pocket-shaped slots are, so its 79 faces cannot be called steps without calling the 164 slot faces steps too. With them on their own line (D-019's way), the first set's step recall would be 2,483 of 2,680 (92.6%), still short.
 
 Remaining misses (first set, round 1): about 276 faces: V-shaped floors of class 9 (two tilted faces, material past an edge, about 40), U-shaped class 22 (about 60 with the slot-side drops), knife edges on class 21 (18), quarter-round walls covering 150° or more (18), tilted floors with no wall on an axis (about 40), two or more runs (about 30). Wrong calls: chamfers next to steps are the largest group (16 and 26).
 
