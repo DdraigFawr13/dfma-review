@@ -27,7 +27,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-12 Steps S1 audit (PR #63) acted on (D-092): tilted and side-reached steps out until Morgan decides; `runs()` fixed; re-freeze guard tested; CTC 02 7.4-8.2 s (limit 10). Recall 89.1% first set, 90.6% check set (pockets 97.9%, 97.1%); 26 and 39 wrong. Only 5 of 13 U-shaped class 22 steps match class 17 slots by shape. Patch and numbers: [README](research/steps-s1/README.md).
+- 2026-11-12 Steps S1 with D-093 scoring: recall 91.8% first set, 92.5% check set (pockets 97.9%, 97.1%); 26 and 39 wrong (chamfers most); holes and pockets unchanged; UMD 7 of 11 agree. Audit (PR #63) acted on (D-092). Patch and numbers: [README](research/steps-s1/README.md).
 - 2026-11-11 P1 S2 (stock box and your stock) approved (D-090), merged in [PR #61](https://github.com/DdraigFawr13/dfma-review/pull/61): archive "Moved 2026-11-12".
 - Earlier (P1 S1 #60, P1+P2 spec #59, reach spike #58, P0 #57, UI fixes, S8b, harness): archive.
 

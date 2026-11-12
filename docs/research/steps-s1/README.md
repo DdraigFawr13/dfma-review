@@ -16,7 +16,17 @@ Runs: `node web/scripts/grading.mjs grade mfcadpp tests/grading/.cache/mfcadpp -
 - Holes and pockets on every run: first 590 / 602, 0 wrong and 3,667 / 3,745, 1 wrong; check 643 / 666, 0 wrong and 3,760 / 3,872, 1 wrong: the baseline exactly.
 - V-groove (5) and round-bottom (7) slots: no step call on any run (first: 103 and 78 faces; check: 130 and 80).
 
-## After the audit (D-092, 2026-11-12): in the patch now
+## D-093 scoring (2026-11-12): in the patch now
+
+Morgan: tilted floors, side-only notches and vand1's steps are not steps; UMD corners are; chamfers beside a step are wrong. The finder has a grading-only diagnostic (`OPEN_DIAG` in `features/pockets.ts`, off in the app) that records those shapes, and blind-slot-shaped U's (4 flat faces, 3 walls, 1 open edge); the scorer leaves labelled step faces of those shapes out of the step count unless they are called steps, on a "not steps (D-093)" line (`score.test.ts` tests it). The engine's results do not change.
+
+- First set (676 s): steps 2,459 / 2,678 (91.8%) vs pockets 97.9%; 26 wrong; not steps: tilted 42, u-slot 36, side 3. Misses by class: 8 26, 9 58, 10 23, 20 44, 21 49, 22 19.
+- Check set (654 s): steps 2,383 / 2,577 (92.5%) vs pockets 97.1%; 39 wrong; not steps: tilted 28, u-slot 21, side 3.
+- Holes and pockets unchanged. Target: FAIL on both (recall, and wrong calls, chamfers the largest group: 14 and 23).
+- UMD (`umd_counts.test.ts`, `[Corner]` counted with steps, vand1 a known difference): 7 of 11 agree; base1 9 found (3 labelled), base2 13 (7), regli_pathological1 1 (0), socket2 8 (4) are over-calls to work on.
+- Tests: `steps_slots`, `runs`, `refreeze-mask` 47 pass; `score.test.ts` 26 pass.
+
+## After the audit (D-092, 2026-11-12): superseded by D-093 scoring
 
 The audit (`docs/audit/2026-11-12-design.md`, PR #63) found six high items; Morgan: "Do as you recommend".
 
