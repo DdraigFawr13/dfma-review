@@ -416,7 +416,7 @@ index 97ea568..5e315b5 100644
      const summary: PartSummary = { units_in_file: part.unitsInFile, frame, turn, face_count: part.faces.length };
      if (inventor !== null) {
 diff --git a/web/src/engine/features/pockets.ts b/web/src/engine/features/pockets.ts
-index 7258bc4..ce54069 100644
+index 7258bc4..b6c14fc 100644
 --- a/web/src/engine/features/pockets.ts
 +++ b/web/src/engine/features/pockets.ts
 @@ -6,6 +6,7 @@ import { ANGLE_TOL, cross, dot, unit, type Vec } from "../frame";
@@ -479,13 +479,34 @@ index 7258bc4..ce54069 100644
        if (wallKind(topo, k, n)) {
          if (!walls.includes(k)) walls.push(k);
          tangent = tangent || sm;
-@@ -292,6 +303,135 @@ function pocketWalls(topo: Topology, floor: number, n: Vec, edges: FloorEdge[],
+@@ -292,6 +303,156 @@ function pocketWalls(topo: Topology, floor: number, n: Vec, edges: FloorEdge[],
    return walls;
  }
  
 +/** One floor edge in an open floor's outline, in wire order: a wall edge (the walls it leads to), an open edge (no wall,
 + *  and the gap past it is open to the outside) or a cut edge (another feature cuts the floor there). */
 +export interface TraceEdge { kind: "wall" | "open" | "cut"; walls: number[]; edge: OC; piece: number }
++
++export const CHAMFER_TURN_MAX_DEG = 60; // a chamfer turns under this from a face it breaks; a wall meets its top at about 90 deg
++export const CHAMFER_NARROW_SHARE = 0.5; // a chamfer is under half as wide across the floor normal as it runs along it
++
++/** A flat face that breaks an edge between two other faces (D-093): narrow (its spread across n under
++ *  CHAMFER_NARROW_SHARE of its run along n), and meeting a face other than `floor` at an outside (convex) edge, turning
++ *  between 0.5 and CHAMFER_TURN_MAX_DEG deg from it. A step's wall, drafted up to 15 deg, turns 75 or more at its top. */
++function chamferFace(topo: Topology, k: number, floor: number, n: Vec): boolean {
++  if (topo.type(k) !== "GeomAbs_Plane") return false;
++  const along = topo.facePoints(k).map((p) => dot(p, n));
++  if (span(topo, k, n) >= CHAMFER_NARROW_SHARE * (maxOf(along) - minOf(along))) return false;
++  for (const [j, edges] of topo.neighbours(k)) {
++    if (j === floor) continue;
++    for (const e of edges) {
++      const [p] = edgeMid(topo.oc, e);
++      const turn = degrees(Math.acos(Math.max(-1, Math.min(1, dot(normalAt(topo, k, p), normalAt(topo, j, p))))));
++      if (turn > degrees(ANGLE_TOL) && turn < CHAMFER_TURN_MAX_DEG && !concave(topo, k, j, e) && !concave(topo, j, k, e)) return true;
++    }
++  }
++  return false;
++}
 +
 +/** The walls of an open floor (steps and slots spec, Design "Finder"), with every edge's kind in `trace`; null when an
 + *  edge has no neighbour, the floor has no wall or no open edge, or a pocket test (cut with under two walls, a knife
@@ -615,7 +636,7 @@ index 7258bc4..ce54069 100644
  export const REACH_STEP = 1e-3; // mm: a reach ray starts this far off the floor
  
  /** A cutter can reach the floor along its axis: a ray from some point inside a floor piece, along the outward
-@@ -654,12 +794,32 @@ export interface CornerFeature {
+@@ -654,12 +815,32 @@ export interface CornerFeature {
    edge_mm?: number[][];
  }
  
@@ -650,7 +671,7 @@ index 7258bc4..ce54069 100644
    const topo = new Topology(oc, solid, faces);
    const cyls = new Map<number, Cyl>();
    faces.forEach((_, i) => {
-@@ -669,6 +829,7 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
+@@ -669,6 +850,7 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
    const foundP: Pocket[] = [];
    const foundC: CornerFeature[] = [];
    const enclosure = new Enclosure(topo);
@@ -658,7 +679,7 @@ index 7258bc4..ce54069 100644
    faces.forEach((face, fid) => {
      if (holeFaces.has(fid)) return;
      const n = planeNormal(topo, fid);
-@@ -692,7 +853,11 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
+@@ -692,7 +874,11 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
        walls = pocketWalls(topo, fid, n, outerEdges, enclosure, blends, cuts);
        if (walls && walls.length) [walls, reached] = floorChecks(topo, cyls, walls, pieces, n, enclosure);
      }
@@ -671,7 +692,7 @@ index 7258bc4..ce54069 100644
      const sealed = pieces.every((k) => enclosure.sealed.has(k));
      const [ceilings, upper] = sealed ? [[], []] as [number[], number[]]
        : undercut(topo, walls, n, new Set([...pieces, ...holeFaces]), overFloor(topo, pieces, n));
-@@ -740,7 +905,145 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
+@@ -740,7 +926,163 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
        foundC.push(corner);
      }
    });
@@ -768,6 +789,20 @@ index 7258bc4..ce54069 100644
 +        && o.trace.filter((t) => t.kind === "open").length === 1 && !o.trace.some((t) => t.kind === "cut")) OPEN_DIAG.held.push(["u-slot", [...own]]);
 +    }
 +  }
++  // A slot whose floor another feature breaks into strips (a channel over grooves or cross holes): each strip sees one
++  // wall, so it reads as a step. Two step floors on one plane whose single walls face each other across them are that
++  // slot's pieces, not steps; so is a step seen from one of those walls (round 2; UMD base1).
++  const one = stepFloors.filter((o) => o.walls.length === 1 && topo.type(o.walls[0]) === "GeomAbs_Plane");
++  const strips = new Set<OpenFloor>();
++  for (const a of one) for (const b of one) {
++    if (a === b || a.walls[0] === b.walls[0] || !coplanar(topo, a.fid, b.fid)) continue;
++    if (facing(topo, a.walls[0], b.walls[0], a.n, centre(oc, topo.faces[a.fid]))) { strips.add(a); strips.add(b); }
++  }
++  if (strips.size) {
++    const pairs = [...strips].map((o) => [o.fid, o.walls[0]]);
++    const pieceOf = (o: OpenFloor) => { const f = new Set([...o.pieces, ...o.walls]); return pairs.some(([x, y]) => f.has(x) && f.has(y)); };
++    for (let i = stepFloors.length - 1; i >= 0; i--) if (pieceOf(stepFloors[i])) stepFloors.splice(i, 1);
++  }
 +  // One feature per face set; its floor the face whose direction comes first in ORDER (Terms, "Same feature").
 +  const bySet = new Map<string, OpenFloor>();
 +  const rankOf = (d: string) => ORDER.indexOf(d as (typeof ORDER)[number]);
@@ -783,7 +818,11 @@ index 7258bc4..ce54069 100644
 +  const kept = [...bySet.values()].filter((_, i) => !sets.some((s, j) => j !== i && s.size > sets[i].size && [...sets[i]].every((f) => s.has(f))));
 +  const steps: OpenFeature[] = [];
 +  for (const o of kept) {
-+    const { fid, n, pieces, walls, blends, trace } = o;
++    const { fid, n, pieces, blends, trace } = o;
++    // A chamfer beside another wall is its own operation (D-093, edge breaks D-075), kept out of the step's faces. A
++    // chamfer-shaped wall that is the step's only one stays: MFCAD++ calls such a notch a triangular blind step (20).
++    const plain = o.walls.filter((w) => !chamferFace(topo, w, fid, n));
++    const walls = plain.length ? plain : o.walls;
 +    const floorH = dot(outwardNormal(oc, topo.faces[fid])[0], n);
 +    const top = maxOf(walls.flatMap((w) => topo.facePoints(w).map((p) => dot(p, n))));
 +    const own = new Set([...pieces, ...walls, ...blends]);
