@@ -16,7 +16,26 @@ Runs: `node web/scripts/grading.mjs grade mfcadpp tests/grading/.cache/mfcadpp -
 - Holes and pockets on every run: first 590 / 602, 0 wrong and 3,667 / 3,745, 1 wrong; check 643 / 666, 0 wrong and 3,760 / 3,872, 1 wrong: the baseline exactly.
 - V-groove (5) and round-bottom (7) slots: no step call on any run (first: 103 and 78 faces; check: 130 and 80).
 
-## Round 2 (2026-11-12): in the patch now
+## Round 3 (2026-11-12): census of the misses, V-floors scored as tilted (in the patch now)
+
+Fresh container: patch applied, MFCAD++ test split re-downloaded from Morgan's Drive copy (1,615,810,586 bytes, size matched), baseline first set reproduced round 2 exactly (2,444 / 2,677, 16 wrong).
+
+**Census** (`web/scripts/census-steps.ts`, in the patch): reruns every step-class miss with the open-floor diagnostic on and tallies why. The 233 missed faces of the first set:
+
+- 99 are planes off the part axes (classes 9: 41, 10: 15, 20: 39, 21: 2, 8: 2). D-093 already leaves tilted floors out, but the diagnostic only noted one after the wall search succeeded.
+- "material past edge" (Terms, "Open edge") is the most common reason a floor is rejected: about 110 faces, mostly a neighbour sloping 35 to 60 deg; the rule that removed the class 19 wrong calls (change 1), so relaxing it needs its own test.
+- Class 21: 15 faces never a floor or wall candidate, 15 wall arc 150 deg or more, 9 knife edge. Class 8: 14 floors with no wall. A class 8 face on an O-ring cylinder (`10015` face 20) is a disc another feature consumed; no shape rule finds it.
+- A gap with no direction into the floor (`into` null) hit 1 face only: not a lever.
+
+**Change 11 (scoring only, engine results unchanged):** a V-floor, two planes off the part axes meeting at a concave edge with no flat on-axis floor beside either, goes on the "not steps (D-093)" tilted line. A first version without the "no floor beside" test also took 24 class 20 and 2 class 8 faces that are a notch's diagonal walls standing on a floor; those stay.
+
+- First set: steps 2,444 / 2,641 (92.5%) vs pockets 97.9%; 16 wrong; not steps: tilted 79 (was 43), u-slot 36, side 3. Misses by class: 8 24, 9 60, 10 11, 20 30, 21 49, 22 23.
+- Check set: steps 2,375 / 2,550 (93.1%) vs pockets 97.1%; 25 wrong; not steps: u-slot 21, tilted 55 (was 29), side 3.
+- Holes and pockets unchanged on both. Target: FAIL on both (recall, wrong calls).
+- `vitest` on `src/grading`, `src/engine/features`, `steps_slots`, `umd_counts`: 75 pass, 2 fail (umd base2, regli_pathological1: the round 2 pair). The V-floor line has no unit test of its own (no V-groove part in the set); it is measured on the two runs only. Not run: `npm run check`, `parity:refreeze`, EDMR.
+- Reading: scoring cannot close the gap. 197 first-set faces are still missed and 16 wrong, mostly sloped-neighbour floors, class 21 circular steps and chamfers. The target needs either engine rules that each risk wrong calls or Morgan changing the target (spec J4: the target is not lowered by us).
+
+## Round 2 (2026-11-12): in the patch
 
 Morgan approved the round ("I approve all"). Two changes, each measured on the 193-part dev set (the first-set parts with misses or wrong calls, plus 60 others) before the full runs:
 

@@ -291,6 +291,39 @@ index 0000000..86aa63c
 +}
 +writeFileSync(join(HERE, "MANIFEST.md"), lines.join("\n") + "\n");
 +writeFileSync(join(HERE, "INSTANCES.json"), JSON.stringify(instances, null, 1) + "\n");
+diff --git a/web/scripts/census-steps.ts b/web/scripts/census-steps.ts
+new file mode 100644
+index 0000000..36a5d43
+--- /dev/null
++++ b/web/scripts/census-steps.ts
+@@ -0,0 +1,27 @@
++// Why each missed step face was missed (steps S1 round 3): reruns the parts a grading result lists as step-class misses with
++// the open-floor diagnostic on and prints a tally of reasons.
++//   node --no-warnings --experimental-transform-types --import ./scripts/ts-register.mjs scripts/census-steps.ts <result.json> <out.json> [<set folder>]
++import { readFileSync, writeFileSync } from "node:fs";
++import { resolve } from "node:path";
++import { loadNodeOc } from "../src/engine/node.ts";
++import { gradeFile } from "../src/grading/analyse.ts";
++import { OPEN_DIAG } from "../src/engine/features/pockets.ts";
++const res = JSON.parse(readFileSync(process.argv[2], "utf8"));
++const out = process.argv[3];
++const STEP = [8, 9, 10, 20, 21, 22];
++const byPart = new Map<string, { class: number; faces: number[] }[]>();
++for (const m of res.misses) if (STEP.includes(m.class)) { (byPart.get(m.part) ?? byPart.set(m.part, []).get(m.part)!).push(m); }
++const oc = await loadNodeOc();
++const rows: any[] = [];
++for (const [part, ms] of byPart) {
++  const r = await gradeFile(oc, resolve(process.argv[4] ?? "../tests/grading/.cache/mfcadpp", part));
++  const held = new Map<number, string>(); for (const [k, fs] of r.held_steps ?? []) for (const f of fs) held.set(f, k);
++  for (const m of ms) for (const f of m.faces) {
++    rows.push({ part, class: m.class, face: f, kind: r.faces[f]?.kind, held: held.get(f) ?? null, why: OPEN_DIAG.why.get(f) ?? [] });
++  }
++}
++writeFileSync(out, JSON.stringify(rows, null, 1));
++const tally = new Map<string, number>();
++for (const x of rows) { const k = `${x.class} | ${x.held ? "HELD " + x.held : ""} ${x.why.join("; ") || "(never a floor/wall candidate)"}`; tally.set(k, (tally.get(k) ?? 0) + 1); }
++for (const [k, n] of [...tally].sort()) console.log(String(n).padStart(4), k);
++console.log("total", rows.length);
 diff --git a/web/scripts/make-set.mjs b/web/scripts/make-set.mjs
 new file mode 100644
 index 0000000..ce5d12b
@@ -416,7 +449,7 @@ index 97ea568..5e315b5 100644
      const summary: PartSummary = { units_in_file: part.unitsInFile, frame, turn, face_count: part.faces.length };
      if (inventor !== null) {
 diff --git a/web/src/engine/features/pockets.ts b/web/src/engine/features/pockets.ts
-index 7258bc4..b6c14fc 100644
+index 7258bc4..abe7144 100644
 --- a/web/src/engine/features/pockets.ts
 +++ b/web/src/engine/features/pockets.ts
 @@ -6,6 +6,7 @@ import { ANGLE_TOL, cross, dot, unit, type Vec } from "../frame";
@@ -442,7 +475,7 @@ index 7258bc4..b6c14fc 100644
      const [p, e] = edgeMid(oc, edge);
      const intoDir = into(oc, this.topo.faces[floor], p, n, e);
 -    if (intoDir === null) return false;
-+    if (intoDir === null) return "material";
++    if (intoDir === null) { whyAdd(floor, "NOINTO"); return "material"; }
      const out = neg(intoDir);
      const start: Vec = [0, 1, 2].map((i) => p[i] + BREAK_STEP * out[i] - BREAK_STEP * n[i]) as Vec;
      if (this.classifier === null) this.classifier = new oc.BRepClass3d_SolidClassifier(this.topo.solid);
@@ -479,7 +512,7 @@ index 7258bc4..b6c14fc 100644
        if (wallKind(topo, k, n)) {
          if (!walls.includes(k)) walls.push(k);
          tangent = tangent || sm;
-@@ -292,6 +303,156 @@ function pocketWalls(topo: Topology, floor: number, n: Vec, edges: FloorEdge[],
+@@ -292,6 +303,157 @@ function pocketWalls(topo: Topology, floor: number, n: Vec, edges: FloorEdge[],
    return walls;
  }
  
@@ -519,7 +552,7 @@ index 7258bc4..b6c14fc 100644
 +  for (const item of edges) {
 +    const [piece, edge] = Array.isArray(item) ? item : [floor, item];
 +    const nb = edgeNeighbour(topo, piece, edge);
-+    if (nb === null) return null;
++    if (nb === null) { OPEN_DIAG.last = "no neighbour"; return null; }
 +    let beyond: number[] = [];
 +    let fill: [Set<number>, number[]] | null = null;
 +    let found: number[] | null = null;
@@ -534,19 +567,20 @@ index 7258bc4..b6c14fc 100644
 +    if (found) for (const w of found) { if (!walls.includes(w)) walls.push(w); }
 +    else rest.push([piece, t]);
 +  }
-+  if (!walls.length || !rest.length) return null;
++  if (!walls.length) { OPEN_DIAG.last = "no wall"; return null; }
++  if (!rest.length) { OPEN_DIAG.last = "walls all round"; return null; }
 +  let cut = false;
 +  for (const [piece, t] of rest) {
 +    const gap = enclosure.gap(piece, n, t.edge);
-+    if (gap === "material") return null; // a slope or rounded side past the edge: not an open edge (Terms, "Open edge")
++    if (gap === "material") { OPEN_DIAG.last = "material past edge"; return null; } // a slope or rounded side past the edge: not an open edge (Terms, "Open edge")
 +    if (gap === "closed") {
 +      t.kind = "cut";
 +      cut = true;
 +    }
 +  }
-+  if (!trace.some((t) => t.kind === "open")) return null;
-+  if (cut && walls.length < 2) return null;
-+  if (walls.some((w) => knifeEdge(topo, floor, w, walls))) return null;
++  if (!trace.some((t) => t.kind === "open")) { OPEN_DIAG.last = "no open edge"; return null; }
++  if (cut && walls.length < 2) { OPEN_DIAG.last = "cut, one wall"; return null; }
++  if (walls.some((w) => knifeEdge(topo, floor, w, walls))) { OPEN_DIAG.last = "knife edge"; return null; }
 +  return walls;
 +}
 +
@@ -636,7 +670,7 @@ index 7258bc4..b6c14fc 100644
  export const REACH_STEP = 1e-3; // mm: a reach ray starts this far off the floor
  
  /** A cutter can reach the floor along its axis: a ray from some point inside a floor piece, along the outward
-@@ -654,12 +815,32 @@ export interface CornerFeature {
+@@ -654,12 +816,32 @@ export interface CornerFeature {
    edge_mm?: number[][];
  }
  
@@ -671,7 +705,7 @@ index 7258bc4..b6c14fc 100644
    const topo = new Topology(oc, solid, faces);
    const cyls = new Map<number, Cyl>();
    faces.forEach((_, i) => {
-@@ -669,6 +850,7 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
+@@ -669,6 +851,7 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
    const foundP: Pocket[] = [];
    const foundC: CornerFeature[] = [];
    const enclosure = new Enclosure(topo);
@@ -679,7 +713,7 @@ index 7258bc4..b6c14fc 100644
    faces.forEach((face, fid) => {
      if (holeFaces.has(fid)) return;
      const n = planeNormal(topo, fid);
-@@ -692,7 +874,11 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
+@@ -692,7 +875,11 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
        walls = pocketWalls(topo, fid, n, outerEdges, enclosure, blends, cuts);
        if (walls && walls.length) [walls, reached] = floorChecks(topo, cyls, walls, pieces, n, enclosure);
      }
@@ -692,7 +726,7 @@ index 7258bc4..b6c14fc 100644
      const sealed = pieces.every((k) => enclosure.sealed.has(k));
      const [ceilings, upper] = sealed ? [[], []] as [number[], number[]]
        : undercut(topo, walls, n, new Set([...pieces, ...holeFaces]), overFloor(topo, pieces, n));
-@@ -740,7 +926,163 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
+@@ -740,7 +927,176 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
        foundC.push(corner);
      }
    });
@@ -717,13 +751,22 @@ index 7258bc4..b6c14fc 100644
 +/** Grading only (D-093): with `on`, the open-floor search also records, per shape it leaves out of steps on purpose,
 + *  the faces involved, so the scorer can put labelled step faces of those shapes on their own line. It never changes
 + *  a result; the app leaves it off. Reset `held` before each analysis. */
-+export const OPEN_DIAG: { on: boolean; held: [string, number[]][] } = { on: false, held: [] };
++export const OPEN_DIAG: { on: boolean; held: [string, number[]][]; why: Map<number, string[]>; last: string } = { on: false, held: [], why: new Map(), last: "" };
++const whyAdd = (f: number, r: string) => { if (OPEN_DIAG.on) { const l = OPEN_DIAG.why.get(f) ?? []; l.push(r); OPEN_DIAG.why.set(f, l); } };
 +
 +function openFloor(topo: Topology, fid: number, n: Vec, frame: Frame, holeFaces: Set<number>, enclosure: Enclosure): OpenFloor | null {
 +  const oc = topo.oc;
 +  const dir = frameDir(n, frame);
-+  // A floor off the part axes is no step (D-081, D-093); grading notes one that has a wall on a part axis
-+  if (dir === null && !OPEN_DIAG.on) return null;
++  if (dir === null) whyAdd(fid, "OFFAXIS");
++  // Grading (D-093): a V-floor is two planes off the part axes meeting at a concave edge with no flat floor on a part
++  // axis beside either (a notch's diagonal walls stand on one), whatever lies past their other edges
++  if (dir === null && OPEN_DIAG.on) {
++    const nbs = (k: number) => wireEdges(oc, outerWire(oc, topo.faces[k])).map((e) => [edgeNeighbour(topo, k, e), e] as [number | null, OC])
++      .filter(([nb]) => nb !== null && nb !== k && !holeFaces.has(nb)) as [number, OC][];
++    const axisFloor = (k: number) => nbs(k).some(([nb, e]) => { const nn = planeNormal(topo, nb); return nn !== null && frameDir(nn, frame) !== null && concave(topo, k, nb, e); });
++    const v = nbs(fid).find(([nb, e]) => { const nn = planeNormal(topo, nb); return nn !== null && frameDir(nn, frame) === null && concave(topo, fid, nb, e); });
++    if (v && !axisFloor(fid) && !axisFloor(v[0])) OPEN_DIAG.held.push(["tilted", [fid, v[0]]]);
++  }
 +  const group = floorPieces(topo, fid, n, holeFaces);
 +  if (group && minOf(group) !== fid) return null;
 +  const pieces = group ?? [fid];
@@ -734,12 +777,13 @@ index 7258bc4..b6c14fc 100644
 +  const blends = new Set<number>();
 +  const trace: TraceEdge[] = [];
 +  const walls = openWalls(topo, fid, n, edges, enclosure, blends, trace);
-+  if (walls === null) return null;
++  if (walls === null) { whyAdd(fid, "floor: " + OPEN_DIAG.last); return null; }
 +  const own = () => [...pieces, ...walls, ...blends];
 +  if (enclosure.rays === null) enclosure.rays = new Rays(oc, topo.solid);
 +  if (dir === null) {
 +    const axisWall = walls.some((w) => topo.type(w) === "GeomAbs_Plane" && frameDir(outwardNormal(oc, topo.faces[w])[1], frame) !== null);
 +    if (axisWall && reachable(topo, pieces, n, enclosure.rays)) OPEN_DIAG.held.push(["tilted", own()]);
++    for (const f of own()) whyAdd(f, axisWall ? "tilted floor, axis wall" : "tilted floor, no axis wall");
 +    return null;
 +  }
 +  // A floor no cutter reaches along its normal is no step (as pockets; D-093); grading notes one reached from a side
@@ -747,6 +791,7 @@ index 7258bc4..b6c14fc 100644
 +  if (OPEN_DIAG.on && openVectors(topo, trace, n).some((v) => frameDir(v, frame) !== null && reachable(topo, pieces, v, enclosure.rays!))) {
 +    OPEN_DIAG.held.push(["side", own()]);
 +  }
++  for (const f of own()) whyAdd(f, "floor not reached along its normal");
 +  return null;
 +}
 +
@@ -780,9 +825,11 @@ index 7258bc4..b6c14fc 100644
 +    const face = (a: number, b: number) => facing(topo, a, b, o.n, at);
 +    const pairIn = (ws: number[]) => ws.some((a, i) => ws.slice(i + 1).some((b) => face(a, b)));
 +    const own = new Set([...o.pieces, ...o.walls, ...o.blends]);
++    const isSlot = (rs.length === 2 && rs.every((r) => r.length === 1) && face(rs[0][0], rs[1][0]))
++      || (rs.length === 1 && rs[0].length >= 3 && face(rs[0][0], rs[0][rs[0].length - 1]));
 +    if (rs.length === 1 && !pairIn(rs[0]) && wallArc(topo, rs[0], o.n) < STEP_ARC_MAX_DEG) stepFloors.push(o);
-+    else if ((rs.length === 2 && rs.every((r) => r.length === 1) && face(rs[0][0], rs[1][0]))
-+      || (rs.length === 1 && rs[0].length >= 3 && face(rs[0][0], rs[0][rs[0].length - 1]))) {
++    else if (!isSlot) for (const f of own) whyAdd(f, "classify: " + (rs.length !== 1 ? `${rs.length} runs` : pairIn(rs[0]) ? "facing wall pair" : "wall arc >= 150"));
++    else {
 +      slotSets.push(own);
 +      // Grading (D-093): a U of 4 flat faces, 3 walls and 1 open edge is the shape of a blind slot (MFCAD++ class 17)
 +      if (OPEN_DIAG.on && own.size === 4 && [...own].every((f) => topo.type(f) === "GeomAbs_Plane") && rs[0].length === 3
@@ -1743,7 +1790,7 @@ index 7ef941a..caddf5c 100644
        : `${toolName(t)}: no drill matches ${inch(d.diameter)}, so an end mill.`;
    }).join(" ");
 diff --git a/web/src/grading/analyse.ts b/web/src/grading/analyse.ts
-index 5761e8e..e91bc17 100644
+index 5761e8e..249997d 100644
 --- a/web/src/grading/analyse.ts
 +++ b/web/src/grading/analyse.ts
 @@ -7,6 +7,7 @@ import { basename } from "node:path";
@@ -1765,7 +1812,7 @@ index 5761e8e..e91bc17 100644
    const bytes = new Uint8Array(readFileSync(path));
    const empty = (error: string): GradeFile => ({ faces: [], features: [], ignored_solids: 0, error });
    if (path.toLowerCase().endsWith(".brep")) return empty("the browser engine reads STEP only (no BREP reader)");
-+  [OPEN_DIAG.on, OPEN_DIAG.held] = [true, []]; // D-093: the shapes left out of steps on purpose, for the scorer
++  [OPEN_DIAG.on, OPEN_DIAG.held] = [true, []]; OPEN_DIAG.why = new Map(); // D-093: the shapes left out of steps on purpose, for the scorer
    const r = (await analyzeOrRefuse(oc, bytes, basename(path), "mill")) as {
      error?: string; faces: { kind: string }[]; features: (FeatureRec & { open_vectors?: unknown[]; axis: number[]; dims_mm: Record<string, number> })[];
      part: { ignored_solids: number };
