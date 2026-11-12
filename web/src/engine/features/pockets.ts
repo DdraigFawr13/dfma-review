@@ -1047,6 +1047,20 @@ function openVectors(topo: Topology, trace: TraceEdge[], n: Vec): Vec[] {
 
 const faceKey = (faces: Iterable<number>) => [...new Set(faces)].sort((a, b) => a - b).join(",");
 
+export const SLOT_OPEN_MIN = 0.9;
+/** The share of a floor's sample points whose ray along the floor's normal leaves the part. A slot's floor is open to
+ *  the sky everywhere; a rectangular passage seen from one wall has its opposite wall over part of it (steps and slots
+ *  S2: 22 of 33 class 3 calls in 40 sampled parts had under 0.7; 2 of about 100 right calls under 0.9). */
+function openShare(topo: Topology, pieces: number[], n: Vec): number {
+  const rr = new Rays(topo.oc, topo.solid);
+  let esc = 0, tot = 0;
+  for (const k of pieces) for (const p of innerPoints(topo.oc, topo.faces[k], 5)) {
+    tot++;
+    if (rr.firstHit([p[0] + REACH_STEP * n[0], p[1] + REACH_STEP * n[1], p[2] + REACH_STEP * n[2]], n)[0] === null) esc++;
+  }
+  return esc / Math.max(tot, 1);
+}
+
 /** Steps and slots from the open floors (spec Design, "Classify an open floor"; Terms, "Same feature"). Slots are
  *  classified so that a slot's side wall, seen as a floor, is not called a step; S1 emits no slot. Step corners are
  *  added to `cornerOut`. */
@@ -1149,6 +1163,7 @@ function classifyOpen(topo: Topology, cyls: Map<number, Cyl>, floors: OpenFloor[
   for (const [o, rs] of slotBy.values()) {
     const { fid, n, pieces, blends, trace, walls } = o;
     const own = new Set([...pieces, ...walls, ...blends]);
+    if (openShare(topo, pieces, n) < SLOT_OPEN_MIN) { for (const f of own) whyAdd(f, "slot: floor covered by a wall past it"); continue; }
     // The facing pair: a U's first and last wall, or the two runs of a through slot; between them the end walls
     const pair: [number, number] = rs.length === 2 ? [rs[0][0], rs[1][0]] : [rs[0][0], rs[0][rs[0].length - 1]];
     const ends = rs.length === 1 ? rs[0].slice(1, -1) : [];
