@@ -705,3 +705,21 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-11). Morgan, in chat, after the [P1 S2 status page](https://claude.ai/artifact/6y8Z73s1bg4tSk2tKoGcS3) and [demo](https://claude.ai/artifact/D4wrFp3MAWt3EwN2SqYJsy): "Approved for merge".
 - **Decision:** PR #61 as built: the ghost stock box and Stock button, Your stock with facing lines (D-089). Build defaults the spec left open, as the status page listed them: the part's sides to 0.001 in as the Stock line shows them (a typed size equal to the shown one is 0 facing); one sentence per too-small size; a wrong Apply keeps the size in use; the box hides with its button in the Machine view and on other steps, and is not in the PDF picture; turned parts get no box, button or Your stock; Your stock stays through a material or process change on the same part. Next: steps and slots S1 (D-081) in a new session.
 - **Why:** Morgan's approval; checks green (`npm run check` 601 s, parity 122/122 on the existing key).
+
+## D-091 Steps S1: keep improving recall; the target stands
+
+- **Status:** Accepted (2026-11-12). Morgan, in chat, after the [steps S1 results page](https://claude.ai/artifact/A48Afukz6a3KdVt1NoKkxV) (option A, recommended): "Keep improving".
+- **Decision:** S1 goes on in rounds on the miss causes in `docs/research/steps-s1/README.md`; each round runs both 500-part MFCAD++ sets and shows Morgan the numbers. The D-079 target is unchanged (step face recall at least the pocket recall of the same run, 0 wrong faces). Open for Morgan: whether a UMD `[Corner]` counts as a step.
+- **Why:** step recall 86.1% and 86.9% against pocket recall 97.9% and 97.1%, 21 and 29 wrong faces (version B, 2026-11-12).
+
+## D-092 Steps S1 audit: fix speed, the guard and the run bug; hold tilted and side steps
+
+- **Status:** Accepted (2026-11-12). Morgan, in chat, after the [audit reply page](https://claude.ai/artifact/6pLDaWQobgfDXxmuGHKncb) and report `docs/audit/2026-11-12-design.md` (PR #63): "Do as you recommend".
+- **Decision:** Next: bring CTC 02 back under its 10 s limit (F1), test the re-freeze guard with planted bugs (F6), fix `runs()` so a run does not depend on the edge the wire starts at (F7), and compare the U-shaped class 22 and class 17 instances by shape before any scoring change (F5). Round 1's change 7 (tilted floors) and change 8 (floors reached from a side) come out until Morgan decides whether those steps are in scope, since D-081 keeps steps on a floor along a part axis (F2, F3). The other findings stay open for later rounds.
+- **Why:** the audit's six high findings; F2 found change 7 reversed D-081 without asking (WS-07).
+
+## D-093 Steps S1: what is not a step, and how the target scores it
+
+- **Status:** Accepted (2026-11-12). Morgan, in chat, after the [results page](https://claude.ai/artifact/A48Afukz6a3KdVt1NoKkxV) recommendations: "Yes please do" (earlier: "It's ok if we don't classify everything like that as a step. It's really just important to understand those for machining operations").
+- **Decision:** Not steps (D-081 stands): a floor off the part axes (MFCAD++ slanted and V-floor steps, classes 9 and 10 where the floor is tilted), a notch reached only from its open side, and vand1's steps (one wall and a cut by the centre hole; the pocket rule stays). Their machining belongs to the reach check (P2, D-085). Steps: UMD `[Corner]` notches (plain L steps; MFCAD++ class 22). A chamfer beside a step is a wrong call and is kept out of the step's faces (edge breaks, D-075). Scoring: labelled step faces the engine shows to be one of these shapes, or a U the same shape as a blind slot (4 flat faces, 3 walls, 1 open edge), are left out of the step count on their own line, as D-019 did for pocket-shaped slots; the D-079 target is otherwise unchanged. The UMD check counts `[Corner]` with steps and records vand1 as a known difference with its numbers.
+- **Why:** Morgan's call; these shapes matter for machining access, not for the step name. Recall estimate with them left out: 92-93% (an estimate, before measuring).
