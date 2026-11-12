@@ -449,7 +449,7 @@ index 97ea568..5e315b5 100644
      const summary: PartSummary = { units_in_file: part.unitsInFile, frame, turn, face_count: part.faces.length };
      if (inventor !== null) {
 diff --git a/web/src/engine/features/pockets.ts b/web/src/engine/features/pockets.ts
-index 7258bc4..abe7144 100644
+index 7258bc4..690eaac 100644
 --- a/web/src/engine/features/pockets.ts
 +++ b/web/src/engine/features/pockets.ts
 @@ -6,6 +6,7 @@ import { ANGLE_TOL, cross, dot, unit, type Vec } from "../frame";
@@ -512,7 +512,7 @@ index 7258bc4..abe7144 100644
        if (wallKind(topo, k, n)) {
          if (!walls.includes(k)) walls.push(k);
          tangent = tangent || sm;
-@@ -292,6 +303,157 @@ function pocketWalls(topo: Topology, floor: number, n: Vec, edges: FloorEdge[],
+@@ -292,6 +303,165 @@ function pocketWalls(topo: Topology, floor: number, n: Vec, edges: FloorEdge[],
    return walls;
  }
  
@@ -580,7 +580,7 @@ index 7258bc4..abe7144 100644
 +  }
 +  if (!trace.some((t) => t.kind === "open")) { OPEN_DIAG.last = "no open edge"; return null; }
 +  if (cut && walls.length < 2) { OPEN_DIAG.last = "cut, one wall"; return null; }
-+  if (walls.some((w) => knifeEdge(topo, floor, w, walls))) { OPEN_DIAG.last = "knife edge"; return null; }
++  // No knife-edge test here (round 4, D-094): a zero-thickness edge of stock where a cylinder wall meets a slot wall stops no cutter; pockets keep theirs
 +  return walls;
 +}
 +
@@ -645,6 +645,14 @@ index 7258bc4..abe7144 100644
 +}
 +
 +export const STEP_ARC_MAX_DEG = 180 - FACING_DEG; // a step's walls all face one side of the floor
++/** A floor whose walls are one flat face and one cylinder is a quarter-round notch (MFCAD++ circular blind step): its
++ *  walls span 180 deg, which a round-ended slot (two cylinders and a flat) also does, so only this pair gets the wider
++ *  limit (round 4, D-094; measured: all 5 new calls on the first set were class 21, the 19 slot calls stayed out). */
++export const SECTOR_ARC_MAX_DEG = 181;
++function arcLimit(topo: Topology, walls: number[]): number {
++  const flat = walls.filter((w) => topo.type(w) === "GeomAbs_Plane").length;
++  return walls.length === 2 && flat === 1 && topo.type(walls[0]) !== topo.type(walls[1]) ? SECTOR_ARC_MAX_DEG : STEP_ARC_MAX_DEG;
++}
 +
 +/** The smallest arc, in degrees, holding the outward directions of a run's walls on the floor plane: a flat wall by
 + *  its normal, a round one by its normals at its vertices. An L step's walls cover 90 deg; a U (a slot's sides, or a
@@ -670,7 +678,7 @@ index 7258bc4..abe7144 100644
  export const REACH_STEP = 1e-3; // mm: a reach ray starts this far off the floor
  
  /** A cutter can reach the floor along its axis: a ray from some point inside a floor piece, along the outward
-@@ -654,12 +816,32 @@ export interface CornerFeature {
+@@ -654,12 +824,32 @@ export interface CornerFeature {
    edge_mm?: number[][];
  }
  
@@ -705,7 +713,7 @@ index 7258bc4..abe7144 100644
    const topo = new Topology(oc, solid, faces);
    const cyls = new Map<number, Cyl>();
    faces.forEach((_, i) => {
-@@ -669,6 +851,7 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
+@@ -669,6 +859,7 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
    const foundP: Pocket[] = [];
    const foundC: CornerFeature[] = [];
    const enclosure = new Enclosure(topo);
@@ -713,7 +721,7 @@ index 7258bc4..abe7144 100644
    faces.forEach((face, fid) => {
      if (holeFaces.has(fid)) return;
      const n = planeNormal(topo, fid);
-@@ -692,7 +875,11 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
+@@ -692,7 +883,11 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
        walls = pocketWalls(topo, fid, n, outerEdges, enclosure, blends, cuts);
        if (walls && walls.length) [walls, reached] = floorChecks(topo, cyls, walls, pieces, n, enclosure);
      }
@@ -726,7 +734,7 @@ index 7258bc4..abe7144 100644
      const sealed = pieces.every((k) => enclosure.sealed.has(k));
      const [ceilings, upper] = sealed ? [[], []] as [number[], number[]]
        : undercut(topo, walls, n, new Set([...pieces, ...holeFaces]), overFloor(topo, pieces, n));
-@@ -740,7 +927,176 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
+@@ -740,7 +935,176 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
        foundC.push(corner);
      }
    });
@@ -827,7 +835,7 @@ index 7258bc4..abe7144 100644
 +    const own = new Set([...o.pieces, ...o.walls, ...o.blends]);
 +    const isSlot = (rs.length === 2 && rs.every((r) => r.length === 1) && face(rs[0][0], rs[1][0]))
 +      || (rs.length === 1 && rs[0].length >= 3 && face(rs[0][0], rs[0][rs[0].length - 1]));
-+    if (rs.length === 1 && !pairIn(rs[0]) && wallArc(topo, rs[0], o.n) < STEP_ARC_MAX_DEG) stepFloors.push(o);
++    if (rs.length === 1 && !pairIn(rs[0]) && wallArc(topo, rs[0], o.n) < arcLimit(topo, rs[0])) stepFloors.push(o);
 +    else if (!isSlot) for (const f of own) whyAdd(f, "classify: " + (rs.length !== 1 ? `${rs.length} runs` : pairIn(rs[0]) ? "facing wall pair" : "wall arc >= 150"));
 +    else {
 +      slotSets.push(own);

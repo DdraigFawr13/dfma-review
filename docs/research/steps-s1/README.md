@@ -16,6 +16,21 @@ Runs: `node web/scripts/grading.mjs grade mfcadpp tests/grading/.cache/mfcadpp -
 - Holes and pockets on every run: first 590 / 602, 0 wrong and 3,667 / 3,745, 1 wrong; check 643 / 666, 0 wrong and 3,760 / 3,872, 1 wrong: the baseline exactly.
 - V-groove (5) and round-bottom (7) slots: no step call on any run (first: 103 and 78 faces; check: 130 and 80).
 
+## Round 4 (2026-11-12, D-094): quarter-round notches and knife edges (in the patch now)
+
+Morgan chose option A after the round 3 page. Each change was measured on the full first set before it stayed (the 500-part runs take about 11 min each).
+
+12. A floor whose walls are exactly one flat face and one cylinder gets a wall-arc limit of 181 deg instead of 150 (`SECTOR_ARC_MAX_DEG`). That shape is MFCAD++'s circular blind step (a quarter-round notch with one flat side, e.g. `11074`, floor 23). A blanket limit of 181 for every floor added 95 wrong faces (79 on excluded labels): round-ended slots (class 19: two cylinders and a flat) also span 180 deg. With the narrow rule, the only new calls were the 5 three-face class 21 features (15 faces) and no class 19 call.
+13. The open-floor search no longer rejects a step for a knife edge (a cylinder wall and a slot wall meeting at a convex edge with exactly opposite normals, a zero-thickness blade of stock; `10314`, `10627`, `10683`, `11905`). Pockets keep their knife-edge rule. Switching it off added no wrong face on the first set.
+
+- First set: steps 2,477 / 2,636 (94.0%, was 92.5%) vs pockets 97.9%; 16 wrong (unchanged); class 21 335 / 351 (was 302). Not steps: tilted 79, u-slot 41 (was 36), side 3.
+- Check set: steps 2,418 / 2,545 (95.0%, was 93.1%) vs pockets 97.1%; 25 wrong (unchanged); class 21 291 / 307. Not steps: u-slot 26 (was 21), tilted 55, side 3.
+- The u-slot line grew by 5 faces on each set: with the knife test gone, some class 22 U-shaped notches now show the blind-slot shape D-093 leaves out, so their faces moved from the recall count to that line. This is a scoring side effect, not a call.
+- Holes and pockets unchanged on both sets. Target: FAIL on both (recall short by 3.9 and 2.1 points; wrong faces 16 and 25).
+- `vitest` on `src/grading`, `src/engine/features`, `steps_slots`, `umd_counts`: 75 pass, 2 fail (the round 2 pair, base2 and regli_pathological1). Not run: `npm run check`, `parity:refreeze`, EDMR, timed CTC 02. The two changes have no unit test of their own (no part with a quarter-round notch or a knife edge in the step test set).
+- Not fixable by a shape rule (traced): class 21 cylinders 1.2 mm wide that are the remains of a step another feature cut away (`10190` face 32); class 8 faces split from their floor by an O-ring groove (`10127` face 4).
+- What is left on the first set (159 missed faces): sloped-neighbour floors (about 28 on-axis), class 21 wall arcs of 150 deg or more beyond the new pair (10), class 8 floors with no wall (14), class 22 (20), two or more runs. Then the 16 wrong faces: chamfers 5, class 6 6, class 4 3, class 13 2.
+
 ## Round 3 (2026-11-12): census of the misses, V-floors scored as tilted (in the patch now)
 
 Fresh container: patch applied, MFCAD++ test split re-downloaded from Morgan's Drive copy (1,615,810,586 bytes, size matched), baseline first set reproduced round 2 exactly (2,444 / 2,677, 16 wrong).
