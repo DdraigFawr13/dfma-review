@@ -10,7 +10,7 @@ export const ID = "access";
 export const PROCESSES = ["mill"] as const;
 export const LIMIT_DEG = 0.5;
 export const SQUARE_DEG = 0.5; // D-050: how far off square a hole may enter its face (assumption)
-const KINDS = ["hole", "pocket"];
+const KINDS = ["hole", "pocket", "step"]; // steps from steps and slots S1
 
 /** Degrees between a vector and the nearest of +-X +-Y +-Z of the frame. */
 function angleToAxes(v: number[], frame: PartSummary["frame"]): number {

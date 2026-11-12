@@ -5,6 +5,7 @@ import type { Process } from "../../api";
 import * as access from "./access";
 import * as cornerRadius from "./corner_radius";
 import * as pocketDepth from "./pocket_depth";
+import * as stepDepth from "./step_depth";
 import * as undercut from "./undercut";
 import * as thinWall from "./thin_wall";
 import * as holeDepth from "./hole_depth";
@@ -30,6 +31,7 @@ export const RULES: RuleEntry[] = [
   { ID: "hole_size", PROCESSES: ["mill", "turn"], ported: ["mill", "turn"], module: holeSize },
   { ID: "corner_radius", PROCESSES: ["mill"], ported: ["mill"], module: cornerRadius },
   { ID: "pocket_depth", PROCESSES: ["mill"], ported: ["mill"], module: pocketDepth },
+  { ID: "step_depth", PROCESSES: ["mill"], ported: ["mill"], module: stepDepth }, // steps and slots S1 (D-079)
   { ID: "undercut", PROCESSES: ["mill"], ported: ["mill"], module: undercut },
   { ID: "thin_wall", PROCESSES: ["mill", "turn"], ported: ["mill", "turn"], module: thinWall },
   { ID: "access", PROCESSES: ["mill"], ported: ["mill"], module: access },

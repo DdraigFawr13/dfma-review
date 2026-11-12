@@ -6,6 +6,7 @@ import { ANGLE_TOL, cross, dot, unit, type Vec } from "../frame";
 import type { OC } from "../oc";
 import { round } from "../units";
 import { pickEndMill } from "../tools";
+import { ORDER } from "../plan";
 import {
   cylinder, frameDir, LINE_TOL, outwardNormal, pt, RADIUS_TOL, refFrame, sameLine, sub, Topology, uvBounds,
   vertices, type Cyl, type Frame,
@@ -197,22 +198,29 @@ class Enclosure {
    *  just below the floor, in the air of that feature, and cast rays in the floor's plane: outward, 45 deg either
    *  side, and both ways along the edge. Every one must meet the part again, so the gap is closed all round. */
   inside(floor: number, n: Vec, edge: OC): boolean {
+    return this.gap(floor, n, edge) === "closed";
+  }
+
+  /** What lies past a floor edge with no wall: "closed" (inside(): another feature's air, closed all round), "open"
+   *  (air whose rays escape the part: a step's or slot's open edge) or "material" (a slope or chamfer past the edge,
+   *  or no direction into the floor). */
+  gap(floor: number, n: Vec, edge: OC): "closed" | "open" | "material" {
     const oc = this.topo.oc;
     const [p, e] = edgeMid(oc, edge);
     const intoDir = into(oc, this.topo.faces[floor], p, n, e);
-    if (intoDir === null) return false;
+    if (intoDir === null) { whyAdd(floor, "NOINTO"); return "material"; }
     const out = neg(intoDir);
     const start: Vec = [0, 1, 2].map((i) => p[i] + BREAK_STEP * out[i] - BREAK_STEP * n[i]) as Vec;
     if (this.classifier === null) this.classifier = new oc.BRepClass3d_SolidClassifier(this.topo.solid);
     const pnt = gpPnt(oc, start);
     this.classifier.Perform(pnt, 1e-6);
     pnt.delete();
-    if (state(this.classifier.State()) !== "TopAbs_OUT") return false; // material past the edge: a slope or chamfer, not a cut
+    if (state(this.classifier.State()) !== "TopAbs_OUT") return "material"; // material past the edge: a slope or chamfer, not a cut
     if (this.rays === null) this.rays = new Rays(oc, this.topo.solid);
     const [c, s] = [Math.cos(Math.PI / 4), Math.sin(Math.PI / 4)];
     const dirs: Vec[] = [out, e, neg(e), [0, 1, 2].map((i) => c * out[i] + s * e[i]) as Vec,
       [0, 1, 2].map((i) => c * out[i] - s * e[i]) as Vec];
-    return dirs.every((d) => this.rays!.firstHit(start, unit(d))[0] !== null);
+    return dirs.every((d) => this.rays!.firstHit(start, unit(d))[0] !== null) ? "closed" : "open";
   }
 }
 
@@ -237,7 +245,7 @@ function isBlend(topo: Topology, faceId: number, n: Vec): boolean {
 
 /** The fillet faces between a floor and its walls, and the walls past them; null when `nb` is no such fillet or
  *  leads to no wall (features.py _blend_walls). */
-function blendWalls(topo: Topology, floor: number, nb: number, n: Vec, edge: OC): [Set<number>, number[]] | null {
+function blendWalls(topo: Topology, floor: number, nb: number, n: Vec, edge: OC, open = false): [Set<number>, number[]] | null {
   if (!isBlend(topo, nb, n) || !smooth(topo, floor, nb, edge)) return null;
   const blend = new Set([nb]);
   const todo = [nb];
@@ -248,6 +256,9 @@ function blendWalls(topo: Topology, floor: number, nb: number, n: Vec, edge: OC)
     for (const [k, edges] of topo.neighbours(cur)) {
       if (k === floor || blend.has(k)) continue;
       const sm = edges.some((e) => smooth(topo, cur, k, e));
+      // Open floors (steps and slots): a face the fillet meets at an outside (convex) edge is where the fillet runs out
+      // of the part, as at a step's open end, not a wall past it.
+      if (open && !sm && !edges.some((e) => concave(topo, cur, k, e) || concave(topo, k, cur, e))) continue;
       if (wallKind(topo, k, n)) {
         if (!walls.includes(k)) walls.push(k);
         tangent = tangent || sm;
@@ -290,6 +301,165 @@ function pocketWalls(topo: Topology, floor: number, n: Vec, edges: FloorEdge[], 
   if (cut && walls.length < 2) return null;
   if (walls.some((w) => knifeEdge(topo, floor, w, walls))) return null;
   return walls;
+}
+
+/** One floor edge in an open floor's outline, in wire order: a wall edge (the walls it leads to), an open edge (no wall,
+ *  and the gap past it is open to the outside) or a cut edge (another feature cuts the floor there). */
+export interface TraceEdge { kind: "wall" | "open" | "cut"; walls: number[]; edge: OC; piece: number }
+
+export const CHAMFER_TURN_MAX_DEG = 60; // a chamfer turns under this from a face it breaks; a wall meets its top at about 90 deg
+export const CHAMFER_NARROW_SHARE = 0.5; // a chamfer is under half as wide across the floor normal as it runs along it
+
+/** A flat face that breaks an edge between two other faces (D-093): narrow (its spread across n under
+ *  CHAMFER_NARROW_SHARE of its run along n), and meeting a face other than `floor` at an outside (convex) edge, turning
+ *  between 0.5 and CHAMFER_TURN_MAX_DEG deg from it. A step's wall, drafted up to 15 deg, turns 75 or more at its top. */
+function chamferFace(topo: Topology, k: number, floor: number, n: Vec): boolean {
+  if (topo.type(k) !== "GeomAbs_Plane") return false;
+  const along = topo.facePoints(k).map((p) => dot(p, n));
+  if (span(topo, k, n) >= CHAMFER_NARROW_SHARE * (maxOf(along) - minOf(along))) return false;
+  for (const [j, edges] of topo.neighbours(k)) {
+    if (j === floor) continue;
+    for (const e of edges) {
+      const [p] = edgeMid(topo.oc, e);
+      const turn = degrees(Math.acos(Math.max(-1, Math.min(1, dot(normalAt(topo, k, p), normalAt(topo, j, p))))));
+      if (turn > degrees(ANGLE_TOL) && turn < CHAMFER_TURN_MAX_DEG && !concave(topo, k, j, e) && !concave(topo, j, k, e)) return true;
+    }
+  }
+  return false;
+}
+
+/** The walls of an open floor (steps and slots spec, Design "Finder"), with every edge's kind in `trace`; null when an
+ *  edge has no neighbour, the floor has no wall or no open edge, or a pocket test (cut with under two walls, a knife
+ *  edge) fails. pocketWalls' tests in its order, but an open edge no longer ends the walk. The enclosure test runs only
+ *  once a wall is found, so a face with no wall (most outside faces) costs no rays. */
+function openWalls(topo: Topology, floor: number, n: Vec, edges: FloorEdge[], enclosure: Enclosure, blends: Set<number>,
+  trace: TraceEdge[]): number[] | null {
+  const walls: number[] = [];
+  const rest: [number, TraceEdge][] = [];
+  for (const item of edges) {
+    const [piece, edge] = Array.isArray(item) ? item : [floor, item];
+    const nb = edgeNeighbour(topo, piece, edge);
+    if (nb === null) { OPEN_DIAG.last = "no neighbour"; return null; }
+    let beyond: number[] = [];
+    let fill: [Set<number>, number[]] | null = null;
+    let found: number[] | null = null;
+    if (wallKind(topo, nb, n) && concave(topo, piece, nb, edge)) found = [nb];
+    else if ((beyond = floorChamferWalls(topo, piece, nb, n, edge)).length) found = beyond;
+    else if ((fill = blendWalls(topo, piece, nb, n, edge, true))) {
+      for (const b of fill[0]) blends.add(b);
+      found = fill[1];
+    }
+    const t: TraceEdge = { kind: found ? "wall" : "open", walls: found ?? [], edge, piece };
+    trace.push(t);
+    if (found) for (const w of found) { if (!walls.includes(w)) walls.push(w); }
+    else rest.push([piece, t]);
+  }
+  if (!walls.length) { OPEN_DIAG.last = "no wall"; return null; }
+  if (!rest.length) { OPEN_DIAG.last = "walls all round"; return null; }
+  let cut = false;
+  for (const [piece, t] of rest) {
+    const gap = enclosure.gap(piece, n, t.edge);
+    if (gap === "material") { OPEN_DIAG.last = "material past edge"; return null; } // a slope or rounded side past the edge: not an open edge (Terms, "Open edge")
+    if (gap === "closed") {
+      t.kind = "cut";
+      cut = true;
+    }
+  }
+  if (!trace.some((t) => t.kind === "open")) { OPEN_DIAG.last = "no open edge"; return null; }
+  if (cut && walls.length < 2) { OPEN_DIAG.last = "cut, one wall"; return null; }
+  // No knife-edge test here (round 4, D-094): a zero-thickness edge of stock where a cylinder wall meets a slot wall stops no cutter; pockets keep theirs
+  return walls;
+}
+
+/** The walls in order round the floor, split wherever an open or cut edge comes between them (Terms, "Run"); with
+ *  `same`, a cut between two pieces of one wall (another feature cut through it, as a pocket beside a step) does not
+ *  split it. */
+export function runs(trace: { kind: string; walls: number[] }[], same: (a: number, b: number) => boolean = () => false): number[][] {
+  // Start at an open edge, which always ends a run, so a run is never cut where the walk wraps (audit F7, D-092);
+  // with none, at a cut, and the last run joins the first when the cut between them is within one wall.
+  const firstOpen = trace.findIndex((t) => t.kind === "open");
+  const start = firstOpen >= 0 ? firstOpen : trace.findIndex((t) => t.kind !== "wall");
+  if (start < 0) return [[...new Set(trace.flatMap((t) => t.walls))]];
+  const out: number[][] = [];
+  let cur: number[] = [];
+  let cutAfter: number | null = null; // the last wall before a run of cut edges
+  for (let i = 1; i <= trace.length; i++) {
+    const t = trace[(start + i) % trace.length];
+    if (t.kind === "open") {
+      if (cur.length) out.push(cur);
+      [cur, cutAfter] = [[], null];
+    } else if (t.kind === "cut") {
+      if (cur.length && cutAfter === null) cutAfter = cur[cur.length - 1];
+    } else {
+      if (cutAfter !== null && !t.walls.some((w) => same(cutAfter!, w))) {
+        out.push(cur);
+        cur = [];
+      }
+      cutAfter = null;
+      for (const w of t.walls) if (!cur.includes(w)) cur.push(w);
+    }
+  }
+  if (cur.length) out.push(cur);
+  if (firstOpen < 0 && out.length > 1) { // closed by cuts all round: the wrap is a cut between the last run and the first
+    const [last, first] = [out[out.length - 1], out[0]];
+    if (first.some((w) => same(last[last.length - 1], w))) out.splice(0, 1, ...[[...new Set([...out.pop()!, ...first])]]);
+  }
+  return out;
+}
+
+/** Two planar faces on one plane (normals within 0.5 deg, 1e-4 mm apart). */
+function coplanar(topo: Topology, a: number, b: number): boolean {
+  if (topo.type(a) !== "GeomAbs_Plane" || topo.type(b) !== "GeomAbs_Plane") return false;
+  const [pa, na] = outwardNormal(topo.oc, topo.faces[a]);
+  const [pb, nb] = outwardNormal(topo.oc, topo.faces[b]);
+  return dot(na, nb) >= Math.cos(ANGLE_TOL) && Math.abs(dot(sub(pb, pa), na)) <= 1e-4;
+}
+
+export const FACING_DEG = 2 * DRAFT_MAX_DEG; // two drafted slot walls may each lean 15 deg
+
+/** Two planar walls face each other across the floor: their outward normals, projected on the floor plane, point at
+ *  each other within FACING_DEG, and the floor lies between them (Terms, "Facing pair"). */
+function facing(topo: Topology, a: number, b: number, n: Vec, floorAt: Vec): boolean {
+  if (topo.type(a) !== "GeomAbs_Plane" || topo.type(b) !== "GeomAbs_Plane") return false;
+  const flat = (v: Vec): Vec | null => {
+    const w = sub(v, scale(dot(v, n), n));
+    return norm(w) < 1e-9 ? null : unit(w);
+  };
+  const [pa, pb] = [flat(outwardNormal(topo.oc, topo.faces[a])[1]), flat(outwardNormal(topo.oc, topo.faces[b])[1])];
+  if (pa === null || pb === null || dot(pa, pb) > -Math.cos(radians(FACING_DEG))) return false;
+  const [ca, cb] = [centre(topo.oc, topo.faces[a]), centre(topo.oc, topo.faces[b])];
+  return dot(pa, sub(cb, ca)) > 0 && dot(pa, sub(floorAt, ca)) > 0 && dot(pb, sub(floorAt, cb)) > 0;
+}
+
+export const STEP_ARC_MAX_DEG = 180 - FACING_DEG; // a step's walls all face one side of the floor
+/** A floor whose walls are one flat face and one cylinder is a quarter-round notch (MFCAD++ circular blind step): its
+ *  walls span 180 deg, which a round-ended slot (two cylinders and a flat) also does, so only this pair gets the wider
+ *  limit (round 4, D-094; measured: all 5 new calls on the first set were class 21, the 19 slot calls stayed out). */
+export const SECTOR_ARC_MAX_DEG = 181;
+function arcLimit(topo: Topology, walls: number[]): number {
+  const flat = walls.filter((w) => topo.type(w) === "GeomAbs_Plane").length;
+  return walls.length === 2 && flat === 1 && topo.type(walls[0]) !== topo.type(walls[1]) ? SECTOR_ARC_MAX_DEG : STEP_ARC_MAX_DEG;
+}
+
+/** The smallest arc, in degrees, holding the outward directions of a run's walls on the floor plane: a flat wall by
+ *  its normal, a round one by its normals at its vertices. An L step's walls cover 90 deg; a U (a slot's sides, or a
+ *  blind slot seen from its end wall) 180; a pocket broken open at one corner, as a triangle, more. */
+export function wallArc(topo: Topology, ws: number[], n: Vec): number {
+  const [a, b] = refFrame(n);
+  const angles: number[] = [];
+  for (const w of ws) {
+    const plane = topo.type(w) === "GeomAbs_Plane";
+    const normals = plane ? [outwardNormal(topo.oc, topo.faces[w])[1]] : topo.facePoints(w).map((p) => normalAt(topo, w, p));
+    for (const m of normals) {
+      const [u, v] = [dot(m, a), dot(m, b)];
+      if (Math.hypot(u, v) > 1e-9) angles.push(degrees(Math.atan2(v, u)));
+    }
+  }
+  if (angles.length < 2) return 0;
+  angles.sort((x, y) => x - y);
+  let gap = angles[0] + 360 - angles[angles.length - 1];
+  for (let i = 1; i < angles.length; i++) gap = Math.max(gap, angles[i] - angles[i - 1]);
+  return 360 - gap;
 }
 
 export const REACH_STEP = 1e-3; // mm: a reach ray starts this far off the floor
@@ -654,12 +824,32 @@ export interface CornerFeature {
   edge_mm?: number[][];
 }
 
+/** A step or a slot (steps and slots spec, D-079): an open floor with its walls. `floor` is the floor's face id. */
+export interface OpenFeature {
+  kind: "step" | "slot";
+  faces: number[];
+  floor: number;
+  axis: number[];
+  open_dirs: string[];
+  open_vectors: number[][];
+  dims_mm: Record<string, number>;
+  open_edges?: number;
+  open_ends?: number;
+  end_type?: "open" | "round" | "flat";
+}
+
+/** An open floor found in the pockets() loop, before it is classified. */
+interface OpenFloor { fid: number; n: Vec; dir: string; pieces: number[]; walls: number[]; blends: Set<number>; trace: TraceEdge[] }
+
 function outerWire(oc: OC, face: OC): OC {
   return oc.BRepTools.OuterWire(oc.TopoDS.Face(face));
 }
 
-/** Closed pockets and their inside corners. Returns [pockets, corners], unnumbered (features.py pockets). */
-export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces: Set<number>): [Pocket[], CornerFeature[]] {
+/** Closed pockets and their inside corners, then steps and slots (steps and slots spec). Returns [pockets, corners,
+ *  steps, slots, the steps' and slots' corners], unnumbered (features.py pockets, then the open floors). The open
+ *  floors' corners come apart so the pockets' corners keep their numbers. */
+export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces: Set<number>):
+  [Pocket[], CornerFeature[], OpenFeature[], OpenFeature[], CornerFeature[]] {
   const topo = new Topology(oc, solid, faces);
   const cyls = new Map<number, Cyl>();
   faces.forEach((_, i) => {
@@ -669,6 +859,7 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
   const foundP: Pocket[] = [];
   const foundC: CornerFeature[] = [];
   const enclosure = new Enclosure(topo);
+  const openFloors: OpenFloor[] = [];
   faces.forEach((face, fid) => {
     if (holeFaces.has(fid)) return;
     const n = planeNormal(topo, fid);
@@ -692,7 +883,11 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
       walls = pocketWalls(topo, fid, n, outerEdges, enclosure, blends, cuts);
       if (walls && walls.length) [walls, reached] = floorChecks(topo, cyls, walls, pieces, n, enclosure);
     }
-    if (!(walls && walls.length) || !reached) return;
+    if (!(walls && walls.length) || !reached) {
+      const open = openFloor(topo, fid, n, frame, holeFaces, enclosure);
+      if (open) openFloors.push(open);
+      return;
+    }
     const sealed = pieces.every((k) => enclosure.sealed.has(k));
     const [ceilings, upper] = sealed ? [[], []] as [number[], number[]]
       : undercut(topo, walls, n, new Set([...pieces, ...holeFaces]), overFloor(topo, pieces, n));
@@ -740,7 +935,176 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
       foundC.push(corner);
     }
   });
-  return [foundP, foundC];
+  const pocketFaceSet = new Set(foundP.flatMap((p) => p.faces));
+  const openCorners: CornerFeature[] = [];
+  // A floor whose walls all meet it on an inner loop of the wall (an island in that face: a rib or boss standing on a
+  // plate, seen from the boss's side) is not a step; a step's wall meets its floor on the wall's outer boundary.
+  const onIsland = (o: OpenFloor) => o.walls.every((w) => {
+    const outer = wireEdges(oc, outerWire(oc, faces[w]));
+    const shared = o.pieces.flatMap((k) => sharedEdges(topo, k, w));
+    return shared.length > 0 && shared.every((e) => !outer.some((x) => x.IsSame(e)));
+  });
+  const confirmed = (o: OpenFloor) => !onIsland(o);
+  const [steps, slots] = classifyOpen(topo, cyls, openFloors.filter((o) => !pocketFaceSet.has(o.fid) && confirmed(o)), openCorners, frame, enclosure);
+  return [foundP, foundC, steps, slots, openCorners];
+}
+
+/** The open floor on this face, or null (Terms, "Open floor"): a plane on a part-frame axis whose outline has at least
+ *  one wall and one open edge, reached by a cutter along its normal. A floor in several flat pieces is taken once,
+ *  from its lowest-numbered piece, with the pieces' shared outline. */
+/** Grading only (D-093): with `on`, the open-floor search also records, per shape it leaves out of steps on purpose,
+ *  the faces involved, so the scorer can put labelled step faces of those shapes on their own line. It never changes
+ *  a result; the app leaves it off. Reset `held` before each analysis. */
+export const OPEN_DIAG: { on: boolean; held: [string, number[]][]; why: Map<number, string[]>; last: string } = { on: false, held: [], why: new Map(), last: "" };
+const whyAdd = (f: number, r: string) => { if (OPEN_DIAG.on) { const l = OPEN_DIAG.why.get(f) ?? []; l.push(r); OPEN_DIAG.why.set(f, l); } };
+
+function openFloor(topo: Topology, fid: number, n: Vec, frame: Frame, holeFaces: Set<number>, enclosure: Enclosure): OpenFloor | null {
+  const oc = topo.oc;
+  const dir = frameDir(n, frame);
+  if (dir === null) whyAdd(fid, "OFFAXIS");
+  // Grading (D-093): a V-floor is two planes off the part axes meeting at a concave edge with no flat floor on a part
+  // axis beside either (a notch's diagonal walls stand on one), whatever lies past their other edges
+  if (dir === null && OPEN_DIAG.on) {
+    const nbs = (k: number) => wireEdges(oc, outerWire(oc, topo.faces[k])).map((e) => [edgeNeighbour(topo, k, e), e] as [number | null, OC])
+      .filter(([nb]) => nb !== null && nb !== k && !holeFaces.has(nb)) as [number, OC][];
+    const axisFloor = (k: number) => nbs(k).some(([nb, e]) => { const nn = planeNormal(topo, nb); return nn !== null && frameDir(nn, frame) !== null && concave(topo, k, nb, e); });
+    const v = nbs(fid).find(([nb, e]) => { const nn = planeNormal(topo, nb); return nn !== null && frameDir(nn, frame) === null && concave(topo, fid, nb, e); });
+    if (v && !axisFloor(fid) && !axisFloor(v[0])) OPEN_DIAG.held.push(["tilted", [fid, v[0]]]);
+  }
+  const group = floorPieces(topo, fid, n, holeFaces);
+  if (group && minOf(group) !== fid) return null;
+  const pieces = group ?? [fid];
+  const edges: FloorEdge[] = group
+    ? group.flatMap((k) => wireEdges(oc, outerWire(oc, topo.faces[k])).filter((e) => !group.includes(edgeNeighbour(topo, k, e) as number))
+      .map((e) => [k, e] as [number, OC]))
+    : wireEdges(oc, outerWire(oc, topo.faces[fid]));
+  const blends = new Set<number>();
+  const trace: TraceEdge[] = [];
+  const walls = openWalls(topo, fid, n, edges, enclosure, blends, trace);
+  if (walls === null) { whyAdd(fid, "floor: " + OPEN_DIAG.last); return null; }
+  const own = () => [...pieces, ...walls, ...blends];
+  if (enclosure.rays === null) enclosure.rays = new Rays(oc, topo.solid);
+  if (dir === null) {
+    const axisWall = walls.some((w) => topo.type(w) === "GeomAbs_Plane" && frameDir(outwardNormal(oc, topo.faces[w])[1], frame) !== null);
+    if (axisWall && reachable(topo, pieces, n, enclosure.rays)) OPEN_DIAG.held.push(["tilted", own()]);
+    for (const f of own()) whyAdd(f, axisWall ? "tilted floor, axis wall" : "tilted floor, no axis wall");
+    return null;
+  }
+  // A floor no cutter reaches along its normal is no step (as pockets; D-093); grading notes one reached from a side
+  if (reachable(topo, pieces, n, enclosure.rays)) return { fid, n, dir, pieces, walls, blends, trace };
+  if (OPEN_DIAG.on && openVectors(topo, trace, n).some((v) => frameDir(v, frame) !== null && reachable(topo, pieces, v, enclosure.rays!))) {
+    OPEN_DIAG.held.push(["side", own()]);
+  }
+  for (const f of own()) whyAdd(f, "floor not reached along its normal");
+  return null;
+}
+
+/** The outward unit vector across each open edge, deduplicated within 0.5 deg. */
+function openVectors(topo: Topology, trace: TraceEdge[], n: Vec): Vec[] {
+  const out: Vec[] = [];
+  for (const t of trace) {
+    if (t.kind !== "open") continue;
+    const [p, e] = edgeMid(topo.oc, t.edge);
+    const d = into(topo.oc, topo.faces[t.piece], p, n, e);
+    if (d === null) continue;
+    const v = neg(d);
+    if (!out.some((w) => dot(w, v) >= Math.cos(ANGLE_TOL))) out.push(v);
+  }
+  return out;
+}
+
+const faceKey = (faces: Iterable<number>) => [...new Set(faces)].sort((a, b) => a - b).join(",");
+
+/** Steps and slots from the open floors (spec Design, "Classify an open floor"; Terms, "Same feature"). Slots are
+ *  classified so that a slot's side wall, seen as a floor, is not called a step; S1 emits no slot. Step corners are
+ *  added to `cornerOut`. */
+function classifyOpen(topo: Topology, cyls: Map<number, Cyl>, floors: OpenFloor[], cornerOut: CornerFeature[], frame: Frame,
+  enclosure: Enclosure): [OpenFeature[], OpenFeature[]] {
+  const oc = topo.oc;
+  const stepFloors: OpenFloor[] = [];
+  const slotSets: Set<number>[] = [];
+  for (const o of floors) {
+    const rs = runs(o.trace, (a, b) => coplanar(topo, a, b));
+    const at = centre(oc, topo.faces[o.fid]);
+    const face = (a: number, b: number) => facing(topo, a, b, o.n, at);
+    const pairIn = (ws: number[]) => ws.some((a, i) => ws.slice(i + 1).some((b) => face(a, b)));
+    const own = new Set([...o.pieces, ...o.walls, ...o.blends]);
+    const isSlot = (rs.length === 2 && rs.every((r) => r.length === 1) && face(rs[0][0], rs[1][0]))
+      || (rs.length === 1 && rs[0].length >= 3 && face(rs[0][0], rs[0][rs[0].length - 1]));
+    if (rs.length === 1 && !pairIn(rs[0]) && wallArc(topo, rs[0], o.n) < arcLimit(topo, rs[0])) stepFloors.push(o);
+    else if (!isSlot) for (const f of own) whyAdd(f, "classify: " + (rs.length !== 1 ? `${rs.length} runs` : pairIn(rs[0]) ? "facing wall pair" : "wall arc >= 150"));
+    else {
+      slotSets.push(own);
+      // Grading (D-093): a U of 4 flat faces, 3 walls and 1 open edge is the shape of a blind slot (MFCAD++ class 17)
+      if (OPEN_DIAG.on && own.size === 4 && [...own].every((f) => topo.type(f) === "GeomAbs_Plane") && rs[0].length === 3
+        && o.trace.filter((t) => t.kind === "open").length === 1 && !o.trace.some((t) => t.kind === "cut")) OPEN_DIAG.held.push(["u-slot", [...own]]);
+    }
+  }
+  // A slot whose floor another feature breaks into strips (a channel over grooves or cross holes): each strip sees one
+  // wall, so it reads as a step. Two step floors on one plane whose single walls face each other across them are that
+  // slot's pieces, not steps; so is a step seen from one of those walls (round 2; UMD base1).
+  const one = stepFloors.filter((o) => o.walls.length === 1 && topo.type(o.walls[0]) === "GeomAbs_Plane");
+  const strips = new Set<OpenFloor>();
+  for (const a of one) for (const b of one) {
+    if (a === b || a.walls[0] === b.walls[0] || !coplanar(topo, a.fid, b.fid)) continue;
+    if (facing(topo, a.walls[0], b.walls[0], a.n, centre(oc, topo.faces[a.fid]))) { strips.add(a); strips.add(b); }
+  }
+  if (strips.size) {
+    const pairs = [...strips].map((o) => [o.fid, o.walls[0]]);
+    const pieceOf = (o: OpenFloor) => { const f = new Set([...o.pieces, ...o.walls]); return pairs.some(([x, y]) => f.has(x) && f.has(y)); };
+    for (let i = stepFloors.length - 1; i >= 0; i--) if (pieceOf(stepFloors[i])) stepFloors.splice(i, 1);
+  }
+  // One feature per face set; its floor the face whose direction comes first in ORDER (Terms, "Same feature").
+  const bySet = new Map<string, OpenFloor>();
+  const rankOf = (d: string) => ORDER.indexOf(d as (typeof ORDER)[number]);
+  for (const o of stepFloors) {
+    const own = [...o.pieces, ...o.walls, ...o.blends];
+    if (slotSets.some((s) => own.every((f) => s.has(f)))) continue; // a slot's side wall seen as a floor
+    const key = faceKey(own);
+    const had = bySet.get(key);
+    if (!had || rankOf(o.dir) < rankOf(had.dir)) bySet.set(key, o);
+  }
+  // A step whose faces all lie in a larger step's is part of it, seen from one of its walls (a wall cut in two)
+  const sets = [...bySet.values()].map((o) => new Set([...o.pieces, ...o.walls, ...o.blends]));
+  const kept = [...bySet.values()].filter((_, i) => !sets.some((s, j) => j !== i && s.size > sets[i].size && [...sets[i]].every((f) => s.has(f))));
+  const steps: OpenFeature[] = [];
+  for (const o of kept) {
+    const { fid, n, pieces, blends, trace } = o;
+    // A chamfer beside another wall is its own operation (D-093, edge breaks D-075), kept out of the step's faces. A
+    // chamfer-shaped wall that is the step's only one stays: MFCAD++ calls such a notch a triangular blind step (20).
+    const plain = o.walls.filter((w) => !chamferFace(topo, w, fid, n));
+    const walls = plain.length ? plain : o.walls;
+    const floorH = dot(outwardNormal(oc, topo.faces[fid])[0], n);
+    const top = maxOf(walls.flatMap((w) => topo.facePoints(w).map((p) => dot(p, n))));
+    const own = new Set([...pieces, ...walls, ...blends]);
+    const depth = rimTop(topo, walls, own, n, top, top - floorH) - floorH;
+    const found = corners(topo, walls, cyls);
+    const minR = found.length ? minOf(found.map(([, r]) => r)) : Infinity;
+    const [tool, undersized] = pickEndMill(minR, Infinity);
+    const stepFaces = [...own].sort((a, b) => a - b);
+    const dirs = [o.dir];
+    if (walls.length === 1 && topo.type(walls[0]) === "GeomAbs_Plane") { // D-079: the wall's side too, when a cutter reaches it
+      const m = outwardNormal(oc, topo.faces[walls[0]])[1];
+      const d = frameDir(m, frame);
+      if (enclosure.rays === null) enclosure.rays = new Rays(oc, topo.solid);
+      if (d !== null && reachable(topo, walls, m, enclosure.rays)) dirs.push(d);
+    }
+    dirs.sort((a, b) => rankOf(a) - rankOf(b));
+    const vectors: Vec[] = [[...n] as Vec];
+    for (const out of openVectors(topo, trace, n)) if (!vectors.some((v) => dot(v, out) >= Math.cos(ANGLE_TOL))) vectors.push(out);
+    steps.push({ kind: "step", faces: stepFaces, floor: fid, axis: [...n], open_dirs: dirs, open_vectors: vectors.map((v) => [...v]),
+      dims_mm: { depth, length: maxOf(walls.map((w) => span(topo, w, n))), min_corner_radius: minR === Infinity ? 0.0 : minR,
+        end_mill_mm: tool, undersized: Number(undersized) },
+      open_edges: trace.filter((t) => t.kind === "open").length });
+    for (const [cfaces, r, edge] of found) {
+      const [ctool] = pickEndMill(r, Infinity);
+      const corner: CornerFeature = { kind: "corner", faces: cfaces, axis: [...n], open_dirs: [], open_vectors: [],
+        dims_mm: { radius: r, depth, end_mill_mm: ctool }, pocket: minOf(stepFaces) };
+      if (edge) corner.edge_mm = edge;
+      cornerOut.push(corner);
+    }
+  }
+  return [steps, []];
 }
 
 /** Each corner's `pocket`: the id of the pocket it sits in (D-049). Run after both are numbered. */

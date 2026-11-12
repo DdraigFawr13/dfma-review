@@ -1,6 +1,6 @@
 # Handoff
 
-Updated: 2026-11-12 (steps S1 round 2 measured; PR #62 and the audit PR #63 merged as docs, Morgan: "Ok merge when done and ready"). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
+Updated: 2026-11-12 (steps S1 merged, D-095; PR #62 and the audit PR #63 merged as docs, Morgan: "Ok merge when done and ready"). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
 
 ## Phase
 
@@ -21,14 +21,13 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 - ✔ UI direction: research, mock-ups, spec, S1-S3, UX audit and fixes (#25 to #32, D-042 to D-053; full line in the archive).
 - ✔ GitLab Pages port (D-054 to D-074): trial, spec, S1-S7, S8a, S8b retire Python (#33 to #43; full line in the archive).
 - ✔ UI fixes (Morgan, 2026-11-10; D-076): ✔ round 1 and review · ✔ mock-up approved (PR #46) · ✔ spec A+B (D-078, #49) · ✔ slice A model (#51, D-080) · ✔ slice B screens (#53) · ○ Morgan's work-copy check · ○ later: cutaway, dimensions; tool-access check after steps and slots.
-- ▶ Steps and slots (D-066, D-068, D-079, D-081): ✔ research, planning, spec `docs/specs/steps-slots.md` (#50) · ▶ S1 steps: target fails, to Morgan ([README](research/steps-s1/README.md)) · ○ S2 slots · ○ S3 screens · ○ then V-groove and round-bottom slots, edge treatments, pocket shapes (D-075). Full line in the archive.
+- ▶ Steps and slots (D-066, D-068, D-079, D-081): ✔ research, planning, spec `docs/specs/steps-slots.md` (#50) · ✔ S1 steps merged (#64, D-095; [README](research/steps-s1/README.md)) · ▶ S2 slots · ○ S3 screens · ○ then V-groove and round-bottom slots, edge treatments, pocket shapes (D-075). Full line in the archive.
 - ▶ Machining and DFMA rework (D-083 to D-088): ✔ research, plan, P0 (#57), spike (#58), spec P1+P2 ([spec](specs/machining-p1-p2.md), #59) · ✔ P1 S1 removal numbers (#60, D-089) · ✔ P1 S2 stock box and your stock (#61, D-090) · ▶ steps and slots S1-S2 · ○ P2 reach check · ○ P3 Xometry checks · ○ P4 time · ○ DFMA · ○ Inventor-only · ○ Vault. Full line in the archive.
 - ○ Stage 2 design review · ○ Stage 3 DXF drawing check · ○ Stage 4 DXF drawing generation.
 
 ## Just done
 
-- 2026-11-12 Steps S1 round 2: recall 91.3% first set, 92.2% check set (pockets 97.9%, 97.1%); wrong 16 and 25 (from 26 and 39); holes and pockets unchanged; UMD 9 of 11. Merged as docs in PR #62 (write-up and `s1-wip.patch`, [README](research/steps-s1/README.md)); audit in PR #63 (D-092, D-093).
-- 2026-11-11 P1 S2 (stock box and your stock) approved (D-090), merged in [PR #61](https://github.com/DdraigFawr13/dfma-review/pull/61): archive "Moved 2026-11-12".
+- 2026-11-12 Steps S1 merged (PR #64, D-094, D-095): Morgan chose to accept round 4 as measured (steps recall 94.0% and 95.0% vs pockets 97.9%, 97.1%; wrong 16 and 25) and drop the recall target; revisit with a stronger model later. Check 848 s, EDMR 114 pass, parity re-frozen.
 - Earlier (P1 S1 #60, P1+P2 spec #59, reach spike #58, P0 #57, UI fixes, S8b, harness): archive.
 
 ## Next
@@ -36,7 +35,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 00. Checks: `npm run check` at the root; before a PR is marked ready also `npm --prefix web run edmr` and `parity:full` when the engine changed. Morgan: turn on GitHub Pages (Settings → Pages → Source: GitHub Actions) if not yet; tell IT before the work copy (D-055).
 000a. UI fixes (D-076, D-078, D-080): A and B merged (#51, #53). Owed: Morgan's work-copy check of both (VER-07); arrow keys and the 50 ms drag target stand as built (D-080) until then. B's open finding: a countersink tool has `diameter_in: null`, so it shows no spindle.
 0000. Done: P1 S2 merged in PR #61 (D-090). Still owed by Morgan: the engineer's wrong-side parts, which free options he meant, the shop's setup issues; turn on GitHub Pages (Pages runs 21 and 22 on main failed). Stale branch `port-s8-retire-python` (merged in #43): check before deleting (GIT-03).
-000. Now: steps S1 round 3 on a new branch from main (GIT-01): `git apply docs/research/steps-s1/s1-wip.patch`, `node web/scripts/make-set.mjs steps_slots`, MFCAD++ download in archive "Moved 2026-11-09". Work on the misses (classes 9, 20, 21 most) and the class 6 and 13 wrong calls; both 500-part runs per round, shown to Morgan; UMD base2 and regli disagree (README). Not run yet: `parity:refreeze`, `npm run check`, EDMR. Audit findings still open: F4, F8-F23.
+000. Now: S2 slots (spec `docs/specs/steps-slots.md`) on a new branch from main (GIT-01). Steps S1 is merged (D-095); its misses are in [README](research/steps-s1/README.md) "Round 4". MFCAD++ download for grading: archive "Moved 2026-11-09".
 0. Now: plainer sentences for the rule cases that still read as titles, each shown to Morgan first (D-045). Follow-up from the audit fixes: Hole feature rows still carry aria-pressed and aria-expanded (F15's pattern, out of its scope).
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `cd web && node scripts/harness.mjs local-pairs` (prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
 2. Recognition and stress-test status, scoring commands and the MFCAD++ download: archive "Moved 2026-11-09" (old Next 3 and 3a). Re-run them on every recognition change.
@@ -44,7 +43,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Open questions
 
-- Steps S1: none open for Morgan (D-093 settled the five). ([README](research/steps-s1/README.md))
+- Steps S1: closed (D-095); a later round can retry the misses.
 - Shape from the `.ipt` alone: its own phase after I1 (D-035); test-run numbers in the archive.
 - Backlog and after-project ideas (hole types, ring-face threads, G-code view, waivers, shop profiles): archive "Moved 2026-11-09".
 - GitLab at work: are there CI runners, and can they download packages? Ask IT before the move (D-006).

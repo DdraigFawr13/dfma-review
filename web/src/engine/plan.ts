@@ -89,6 +89,21 @@ export function pocketTools(f: Feature): Tool[] {
   return [...(rough ? [rough] : []), pocketTool(f)];
 }
 
+/** A step's tools (D-079): the roughing end mill, the largest in the list, since no wall limits it, when larger than
+ *  the finishing one; then the finishing one, the largest that fits its inside corners. */
+export function stepTools(f: Feature): Tool[] {
+  const finish = pocketTool(f);
+  const largest = endMillsMm()[endMillsMm().length - 1];
+  if (largest <= f.dims_mm.end_mill_mm + 1e-6) return [finish];
+  return [{ id: millId(largest), kind: "end_mill", diameter_in: round(largest / MM_PER_IN, 6), undersized: false }, finish];
+}
+
+/** The kinds a mill setup reaches and their tools (steps and slots spec, "Every place that lists pocket"). */
+export const PLANNED_KINDS = ["hole", "pocket", "step"];
+function featureTools(f: Feature, unitsInFile: string): Tool[] {
+  return f.kind === "hole" ? [holeTool(f, unitsInFile)] : f.kind === "step" ? stepTools(f) : pocketTools(f);
+}
+
 function countersinkTool(deg: number): Tool {
   return { id: `cs-${pyG(deg)}`, kind: "countersink", diameter_in: null, undersized: false };
 }
@@ -111,9 +126,9 @@ export function plan(features: Feature[], findings: { rule: string; feature?: st
   const flagged = new Set(findings.filter((f) => f.rule === "access").map((f) => f.feature));
   const jobs: [string, Set<string>, Tool, number[]][] = []; // feature id, the directions it can be cut from, tool, its faces
   for (const f of features) {
-    if ((f.kind !== "hole" && f.kind !== "pocket") || flagged.has(f.id) || !f.open_dirs?.length) continue;
+    if (!PLANNED_KINDS.includes(f.kind) || flagged.has(f.id) || !f.open_dirs?.length) continue;
     const dirs = new Set<string>(f.tool_dirs ?? f.open_dirs); // P0 (D-085): a counterbore from its large end only
-    for (const tool of f.kind === "hole" ? [holeTool(f, unitsInFile)] : pocketTools(f)) jobs.push([f.id, dirs, tool, f.faces]);
+    for (const tool of featureTools(f, unitsInFile)) jobs.push([f.id, dirs, tool, f.faces]);
     const vecs: number[][] = f.countersink_vectors ?? [], degs: number[] = f.countersink_degs ?? [], cones: number[][] = f.countersink_end_faces ?? [];
     for (let i = 0; i < Math.min(vecs.length, degs.length, cones.length); i++) {
       const d = frameDir(vecs[i] as [number, number, number], frame);

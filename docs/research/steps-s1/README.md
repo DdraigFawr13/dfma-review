@@ -2,9 +2,9 @@
 
 Spec: [`docs/specs/steps-slots.md`](../../specs/steps-slots.md) (D-079, D-081). Branch `ccr-32792aa1-29h1tl`.
 
-**Result: the target rule fails on both MFCAD++ sets, so S1 stops here for Morgan (spec J4: "A miss stops the slice: the numbers go to Morgan; the target is not lowered").** Holes and pockets are unchanged on both sets. On our own 18-part set every step face is found, each step whole, and nothing else is called a step.
+**Result at the time: the target rule fails on both MFCAD++ sets, so S1 stops here for Morgan (spec J4: "A miss stops the slice: the numbers go to Morgan; the target is not lowered").** Holes and pockets are unchanged on both sets. On our own 18-part set every step face is found, each step whole, and nothing else is called a step.
 
-The engine work is kept as a patch, [`s1-wip.patch`](s1-wip.patch), so `main` stays green (GIT-05): `git apply docs/research/steps-s1/s1-wip.patch`, then `node web/scripts/make-set.mjs steps_slots` rebuilds the set's STEP files, MANIFEST.md and INSTANCES.json (left out of the patch; the script makes the same files every run).
+**Merged with D-095:** Morgan accepted S1 as measured (round 4) and dropped the recall target for now; the engine work is in the code (PR #64). The earlier text below, which says the engine work is kept as a patch, was true until then. The parity keys were re-frozen with the guarded script (quick 91 files, full 206 more, none refused). `node web/scripts/make-set.mjs steps_slots` rebuilds the set's STEP files, MANIFEST.md and INSTANCES.json; `web/scripts/census-steps.ts` tallies why step faces are missed.
 
 ## The target (D-079), measured
 
@@ -16,7 +16,41 @@ Runs: `node web/scripts/grading.mjs grade mfcadpp tests/grading/.cache/mfcadpp -
 - Holes and pockets on every run: first 590 / 602, 0 wrong and 3,667 / 3,745, 1 wrong; check 643 / 666, 0 wrong and 3,760 / 3,872, 1 wrong: the baseline exactly.
 - V-groove (5) and round-bottom (7) slots: no step call on any run (first: 103 and 78 faces; check: 130 and 80).
 
-## Round 2 (2026-11-12): in the patch now
+## Round 4 (2026-11-12, D-094): quarter-round notches and knife edges (in the patch now)
+
+Morgan chose option A after the round 3 page. Each change was measured on the full first set before it stayed (the 500-part runs take about 11 min each).
+
+12. A floor whose walls are exactly one flat face and one cylinder gets a wall-arc limit of 181 deg instead of 150 (`SECTOR_ARC_MAX_DEG`). That shape is MFCAD++'s circular blind step (a quarter-round notch with one flat side, e.g. `11074`, floor 23). A blanket limit of 181 for every floor added 95 wrong faces (79 on excluded labels): round-ended slots (class 19: two cylinders and a flat) also span 180 deg. With the narrow rule, the only new calls were the 5 three-face class 21 features (15 faces) and no class 19 call.
+13. The open-floor search no longer rejects a step for a knife edge (a cylinder wall and a slot wall meeting at a convex edge with exactly opposite normals, a zero-thickness blade of stock; `10314`, `10627`, `10683`, `11905`). Pockets keep their knife-edge rule. Switching it off added no wrong face on the first set.
+
+- First set: steps 2,477 / 2,636 (94.0%, was 92.5%) vs pockets 97.9%; 16 wrong (unchanged); class 21 335 / 351 (was 302). Not steps: tilted 79, u-slot 41 (was 36), side 3.
+- Check set: steps 2,418 / 2,545 (95.0%, was 93.1%) vs pockets 97.1%; 25 wrong (unchanged); class 21 291 / 307. Not steps: u-slot 26 (was 21), tilted 55, side 3.
+- The u-slot line grew by 5 faces on each set: with the knife test gone, some class 22 U-shaped notches now show the blind-slot shape D-093 leaves out, so their faces moved from the recall count to that line. This is a scoring side effect, not a call.
+- Holes and pockets unchanged on both sets. Target: FAIL on both (recall short by 3.9 and 2.1 points; wrong faces 16 and 25).
+- `vitest` on `src/grading`, `src/engine/features`, `steps_slots`, `umd_counts`: 75 pass, 2 fail (the round 2 pair, base2 and regli_pathological1). Not run: `npm run check`, `parity:refreeze`, EDMR, timed CTC 02. The two changes have no unit test of their own (no part with a quarter-round notch or a knife edge in the step test set).
+- Not fixable by a shape rule (traced): class 21 cylinders 1.2 mm wide that are the remains of a step another feature cut away (`10190` face 32); class 8 faces split from their floor by an O-ring groove (`10127` face 4).
+- What is left on the first set (159 missed faces): sloped-neighbour floors (about 28 on-axis), class 21 wall arcs of 150 deg or more beyond the new pair (10), class 8 floors with no wall (14), class 22 (20), two or more runs. Then the 16 wrong faces: chamfers 5, class 6 6, class 4 3, class 13 2.
+
+## Round 3 (2026-11-12): census of the misses, V-floors scored as tilted (in the patch now)
+
+Fresh container: patch applied, MFCAD++ test split re-downloaded from Morgan's Drive copy (1,615,810,586 bytes, size matched), baseline first set reproduced round 2 exactly (2,444 / 2,677, 16 wrong).
+
+**Census** (`web/scripts/census-steps.ts`, in the patch): reruns every step-class miss with the open-floor diagnostic on and tallies why. The 233 missed faces of the first set:
+
+- 99 are planes off the part axes (classes 9: 41, 10: 15, 20: 39, 21: 2, 8: 2). D-093 already leaves tilted floors out, but the diagnostic only noted one after the wall search succeeded.
+- "material past edge" (Terms, "Open edge") is the most common reason a floor is rejected: about 110 faces, mostly a neighbour sloping 35 to 60 deg; the rule that removed the class 19 wrong calls (change 1), so relaxing it needs its own test.
+- Class 21: 15 faces never a floor or wall candidate, 15 wall arc 150 deg or more, 9 knife edge. Class 8: 14 floors with no wall. A class 8 face on an O-ring cylinder (`10015` face 20) is a disc another feature consumed; no shape rule finds it.
+- A gap with no direction into the floor (`into` null) hit 1 face only: not a lever.
+
+**Change 11 (scoring only, engine results unchanged):** a V-floor, two planes off the part axes meeting at a concave edge with no flat on-axis floor beside either, goes on the "not steps (D-093)" tilted line. A first version without the "no floor beside" test also took 24 class 20 and 2 class 8 faces that are a notch's diagonal walls standing on a floor; those stay.
+
+- First set: steps 2,444 / 2,641 (92.5%) vs pockets 97.9%; 16 wrong; not steps: tilted 79 (was 43), u-slot 36, side 3. Misses by class: 8 24, 9 60, 10 11, 20 30, 21 49, 22 23.
+- Check set: steps 2,375 / 2,550 (93.1%) vs pockets 97.1%; 25 wrong; not steps: u-slot 21, tilted 55 (was 29), side 3.
+- Holes and pockets unchanged on both. Target: FAIL on both (recall, wrong calls).
+- `vitest` on `src/grading`, `src/engine/features`, `steps_slots`, `umd_counts`: 75 pass, 2 fail (umd base2, regli_pathological1: the round 2 pair). The V-floor line has no unit test of its own (no V-groove part in the set); it is measured on the two runs only. Not run: `npm run check`, `parity:refreeze`, EDMR.
+- Reading: scoring cannot close the gap. 197 first-set faces are still missed and 16 wrong, mostly sloped-neighbour floors, class 21 circular steps and chamfers. The target needs either engine rules that each risk wrong calls or Morgan changing the target (spec J4: the target is not lowered by us).
+
+## Round 2 (2026-11-12): in the patch
 
 Morgan approved the round ("I approve all"). Two changes, each measured on the 193-part dev set (the first-set parts with misses or wrong calls, plus 60 others) before the full runs:
 
@@ -106,3 +140,11 @@ Per part, steps found against labelled steps `s` and opened pockets `o` in `<par
 - `web/src/engine/port/umd_counts.test.ts`: fails on the 5 parts above (spec: to Morgan before any exemption).
 - `npx vitest run` (web), version B with the list tests updated (drivers, rules run, checks run, rule-to-kind map, the scorer's summary line): 916 pass, 5 fail, all in umd_counts. Version A also failed `plan.test.ts` "no holes or pockets gets one setup" (the 4 `thin_rib` steps), which change 5 removed.
 - Not run: `parity:refreeze`, `npm run check`, EDMR, timed NIST CTC 02: the slice stopped at the target.
+
+## Landing (2026-11-12, D-095)
+
+- Morgan chose option B after round 4: S1 accepted as measured, the D-079 recall target no longer gates it. The scorer still prints it.
+- `umd_counts.test.ts`: base2-Part (3 found, 7 labelled) and regli_pathological1 (1 found, 0 labelled) are now recorded known differences with their exact counts, like vand1; a planted count of 4 failed the base2 test. S2 names slots.
+- Parity re-freeze: quick 91 files and full 206 more changed, none refused (the new Step depth check adds to `rules_run` and `checks_run`; step parts gain step features). After: quick 122 / 122 the same; full 335 compared, 327 the same, 2 known tessellation, 0 different.
+- `e2e/steps.spec.ts` test_report_step lists the new "Step depth check: none" after the pocket check.
+- Times: `npm run check` 848 s (14 m 8 s) here, under the 900 s budget (D-073) with little room; `npm --prefix web run edmr` 114 pass in 7 m 0 s; `parity:full` 3 m 22 s.

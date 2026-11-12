@@ -7,6 +7,7 @@ import { basename } from "node:path";
 import { dot, faceInfo, type Vec } from "../engine/frame.ts";
 import { Topology } from "../engine/features/holes.ts";
 import { analyzeOrRefuse } from "../engine/node.ts";
+import { OPEN_DIAG } from "../engine/features/pockets.ts";
 import type { OC } from "../engine/oc.ts";
 import { SOLID_ENTITIES, volume } from "../engine/read.ts";
 import type { FaceRec, FeatureRec } from "./score.ts";
@@ -98,12 +99,13 @@ export function shortWalls(topo: Topology, pocket: { faces: number[]; axis: numb
     .map((w): [number, number[]] => [w, [...topo.neighbours(w).keys()].filter((k) => !faces.has(k)).sort((a, b) => a - b)]);
 }
 
-export interface GradeFile { faces: FaceRec[]; features: FeatureRec[]; ignored_solids: number; error: string | null }
+export interface GradeFile { faces: FaceRec[]; features: FeatureRec[]; ignored_solids: number; error: string | null; held_steps?: [string, number[]][] }
 
 export async function gradeFile(oc: OC, path: string): Promise<GradeFile> {
   const bytes = new Uint8Array(readFileSync(path));
   const empty = (error: string): GradeFile => ({ faces: [], features: [], ignored_solids: 0, error });
   if (path.toLowerCase().endsWith(".brep")) return empty("the browser engine reads STEP only (no BREP reader)");
+  [OPEN_DIAG.on, OPEN_DIAG.held] = [true, []]; OPEN_DIAG.why = new Map(); // D-093: the shapes left out of steps on purpose, for the scorer
   const r = (await analyzeOrRefuse(oc, bytes, basename(path), "mill")) as {
     error?: string; faces: { kind: string }[]; features: (FeatureRec & { open_vectors?: unknown[]; axis: number[]; dims_mm: Record<string, number> })[];
     part: { ignored_solids: number };
@@ -120,7 +122,7 @@ export async function gradeFile(oc: OC, path: string): Promise<GradeFile> {
       const sid = second.shape && !second.shape.IsNull() && i < second.faces.length ? whole.FindIndex(second.faces[i]) : 0;
       return { kind: f.kind, kind2, name, file_pos: pos, shape_id: sid || null };
     });
-    const kept = r.features.filter((f) => f.kind === "hole" || f.kind === "pocket");
+    const kept = r.features.filter((f) => f.kind === "hole" || f.kind === "pocket" || f.kind === "step" || f.kind === "slot");
     const features: FeatureRec[] = kept.map((f) => ({
       kind: f.kind, faces: f.faces, open_ends: (f.open_vectors ?? []).length, ...(f.chain !== undefined ? { chain: f.chain } : {}),
     }));
@@ -130,7 +132,7 @@ export async function gradeFile(oc: OC, path: string): Promise<GradeFile> {
       topo ??= new Topology(oc, second.solid, second.faces);
       features[i].short_walls = shortWalls(topo, f);
     });
-    return { faces, features, ignored_solids: r.part.ignored_solids, error: null };
+    return { faces, features, ignored_solids: r.part.ignored_solids, error: null, held_steps: OPEN_DIAG.held };
   } finally {
     oc.FS.unlink(SECOND_FILE);
   }

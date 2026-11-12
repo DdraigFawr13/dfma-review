@@ -11,7 +11,7 @@ export const REMOVAL_ASSUMPTION = "Removal is the stock block minus the part's e
 
 /** Feature kinds with a volume of their own. Steps and slots (steps-slots S1, S2) add `step` and `slot` with the
  *  pocket's formula. */
-export const VOLUME_KINDS = ["hole", "pocket"];
+export const VOLUME_KINDS = ["hole", "pocket", "step"]; // step: steps and slots S1, with the pocket's formula
 
 type Feat = { id: string; kind: string; faces: number[]; axis?: number[]; dims_mm?: Record<string, number> };
 type FaceMesh = { kind: string; positions: ArrayLike<number>; indices: ArrayLike<number> };

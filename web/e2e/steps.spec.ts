@@ -210,7 +210,7 @@ test("test_report_step", async ({ page, browser }) => {
   await expect(report).toContainText("The PDF holds");
   await expect(page.getByTestId("report-rules").locator("li")).toHaveText([ // each with its finding count (audit F23)
     "Hole depth check: 2 findings", "Hole size check: 1 finding", "Corner radius check: 4 findings",
-    "Pocket depth check: 1 finding", "Undercut check: none", "Thin wall check: none", "Access check: none",
+    "Pocket depth check: 1 finding", "Step depth check: none", "Undercut check: none", "Thin wall check: none", "Access check: none",
     "Process check: none"]);
   const folded = page.getByTestId("report-assumptions");
   await expect(folded.locator("summary")).toHaveText(`Assumptions (${sample.assumptions.length})`);

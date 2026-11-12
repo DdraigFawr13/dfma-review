@@ -43,10 +43,11 @@ test("off axis and multi axis", async () => {
 test("rules to drivers", () => {
   // A deep bore (bore_depth, D-026) is a deep hole for cost; deep pockets, undercuts and slender turned parts have
   // their own drivers (D-030); the two process warnings feed none.
-  const rules = ["bore_depth", "hole_depth", "turn_slender", "pocket_depth", "undercut", "looks_turned", "turn_axis"];
+  // their own drivers (D-030), and deep steps theirs (steps and slots S1)
+  const rules = ["bore_depth", "hole_depth", "turn_slender", "pocket_depth", "undercut", "looks_turned", "turn_axis", "step_depth"];
   const findings = rules.map((rule, n) => ({ id: `F${n + 1}`, rule }));
   const got = costDrivers(findings, [{}], []);
-  expect(got.map((d) => [d.driver, d.count])).toEqual([["deep_holes", 2], ["deep_pockets", 1], ["slender_parts", 1], ["undercuts", 1]]);
+  expect(got.map((d) => [d.driver, d.count])).toEqual([["deep_holes", 2], ["deep_pockets", 1], ["deep_steps_slots", 1], ["slender_parts", 1], ["undercuts", 1]]);
 });
 
 test("small tools: undersized or under an eighth", async () => {
@@ -76,11 +77,11 @@ test("the weight scales the score and the order", () => {
 });
 
 test("the config lists the drivers, each labelled", () => {
-  // Spec: the nine driver names in drivers.toml, plus D-030's three; every starting weight 1.0 and labelled
-  // `estimate` (REP-01).
+  // Spec: the nine driver names in drivers.toml, plus D-030's three and steps and slots S1's deep_steps_slots; every
+  // starting weight 1.0 and labelled `estimate` (REP-01).
   const config = driversConfig() as Record<string, { weight: number; source: string; label: string }>;
   expect(Object.keys(config)).toEqual(["extra_setups", "distinct_tools", "small_tools", "deep_holes", "odd_holes", "thin_walls",
-    "small_corners", "off_axis", "multi_axis", "deep_pockets", "undercuts", "slender_parts"]);
+    "small_corners", "off_axis", "multi_axis", "deep_pockets", "deep_steps_slots", "undercuts", "slender_parts"]);
   for (const d of Object.values(config)) {
     expect(d.weight).toBe(1.0);
     expect(d.source).toBe("estimate");
