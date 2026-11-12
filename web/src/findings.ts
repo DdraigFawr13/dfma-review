@@ -5,7 +5,7 @@ import { removalLines, type Typed } from "./removal";
 import type { Analysis, Blend, CostDriver, Feature, Finding, HoleFeature, IptHole, Thread, Tool } from "./api";
 
 const KIND_NAMES: [string, string, string][] = [["profile", "turned profile", "turned profiles"], ["hole", "hole", "holes"], ["bore", "bore", "bores"], ["groove", "groove", "grooves"],
-  ["pocket", "pocket", "pockets"], ["corner", "corner", "corners"], ["wall", "wall", "walls"]];
+  ["pocket", "pocket", "pockets"], ["step", "step", "steps"], ["corner", "corner", "corners"], ["wall", "wall", "walls"]];
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
@@ -88,6 +88,7 @@ export function featureLine(f: Feature): string {
   if (f.kind === "hole" || f.kind === "bore") return `${diameterText(d.diameter / 25.4)} diameter, ${inch(d.depth)} deep`;
   if (f.kind === "profile") return `${diameterText(d.diameter / 25.4)} diameter, ${inch(d.length)} long`;
   if (f.kind === "pocket") return `${inch(d.depth)} deep, ${toolText(d.end_mill_mm / 25.4)} end mill fits`;
+  if (f.kind === "step") return `${inch(d.depth)} deep`; // steps and slots spec, Design "Plan and tools"
   if (f.kind === "corner") return `radius ${inch(d.radius)}`;
   if (f.kind === "wall") return `${inch(d.thickness)} thick`;
   return "";
@@ -135,6 +136,11 @@ function toolWhy(f: Feature, result: Analysis, setup: number, only?: string): st
     if (f.kind === "pocket") {
       const gap = d.narrowest_width !== undefined ? ` and its ${inch(d.narrowest_width)} gap` : "";
       return `${toolName(t)}: the largest that fits its ${inch(d.min_corner_radius)} corners${gap}.`;
+    }
+    if (f.kind === "step") { // steps and slots S1 (D-079): the largest end mill roughs; the finisher fits the corners
+      if ((t.diameter_in ?? 0) * 25.4 > d.end_mill_mm + 1e-6) return `${toolName(t)}: the roughing end mill: no wall limits it.`;
+      return d.min_corner_radius === 0 && !d.undersized ? `${toolName(t)}: the largest end mill: no inside corner limits it.`
+        : `${toolName(t)}: fits its inside corner.`;
     }
     return t.kind === "drill" ? `${toolName(t)}: matches its ${inch(d.diameter)} diameter.`
       : `${toolName(t)}: no drill matches ${inch(d.diameter)}, so an end mill.`;

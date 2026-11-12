@@ -1,0 +1,188 @@
+{
+ "st_through": {
+  "holes": [],
+  "steps": [
+   [
+    2,
+    3
+   ]
+  ],
+  "slots": []
+ },
+ "st_l": {
+  "holes": [],
+  "steps": [
+   [
+    6,
+    7,
+    8,
+    9
+   ]
+  ],
+  "slots": []
+ },
+ "st_deep": {
+  "holes": [],
+  "steps": [
+   [
+    2,
+    3,
+    7,
+    8
+   ]
+  ],
+  "slots": []
+ },
+ "st_stair": {
+  "holes": [],
+  "steps": [
+   [
+    2,
+    3
+   ],
+   [
+    4,
+    5
+   ]
+  ],
+  "slots": []
+ },
+ "st_fillet": {
+  "holes": [],
+  "steps": [
+   [
+    1,
+    2,
+    4
+   ]
+  ],
+  "slots": []
+ },
+ "st_blind_rect": {
+  "holes": [],
+  "steps": [
+   [
+    2,
+    3,
+    8
+   ]
+  ],
+  "slots": []
+ },
+ "st_blind_round": {
+  "holes": [],
+  "steps": [
+   [
+    2,
+    3
+   ]
+  ],
+  "slots": []
+ },
+ "st_blind_tri": {
+  "holes": [],
+  "steps": [
+   [
+    2,
+    3
+   ]
+  ],
+  "slots": []
+ },
+ "st_face": {
+  "holes": [],
+  "steps": [
+   [
+    2,
+    7
+   ]
+  ],
+  "slots": []
+ },
+ "sl_blind_round": {
+  "holes": [],
+  "steps": [],
+  "slots": [
+   [
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ]
+  ]
+ },
+ "sl_blind": {
+  "holes": [],
+  "steps": [],
+  "slots": [
+   [
+    6,
+    7,
+    8,
+    9
+   ]
+  ]
+ },
+ "sl_through": {
+  "holes": [],
+  "steps": [],
+  "slots": [
+   [
+    2,
+    3,
+    4
+   ]
+  ]
+ },
+ "sl_deep": {
+  "holes": [],
+  "steps": [],
+  "slots": [
+   [
+    2,
+    3,
+    4
+   ]
+  ]
+ },
+ "st_chamfer": {
+  "holes": [],
+  "steps": [],
+  "slots": []
+ },
+ "pk_beside_step": {
+  "holes": [],
+  "steps": [
+   [
+    6,
+    7,
+    8,
+    9
+   ]
+  ],
+  "slots": []
+ },
+ "pk_control": {
+  "holes": [],
+  "steps": [],
+  "slots": []
+ },
+ "sl_angled": {
+  "holes": [],
+  "steps": [],
+  "slots": [
+   [
+    3,
+    4,
+    5
+   ]
+  ]
+ },
+ "vg_through": {
+  "holes": [],
+  "steps": [],
+  "slots": []
+ }
+}

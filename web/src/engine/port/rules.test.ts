@@ -26,7 +26,7 @@ const r3 = (v: number) => Math.round(v * 1e3) / 1e3;
 
 test("deep hole", async () => {
   const result = await run("deep_hole");
-  expect(result.rules_run).toEqual(["hole_depth", "hole_size", "corner_radius", "pocket_depth", "undercut", "thin_wall", "access", "looks_turned"]); // D-028
+  expect(result.rules_run).toEqual(["hole_depth", "hole_size", "corner_radius", "pocket_depth", "step_depth", "undercut", "thin_wall", "access", "looks_turned"]); // D-028; step_depth: steps and slots S1
   const hole = one(onlyHoles(result));
   expect(hole.id).toBe("hole-1");
   expect(hole.kind).toBe("hole");

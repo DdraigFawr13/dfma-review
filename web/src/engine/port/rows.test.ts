@@ -62,7 +62,7 @@ test("check names", () => {
 test("words in the response", async () => {
   // Findings and passes carry their limit in words, findings their check; the response lists the checks run.
   const r = await run("report_sample");
-  expect(r.checks_run).toEqual(["Hole depth check", "Hole size check", "Corner radius check", "Pocket depth check",
+  expect(r.checks_run).toEqual(["Hole depth check", "Hole size check", "Corner radius check", "Pocket depth check", "Step depth check",
     "Undercut check", "Thin wall check", "Access check", "Process check"]);
   for (const f of r.findings) {
     expect(f.limit_text).toBe(limitText(f.threshold_source));

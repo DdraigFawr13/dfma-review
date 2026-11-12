@@ -729,3 +729,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-12). Morgan, in chat, after the [round 3 page](https://claude.ai/artifact/P345gYBzkRxXqkqnWi8WK8), option A: "A".
 - **Decision:** Round 4 works on class 21 circular steps and floors beside a sloped neighbour ("material past edge"), each rule measured on both 500-part sets for wrong calls before it stays. The D-079 target is unchanged.
 - **Why:** after round 3 step recall is 92.5% and 93.1% against pocket recall 97.9% and 97.1%, with 16 and 25 wrong faces; the engine rules left are each a wrong-call risk.
+
+## D-095 Steps S1: accepted as measured; the D-079 recall target is dropped for now
+
+- **Status:** Accepted (2026-11-12). Morgan, in chat, after the round 4 page, option B: "Let's just go with b. We can revisit later with a higher end model once I have more usage again. We can call this good and continue".
+- **Decision:** S1 is accepted at its round 4 numbers: step face recall 94.0% (first set) and 95.0% (check set) against pocket recall 97.9% and 97.1%, with 16 and 25 wrong faces, holes and pockets unchanged. The D-079 rule "step recall at least pocket recall, 0 wrong faces" no longer gates S1; the scorer still prints it. The two UMD parts that disagree (base2-Part, regli_pathological1) become recorded known differences with exact counts, as vand1 is (D-093). Work moves on to S2 slots. Revisit the misses and wrong calls later (README, "Round 4", lists what is left).
+- **Why:** each remaining shape rule risks wrong calls (rounds 3 and 4); Morgan's call to stop spending on it now.

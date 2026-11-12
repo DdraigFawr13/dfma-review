@@ -2,9 +2,9 @@
 
 Spec: [`docs/specs/steps-slots.md`](../../specs/steps-slots.md) (D-079, D-081). Branch `ccr-32792aa1-29h1tl`.
 
-**Result: the target rule fails on both MFCAD++ sets, so S1 stops here for Morgan (spec J4: "A miss stops the slice: the numbers go to Morgan; the target is not lowered").** Holes and pockets are unchanged on both sets. On our own 18-part set every step face is found, each step whole, and nothing else is called a step.
+**Result at the time: the target rule fails on both MFCAD++ sets, so S1 stops here for Morgan (spec J4: "A miss stops the slice: the numbers go to Morgan; the target is not lowered").** Holes and pockets are unchanged on both sets. On our own 18-part set every step face is found, each step whole, and nothing else is called a step.
 
-The engine work is kept as a patch, [`s1-wip.patch`](s1-wip.patch), so `main` stays green (GIT-05): `git apply docs/research/steps-s1/s1-wip.patch`, then `node web/scripts/make-set.mjs steps_slots` rebuilds the set's STEP files, MANIFEST.md and INSTANCES.json (left out of the patch; the script makes the same files every run).
+**Merged with D-095:** Morgan accepted S1 as measured (round 4) and dropped the recall target for now; the engine work is in the code (PR #64). The earlier text below, which says the engine work is kept as a patch, was true until then. The parity keys were re-frozen with the guarded script (quick 91 files, full 206 more, none refused). `node web/scripts/make-set.mjs steps_slots` rebuilds the set's STEP files, MANIFEST.md and INSTANCES.json; `web/scripts/census-steps.ts` tallies why step faces are missed.
 
 ## The target (D-079), measured
 
@@ -140,3 +140,11 @@ Per part, steps found against labelled steps `s` and opened pockets `o` in `<par
 - `web/src/engine/port/umd_counts.test.ts`: fails on the 5 parts above (spec: to Morgan before any exemption).
 - `npx vitest run` (web), version B with the list tests updated (drivers, rules run, checks run, rule-to-kind map, the scorer's summary line): 916 pass, 5 fail, all in umd_counts. Version A also failed `plan.test.ts` "no holes or pockets gets one setup" (the 4 `thin_rib` steps), which change 5 removed.
 - Not run: `parity:refreeze`, `npm run check`, EDMR, timed NIST CTC 02: the slice stopped at the target.
+
+## Landing (2026-11-12, D-095)
+
+- Morgan chose option B after round 4: S1 accepted as measured, the D-079 recall target no longer gates it. The scorer still prints it.
+- `umd_counts.test.ts`: base2-Part (3 found, 7 labelled) and regli_pathological1 (1 found, 0 labelled) are now recorded known differences with their exact counts, like vand1; a planted count of 4 failed the base2 test. S2 names slots.
+- Parity re-freeze: quick 91 files and full 206 more changed, none refused (the new Step depth check adds to `rules_run` and `checks_run`; step parts gain step features). After: quick 122 / 122 the same; full 335 compared, 327 the same, 2 known tessellation, 0 different.
+- `e2e/steps.spec.ts` test_report_step lists the new "Step depth check: none" after the pocket check.
+- Times: `npm run check` 848 s (14 m 8 s) here, under the 900 s budget (D-073) with little room; `npm --prefix web run edmr` 114 pass in 7 m 0 s; `parity:full` 3 m 22 s.

@@ -7,6 +7,7 @@ export const CHECKS: Record<string, string> = {
   hole_depth: "Hole depth check",
   hole_size: "Hole size check",
   pocket_depth: "Pocket depth check",
+  step_depth: "Step depth check",
   thin_wall: "Thin wall check",
   undercut: "Undercut check",
   access: "Access check",
@@ -63,6 +64,7 @@ export const SHORTS: Record<string, string> = {
   hole_depth: "Deep hole",
   hole_size: "Drill size",
   pocket_depth: "Deep pocket",
+  step_depth: "Deep step",
   thin_wall: "Thin wall",
   undercut: "Undercut",
   access: "Angled feature",
@@ -85,6 +87,8 @@ export const SENTENCES: Record<string, [string, string]> = {
   hole_size: ["{measured} isn't a standard drill. Nearest is {limit}.", "{values} aren't standard drills. Nearest is {limit}."],
   pocket_depth: ["Depth is {measured} the end mill that fits. Over {limit} needs a long tool.",
     "Depths are {values} the end mill that fits. Over {limit} needs a long tool."],
+  step_depth: ["Step depth is {measured} the end mill that fits. Over {limit} needs a long tool.",
+    "Step depths are {values} the end mill that fits. Over {limit} needs a long tool."],
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

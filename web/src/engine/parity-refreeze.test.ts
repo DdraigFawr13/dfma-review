@@ -13,6 +13,7 @@ import type { Process } from "../api";
 import { compare } from "./compare";
 import { analyzeOrRefuse, loadNodeOc } from "./node";
 import { KNOWN_TESSELLATION, parseShard, shardOf } from "./parity-shard";
+import { baseMasked, masked, newIds, PLAN_KEYS, toolsOf, type Obj } from "./refreeze-mask";
 
 const ROOT = resolve(__dirname, "../../..");
 const KEY_DIR = resolve(ROOT, "tests/parity/key");
@@ -21,46 +22,40 @@ const { k, n } = parseShard(process.env.PARITY_SHARD ?? "0/1");
 const OUT = process.env.PARITY_REFREEZE_OUT;
 const REPORT = process.env.PARITY_REFREEZE_REPORT;
 
-/** What this slice may change. P1 S1 (D-088): every result gains `removal` (null on a turned part), and a milled
- *  part's assumptions gain the removal line; nothing else, and every hole and pocket keeps its own tools. */
-const ALLOWED = {
-  keys: ["removal", "assumptions"],
-  featureFields: {} as Record<string, string[]>,
-};
-
 type Entry = { path: string; process: Process; key: string; ipt?: string; harness?: boolean };
-type Obj = Record<string, unknown>;
-type Feat = { id: string; kind: string } & Obj;
-type Op = { setup: number; tool: string; features: string[] };
+type Feat = { id: string; kind: string; pocket?: unknown } & Obj;
 
 const readBytes = (file: string): Buffer => (file.endsWith(".gz") ? gunzipSync(readFileSync(file)) : readFileSync(file));
 const readKey = (file: string): Obj => JSON.parse(readBytes(file).toString("utf8"));
 
-/** Each planned feature's set of tools, as the operations name it. */
-function toolsOf(side: Obj): Map<string, string> {
-  const out = new Map<string, Set<string>>();
-  for (const op of (side.operations as Op[]) ?? []) for (const f of op.features) (out.get(f) ?? out.set(f, new Set()).get(f)!).add(op.tool);
-  return new Map([...out].map(([f, t]) => [f, [...t].sort().join(",")]));
-}
-
-/** The side with the allowed feature fields taken out, and the allowed keys set to `base`'s, so compare() sees only
- *  the changes this slice may not make. */
-function masked(side: Obj, base: Obj): Obj {
-  const out: Obj = { ...side };
-  for (const key of ALLOWED.keys) if (key in base) out[key] = base[key]; else delete out[key];
-  if (Array.isArray(side.features)) {
-    out.features = (side.features as Feat[]).map((f) => {
-      const drop = ALLOWED.featureFields[f.kind] ?? [];
-      return Object.fromEntries(Object.entries(f).filter(([name]) => !drop.includes(name)));
-    });
-  }
-  return out;
-}
-
 const setupsText = (side: Obj) => ((side.setups as { direction: string; features: string[] }[]) ?? [])
   .map((s) => `${s.direction} [${s.features.join(" ")}]`).join(", ");
 
-test(`parity re-freeze on the ${SET} set (shard ${k}/${n})`, async () => {
+/** `--add` (PARITY_REFREEZE_ADD, comma-separated repo paths, milled): the key of each new entry, the engine's result as
+ *  it stands, written to PARITY_REFREEZE_OUT with an `index-add.json` of the entries for the launcher to append. */
+const ADD = (process.env.PARITY_REFREEZE_ADD ?? "").split(",").filter(Boolean);
+const keyName = (path: string) => `${path.replace(/\//g, "__")}.json.gz`;
+
+test.runIf(ADD.length > 0)("parity re-freeze: keys for new entries", async () => {
+  const index = JSON.parse(readFileSync(resolve(KEY_DIR, `index-${SET}.json`), "utf8")) as Entry[];
+  const have = new Set(index.map((e) => e.path));
+  const oc = await loadNodeOc();
+  mkdirSync(OUT!, { recursive: true });
+  const entries: Entry[] = [];
+  for (const path of ADD) {
+    expect(have.has(path), `${path} is already in index-${SET}.json`).toBe(false);
+    const result = await analyzeOrRefuse(oc, new Uint8Array(readFileSync(resolve(ROOT, path))), path.split("/").pop()!, "mill");
+    const entry: Entry = { path, process: "mill", key: keyName(path) };
+    writeFileSync(resolve(OUT!, entry.key), gzipSync(JSON.stringify(result)));
+    entries.push(entry);
+  }
+  writeFileSync(resolve(OUT!, "index-add.json"), JSON.stringify(entries));
+  const text = `## new entries: ${entries.length}\n${entries.map((e) => `ADDED ${e.path}`).join("\n")}`;
+  console.log(text);
+  if (REPORT) writeFileSync(REPORT, text);
+}, 3_600_000);
+
+test.runIf(ADD.length === 0)(`parity re-freeze on the ${SET} set (shard ${k}/${n})`, async () => {
   const index = JSON.parse(readFileSync(resolve(KEY_DIR, `index-${SET}.json`), "utf8")) as Entry[];
   const sizeOf = (e: Entry) => readFileSync(resolve(ROOT, e.path)).length + (e.ipt ? readBytes(resolve(ROOT, e.ipt)).length : 0);
   const shard = shardOf(index.map(sizeOf), n);
@@ -80,29 +75,26 @@ test(`parity re-freeze on the ${SET} set (shard ${k}/${n})`, async () => {
     const label = entry.ipt ? `${entry.path} + ${entry.ipt}` : entry.path;
     if (compare(result, old).diffs.length === 0) continue;
     const exempt = KNOWN_TESSELLATION[entry.path] ?? [];
-    const others = compare(masked(result, old), masked(old, old)).diffs.filter((d) => {
+    const others = compare(masked(result, old), baseMasked(old, result)).diffs.filter((d) => {
       const m = /^faces\[(\d+)\]\.positions:/.exec(d);
       return !(m && exempt.includes(Number(m[1])));
     });
     const [ta, tb] = [toolsOf(old), toolsOf(result)];
-    const lostTools = [...new Set([...ta.keys(), ...tb.keys()])].filter((f) => ta.get(f) !== tb.get(f))
+    const lostTools = [...ta.keys()].filter((f) => ta.get(f) !== tb.get(f)) // every old hole and pocket keeps its tools
       .map((f) => `${f}: tools ${ta.get(f) ?? "none"} -> ${tb.get(f) ?? "none"}`);
     if (others.length || lostTools.length) {
       refused.push(`${label}:\n    ${[...others, ...lostTools].slice(0, 10).join("\n    ")}`);
       continue;
     }
-    const fields = (result.features as Feat[]).flatMap((f, j) => {
-      const was = (old.features as Feat[])[j];
-      const moved = (ALLOWED.featureFields[f.kind] ?? []).filter((x) => JSON.stringify(f[x]) !== JSON.stringify(was[x]));
-      return moved.length ? [`${f.id} ${moved.map((x) => `${x}=${JSON.stringify(f[x] ?? null)}`).join(" ")}`] : [];
-    });
-    const keys = ALLOWED.keys.filter((key) => JSON.stringify(result[key]) !== JSON.stringify(old[key]));
+    const added = newIds(result);
+    const fields = (result.features as Feat[]).filter((f) => added.has(f.id)).map((f) => `${f.id} ${f.kind} [${(f.faces as number[]).join(" ")}]`);
+    const keys = ["rules_run", "checks_run", "features", "findings", "passed", "part", ...PLAN_KEYS]
+      .filter((key) => JSON.stringify(result[key]) !== JSON.stringify(old[key]));
     const count = (side: Obj) => `${(side.setups as unknown[]).length} setups, ${side.tool_changes} tool loads`;
     changed.push(`${label}\n    ${count(old)} -> ${count(result)}; keys changed: ${keys.join(", ") || "none"}` +
-      `\n    features: ${fields.join("; ") || "none"}\n    setups before: ${setupsText(old)}\n    setups after:  ${setupsText(result)}`);
+      `\n    features added: ${fields.join("; ") || "none"}\n    setups before: ${setupsText(old)}\n    setups after:  ${setupsText(result)}`);
     const next: Obj = { ...old };
-    for (const key of ALLOWED.keys) if (key in result) next[key] = result[key];
-    next.features = result.features;
+    for (const key of keys) next[key] = result[key];
     if (OUT) writeFileSync(resolve(OUT, entry.key), gzipSync(JSON.stringify(next)));
   }
   const text = `## shard ${k}/${n}: ${changed.length} changed, ${refused.length} refused\n` +

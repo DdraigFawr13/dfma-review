@@ -189,7 +189,46 @@ describe("summary", () => {
     const part = { part: "a.step", status: "ok", labels: [1, 1, 14], features: [feat({ kind: "hole", faces: [0, 1], open_ends: 2 }), feat({ kind: "pocket", faces: [2] })] };
     const d = { status: { ok: 1 }, scores: scores(tally([1, 1, 14], ["through", "through", "pocket"])), per_part: [part],
       holes_whole: { whole: 1, of: 1, split: 0, merged: 0 } } as unknown as GradeResult;
-    expect(summaryLine("r.json", d)).toBe("r.json: {'ok': 1} holes 2/2 (miss 0, wrong 0, through/blind right 2) whole holes 1/1 (split 0, merged 0) "
+    // steps and slots S1: the first line is unchanged; the step line and the target follow it
+    expect(summaryLine("r.json", d).split("\n")[0]).toBe("r.json: {'ok': 1} holes 2/2 (miss 0, wrong 0, through/blind right 2) whole holes 1/1 (split 0, merged 0) "
       + "pockets 1/1 (miss 0, wrong 0) o-ring-as-hole 0 o-ring-as-pocket 0 slot-step-as-pocket 0 slot-shaped-as-pocket 0 other-excluded 0");
+  });
+
+  test("steps: recall, wrong calls on scored and excluded labels, floorless calls and the target", () => {
+    // faces: two step faces found (8, 22), one missed (20), one wrong (a pocket face, 14), one on stock (24), a V-groove face (5)
+    const labels = [8, 22, 20, 14, 24, 5, 14];
+    const features = [feat({ kind: "step", faces: [0, 1, 3, 4, 5] }), feat({ kind: "pocket", faces: [6] })];
+    const preds = predicted({ faces: labels, features });
+    expect(preds).toEqual(["step", "step", null, "step", "step", "step", "pocket"]);
+    const s = scores(tally(labels, preds));
+    expect([s.recall[8].n, s.recall[22].n, s.recall[20].n, s.recall[20].of]).toEqual([1, 1, 0, 1]);
+    expect(s.precision.step).toEqual({ n: 2, of: 4, pct: 50 }); // 14 and 5 are wrong; 24 is excluded
+    expect(s.claimed_on_excluded.step).toBe(1);
+    expect(s.precision.pocket).toEqual({ n: 1, of: 1, pct: 100 });
+    const part = { part: "a.step", status: "ok", labels, features } as unknown as PartRec;
+    const out = summaryLine("r.json", { status: { ok: 1 }, scores: s, per_part: [part] } as unknown as GradeResult).split("\n");
+    expect(out[1]).toBe("  steps 2/3 (miss 1, wrong 3: 2 on scored labels, 1 on excluded; by class 8 1/1, 9 0/0, 10 0/0, 20 0/1, 21 0/0, 22 1/1); "
+      + 'floorless class 5 {"step":1}, class 7 {}; not steps (D-093) none');
+    expect(out[2]).toBe("  target (D-079): no baseline for this set");
+  });
+
+  test("labelled step faces of a shape that is not a step leave the count, on their own line (D-093)", () => {
+    // faces 0-2 are class 22, face 3 class 10; the engine left [0, 1] out as a side-cut notch and [3] as a tilted floor,
+    // and called face 2 a step; face 1 is called nothing
+    const labels = [22, 22, 22, 10, 24];
+    const r = { status: "ok", faces: faces(labels.map(String)), ignored_solids: 0,
+      features: [feat({ kind: "step", faces: [0, 2] })], held_steps: [["side", [0, 1]], ["tilted", [3]]] as [string, number[]][] };
+    const [rec, counts, missed] = scorePart("p.step", r, labels);
+    expect(rec.held).toEqual({ side: 1, tilted: 1 }); // face 0 is called a step, so it counts as found
+    const s = scores(counts);
+    expect([s.recall[22].n, s.recall[22].of, s.recall[10].of]).toEqual([2, 2, 0]);
+    expect(missed.filter((m) => m.class === 22 || m.class === 10)).toEqual([]);
+    expect(summaryLine("r.json", { status: { ok: 1 }, scores: s, per_part: [rec] } as unknown as GradeResult)).toContain("not steps (D-093) side 1, tilted 1");
+  });
+
+  test("pocket calls on blind step faces stay out of the pocket precision (D-079)", () => {
+    const s = scores(tally([22, 22, 14], ["pocket", "step", "pocket"]));
+    expect(s.precision.pocket).toEqual({ n: 1, of: 1, pct: 100 });
+    expect(s.recall[22]).toEqual({ n: 1, of: 2, pct: 50 });
   });
 });

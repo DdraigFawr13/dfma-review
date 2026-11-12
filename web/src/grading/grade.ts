@@ -24,9 +24,12 @@ export async function mfcadpp(folder: string, limit: number | undefined, jobs: n
     return r;
   });
   const instFile = join(folder, "INSTANCES.json");
-  const instances: Record<string, number[][]> | null = existsSync(instFile) ? JSON.parse(readFileSync(instFile, "utf8")) : null;
+  // A plain list is a part's holes (the older sets); an object holds {"holes", "steps", "slots"} (steps and slots spec)
+  type Inst = number[][] | { holes?: number[][]; steps?: number[][]; slots?: number[][] };
+  const instances: Record<string, Inst> | null = existsSync(instFile) ? JSON.parse(readFileSync(instFile, "utf8")) : null;
   const total = new Tally();
   const holesWhole: Record<string, number> = {};
+  const stepsWhole: Record<string, number> = {};
   const parts: PartRec[] = [];
   const allMisses: Miss[] = [];
   paths.forEach((p, k) => {
@@ -34,8 +37,14 @@ export async function mfcadpp(folder: string, limit: number | undefined, jobs: n
     total.merge(counts);
     allMisses.push(...partMisses);
     if (instances) {
-      rec.holes_whole = instanceScore(rec.features ?? [], instances[basename(p).replace(/\.[^.]*$/, "")] ?? []);
+      const inst = instances[basename(p).replace(/\.[^.]*$/, "")] ?? [];
+      const holes = Array.isArray(inst) ? inst : inst.holes ?? [];
+      rec.holes_whole = instanceScore(rec.features ?? [], holes);
       for (const [key, v] of Object.entries(rec.holes_whole)) holesWhole[key] = (holesWhole[key] ?? 0) + v;
+      if (!Array.isArray(inst)) {
+        rec.steps_whole = instanceScore(rec.features ?? [], inst.steps ?? [], "step");
+        for (const [key, v] of Object.entries(rec.steps_whole)) stepsWhole[key] = (stepsWhole[key] ?? 0) + v;
+      }
     }
     parts.push(rec);
   });
@@ -45,6 +54,7 @@ export async function mfcadpp(folder: string, limit: number | undefined, jobs: n
   const out: GradeResult = { set: folder, parts: parts.length, status: count((p) => p.status), checks_true: checks,
     scores: scores(total), misses: allMisses, per_part: parts };
   if (instances) out.holes_whole = holesWhole;
+  if (Object.keys(stepsWhole).length) out.steps_whole = stepsWhole;
   return out;
 }
 
