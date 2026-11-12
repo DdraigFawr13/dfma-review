@@ -416,7 +416,7 @@ index 97ea568..5e315b5 100644
      const summary: PartSummary = { units_in_file: part.unitsInFile, frame, turn, face_count: part.faces.length };
      if (inventor !== null) {
 diff --git a/web/src/engine/features/pockets.ts b/web/src/engine/features/pockets.ts
-index 7258bc4..0f8738d 100644
+index 7258bc4..7c0210a 100644
 --- a/web/src/engine/features/pockets.ts
 +++ b/web/src/engine/features/pockets.ts
 @@ -6,6 +6,7 @@ import { ANGLE_TOL, cross, dot, unit, type Vec } from "../frame";
@@ -627,7 +627,7 @@ index 7258bc4..0f8738d 100644
 +}
 +
 +/** An open floor found in the pockets() loop, before it is classified. */
-+interface OpenFloor { fid: number; n: Vec; dir: string; pieces: number[]; walls: number[]; blends: Set<number>; trace: TraceEdge[] }
++interface OpenFloor { fid: number; n: Vec; dir: string | null; side?: string; pieces: number[]; walls: number[]; blends: Set<number>; trace: TraceEdge[] }
 +
  function outerWire(oc: OC, face: OC): OC {
    return oc.BRepTools.OuterWire(oc.TopoDS.Face(face));
@@ -664,18 +664,21 @@ index 7258bc4..0f8738d 100644
      const sealed = pieces.every((k) => enclosure.sealed.has(k));
      const [ceilings, upper] = sealed ? [[], []] as [number[], number[]]
        : undercut(topo, walls, n, new Set([...pieces, ...holeFaces]), overFloor(topo, pieces, n));
-@@ -740,7 +898,114 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
+@@ -740,7 +898,132 @@ export function pockets(oc: OC, solid: OC, faces: OC[], frame: Frame, holeFaces:
        foundC.push(corner);
      }
    });
 -  return [foundP, foundC];
 +  const pocketFaceSet = new Set(foundP.flatMap((p) => p.faces));
 +  const openCorners: CornerFeature[] = [];
-+  // A step is symmetric (Terms, "Same feature"): a flat wall on a part axis, seen as a floor, has this floor as a wall.
-+  // A floor with such walls and none that confirms it is a boss's side seen with the face round the boss, not a step.
-+  const byFloor = new Map(openFloors.map((o) => [o.fid, o]));
-+  const axisWall = (w: number) => topo.type(w) === "GeomAbs_Plane" && frameDir(outwardNormal(oc, faces[w])[1], frame) !== null;
-+  const confirmed = (o: OpenFloor) => !o.walls.some(axisWall) || o.walls.some((w) => axisWall(w) && (byFloor.get(w)?.walls ?? []).some((k) => o.pieces.includes(k)));
++  // A floor whose walls all meet it on an inner loop of the wall (an island in that face: a rib or boss standing on a
++  // plate, seen from the boss's side) is not a step; a step's wall meets its floor on the wall's outer boundary.
++  const onIsland = (o: OpenFloor) => o.walls.every((w) => {
++    const outer = wireEdges(oc, outerWire(oc, faces[w]));
++    const shared = o.pieces.flatMap((k) => sharedEdges(topo, k, w));
++    return shared.length > 0 && shared.every((e) => !outer.some((x) => x.IsSame(e)));
++  });
++  const confirmed = (o: OpenFloor) => !onIsland(o);
 +  const [steps, slots] = classifyOpen(topo, cyls, openFloors.filter((o) => !pocketFaceSet.has(o.fid) && confirmed(o)), openCorners, frame, enclosure);
 +  return [foundP, foundC, steps, slots, openCorners];
 +}
@@ -685,8 +688,7 @@ index 7258bc4..0f8738d 100644
 + *  from its lowest-numbered piece, with the pieces' shared outline. */
 +function openFloor(topo: Topology, fid: number, n: Vec, frame: Frame, holeFaces: Set<number>, enclosure: Enclosure): OpenFloor | null {
 +  const oc = topo.oc;
-+  const dir = frameDir(n, frame);
-+  if (dir === null) return null;
++  const dir = frameDir(n, frame); // null: a tilted floor, kept only when a face of the step is on a part axis
 +  const group = floorPieces(topo, fid, n, holeFaces);
 +  if (group && minOf(group) !== fid) return null;
 +  const pieces = group ?? [fid];
@@ -699,8 +701,28 @@ index 7258bc4..0f8738d 100644
 +  const walls = openWalls(topo, fid, n, edges, enclosure, blends, trace);
 +  if (walls === null) return null;
 +  if (enclosure.rays === null) enclosure.rays = new Rays(oc, topo.solid);
-+  if (!reachable(topo, pieces, n, enclosure.rays)) return null;
-+  return { fid, n, dir, pieces, walls, blends, trace };
++  if (reachable(topo, pieces, n, enclosure.rays)) return { fid, n, dir, pieces, walls, blends, trace };
++  // Material over the floor (a notch cut into a side face): a step when a cutter reaches it from an open side along a
++  // part axis, as a side-milled notch; the plan then cuts it from that side.
++  for (const out of openVectors(topo, trace, n)) {
++    const side = frameDir(out, frame);
++    if (side !== null && reachable(topo, pieces, out, enclosure.rays)) return { fid, n, dir, side, pieces, walls, blends, trace };
++  }
++  return null;
++}
++
++/** The outward unit vector across each open edge, deduplicated within 0.5 deg. */
++function openVectors(topo: Topology, trace: TraceEdge[], n: Vec): Vec[] {
++  const out: Vec[] = [];
++  for (const t of trace) {
++    if (t.kind !== "open") continue;
++    const [p, e] = edgeMid(topo.oc, t.edge);
++    const d = into(topo.oc, topo.faces[t.piece], p, n, e);
++    if (d === null) continue;
++    const v = neg(d);
++    if (!out.some((w) => dot(w, v) >= Math.cos(ANGLE_TOL))) out.push(v);
++  }
++  return out;
 +}
 +
 +const faceKey = (faces: Iterable<number>) => [...new Set(faces)].sort((a, b) => a - b).join(",");
@@ -719,13 +741,16 @@ index 7258bc4..0f8738d 100644
 +    const face = (a: number, b: number) => facing(topo, a, b, o.n, at);
 +    const pairIn = (ws: number[]) => ws.some((a, i) => ws.slice(i + 1).some((b) => face(a, b)));
 +    const own = new Set([...o.pieces, ...o.walls, ...o.blends]);
-+    if (rs.length === 1 && !pairIn(rs[0]) && wallArc(topo, rs[0], o.n) < STEP_ARC_MAX_DEG) stepFloors.push(o);
++    // A tilted floor is a step only with a wall on a part axis (a slanted step); two tilted faces, as a V-groove's, are not
++    const axisFace = (w: number) => topo.type(w) === "GeomAbs_Plane" && frameDir(outwardNormal(oc, topo.faces[w])[1], frame) !== null;
++    const anchored = o.dir !== null || o.walls.some(axisFace);
++    if (anchored && rs.length === 1 && !pairIn(rs[0]) && wallArc(topo, rs[0], o.n) < STEP_ARC_MAX_DEG) stepFloors.push(o);
 +    else if ((rs.length === 2 && rs.every((r) => r.length === 1) && face(rs[0][0], rs[1][0]))
 +      || (rs.length === 1 && rs[0].length >= 3 && face(rs[0][0], rs[0][rs[0].length - 1]))) slotSets.push(own);
 +  }
 +  // One feature per face set; its floor the face whose direction comes first in ORDER (Terms, "Same feature").
 +  const bySet = new Map<string, OpenFloor>();
-+  const rankOf = (d: string) => ORDER.indexOf(d as (typeof ORDER)[number]);
++  const rankOf = (d: string | null) => (d === null ? ORDER.length : ORDER.indexOf(d as (typeof ORDER)[number]));
 +  for (const o of stepFloors) {
 +    const own = [...o.pieces, ...o.walls, ...o.blends];
 +    if (slotSets.some((s) => own.every((f) => s.has(f)))) continue; // a slot's side wall seen as a floor
@@ -747,7 +772,7 @@ index 7258bc4..0f8738d 100644
 +    const minR = found.length ? minOf(found.map(([, r]) => r)) : Infinity;
 +    const [tool, undersized] = pickEndMill(minR, Infinity);
 +    const stepFaces = [...own].sort((a, b) => a - b);
-+    const dirs = [o.dir];
++    const dirs = o.side !== undefined ? [o.side] : o.dir === null ? [] : [o.dir];
 +    if (walls.length === 1 && topo.type(walls[0]) === "GeomAbs_Plane") { // D-079: the wall's side too, when a cutter reaches it
 +      const m = outwardNormal(oc, topo.faces[walls[0]])[1];
 +      const d = frameDir(m, frame);
@@ -756,14 +781,7 @@ index 7258bc4..0f8738d 100644
 +    }
 +    dirs.sort((a, b) => rankOf(a) - rankOf(b));
 +    const vectors: Vec[] = [[...n] as Vec];
-+    for (const t of trace) {
-+      if (t.kind !== "open") continue;
-+      const [p, e] = edgeMid(oc, t.edge);
-+      const d = into(oc, topo.faces[t.piece], p, n, e);
-+      if (d === null) continue;
-+      const out = neg(d);
-+      if (!vectors.some((v) => dot(v, out) >= Math.cos(ANGLE_TOL))) vectors.push(out);
-+    }
++    for (const out of openVectors(topo, trace, n)) if (!vectors.some((v) => dot(v, out) >= Math.cos(ANGLE_TOL))) vectors.push(out);
 +    steps.push({ kind: "step", faces: stepFaces, floor: fid, axis: [...n], open_dirs: dirs, open_vectors: vectors.map((v) => [...v]),
 +      dims_mm: { depth, length: maxOf(walls.map((w) => span(topo, w, n))), min_corner_radius: minR === Infinity ? 0.0 : minR,
 +        end_mill_mm: tool, undersized: Number(undersized) },

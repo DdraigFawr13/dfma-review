@@ -36,7 +36,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 00. Checks: `npm run check` at the root; before a PR is marked ready also `npm --prefix web run edmr` and `parity:full` when the engine changed. Morgan: turn on GitHub Pages (Settings → Pages → Source: GitHub Actions) if not yet; tell IT before the work copy (D-055).
 000a. UI fixes (D-076, D-078, D-080): A and B merged (#51, #53). Owed: Morgan's work-copy check of both (VER-07); arrow keys and the 50 ms drag target stand as built (D-080) until then. B's open finding: a countersink tool has `diameter_in: null`, so it shows no spindle.
 0000. Done: P1 S2 merged in PR #61 (D-090). Still owed by Morgan: the engineer's wrong-side parts, which free options he meant, the shop's setup issues; turn on GitHub Pages (Pages runs 21 and 22 on main failed). Stale branch `port-s8-retire-python` (merged in #43): check before deleting (GIT-03).
-000. Now: Morgan's call on steps S1 (spec J4: a miss goes to Morgan, the target is not lowered). Recommended: more recall rounds on the miss causes in the README, each with both 500-part runs. Then also Morgan: the five rule changes, and whether UMD `[Corner]` counts as a step. To resume: `git apply docs/research/steps-s1/s1-wip.patch`, `node web/scripts/make-set.mjs steps_slots`; MFCAD++ download in archive "Moved 2026-11-09". Not run yet: `parity:refreeze`, `npm run check`, EDMR, CTC 02 timing.
+000. Now: steps S1 recall rounds (D-091: keep improving, target stands), each with both 500-part runs shown to Morgan. Also Morgan: the five rule changes, and whether UMD `[Corner]` counts as a step. To resume: `git apply docs/research/steps-s1/s1-wip.patch`, `node web/scripts/make-set.mjs steps_slots`; MFCAD++ download in archive "Moved 2026-11-09". Not run yet: `parity:refreeze`, `npm run check`, EDMR, CTC 02 timing.
 0. Now: plainer sentences for the rule cases that still read as titles, each shown to Morgan first (D-045). Follow-up from the audit fixes: Hole feature rows still carry aria-pressed and aria-expanded (F15's pattern, out of its scope).
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `cd web && node scripts/harness.mjs local-pairs` (prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
 2. Recognition and stress-test status, scoring commands and the MFCAD++ download: archive "Moved 2026-11-09" (old Next 3 and 3a). Re-run them on every recognition change.
@@ -44,17 +44,17 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Open questions
 
-- Steps S1 (2026-11-12): keep working on recall, change the target, or pause? UMD `[Corner]` as a step? ([README](research/steps-s1/README.md))
+- Steps S1 (2026-11-12, D-091 chose more rounds): UMD `[Corner]` as a step? ([README](research/steps-s1/README.md))
 - Shape from the `.ipt` alone: its own phase after I1 (D-035); test-run numbers in the archive.
 - Backlog and after-project ideas (hole types, ring-face threads, G-code view, waivers, shop profiles): archive "Moved 2026-11-09".
 - GitLab at work: are there CI runners, and can they download packages? Ask IT before the move (D-006).
 
 ## Decisions since the last plan update
 
+- 2026-11-12 D-091: steps S1: keep improving recall; the target stands.
 - 2026-11-11 D-090: P1 S2 approved with its build defaults; merge when ready; steps and slots S1 next.
 - 2026-11-11 D-089: P1 mock-up approved with its four defaults; merge P1 S1 when ready, then P1 S2 in a new session.
 - 2026-11-11 D-088: P1+P2 spec approved (R1-R10 as recommended); merge on our own checks while Actions is down.
 - 2026-11-11 D-087: spike accepted; P2a cell rule D/4 capped 4 M, a height map that is never optimistic, OpenCAMLib built from source for tests.
 - 2026-11-11 D-086: P0 approved; `tool_dirs` on holes; the guarded `parity:refreeze` changes the key.
-- 2026-11-11 D-085: P1+P2 plan approved (Morgan: "Go with all as recommended and I approve"): P0 counterbore side, spike, P1, slots S1-S2, P2a, P2b; Manifold at runtime, OpenCAMLib test-only.
-- Earlier (D-001 to D-084): `docs/DECISIONS.md` (`grep '^## D-'`).
+- Earlier (D-001 to D-085): `docs/DECISIONS.md` (`grep '^## D-'`).

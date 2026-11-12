@@ -705,3 +705,9 @@ Settled rules for this project. Not a changelog: an entry stays while the rule i
 - **Status:** Accepted (2026-11-11). Morgan, in chat, after the [P1 S2 status page](https://claude.ai/artifact/6y8Z73s1bg4tSk2tKoGcS3) and [demo](https://claude.ai/artifact/D4wrFp3MAWt3EwN2SqYJsy): "Approved for merge".
 - **Decision:** PR #61 as built: the ghost stock box and Stock button, Your stock with facing lines (D-089). Build defaults the spec left open, as the status page listed them: the part's sides to 0.001 in as the Stock line shows them (a typed size equal to the shown one is 0 facing); one sentence per too-small size; a wrong Apply keeps the size in use; the box hides with its button in the Machine view and on other steps, and is not in the PDF picture; turned parts get no box, button or Your stock; Your stock stays through a material or process change on the same part. Next: steps and slots S1 (D-081) in a new session.
 - **Why:** Morgan's approval; checks green (`npm run check` 601 s, parity 122/122 on the existing key).
+
+## D-091 Steps S1: keep improving recall; the target stands
+
+- **Status:** Accepted (2026-11-12). Morgan, in chat, after the [steps S1 results page](https://claude.ai/artifact/A48Afukz6a3KdVt1NoKkxV) (option A, recommended): "Keep improving".
+- **Decision:** S1 goes on in rounds on the miss causes in `docs/research/steps-s1/README.md`; each round runs both 500-part MFCAD++ sets and shows Morgan the numbers. The D-079 target is unchanged (step face recall at least the pocket recall of the same run, 0 wrong faces). Open for Morgan: whether a UMD `[Corner]` counts as a step.
+- **Why:** step recall 86.1% and 86.9% against pocket recall 97.9% and 97.1%, 21 and 29 wrong faces (version B, 2026-11-12).
