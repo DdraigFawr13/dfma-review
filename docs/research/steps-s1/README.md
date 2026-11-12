@@ -16,7 +16,21 @@ Runs: `node web/scripts/grading.mjs grade mfcadpp tests/grading/.cache/mfcadpp -
 - Holes and pockets on every run: first 590 / 602, 0 wrong and 3,667 / 3,745, 1 wrong; check 643 / 666, 0 wrong and 3,760 / 3,872, 1 wrong: the baseline exactly.
 - V-groove (5) and round-bottom (7) slots: no step call on any run (first: 103 and 78 faces; check: 130 and 80).
 
-## D-093 scoring (2026-11-12): in the patch now
+## Round 2 (2026-11-12): in the patch now
+
+Morgan approved the round ("I approve all"). Two changes, each measured on the 193-part dev set (the first-set parts with misses or wrong calls, plus 60 others) before the full runs:
+
+9. A chamfer beside another wall (a flat wall under half as wide across the floor normal as it runs along it, turning under 60 deg from a neighbour at an outside edge) is kept out of the step's faces (D-093). A chamfer-shaped wall that is a step's only wall stays: MFCAD++ calls such a notch a triangular blind step (20). Dev set: wrong faces 26 to 16 (chamfers 14 to 5), right faces 1,038 to 1,029. Dropping every chamfer-shaped wall instead cost 32 right faces, 18 of them class 20.
+10. Two step floors on one plane whose single walls face each other across them are one slot's pieces (a channel floor broken into strips by grooves or cross holes), and so is a step seen from one of those walls. No change on the dev set; UMD base1 and socket2 now agree.
+
+- First set (690 s): steps 2,444 / 2,677 (91.3%) vs pockets 97.9%; 16 wrong (chamfer 5, class 6 6, class 4 3, class 13 2); not steps: tilted 43, u-slot 36, side 3.
+- Check set (690 s): steps 2,375 / 2,576 (92.2%) vs pockets 97.1%; 25 wrong (chamfer 11, class 13 4, class 15 4, class 2 3, class 3 2, class 23 1); not steps: u-slot 21, tilted 29, side 3.
+- Holes and pockets unchanged. Target: FAIL on both.
+- UMD: 9 of 11 agree. base2 finds 3 of 7 labelled steps: UMD labels its four lower floors steps between two slots, the arrangement it leaves unlabelled in base1, so change 10 fixes one and breaks the other. regli_pathological1 finds 1 step where UMD labels a slot (S2 will name slots).
+- `npx vitest run` (web): 936 pass, 2 fail (umd_counts base2, regli_pathological1).
+- Next round: misses by class on the first set (8 26, 9 63, 10 23, 20 49, 21 49, 22 23); wrong class 6 (a through slot's faces, S2's step-or-slot question) and class 13.
+
+## D-093 scoring (2026-11-12): superseded by round 2
 
 Morgan: tilted floors, side-only notches and vand1's steps are not steps; UMD corners are; chamfers beside a step are wrong. The finder has a grading-only diagnostic (`OPEN_DIAG` in `features/pockets.ts`, off in the app) that records those shapes, and blind-slot-shaped U's (4 flat faces, 3 walls, 1 open edge); the scorer leaves labelled step faces of those shapes out of the step count unless they are called steps, on a "not steps (D-093)" line (`score.test.ts` tests it). The engine's results do not change.
 

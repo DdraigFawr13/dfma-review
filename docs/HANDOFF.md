@@ -1,6 +1,6 @@
 # Handoff
 
-Updated: 2026-11-12 (steps S1 built as a patch; the D-079 target fails on both MFCAD++ sets; waiting for Morgan). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
+Updated: 2026-11-12 (steps S1 round 2 measured; PR #62 and the audit PR #63 merged as docs, Morgan: "Ok merge when done and ready"). A fresh session must be able to continue from this file alone. Keep it to 60 lines; move finished entries to `docs/archive/handoff-YYYY-MM.md`.
 
 ## Phase
 
@@ -27,7 +27,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 
 ## Just done
 
-- 2026-11-12 Steps S1 with D-093 scoring: recall 91.8% first set, 92.5% check set (pockets 97.9%, 97.1%); 26 and 39 wrong (chamfers most); holes and pockets unchanged; UMD 7 of 11 agree. Audit (PR #63) acted on (D-092). Patch and numbers: [README](research/steps-s1/README.md).
+- 2026-11-12 Steps S1 round 2: recall 91.3% first set, 92.2% check set (pockets 97.9%, 97.1%); wrong 16 and 25 (from 26 and 39); holes and pockets unchanged; UMD 9 of 11. Merged as docs in PR #62 (write-up and `s1-wip.patch`, [README](research/steps-s1/README.md)); audit in PR #63 (D-092, D-093).
 - 2026-11-11 P1 S2 (stock box and your stock) approved (D-090), merged in [PR #61](https://github.com/DdraigFawr13/dfma-review/pull/61): archive "Moved 2026-11-12".
 - Earlier (P1 S1 #60, P1+P2 spec #59, reach spike #58, P0 #57, UI fixes, S8b, harness): archive.
 
@@ -36,7 +36,7 @@ Shown at the start of a session and when asking the owner to approve a PR or a m
 00. Checks: `npm run check` at the root; before a PR is marked ready also `npm --prefix web run edmr` and `parity:full` when the engine changed. Morgan: turn on GitHub Pages (Settings → Pages → Source: GitHub Actions) if not yet; tell IT before the work copy (D-055).
 000a. UI fixes (D-076, D-078, D-080): A and B merged (#51, #53). Owed: Morgan's work-copy check of both (VER-07); arrow keys and the 50 ms drag target stand as built (D-080) until then. B's open finding: a countersink tool has `diameter_in: null`, so it shows no spindle.
 0000. Done: P1 S2 merged in PR #61 (D-090). Still owed by Morgan: the engineer's wrong-side parts, which free options he meant, the shop's setup issues; turn on GitHub Pages (Pages runs 21 and 22 on main failed). Stale branch `port-s8-retire-python` (merged in #43): check before deleting (GIT-03).
-000. Now: steps S1 recall rounds (D-091), with D-093's scoring (shapes that are not steps on their own line). Remaining: over-calls on UMD base1, base2, regli, socket2; chamfers in step faces; the other audit findings (F4, F8-F23). To resume: `git apply docs/research/steps-s1/s1-wip.patch`, `node web/scripts/make-set.mjs steps_slots`; MFCAD++ download in archive "Moved 2026-11-09". Not run yet: `parity:refreeze`, `npm run check`, EDMR, CTC 02 timing.
+000. Now: steps S1 round 3 on a new branch from main (GIT-01): `git apply docs/research/steps-s1/s1-wip.patch`, `node web/scripts/make-set.mjs steps_slots`, MFCAD++ download in archive "Moved 2026-11-09". Work on the misses (classes 9, 20, 21 most) and the class 6 and 13 wrong calls; both 500-part runs per round, shown to Morgan; UMD base2 and regli disagree (README). Not run yet: `parity:refreeze`, `npm run check`, EDMR. Audit findings still open: F4, F8-F23.
 0. Now: plainer sentences for the rule cases that still read as titles, each shown to Morgan first (D-045). Follow-up from the audit fixes: Hole feature rows still carry aria-pressed and aria-expanded (F15's pattern, out of its scope).
 1. Owed from 2026-11-12 (D-035, D-046; now after the merge): one of Morgan's work pairs, with one Hole renamed (names right or absent, never wrong; else switch names off), by Drive share into `tests/inventor/.local/<pair>/`, then `cd web && node scripts/harness.mjs local-pairs` (prints Hole features too); counts differ or a gap over 0.01 mm: stop and take the numbers and D-033's fallback to Morgan; else record it in `local_pairs.toml`. Don't ask before 2026-11-12.
 2. Recognition and stress-test status, scoring commands and the MFCAD++ download: archive "Moved 2026-11-09" (old Next 3 and 3a). Re-run them on every recognition change.
