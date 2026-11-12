@@ -15,17 +15,17 @@ const OLD: Obj = {
   operations: [{ setup: 0, tool: "dr-0.2", features: ["hole-1"], faces: [1] }, { setup: 0, tool: "em-0.250", features: ["pocket-1"], faces: [2, 3] }],
   tools: [{ id: "dr-0.2" }, { id: "em-0.250" }], tool_changes: 2, cost_drivers: [], cost_total: null, rows: [], passed_rows: [],
 };
-/** OLD plus what S1 may add: a step, its finding first (renumbering F1 to F2), its setup, tool and plan keys. */
+/** OLD plus what S2 may add: a slot, its finding first (renumbering F1 to F2), its setup, tool and plan keys. */
 function withStep(): Obj {
   const r = clone(OLD) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
   r.part.not_analysed_faces = [];
-  r.features.push({ id: "step-1", kind: "step", faces: [7, 8], dims_mm: { depth: 10 } }, { id: "corner-1", kind: "corner", faces: [8], pocket: "step-1", dims_mm: {} });
-  r.findings = [{ id: "F1", rule: "step_depth", feature: "step-1" }, { id: "F2", rule: "hole_depth", feature: "hole-1" }];
+  r.features.push({ id: "slot-1", kind: "slot", faces: [7, 8], dims_mm: { depth: 10 } }, { id: "corner-1", kind: "corner", faces: [8], pocket: "slot-1", dims_mm: {} });
+  r.findings = [{ id: "F1", rule: "slot_depth", feature: "slot-1" }, { id: "F2", rule: "hole_depth", feature: "hole-1" }];
   r.passed.push({ rule: "corner_radius", feature: "corner-1" });
-  r.rules_run = ["hole_depth", "pocket_depth", "step_depth"];
-  r.checks_run = ["Hole depth check", "Pocket depth check", "Step depth check"];
-  r.setups = [{ direction: "+Z", features: ["hole-1", "pocket-1", "step-1"] }];
-  r.operations.unshift({ setup: 0, tool: "em-1.000", features: ["step-1"], faces: [7, 8] });
+  r.rules_run = ["hole_depth", "pocket_depth", "slot_depth"];
+  r.checks_run = ["Hole depth check", "Pocket depth check", "Slot depth check"];
+  r.setups = [{ direction: "+Z", features: ["hole-1", "pocket-1", "slot-1"] }];
+  r.operations.unshift({ setup: 0, tool: "em-1.000", features: ["slot-1"], faces: [7, 8] });
   r.tools.unshift({ id: "em-1.000" });
   r.tool_changes = 3;
   r.cost_drivers = [{ driver: "deep_steps_slots", count: 1 }];
@@ -38,7 +38,7 @@ describe("re-freeze guard", () => {
   test("an allowed step change passes", () => expect(refused(withStep(), OLD)).toEqual([]));
   test("a new rule in rules_run on a file with no step passes", () => {
     const r = clone(OLD) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
-    r.rules_run = [...r.rules_run, "step_depth"]; r.checks_run = [...r.checks_run, "Step depth check"];
+    r.rules_run = [...r.rules_run, "slot_depth"]; r.checks_run = [...r.checks_run, "Slot depth check"];
     expect(refused(r, OLD)).toEqual([]);
   });
   const planted: [string, (r: Record<string, any>) => void][] = [ // eslint-disable-line @typescript-eslint/no-explicit-any

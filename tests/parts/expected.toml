@@ -261,12 +261,32 @@ name = "slot_not_wall"
 units = "inch"
 face_count = 10
 features = { hole = 0, pocket = 0, corner = 0, wall = 7 }
+[[part.finding]]
+rule = "slot_depth"
+severity = "medium"
+measured = 8.0
+probe_mm = [25.4, 12.7, 6.35]
+[[part.finding]]
+rule = "slot_ratio"
+severity = "medium"
+measured = 6.25
+probe_mm = [25.4, 12.7, 6.35]
 
 [[part]]
 name = "slot_not_wall"
 units = "inch"
 face_count = 10
 features = { hole = 0, pocket = 0, corner = 0, wall = 7 }
+[[part.finding]]
+rule = "slot_depth"
+severity = "medium"
+measured = 8.0
+probe_mm = [25.4, 12.7, 6.35]
+[[part.finding]]
+rule = "slot_ratio"
+severity = "medium"
+measured = 6.25
+probe_mm = [25.4, 12.7, 6.35]
 material = "plastic"
 
 [[part]]

@@ -7,8 +7,8 @@ import { expectedParts, run, type Result } from "./groupa_common";
 
 const JUDGES: Record<string, string[]> = {
   hole_depth: ["hole"], bore_depth: ["bore"], hole_size: ["hole"], corner_radius: ["corner"], pocket_depth: ["pocket"],
-  step_depth: ["step"], // steps and slots S1
-  undercut: ["pocket"], thin_wall: ["wall"], access: ["hole", "pocket", "step"],
+  step_depth: ["step"], slot_depth: ["slot"], slot_ratio: ["slot"], // steps and slots S1, S2
+  undercut: ["pocket"], thin_wall: ["wall"], access: ["hole", "pocket", "step", "slot"],
   // S6: turn_axis judges the part (no feature when it fires) and passes the profile it found
   turn_axis: ["profile"], looks_turned: [], turn_slender: ["profile"], turn_offaxis: ["hole", "pocket", "bore"],
 };

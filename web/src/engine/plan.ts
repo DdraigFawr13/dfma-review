@@ -98,10 +98,22 @@ export function stepTools(f: Feature): Tool[] {
   return [{ id: millId(largest), kind: "end_mill", diameter_in: round(largest / MM_PER_IN, 6), undersized: false }, finish];
 }
 
+/** A slot's tools (D-068, D-079): the roughing end mill, the largest at most `pocket_width_share` of its width (it may
+ *  be smaller than the finisher), listed unless it is the finisher; then the finisher, as a pocket's. */
+export function slotTools(f: Feature): Tool[] {
+  const finish = pocketTool(f);
+  const width = f.dims_mm.narrowest_width;
+  const share = (toolsConfig().roughing as Record<string, number>).pocket_width_share;
+  const fits = width === undefined || width === null ? [] : endMillsMm().filter((d) => d <= share * width + PICK_TOL_MM);
+  const d = fits[fits.length - 1];
+  if (d === undefined || Math.abs(d - f.dims_mm.end_mill_mm) <= 1e-6) return [finish];
+  return [{ id: millId(d), kind: "end_mill", diameter_in: round(d / MM_PER_IN, 6), undersized: false }, finish];
+}
+
 /** The kinds a mill setup reaches and their tools (steps and slots spec, "Every place that lists pocket"). */
-export const PLANNED_KINDS = ["hole", "pocket", "step"];
+export const PLANNED_KINDS = ["hole", "pocket", "step", "slot"];
 function featureTools(f: Feature, unitsInFile: string): Tool[] {
-  return f.kind === "hole" ? [holeTool(f, unitsInFile)] : f.kind === "step" ? stepTools(f) : pocketTools(f);
+  return f.kind === "hole" ? [holeTool(f, unitsInFile)] : f.kind === "step" ? stepTools(f) : f.kind === "slot" ? slotTools(f) : pocketTools(f);
 }
 
 function countersinkTool(deg: number): Tool {

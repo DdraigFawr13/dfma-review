@@ -26,7 +26,7 @@ const r3 = (v: number) => Math.round(v * 1e3) / 1e3;
 
 test("deep hole", async () => {
   const result = await run("deep_hole");
-  expect(result.rules_run).toEqual(["hole_depth", "hole_size", "corner_radius", "pocket_depth", "step_depth", "undercut", "thin_wall", "access", "looks_turned"]); // D-028; step_depth: steps and slots S1
+  expect(result.rules_run).toEqual(["hole_depth", "hole_size", "corner_radius", "pocket_depth", "step_depth", "slot_depth", "slot_ratio", "undercut", "thin_wall", "access", "looks_turned"]); // D-028; step_depth: steps and slots S1
   const hole = one(onlyHoles(result));
   expect(hole.id).toBe("hole-1");
   expect(hole.kind).toBe("hole");
@@ -461,7 +461,8 @@ test("wall at the limit is not flagged", async () => {
 test("slot sides are not a wall", async () => {
   // The 0.040 in slot's two sides face each other across air: no wall, so no finding in plastic.
   const result = await run("slot_not_wall", "plastic");
-  expect(result.findings).toEqual([]);
+  // Steps and slots S2: the 0.040 in slot is a slot now, 8 times the end mill that fits deep and 6.25 times its width
+  expect(result.findings.map((f: { rule: string }) => f.rule)).toEqual(["slot_depth", "slot_ratio"]);
   expect(Math.min(...wallsOf(result).map((w) => w.dims_mm.thickness))).toBeGreaterThan(0.2 * IN);
 });
 

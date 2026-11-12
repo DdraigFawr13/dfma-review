@@ -8,6 +8,8 @@ export const CHECKS: Record<string, string> = {
   hole_size: "Hole size check",
   pocket_depth: "Pocket depth check",
   step_depth: "Step depth check",
+  slot_depth: "Slot depth check",
+  slot_ratio: "Slot depth to width check",
   thin_wall: "Thin wall check",
   undercut: "Undercut check",
   access: "Access check",
@@ -43,6 +45,7 @@ export const LIMITS: Record<string, string> = {
   "D-021": "limit Morgan approved",
   "D-025": "limit Morgan approved",
   "D-026 (Sandvik)": "limit from Sandvik's tables",
+  "D-068": "limit from Protolabs",
 };
 
 /** "limit is an estimate" for "estimate"; a source LIMITS lacks shows as given ("limit: shop table"). */
@@ -65,6 +68,8 @@ export const SHORTS: Record<string, string> = {
   hole_size: "Drill size",
   pocket_depth: "Deep pocket",
   step_depth: "Deep step",
+  slot_depth: "Deep slot",
+  slot_ratio: "Slot deeper than 6× its width",
   thin_wall: "Thin wall",
   undercut: "Undercut",
   access: "Angled feature",
@@ -89,6 +94,10 @@ export const SENTENCES: Record<string, [string, string]> = {
     "Depths are {values} the end mill that fits. Over {limit} needs a long tool."],
   step_depth: ["Step depth is {measured} the end mill that fits. Over {limit} needs a long tool.",
     "Step depths are {values} the end mill that fits. Over {limit} needs a long tool."],
+  slot_depth: ["Slot depth is {measured} the end mill that fits. Over {limit} needs a long tool.",
+    "Slot depths are {values} the end mill that fits. Over {limit} needs a long tool."],
+  slot_ratio: ["Depth is {measured} its width. Over {limit} is deeper than most shops cut a slot.",
+    "Depths are {values} their width. Over {limit} is deeper than most shops cut a slot."],
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

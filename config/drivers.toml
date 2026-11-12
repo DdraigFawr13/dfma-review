@@ -74,11 +74,11 @@ rules = ["pocket_depth"]
 weight = 1.0
 source = "estimate"
 
-# Steps and slots S1 (D-079): slot_depth and slot_ratio join in S2.
+# Steps and slots (D-079): step_depth in S1; slot_depth and slot_ratio in S2.
 [deep_steps_slots]
 label = "Deep steps and slots"
 count = "findings"
-rules = ["step_depth"]
+rules = ["step_depth", "slot_depth", "slot_ratio"]
 weight = 1.0
 source = "estimate"
 

@@ -4,7 +4,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeAll, describe, expect, test } from "vitest";
-import { POCKET_CLASSES, scores, type Tally } from "../../grading/score";
+import { POCKET_CLASSES, scores, SLOT_CLASSES, type Tally } from "../../grading/score";
 import { loadNodeOc } from "../node";
 import type { OC } from "../oc";
 import { MATERIALS, thresholds } from "../settings";
@@ -29,7 +29,8 @@ describe("set_part", () => {
       const s = scores(counts);
       expect(s.precision.pocket.n, "a face that is not a pocket's was called one").toBe(s.precision.pocket.of);
       expect(s.claimed_on_excluded, "a slot face (not scored) was called a pocket or hole").toEqual({});
-      expect(missed).toEqual([]);
+      // T-slots and dovetails (classes 6, 17-19 here) are not slots the finder calls (spec Non-goals); pockets must be whole
+      expect((missed as { class: number }[]).filter((m) => !(m.class in SLOT_CLASSES))).toEqual([]);
     });
   }
 });

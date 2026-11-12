@@ -30,6 +30,7 @@ export async function mfcadpp(folder: string, limit: number | undefined, jobs: n
   const total = new Tally();
   const holesWhole: Record<string, number> = {};
   const stepsWhole: Record<string, number> = {};
+  const slotsWhole: Record<string, number> = {};
   const parts: PartRec[] = [];
   const allMisses: Miss[] = [];
   paths.forEach((p, k) => {
@@ -44,6 +45,8 @@ export async function mfcadpp(folder: string, limit: number | undefined, jobs: n
       if (!Array.isArray(inst)) {
         rec.steps_whole = instanceScore(rec.features ?? [], inst.steps ?? [], "step");
         for (const [key, v] of Object.entries(rec.steps_whole)) stepsWhole[key] = (stepsWhole[key] ?? 0) + v;
+        rec.slots_whole = instanceScore(rec.features ?? [], inst.slots ?? [], "slot");
+        for (const [key, v] of Object.entries(rec.slots_whole)) slotsWhole[key] = (slotsWhole[key] ?? 0) + v;
       }
     }
     parts.push(rec);
@@ -55,6 +58,7 @@ export async function mfcadpp(folder: string, limit: number | undefined, jobs: n
     scores: scores(total), misses: allMisses, per_part: parts };
   if (instances) out.holes_whole = holesWhole;
   if (Object.keys(stepsWhole).length) out.steps_whole = stepsWhole;
+  if (Object.keys(slotsWhole).length) out.slots_whole = slotsWhole;
   return out;
 }
 

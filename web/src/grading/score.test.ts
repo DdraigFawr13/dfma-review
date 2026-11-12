@@ -209,7 +209,8 @@ describe("summary", () => {
     const out = summaryLine("r.json", { status: { ok: 1 }, scores: s, per_part: [part] } as unknown as GradeResult).split("\n");
     expect(out[1]).toBe("  steps 2/3 (miss 1, wrong 3: 2 on scored labels, 1 on excluded; by class 8 1/1, 9 0/0, 10 0/0, 20 0/1, 21 0/0, 22 1/1); "
       + 'floorless class 5 {"step":1}, class 7 {}; not steps (D-093) none');
-    expect(out[2]).toBe("  target (D-079): no baseline for this set");
+    expect(out[2]).toBe("  slots 0/0 (miss 0, wrong 0: 0 on scored labels, 0 on excluded; by class 6 0/0, 17 0/0, 18 0/0, 19 0/0)");
+    expect(out[3]).toBe("  target (D-079): no baseline for this set");
   });
 
   test("labelled step faces of a shape that is not a step leave the count, on their own line (D-093)", () => {

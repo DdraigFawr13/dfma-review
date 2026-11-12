@@ -53,3 +53,31 @@ describe("steps found within the labelled steps and opened pockets", () => {
     });
   }
 });
+
+/** S2 (spec J4): parts whose slot counts disagree with the labels. NOT settled by Morgan yet: each is held at the numbers
+ *  measured 2026-11-12 so a change shows, and goes to Morgan with them before it becomes a known difference. */
+const SLOT_PENDING: Record<string, [number, number]> = { // part: [steps found, slots found]
+  bottomless_pocket1: [0, 0], // labelled 1 slot
+  polyh_castle: [0, 4], // labelled 2 slots
+  regli_pathological1: [1, 0], // labelled 1 slot
+  "socket2-Part": [4, 2], // labelled 6 slots
+};
+
+// S2: per part, t <= slots found and steps + slots found <= s + t + o (spec J4)
+describe("slots found within the labelled slots", () => {
+  for (const part of PARTS) {
+    test(part, { timeout: 60_000 }, async () => {
+      const r: Result = await analyseFile(oc, resolve(UMD, part, `${part}.step`));
+      const [steps, slots] = ["step", "slot"].map((k) => r.features.filter((f: Result) => f.kind === k).length);
+      const [s, t, o] = [labelled(part, "step") + labelled(part, "Corner"), labelled(part, "slot"), labelled(part, "Opened Pocket")];
+      const say = `${part}: ${steps} steps and ${slots} slots found, labelled ${s} steps and corners, ${t} slots, ${o} opened pockets`;
+      if (part in SLOT_PENDING) {
+        expect([steps, slots], `${say}; awaiting Morgan (spec J4)`).toEqual(SLOT_PENDING[part]);
+        expect(slots >= t && steps + slots <= s + t + o, say).toBe(false);
+        return;
+      }
+      expect(slots, say).toBeGreaterThanOrEqual(t);
+      expect(steps + slots, say).toBeLessThanOrEqual(s + t + o);
+    });
+  }
+});

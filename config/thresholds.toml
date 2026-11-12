@@ -38,6 +38,10 @@ source = "estimate"
 max_in = 0.0
 source = "D-021"
 
+[al6061.slot_ratio]    # a slot deeper than max_ratio times its width is medium (steps and slots S2, D-079)
+max_ratio = 6.0
+source = "D-068"
+
 [steel1018.corner_radius]   # under min_radius_in is medium (0 is high); depth / end mill over max_depth_ratio is medium
 min_radius_in = 0.03125
 max_depth_ratio = 4.0
@@ -51,6 +55,10 @@ source = "estimate"
 [steel1018.undercut]    # a pocket's undercut reaching more than max_in under its lip is medium (D-021)
 max_in = 0.0
 source = "D-021"
+
+[steel1018.slot_ratio]    # a slot deeper than max_ratio times its width is medium (steps and slots S2, D-079)
+max_ratio = 6.0
+source = "D-068"
 
 [ss304.corner_radius]   # under min_radius_in is medium (0 is high); depth / end mill over max_depth_ratio is medium
 min_radius_in = 0.03125
@@ -66,6 +74,10 @@ source = "estimate"
 max_in = 0.0
 source = "D-021"
 
+[ss304.slot_ratio]    # a slot deeper than max_ratio times its width is medium (steps and slots S2, D-079)
+max_ratio = 6.0
+source = "D-068"
+
 [plastic.corner_radius]   # under min_radius_in is medium (0 is high); depth / end mill over max_depth_ratio is medium
 min_radius_in = 0.03125
 max_depth_ratio = 4.0
@@ -79,6 +91,10 @@ source = "estimate"
 [plastic.undercut]    # a pocket's undercut reaching more than max_in under its lip is medium (D-021)
 max_in = 0.0
 source = "D-021"
+
+[plastic.slot_ratio]    # a slot deeper than max_ratio times its width is medium (steps and slots S2, D-079)
+max_ratio = 6.0
+source = "D-068"
 
 [al6061.thin_wall]   # wall thickness under min_in is high
 min_in = 0.030
